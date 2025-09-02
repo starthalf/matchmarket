@@ -10,7 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Database, CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react-native';
+import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { SupabaseConnectionTest } from '../utils/supabaseConnectionTest';
 
 interface ConnectionTestResult {

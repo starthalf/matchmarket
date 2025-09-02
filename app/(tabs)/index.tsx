@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
+import { Database } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { AdBottomSheet } from '../../components/AdBottomSheet';
 import { AdManager } from '../../data/mockAds';
@@ -194,6 +195,12 @@ export default function HomeScreen() {
           <View style={styles.headerIcons}>
             <TouchableOpacity style={styles.dynamicPriceIcon}>
               <TrendingUp size={20} color="#16a34a" />
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.supabaseTestIcon}
+              onPress={() => router.push('/supabase-test')}
+            >
+              <Database size={20} color="#3b82f6" />
             </TouchableOpacity>
             {isAdmin && (
               <TouchableOpacity 
@@ -380,6 +387,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fef2f2',
     borderWidth: 1,
     borderColor: '#fecaca',
+  },
+  supabaseTestIcon: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
   searchSection: {
     flexDirection: 'row',

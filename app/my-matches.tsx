@@ -1,0 +1,796 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  Modal,
+  Switch,
+} from 'react-native';
+import { router } from 'expo-router';
+import { ArrowLeft, Calendar, Clock, MapPin, Users, Trash2, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, User, Lock } from 'lucide-react-native';
+import { useAuth } from '../contexts/AuthContext';
+import { mockMatches, mockUsers, addMockEarning, EarningsData } from '../data/mockData';
+import { ConfirmationModal } from '../components/ConfirmationModal';
+
+export default function MyMatchesScreen() {
+  const { user } = useAuth();
+  const [selectedMatch, setSelectedMatch] = useState<any>(null);
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [completedMatches, setCompletedMatches] = useState<Set<string>>(new Set());
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmModalData, setConfirmModalData] = useState<{
+    title: string;
+    message: string;
+    confirmText: string;
+    onConfirm: () => void;
+    confirmStyle?: 'default' | 'destructive';
+  } | null>(null);
+
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>로그인이 필요합니다.</Text>
+      </SafeAreaView>
+    );
+  }
+
+  // 내가 등록한 매치들
+  const myMatches = mockMatches.filter(match => match.sellerId === user.id);
+
+  const handleDeleteMatch = (match: any) => {
+    const hoursUntilMatch = (new Date(`${match.date}T${match.time}`).getTime() - new Date().getTime()) / (1000 * 60 * 60);
+    
+    if (hoursUntilMatch < 48) {
+      setConfirmModalData({
+        title: '삭제 불가',
+        message: '매치 시작 48시간 전부터는 매치를 삭제할 수 없습니다.',
+        confirmText: '확인',
+        onConfirm: () => setShowConfirmModal(false),
+      });
+      setShowConfirmModal(true);
+      return;
+    }
+
+    setConfirmModalData({
+      title: '매치 삭제',
+      message: `정말로 "${match.title}" 매치를 삭제하시겠습니까?\n\n참가자들에게 자동으로 환불됩니다.`,
+      confirmText: '삭제',
+      confirmStyle: 'destructive',
+      onConfirm: () => {
+        setShowConfirmModal(false);
+        setTimeout(() => {
+          setConfirmModalData({
+            title: '매치 삭제 완료',
+            message: '매치가 삭제되었고 참가자들에게 환불이 진행됩니다.',
+            confirmText: '확인',
+            onConfirm: () => setShowConfirmModal(false),
+          });
+          setShowConfirmModal(true);
+        }, 100);
+      },
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmMatch = (match: any) => {
+    console.log('=== handleConfirmMatch 함수 시작 ===');
+    console.log('match:', match);
+    
+    const now = new Date();
+    const matchTime = new Date(`${match.date}T${match.time}`);
+    console.log('현재 시간:', now);
+    console.log('매치 시간:', matchTime);
+    console.log('매치 시간이 지났는지:', now > matchTime);
+    
+    if (now < matchTime) {
+      console.log('매치 시간이 아직 안됨 - 알림 표시');
+      setConfirmModalData({
+        title: '확정 불가',
+        message: '매치 시작 시간이 지난 후에 확정할 수 있습니다.',
+        confirmText: '확인',
+        onConfirm: () => setShowConfirmModal(false),
+      });
+      setShowConfirmModal(true);
+      return;
+    }
+
+    console.log('매치 완료 확인 알림 표시');
+    setConfirmModalData({
+      title: '경기 완료',
+      message: `"${match.title}" 매치가 성공적으로 진행되었습니까?`,
+      confirmText: '경기 완료',
+      onConfirm: () => {
+        console.log('=== 경기 완료 버튼 클릭됨 ===');
+        console.log('수익 계산 시작...');
+        
+        // 수익 계산 및 추가
+        const matchBaseCost = match.basePrice * match.currentApplicants.total;
+        const matchTotalPaid = match.currentPrice * match.currentApplicants.total;
+        const matchAdditionalRevenue = Math.max(0, (matchTotalPaid - matchBaseCost) * 0.85);
+        
+        console.log('수익 계산 결과:', {
+          matchBaseCost,
+          matchTotalPaid,
+          matchAdditionalRevenue
+        });
+        
+        // 광고 수익 (랜덤 생성)
+        const adViews = Math.floor(Math.random() * 1500) + 500;
+        const adClicks = Math.floor(adViews * 0.05) + Math.floor(Math.random() * 50);
+        const adRevenue = adClicks * (Math.floor(Math.random() * 200) + 100);
+        const adShare = match.adEnabled ? adRevenue * 0.5 : 0;
+        
+        console.log('광고 수익 계산:', {
+          adViews,
+          adClicks,
+          adRevenue,
+          adShare
+        });
+        
+        const totalRevenue = matchBaseCost + matchAdditionalRevenue + adShare;
+        console.log('총 수익:', totalRevenue);
+        
+        const newEarning: EarningsData = {
+          id: match.id,
+          matchTitle: match.title,
+          date: match.date,
+          matchBasePrice: matchBaseCost,
+          matchTotalPaid: matchTotalPaid,
+          matchBaseCost: matchBaseCost,
+          matchAdditionalRevenue: matchAdditionalRevenue,
+          adViews: adViews,
+          adClicks: adClicks,
+          adRevenue: adRevenue,
+          adShare: adShare,
+          totalRevenue: totalRevenue,
+        };
+        
+        console.log('새 수익 데이터:', newEarning);
+        console.log('addMockEarning 호출 전');
+        addMockEarning(newEarning);
+        console.log('addMockEarning 호출 후');
+        
+        // 매치를 완료된 매치 목록에 추가
+        console.log('completedMatches 업데이트 전:', completedMatches);
+        setCompletedMatches(prev => new Set([...prev, match.id]));
+        console.log('completedMatches 업데이트 후');
+        
+        setShowConfirmModal(false);
+        
+        // 완료 알림을 별도 모달로 표시
+        setTimeout(() => {
+          setConfirmModalData({
+            title: '경기 완료 처리됨',
+            message: `매치가 완료되었습니다.\n\n💰 정산 금액: ${totalRevenue.toLocaleString()}원\n- 기본비용: ${matchBaseCost.toLocaleString()}원\n- 추가수익: ${matchAdditionalRevenue.toLocaleString()}원\n- 광고수익: ${adShare.toLocaleString()}원\n\n수익 정산 페이지에서 확인하세요.`,
+            confirmText: '확인',
+            onConfirm: () => setShowConfirmModal(false),
+          });
+          setShowConfirmModal(true);
+        }, 100);
+        
+        console.log('=== handleConfirmMatch 완료 ===');
+      },
+    });
+    setShowConfirmModal(true);
+  };
+
+  const handleViewParticipants = (match: any) => {
+    setSelectedMatch(match);
+    setShowParticipantsModal(true);
+  };
+
+  const handleToggleClosedStatus = (match: any) => {
+    const newClosedStatus = !match.isClosed;
+    const statusText = newClosedStatus ? '마감' : '모집 재개';
+    
+    setConfirmModalData({
+      title: `매치 ${statusText}`,
+      message: `"${match.title}" 매치를 ${statusText}하시겠습니까?${newClosedStatus ? '\n\n마감 시 더 이상 대기자를 받지 않습니다.' : ''}`,
+      confirmText: statusText,
+      onConfirm: () => {
+        // 매치 상태 업데이트
+        match.isClosed = newClosedStatus;
+        
+        if (newClosedStatus) {
+          // 마감 시 현재 참가자 수를 예상 참가자 수와 동일하게 설정하고 대기자 수를 0으로 설정
+          match.currentApplicants = { ...match.expectedParticipants };
+          match.waitingApplicants = 0;
+          match.waitingList = [];
+        }
+        
+        setShowConfirmModal(false);
+        
+        // 완료 알림
+        setTimeout(() => {
+          setConfirmModalData({
+            title: '완료',
+            message: `매치가 ${statusText}되었습니다.`,
+            confirmText: '확인',
+            onConfirm: () => setShowConfirmModal(false),
+          });
+          setShowConfirmModal(true);
+        }, 100);
+      },
+    });
+    setShowConfirmModal(true);
+  };
+
+  const getMatchStatus = (match: any) => {
+    // 경기 완료 처리된 매치인지 확인
+    if (completedMatches.has(match.id)) {
+      return { status: 'settled', text: '경기완료', color: '#16a34a' };
+    }
+    
+    if (match.isClosed) {
+      return { status: 'closed', text: '마감됨', color: '#6b7280' };
+    }
+    
+    const now = new Date();
+    const matchTime = new Date(`${match.date}T${match.time}`);
+    const hoursUntilMatch = (matchTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    
+    if (match.currentApplicants.total >= match.expectedParticipants.total) {
+      return { status: 'confirmed', text: '확정됨', color: '#3b82f6' };
+    } else if (hoursUntilMatch <= 24) {
+      return { status: 'closing', text: '마감임박', color: '#f59e0b' };
+    } else {
+      return { status: 'recruiting', text: '모집중', color: '#6b7280' };
+    }
+  };
+
+  const mockParticipants = [
+    { id: '1', name: '김테니스', gender: '여성', ntrp: 4.5, joinedAt: '2024-12-27T10:30:00Z' },
+    { id: '2', name: '박라켓', gender: '남성', ntrp: 4.0, joinedAt: '2024-12-27T11:15:00Z' },
+  ];
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={styles.backButton} 
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>내 매치 관리</Text>
+        <View style={styles.placeholder} />
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {myMatches.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Calendar size={48} color="#d1d5db" />
+            <Text style={styles.emptyTitle}>등록한 매치가 없습니다</Text>
+            <Text style={styles.emptyText}>첫 매치를 등록해보세요</Text>
+          </View>
+        ) : (
+          myMatches.map((match) => {
+            const status = getMatchStatus(match);
+            const now = new Date();
+            const matchTime = new Date(`${match.date}T${match.time}`);
+            const canConfirm = now > matchTime && !completedMatches.has(match.id);
+            
+            return (
+              <View key={match.id} style={styles.matchCard}>
+                <View style={styles.matchHeader}>
+                  <View style={styles.matchTitleRow}>
+                    <Text style={styles.matchTitle} numberOfLines={1}>
+                      {match.title}
+                    </Text>
+                    {status.status === 'settled' && (
+                      <View style={[styles.statusBadge, { backgroundColor: status.color }]}>
+                        <Text style={styles.statusText}>{status.text}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+
+                <View style={styles.matchDetails}>
+                  <View style={styles.detailRow}>
+                    <Calendar size={16} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      {match.date} {match.time}~{match.endTime}
+                    </Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <MapPin size={16} color="#6b7280" />
+                    <Text style={styles.detailText}>{match.court}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Users size={16} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      {match.currentApplicants.total}/{match.expectedParticipants.total}명 참가
+                      {match.waitingApplicants > 0 && ` · 대기 ${match.waitingApplicants}명`}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.priceInfo}>
+                  <Text style={styles.currentPrice}>
+                    현재가: {match.currentPrice.toLocaleString()}원
+                  </Text>
+                  <Text style={styles.basePrice}>
+                    기본가: {match.initialPrice.toLocaleString()}원
+                  </Text>
+                </View>
+
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity 
+                    style={styles.participantsButton}
+                    onPress={() => handleViewParticipants(match)}
+                  >
+                    <Users size={16} color="#3b82f6" />
+                    <Text style={styles.participantsButtonText}>참가자 보기</Text>
+                  </TouchableOpacity>
+                  
+                  {canConfirm && (
+                    <TouchableOpacity 
+                      style={styles.confirmButton}
+                      onPress={() => handleConfirmMatch(match)}
+                    >
+                      <CheckCircle size={16} color="#16a34a" />
+                      <Text style={styles.confirmButtonText}>경기 완료</Text>
+                    </TouchableOpacity>
+                  )}
+                  
+                  <TouchableOpacity 
+                    style={styles.deleteButton}
+                    onPress={() => handleDeleteMatch(match)}
+                  >
+                    <Trash2 size={16} color="#dc2626" />
+                    <Text style={styles.deleteButtonText}>삭제</Text>
+                  </TouchableOpacity>
+                </View>
+                
+                {/* 마감 토글 - 별도 섹션 */}
+                <View style={styles.closedToggleSection}>
+                  <View style={styles.closedToggleContainer}>
+                    <Lock size={16} color="#6b7280" />
+                    <Text style={styles.closedToggleLabel}>
+                      {completedMatches.has(match.id) 
+                        ? '경기완료' 
+                        : match.isClosed ? '마감됨' : '모집중'}
+                    </Text>
+                  </View>
+                  <Switch
+                    value={completedMatches.has(match.id) || match.isClosed || false}
+                    onValueChange={() => handleToggleClosedStatus(match)}
+                    disabled={completedMatches.has(match.id)}
+                    trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
+                    thumbColor={completedMatches.has(match.id) ? '#16a34a' : (match.isClosed ? '#dc2626' : '#f4f3f4')}
+                  />
+                </View>
+              </View>
+            );
+          })
+        )}
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* 참가자 목록 모달 */}
+      <Modal
+        visible={showParticipantsModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowParticipantsModal(false)}>
+              <Text style={styles.modalCancelText}>닫기</Text>
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>참가자 목록</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            {selectedMatch && (
+              <>
+                <View style={styles.matchInfoCard}>
+                  <Text style={styles.matchInfoTitle}>{selectedMatch.title}</Text>
+                  <Text style={styles.matchInfoDetails}>
+                    {selectedMatch.date} {selectedMatch.time} · {selectedMatch.court}
+                  </Text>
+                </View>
+
+                <View style={styles.participantsSection}>
+                  <Text style={styles.sectionTitle}>
+                    확정 참가자 ({mockParticipants.length}명)
+                  </Text>
+                  
+                  {mockParticipants.map((participant) => (
+                    <View key={participant.id} style={styles.participantCard}>
+                      <View style={styles.participantInfo}>
+                        <User size={20} color="#6b7280" />
+                        <View style={styles.participantDetails}>
+                          <Text style={styles.participantName}>{participant.name}</Text>
+                          <Text style={styles.participantMeta}>
+                            {participant.gender} · NTRP {participant.ntrp}
+                          </Text>
+                        </View>
+                      </View>
+                      <Text style={styles.joinedDate}>
+                        {new Date(participant.joinedAt).toLocaleDateString('ko-KR')}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+
+                {selectedMatch.waitingList && selectedMatch.waitingList.length > 0 && (
+                  <View style={styles.waitingSection}>
+                    <Text style={styles.sectionTitle}>
+                      대기자 목록 ({selectedMatch.waitingList.length}명)
+                    </Text>
+                    
+                    {selectedMatch.waitingList.map((waiter: any, index: number) => (
+                      <View key={waiter.id} style={styles.waiterCard}>
+                        <View style={styles.waiterInfo}>
+                          <Text style={styles.waiterPosition}>{index + 1}</Text>
+                          <User size={16} color="#6b7280" />
+                          <View style={styles.waiterDetails}>
+                            <Text style={styles.waiterName}>{waiter.userName}</Text>
+                            <Text style={styles.waiterMeta}>
+                              {waiter.gender} · NTRP {waiter.ntrp}
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.waitingStatus}>대기중</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* 확인 모달 */}
+      {confirmModalData && (
+        <ConfirmationModal
+          visible={showConfirmModal}
+          title={confirmModalData.title}
+          message={confirmModalData.message}
+          confirmText={confirmModalData.confirmText}
+          confirmStyle={confirmModalData.confirmStyle}
+          onConfirm={confirmModalData.onConfirm}
+          onCancel={() => setShowConfirmModal(false)}
+        />
+      )}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  placeholder: {
+    width: 32,
+  },
+  content: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#374151',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  matchCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  matchHeader: {
+    marginBottom: 12,
+  },
+  matchTitleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
+  matchTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  statusBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  matchDetails: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  detailText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  priceInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  currentPrice: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ec4899',
+  },
+  basePrice: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  participantsButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#dbeafe',
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  participantsButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  confirmButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#dcfce7',
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#16a34a',
+  },
+  confirmButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#15803d',
+  },
+  deleteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#fee2e2',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dc2626',
+  },
+  deleteButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#dc2626',
+  },
+  closedToggleSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderTopColor: '#f3f4f6',
+    borderBottomWidth: 0,
+    borderLeftWidth: 0,
+    borderRightWidth: 0,
+  },
+  closedToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  closedToggleLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  bottomPadding: {
+    height: 40,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalCancelText: {
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalContent: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  matchInfoCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  matchInfoTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  matchInfoDetails: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  participantsSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  waitingSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  participantCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  participantInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  participantDetails: {
+    gap: 2,
+  },
+  participantName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  participantMeta: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  joinedDate: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  waiterCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#fef3c7',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+  },
+  waiterInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  waiterPosition: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#92400e',
+    width: 20,
+  },
+  waiterDetails: {
+    gap: 2,
+  },
+  waiterName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#92400e',
+  },
+  waiterMeta: {
+    fontSize: 12,
+    color: '#92400e',
+  },
+  waitingStatus: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#f59e0b',
+  },
+});

@@ -105,12 +105,12 @@ export class SupabaseConnectionTest {
       }
 
       // 6. 쓰기 권한 테스트 (테스트 데이터 삽입 후 삭제)
-      if (supabaseAdmin) {
+      if (supabase) {
         try {
           const testId = `test_${Date.now()}`;
           
           // 테스트 데이터 삽입
-          const { error: insertError } = await supabaseAdmin
+          const { error: insertError } = await supabase
             .from('app_settings')
             .insert({
               key: testId,
@@ -119,7 +119,7 @@ export class SupabaseConnectionTest {
 
           if (!insertError) {
             // 삽입 성공 시 바로 삭제
-            const { error: deleteError } = await supabaseAdmin
+            const { error: deleteError } = await supabase
               .from('app_settings')
               .delete()
               .eq('key', testId);
@@ -156,7 +156,7 @@ export class SupabaseConnectionTest {
   } {
     const hasUrl = !!process.env.EXPO_PUBLIC_SUPABASE_URL;
     const hasAnonKey = !!process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-    const hasServiceKey = !!process.env.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    const hasServiceKey = !!(process.env.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY);
     
     const urlPreview = hasUrl 
       ? `${process.env.EXPO_PUBLIC_SUPABASE_URL?.substring(0, 20)}...`

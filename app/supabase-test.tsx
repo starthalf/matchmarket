@@ -125,7 +125,7 @@ export default function SupabaseTestScreen() {
             <View style={styles.testInfo}>
               <Text style={styles.testLabel}>SUPABASE_SERVICE_ROLE_KEY</Text>
               <Text style={styles.testDetail}>
-                {envVars.hasServiceKey ? '설정됨' : '설정되지 않음'}
+                {envVars.hasServiceKey ? '설정됨' : '설정되지 않음 (선택사항)'}
               </Text>
             </View>
             {getStatusIcon(envVars.hasServiceKey)}
@@ -259,7 +259,8 @@ export default function SupabaseTestScreen() {
               <Text style={styles.instructionTitle}>2. 환경변수 설정</Text>
               <Text style={styles.instructionText}>
                 • 우측 상단 "Connect to Supabase" 버튼 클릭{'\n'}
-                • Supabase URL과 API 키 입력{'\n'}
+                • Supabase URL과 Anon Key 입력{'\n'}
+                • Service Role Key는 관리자 기능용 (선택사항){'\n'}
                 • 자동으로 .env 파일이 생성됩니다
               </Text>
             </View>
@@ -275,13 +276,13 @@ export default function SupabaseTestScreen() {
         )}
 
         {/* 성공 메시지 */}
-        {testResult && testResult.isConfigured && testResult.clientConnection && testResult.canRead && (
+        {testResult && testResult.isConfigured && testResult.clientConnection && testResult.canRead && testResult.tablesExist && (
           <View style={styles.successSection}>
             <CheckCircle size={48} color="#16a34a" />
             <Text style={styles.successTitle}>✅ Supabase 연결 성공!</Text>
             <Text style={styles.successText}>
-              모든 연결이 정상적으로 작동하고 있습니다.{'\n'}
-              앱의 모든 기능을 사용할 수 있습니다.
+              기본 연결이 정상적으로 작동하고 있습니다.{'\n'}
+              {testResult.canWrite ? '모든 기능을 사용할 수 있습니다.' : '읽기 전용으로 작동합니다.'}
             </Text>
           </View>
         )}

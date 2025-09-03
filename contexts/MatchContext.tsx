@@ -65,7 +65,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
             if (mounted.current) {
               setMatches(prev => [...newMatches, ...prev]);
             }
-            await DataGenerator.updateLastGenerationDate();
+            DataGenerator.updateLastGenerationDate();
             console.log(`✅ ${newMatches.length}개의 새로운 더미 매치가 생성되었습니다.`);
             
             // 더미 매치 개수 확인

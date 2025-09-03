@@ -86,16 +86,20 @@ export class AdManager {
       return null;
     }
 
-    // 오늘 하루 그만보기 체크
-    if (typeof window !== 'undefined') {
-      const hideToday = localStorage.getItem(this.HIDE_TODAY_KEY);
-      const today = new Date().toDateString();
-      console.log('오늘 하루 그만보기 체크:', hideToday, today);
-      
-      if (hideToday === today) {
-        console.log('오늘 하루 그만보기 설정됨');
-        return null;
+    // 오늘 하루 그만보기 체크 (웹에서만)
+    try {
+      if (typeof window !== 'undefined') {
+        const hideToday = localStorage.getItem(this.HIDE_TODAY_KEY);
+        const today = new Date().toDateString();
+        console.log('오늘 하루 그만보기 체크:', hideToday, today);
+        
+        if (hideToday === today) {
+          console.log('오늘 하루 그만보기 설정됨');
+          return null;
+        }
       }
+    } catch (error) {
+      console.warn('localStorage 접근 실패 (네이티브 환경에서는 정상):', error);
     }
 
     // 타겟 오디언스 필터링
@@ -163,9 +167,13 @@ export class AdManager {
    * 오늘 하루 광고 숨기기
    */
   static hideAdsToday(): void {
-    if (typeof window !== 'undefined') {
-      const today = new Date().toDateString();
-      localStorage.setItem(this.HIDE_TODAY_KEY, today);
+    try {
+      if (typeof window !== 'undefined') {
+        const today = new Date().toDateString();
+        localStorage.setItem(this.HIDE_TODAY_KEY, today);
+      }
+    } catch (error) {
+      console.warn('localStorage 저장 실패 (네이티브 환경에서는 정상):', error);
     }
   }
 

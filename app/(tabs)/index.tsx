@@ -44,6 +44,11 @@ export default function HomeScreen() {
 
   // 관리자 상태 실시간 감지
   useEffect(() => {
+    if (Platform.OS !== 'web') {
+      // 네이티브에서는 관리자 모드 비활성화
+      return;
+    }
+    
     const checkAdminStatus = () => {
       if (typeof window !== 'undefined') {
         const adminStatus = localStorage.getItem('isAdmin') === 'true';
@@ -165,6 +170,11 @@ export default function HomeScreen() {
   };
 
   const toggleAdminMode = () => {
+    if (Platform.OS !== 'web') {
+      Alert.alert('알림', '관리자 모드는 웹에서만 사용 가능합니다.');
+      return;
+    }
+    
     if (typeof window !== 'undefined') {
       const currentAdminStatus = localStorage.getItem('isAdmin') === 'true';
       localStorage.setItem('isAdmin', (!currentAdminStatus).toString());

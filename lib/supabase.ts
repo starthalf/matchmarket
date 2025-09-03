@@ -1,22 +1,54 @@
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
-const supabaseServiceKey = process.env.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+// 환경변수 안전하게 가져오기
+const getEnvVar = (key: string): string | undefined => {
+  try {
+    return process.env[key];
+  } catch (error) {
+    console.warn(`환경변수 ${key} 접근 실패:`, error);
+    return undefined;
+  }
+};
+
+const supabaseUrl = getEnvVar('EXPO_PUBLIC_SUPABASE_URL');
+const supabaseAnonKey = getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY');
+const supabaseServiceKey = getEnvVar('EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY') || getEnvVar('SUPABASE_SERVICE_ROLE_KEY');
 
 // Supabase 클라이언트 생성 (환경변수가 없으면 null)
-export const supabase = supabaseUrl && supabaseAnonKey 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : null;
+export const supabase = (() => {
+  try {
+    if (supabaseUrl && supabaseAnonKey) {
+      return createClient(supabaseUrl, supabaseAnonKey, {
+        auth: {
+          persistSession: Platform.OS !== 'web',
+          autoRefreshToken: true,
+        }
+      });
+    }
+    return null;
+  } catch (error) {
+    console.warn('Supabase 클라이언트 생성 실패:', error);
+    return null;
+  }
+})();
 
-export const supabaseAdmin = supabaseUrl && supabaseServiceKey 
-  ? createClient(supabaseUrl, supabaseServiceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    })
-  : null;
+export const supabaseAdmin = (() => {
+  try {
+    if (supabaseUrl && supabaseServiceKey) {
+      return createClient(supabaseUrl, supabaseServiceKey, {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      });
+    }
+    return null;
+  } catch (error) {
+    console.warn('Supabase Admin 클라이언트 생성 실패:', error);
+    return null;
+  }
+})();
 
 // Supabase 연결 상태 확인
 export const isSupabaseConfigured = () => {
@@ -24,7 +56,7 @@ export const isSupabaseConfigured = () => {
 };
 
 // 환경변수 상태 로깅
-if (typeof window !== 'undefined') {
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
   console.log('🔧 Supabase 환경변수 상태:', {
     hasUrl: !!supabaseUrl,
     hasAnonKey: !!supabaseAnonKey,

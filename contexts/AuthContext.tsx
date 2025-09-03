@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '../types/tennis';
 import { mockUsers } from '../data/mockData';
@@ -41,7 +42,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const checkStoredAuth = async () => {
     try {
-      const storedUserId = await AsyncStorage.getItem('userId');
+      let storedUserId: string | null = null;
+      
+      if (Platform.OS === 'web') {
+        // 웹에서는 localStorage 사용
+        if (typeof window !== 'undefined') {
+          storedUserId = localStorage.getItem('userId');
+        }
+      } else {
+        // 네이티브에서는 AsyncStorage 사용
+        storedUserId = await AsyncStorage.getItem('userId');
+      }
+      
       if (storedUserId) {
         // 실제로는 서버에서 사용자 정보를 가져와야 함
         const foundUser = mockUsers.find(u => u.id === storedUserId);
@@ -79,7 +91,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mounted.current) {
         setUser(foundUser);
       }
-      await AsyncStorage.setItem('userId', foundUser.id);
+      
+      // 플랫폼별 저장
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('userId', foundUser.id);
+        }
+      } else {
+        await AsyncStorage.setItem('userId', foundUser.id);
+      }
       
       return { success: true };
     } catch (error) {
@@ -127,7 +147,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mounted.current) {
         setUser(newUser);
       }
-      await AsyncStorage.setItem('userId', newUser.id);
+      
+      // 플랫폼별 저장
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('userId', newUser.id);
+        }
+      } else {
+        await AsyncStorage.setItem('userId', newUser.id);
+      }
       
       return { success: true };
     } catch (error) {
@@ -141,7 +169,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (mounted.current) {
         setUser(null);
       }
-      await AsyncStorage.removeItem('userId');
+      
+      // 플랫폼별 삭제
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('userId');
+        }
+      } else {
+        await AsyncStorage.removeItem('userId');
+      }
     } catch (error) {
       console.error('로그아웃 실패:', error);
     }

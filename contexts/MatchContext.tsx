@@ -35,26 +35,68 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     try {
       console.log('매치 데이터 로딩 시작...');
       
-      // 1. 먼저 모든 매치 가져오기
-      const allMatches = await DataGenerator.getAllMatches(mockMatches);
-      
-      // 2. 각 매치의 대기자 목록을 Supabase에서 동기화
-      const syncedMatches = await Promise.all(
-        allMatches.map(match => WaitlistManager.syncWaitingListFromDB(match))
-      );
-      
+      // 1. 기본 매치 먼저 설정 (Supabase 연결 실패해도 앱이 작동하도록)
       if (mounted.current) {
-        setMatches([...syncedMatches]); // 동기화된 매치들로 설정
+        setMatches([...mockMatches]);
       }
       
-      // 3. 새로운 더미 매치 생성 필요한지 확인
-      const shouldGenerate = await DataGenerator.shouldGenerateNewMatches();
-      if (shouldGenerate) {
-        console.log('새로운 더미 매치 생성 중...');
-        const newMatches = await DataGenerator.generateAndSaveDailyMatches(20);
+      // 2. Supabase 연결이 가능한 경우에만 추가 로직 실행
+      try {
+        // 모든 매치 가져오기
+        const allMatches = await DataGenerator.getAllMatches(mockMatches);
         
-        if (newMatches.length > 0) {
-          // 새 매치들을 맨 앞에 추가
+        // 각 매치의 대기자 목록을 Supabase에서 동기화
+        const syncedMatches = await Promise.all(
+          allMatches.map(match => WaitlistManager.syncWaitingListFromDB(match))
+        );
+        
+        if (mounted.current) {
+          setMatches([...syncedMatches]);
+        }
+        
+        // 새로운 더미 매치 생성 필요한지 확인
+        const shouldGenerate = await DataGenerator.shouldGenerateNewMatches();
+        if (shouldGenerate) {
+          console.log('새로운 더미 매치 생성 중...');
+          const newMatches = await DataGenerator.generateAndSaveDailyMatches(20);
+          
+          if (newMatches.length > 0) {
+            // 새 매치들을 맨 앞에 추가
+            if (mounted.current) {
+              setMatches(prev => [...newMatches, ...prev]);
+            }
+            await DataGenerator.updateLastGenerationDate();
+            console.log(`✅ ${newMatches.length}개의 새로운 더미 매치가 생성되었습니다.`);
+            
+            // 더미 매치 개수 확인
+            const totalDummyCount = await DataGenerator.getDummyMatchCount();
+            console.log(`📊 총 더미 매치 개수: ${totalDummyCount}개`);
+          } else {
+            console.log('Supabase 연결 문제로 더미 매치 생성을 건너뜁니다.');
+          }
+        } else {
+          console.log('오늘은 이미 더미 매치가 생성되었습니다.');
+        }
+      } catch (supabaseError) {
+        console.warn('⚠️ Supabase 관련 작업 실패 (네이티브 환경에서는 정상):', supabaseError);
+        // Supabase 연결 실패해도 기본 매치는 표시
+        if (mounted.current) {
+          setMatches([...mockMatches]);
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ 매치 로딩 중 오류:', error);
+      // 최종 fallback: 기본 매치만 표시
+      if (mounted.current) {
+        setMatches([...mockMatches]);
+      }
+    } finally {
+      if (mounted.current) {
+        setIsLoadingMatches(false);
+      }
+    }
+  };
+
           if (mounted.current) {
             setMatches(prev => [...newMatches, ...prev]); // 이미 올바름
           }

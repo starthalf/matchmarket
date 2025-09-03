@@ -97,34 +97,6 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     }
   };
 
-          if (mounted.current) {
-            setMatches(prev => [...newMatches, ...prev]); // 이미 올바름
-          }
-          await DataGenerator.updateLastGenerationDate();
-          console.log(`✅ ${newMatches.length}개의 새로운 더미 매치가 생성되었습니다.`);
-          
-          // 더미 매치 개수 확인
-          const totalDummyCount = await DataGenerator.getDummyMatchCount();
-          console.log(`📊 총 더미 매치 개수: ${totalDummyCount}개`);
-        } else {
-          console.log('Supabase 연결 문제로 더미 매치 생성을 건너뜁니다.');
-        }
-      } else {
-        console.log('오늘은 이미 더미 매치가 생성되었습니다.');
-      }
-    } catch (error) {
-      console.warn('⚠️ 매치 로딩 중 오류 (Supabase 연결 문제일 수 있음):', error);
-      console.log('로컬 데이터만 사용합니다.');
-      if (mounted.current) {
-        setMatches([...mockMatches]); // 새로운 배열 참조 생성
-      }
-    } finally {
-      if (mounted.current) {
-        setIsLoadingMatches(false);
-      }
-    }
-  };
-
   const refreshMatches = async () => {
     setIsLoadingMatches(true);
     await loadMatches();

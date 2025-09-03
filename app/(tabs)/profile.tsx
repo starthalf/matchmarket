@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Alert,
   Image,
+  Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Settings, Award, TrendingUp, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, DollarSign, Users, Eye, Camera, User, CreditCard } from 'lucide-react-native';
@@ -23,10 +24,16 @@ export default function ProfileScreen() {
 
   // 저장된 프로필 이미지 불러오기
   React.useEffect(() => {
-    if (currentUser && typeof window !== 'undefined') {
-      const savedImage = localStorage.getItem(`profile_image_${currentUser.id}`);
-      if (savedImage) {
-        setProfileImage(savedImage);
+    if (currentUser) {
+      try {
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          const savedImage = localStorage.getItem(`profile_image_${currentUser.id}`);
+          if (savedImage) {
+            setProfileImage(savedImage);
+          }
+        }
+      } catch (error) {
+        console.warn('프로필 이미지 로드 실패:', error);
       }
     }
   }, [currentUser]);
@@ -93,8 +100,14 @@ export default function ProfileScreen() {
         setProfileImage(imageUri);
         
         // 로컬 스토리지에 저장
-        if (currentUser && typeof window !== 'undefined') {
-          localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+        if (currentUser) {
+          try {
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+              localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+            }
+          } catch (error) {
+            console.warn('프로필 이미지 저장 실패:', error);
+          }
         }
         
         Alert.alert('완료', '프로필 사진이 변경되었습니다.');
@@ -125,8 +138,14 @@ export default function ProfileScreen() {
         setProfileImage(imageUri);
         
         // 로컬 스토리지에 저장
-        if (currentUser && typeof window !== 'undefined') {
-          localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+        if (currentUser) {
+          try {
+            if (Platform.OS === 'web' && typeof window !== 'undefined') {
+              localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+            }
+          } catch (error) {
+            console.warn('프로필 이미지 저장 실패:', error);
+          }
         }
         
         Alert.alert('완료', '프로필 사진이 변경되었습니다.');
@@ -139,9 +158,15 @@ export default function ProfileScreen() {
   const removeProfileImage = () => {
     setProfileImage(null);
     
-    // 로컬 스토리지에서 삭제
-    if (currentUser && typeof window !== 'undefined') {
-      localStorage.removeItem(`profile_image_${currentUser.id}`);
+    // 로컬 스토리지에서 삭제 (웹에서만)
+    if (currentUser) {
+      try {
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          localStorage.removeItem(`profile_image_${currentUser.id}`);
+        }
+      } catch (error) {
+        console.warn('프로필 이미지 삭제 실패:', error);
+      }
     }
     
     Alert.alert('완료', '프로필 사진이 삭제되었습니다.');

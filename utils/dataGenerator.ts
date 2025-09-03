@@ -660,7 +660,7 @@ export class DataGenerator {
     try {
       // Supabase 연결 확인
       if (!supabase) {
-        console.log('ℹ️ Supabase가 설정되지 않음. 로컬 데이터만 사용합니다.');
+        console.log('ℹ️ Supabase가 설정되지 않음 또는 네이티브 환경. 로컬 데이터만 사용합니다.');
         return originalMatches;
       }
 
@@ -682,12 +682,12 @@ export class DataGenerator {
         // 더미 매치들과 기본 매치들 합치기
         return [...convertedMatches, ...originalMatches];
       } catch (fetchError) {
-        console.log('ℹ️ Supabase 연결 실패 (환경변수 미설정):', fetchError);
+        console.log('ℹ️ Supabase 연결 실패 (네이티브 환경에서는 정상):', fetchError);
         console.log('로컬 데이터를 사용합니다.');
         return originalMatches;
       }
     } catch (error) {
-      console.log('ℹ️ 매치 데이터 조회 중 오류:', error);
+      console.log('ℹ️ 매치 데이터 조회 중 오류 (네이티브 환경에서는 정상):', error);
       console.log('로컬 데이터를 사용합니다.');
       return originalMatches;
     }
@@ -764,7 +764,8 @@ export class DataGenerator {
     try {
       // Supabase 연결 확인
       if (!supabase) {
-        return false; // Supabase 미연결 시 생성하지 않음
+        console.log('ℹ️ Supabase 미연결 또는 네이티브 환경 - 더미 매치 생성 건너뜀');
+        return false;
       }
 
       const lastDate = await this.getLastGenerationDate();
@@ -772,7 +773,7 @@ export class DataGenerator {
       
       return !lastDate || lastDate !== today;
     } catch (error) {
-      console.warn('⚠️ 생성 필요 여부 확인 중 오류:', error);
+      console.warn('⚠️ 생성 필요 여부 확인 중 오류 (네이티브 환경에서는 정상):', error);
       return false;
     }
   }

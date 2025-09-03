@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Alert,
+  Platform,
 } from 'react-native';
 import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
 import { Database } from 'lucide-react-native';

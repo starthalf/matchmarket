@@ -130,12 +130,10 @@ export class AdManager {
             return false;
           }
         }
-        
-        return true;
-      });
-    }
-
-    // 우선순위 순으로 정렬하여 첫 번째 광고 반환
+          if (hideToday === today) {
+            console.log('Ad hidden for today.');
+            return null;
+          }
     filteredAds.sort((a, b) => a.priority - b.priority);
     return filteredAds[0] || null;
   }

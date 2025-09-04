@@ -24,7 +24,7 @@ export default function ProfileScreen() {
   const [profileImage, setProfileImage] = React.useState<string | null>(null);
 
   // 저장된 프로필 이미지 불러오기
-  React.useEffect(() => { // 이펙트 함수를 async로 변경
+  React.useEffect(() => {
     const loadProfileImage = async () => {
       if (!currentUser) return;
       try {
@@ -110,8 +110,10 @@ export default function ProfileScreen() {
         // 플랫폼별 저장
         if (currentUser) {
           try {
-            if (Platform.OS === 'web' && typeof window !== 'undefined') {
-              localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+            if (Platform.OS === 'web') {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+              }
             } else {
               await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
             }
@@ -150,8 +152,10 @@ export default function ProfileScreen() {
         // 플랫폼별 저장
         if (currentUser) {
           try {
-            if (Platform.OS === 'web' && typeof window !== 'undefined') {
-              localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+            if (Platform.OS === 'web') {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+              }
             } else {
               await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
             }
@@ -173,8 +177,10 @@ export default function ProfileScreen() {
     // 플랫폼별 삭제
     if (currentUser) {
       try {
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          localStorage.removeItem(`profile_image_${currentUser.id}`);
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem(`profile_image_${currentUser.id}`);
+          }
         } else {
           AsyncStorage.removeItem(`profile_image_${currentUser.id}`);
         }

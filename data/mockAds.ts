@@ -167,6 +167,9 @@ export class AdManager {
   static hideAdsToday(): void {
     try {
       if (typeof window !== 'undefined') {
+      }
+    }
+  }
   static async hideAdsToday(): Promise<void> {
     try {
       const today = new Date().toDateString();

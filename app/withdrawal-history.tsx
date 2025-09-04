@@ -231,7 +231,7 @@ export default function WithdrawalHistoryScreen() {
           <Text style={styles.infoTitle}>💡 출금 안내</Text>
           <View style={styles.infoContent}>
             <Text style={styles.infoText}>
-              • 출금은 {AdminSettingsManager.getWithdrawalPeriod()}일에 1번만 가능합니다
+              • 출금은 14일에 1번만 가능합니다
             </Text>
             <Text style={styles.infoText}>
               • 영업일 기준 1-2일 내에 입금됩니다

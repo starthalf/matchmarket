@@ -14,7 +14,33 @@ import { Settings, Bell, DollarSign, Shield, Database, Mail, Smartphone } from '
 import { AdminSettingsManager } from '../../utils/adminSettings';
 
 export default function AdminSettingsScreen() {
-  const [settings, setSettings] = useState(() => AdminSettingsManager.getSettings());
+  const [settings, setSettings] = useState<AdminSettings>({
+    maintenanceMode: false,
+    autoBackup: true,
+    debugMode: false,
+    pushNotifications: true,
+    emailNotifications: true,
+    smsNotifications: false,
+    platformFee: '15',
+    withdrawalFee: '0',
+    minWithdrawalAmount: '10000',
+    withdrawalPeriod: '14',
+    twoFactorAuth: true,
+    sessionTimeout: '30',
+    maxLoginAttempts: '5',
+  });
+
+  useEffect(() => {
+    const loadSettings = async () => {
+      try {
+        const loadedSettings = await AdminSettingsManager.getSettings();
+        setSettings(loadedSettings);
+      } catch (error) {
+        console.error('설정 로딩 오류:', error);
+      }
+    };
+    loadSettings();
+  }, []);
 
   const updateSetting = (key: string, value: any) => {
     setSettings(prev => ({ ...prev, [key]: value }));
@@ -26,9 +52,13 @@ export default function AdminSettingsScreen() {
       '변경된 설정을 저장하시겠습니까?',
       [
         { text: '취소', style: 'cancel' },
-        { text: '저장', onPress: () => {
-          AdminSettingsManager.saveSettings(settings);
-          Alert.alert('완료', '설정이 저장되었습니다.');
+        { text: '저장', onPress: async () => {
+          try {
+            await AdminSettingsManager.saveSettings(settings);
+            Alert.alert('완료', '설정이 저장되었습니다.');
+          } catch (error) {
+            Alert.alert('오류', '설정 저장에 실패했습니다.');
+          }
         }}
       ]
     );

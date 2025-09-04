@@ -83,7 +83,6 @@ export class AdminSettingsManager {
         } catch (error) {
           console.error('설정 파싱 오류:', error);
         }
-        }
       }
     } catch (error) {
       console.error('설정 불러오기 오류:', error);

@@ -47,31 +47,46 @@ export class AdminSettingsManager {
   /**
    * 설정 저장
    */
-  static saveSettings(settings: AdminSettings): void {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
-    }
-    if (Platform.OS !== 'web') {
-      AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings))
-        .catch(error => console.error('AsyncStorage 저장 실패:', error));
+  static async saveSettings(settings: AdminSettings): Promise<void> {
+    try {
+      const settingsJson = JSON.stringify(settings);
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(this.STORAGE_KEY, settingsJson);
+        }
+      } else {
+        await AsyncStorage.setItem(this.STORAGE_KEY, settingsJson);
+      }
+    } catch (error) {
+      console.error('설정 저장 오류:', error);
     }
   }
 
   /**
    * 설정 불러오기
    */
-  static getSettings(): AdminSettings {
-    // Note: AsyncStorage is async, so this sync function will only return default or previously loaded web settings.
-    // For native, settings should ideally be loaded asynchronously in a useEffect or similar.
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem(this.STORAGE_KEY);
+  static async getSettings(): Promise<AdminSettings> {
+    try {
+      let stored: string | null = null;
+      
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          stored = localStorage.getItem(this.STORAGE_KEY);
+        }
+      } else {
+        stored = await AsyncStorage.getItem(this.STORAGE_KEY);
+      }
+      
       if (stored) {
         try {
           return { ...this.DEFAULT_SETTINGS, ...JSON.parse(stored) };
         } catch (error) {
           console.error('설정 파싱 오류:', error);
         }
+        }
       }
+    } catch (error) {
+      console.error('설정 불러오기 오류:', error);
     }
     return this.DEFAULT_SETTINGS;
   }
@@ -79,17 +94,17 @@ export class AdminSettingsManager {
   /**
    * 출금 주기 가져오기 (일수)
    */
-  static getWithdrawalPeriod(): number {
-    const settings = this.getSettings();
+  static async getWithdrawalPeriod(): Promise<number> {
+    const settings = await this.getSettings();
     return parseInt(settings.withdrawalPeriod) || 14;
   }
 
   /**
    * 특정 설정값 업데이트
    */
-  static updateSetting(key: keyof AdminSettings, value: any): void {
-    const settings = this.getSettings();
+  static async updateSetting(key: keyof AdminSettings, value: any): Promise<void> {
+    const settings = await this.getSettings();
     settings[key] = value;
-    this.saveSettings(settings);
+    await this.saveSettings(settings);
   }
 }

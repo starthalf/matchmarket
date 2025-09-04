@@ -29,7 +29,7 @@ export default function HomeScreen() {
   const [showFemaleOnly, setShowFemaleOnly] = useState(false);
   const [currentAd, setCurrentAd] = useState<any>(null);
   const [showAd, setShowAd] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false); // 초기값은 false로 설정
+  const [isAdmin, setIsAdmin] = useState(false);
 
   // Track component mount status
   useEffect(() => {
@@ -42,45 +42,46 @@ export default function HomeScreen() {
   // 관리자 상태 실시간 감지
   useEffect(() => {
     const loadAdminStatus = async () => {
-      let adminStatus = false;
-      if (typeof window !== 'undefined') {
-        // 웹 환경
-        adminStatus = localStorage.getItem('isAdmin') === 'true';
-        const handleStorageChange = (e: StorageEvent) => {
-          if (e.key === 'isAdmin') {
-            if (mounted.current) {
-              setIsAdmin(e.newValue === 'true');
+      try {
+        let adminStatus = false;
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined') {
+            adminStatus = localStorage.getItem('isAdmin') === 'true';
+            const handleStorageChange = (e: StorageEvent) => {
+              if (e.key === 'isAdmin') {
+                if (mounted.current) {
+                  setIsAdmin(e.newValue === 'true');
+                }
+              }
+            };
+            const handleAdminToggle = () => {
+              loadAdminStatus();
+            };
+            window.addEventListener('storage', handleStorageChange);
+            window.addEventListener('adminToggle', handleAdminToggle);
+            return () => {
+              window.removeEventListener('storage', handleStorageChange);
+              window.removeEventListener('adminToggle', handleAdminToggle);
+            };
             }
           }
-        };
-        window.addEventListener('storage', handleStorageChange);
-        window.addEventListener('adminToggle', handleAdminToggle); // 커스텀 이벤트 리스너
-        return () => {
-          window.removeEventListener('storage', handleStorageChange);
-          window.removeEventListener('adminToggle', handleAdminToggle);
-        };
-      } else {
-        // 네이티브 환경
-        const stored = await AsyncStorage.getItem('isAdmin');
-        adminStatus = stored === 'true';
-      }
-      if (mounted.current) {
-        setIsAdmin(adminStatus);
+        } else {
+          const stored = await AsyncStorage.getItem('isAdmin');
+          adminStatus = stored === 'true';
+        }
+        if (mounted.current) {
+          setIsAdmin(adminStatus);
+        }
+      } catch (error) {
+        console.error('관리자 상태 로딩 오류:', error);
+        if (mounted.current) {
+          setIsAdmin(false);
+        }
       }
     };
     loadAdminStatus();
 
-    const handleAdminToggle = () => { // 웹 전용 커스텀 이벤트 핸들러
-      loadAdminStatus(); // 상태 다시 로드
-    };
-
-    // 클린업 함수는 웹 환경에서만 필요
-    if (Platform.OS === 'web') {
-      return () => {
-        // Event listeners are added inside loadAdminStatus for web, so cleanup is also there.
-      };
-    }
-  }, []); // 빈 배열로 한 번만 실행
+  }, []);
 
   // 광고 표시 로직
   useEffect(() => {
@@ -88,33 +89,9 @@ export default function HomeScreen() {
     console.log('user:', user);
     
     // 테스트를 위해 localStorage 초기화 (AsyncStorage도 고려)
-    const clearAdHideStatus = async () => {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('hide_ads_today');
-      } else {
-        await AsyncStorage.removeItem('hide_ads_today');
-      }
-      console.log('광고 숨김 설정 초기화됨');
-    };
-    clearAdHideStatus();
+        console.log('광고 숨김 설정 초기화됨');
     
-    const timer = setTimeout(async () => {
-      console.log('광고 타이머 실행됨');
-      const adToShow = await AdManager.getAdToShow(user);
-      console.log('가져온 광고:', adToShow);
-      if (adToShow) {
-        if (mounted.current) {
-          setCurrentAd(adToShow);
-          setShowAd(true);
-        }
-        console.log('광고 표시 상태 설정 완료');
-        AdManager.incrementViewCount(adToShow.id);
-      } else {
-        console.log('표시할 광고가 없음');
-      }
-    }, 2000); // 2초로 늘려서 확실히 표시
-
-    return () => clearTimeout(timer);
+    showAdWithDelay();
   }, [user]);
 
   const sortedMatches = [...displayMatches].sort((a, b) => {
@@ -176,33 +153,33 @@ export default function HomeScreen() {
   };
 
   const toggleAdminMode = () => {
-    if (Platform.OS !== 'web') {
-      // 네이티브 환경에서는 AsyncStorage 사용
-      const currentAdminStatus = isAdmin; // 현재 상태를 사용
-      AsyncStorage.setItem('isAdmin', (!currentAdminStatus).toString())
-        .then(() => {
-          setIsAdmin(!currentAdminStatus); // UI 즉시 업데이트
-          Alert.alert(
-            '관리자 모드 변경',
-            `관리자 모드가 ${!currentAdminStatus ? '활성화' : '비활성화'}되었습니다.`,
-            [{ text: '확인' }]
-          );
-        })
-        .catch(error => {
-          console.error('AsyncStorage 저장 오류:', error);
-          Alert.alert('오류', '관리자 모드 변경에 실패했습니다.');
-        });
-    } else {
-      // 웹 환경에서는 localStorage 사용
-      const currentAdminStatus = localStorage.getItem('isAdmin') === 'true';
-      localStorage.setItem('isAdmin', (!currentAdminStatus).toString());
-      window.dispatchEvent(new Event('adminToggle')); // 커스텀 이벤트 발생시켜 탭 레이아웃 업데이트
-      Alert.alert(
-        '관리자 모드 변경',
-        `관리자 모드가 ${!currentAdminStatus ? '활성화' : '비활성화'}되었습니다.`,
-        [{ text: '확인' }]
-      );
-    }
+    const toggleAdminStatus = async () => {
+      try {
+        const currentAdminStatus = isAdmin;
+        const newAdminStatus = !currentAdminStatus;
+        
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('isAdmin', newAdminStatus.toString());
+            window.dispatchEvent(new Event('adminToggle'));
+          }
+        } else {
+          await AsyncStorage.setItem('isAdmin', newAdminStatus.toString());
+        }
+        
+        setIsAdmin(newAdminStatus);
+        Alert.alert(
+          '관리자 모드 변경',
+          `관리자 모드가 ${newAdminStatus ? '활성화' : '비활성화'}되었습니다.`,
+          [{ text: '확인' }]
+        );
+      } catch (error) {
+        console.error('관리자 모드 변경 오류:', error);
+        Alert.alert('오류', '관리자 모드 변경에 실패했습니다.');
+      }
+    };
+    
+    toggleAdminStatus();
   };
 
   const handleAdminPress = () => {

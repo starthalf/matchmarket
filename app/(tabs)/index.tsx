@@ -63,7 +63,6 @@ export default function HomeScreen() {
               window.removeEventListener('storage', handleStorageChange);
               window.removeEventListener('adminToggle', handleAdminToggle);
             };
-            }
           }
         } else {
           const stored = await AsyncStorage.getItem('isAdmin');
@@ -93,6 +92,10 @@ export default function HomeScreen() {
     
     showAdWithDelay();
   }, [user]);
+
+  const showAdWithDelay = () => {
+    // Function implementation would go here
+  };
 
   const sortedMatches = [...displayMatches].sort((a, b) => {
     switch (sortBy) {

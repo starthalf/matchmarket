@@ -83,19 +83,36 @@ export default function HomeScreen() {
   }, []);
 
   // 광고 표시 로직
-  useEffect(() => {
-    console.log('광고 표시 useEffect 실행됨');
-    console.log('user:', user);
-    
-    // 테스트를 위해 localStorage 초기화 (AsyncStorage도 고려)
-        console.log('광고 숨김 설정 초기화됨');
-    
-    showAdWithDelay();
-  }, [user]);
+  const showAdWithDelay = async () => {
+    if (!mounted.current) return; // 컴포넌트가 언마운트되면 실행 중지
 
-  const showAdWithDelay = () => {
-    // Function implementation would go here
+    try {
+      // AdManager를 통해 표시할 광고를 가져옵니다.
+      // AdManager.getAdToShow는 '오늘 하루 그만보기' 설정과 타겟팅을 고려합니다.
+      const ad = await AdManager.getAdToShow(user); // user 정보를 넘겨 타겟팅 광고를 가져옵니다.
+
+      if (ad && mounted.current) {
+        // 광고가 표시될 때 조회수를 증가시킵니다.
+        AdManager.incrementViewCount(ad.id);
+
+        // 2초 후에 광고를 표시합니다.
+        setTimeout(() => {
+          if (mounted.current) { // setTimeout 내부에서도 마운트 상태 확인
+            setCurrentAd(ad);
+            setShowAd(true);
+          }
+        }, 2000); // 2초 (2000ms) 지연
+      } else {
+        console.log('표시할 광고가 없거나 이미 숨김 처리되었습니다.');
+      }
+    } catch (error) {
+      console.error('광고 표시 중 오류:', error);
+    }
   };
+
+  useEffect(() => {
+    showAdWithDelay();
+  }, [user]); // user 객체가 변경될 때마다 광고 로직을 다시 실행
 
   const sortedMatches = [...displayMatches].sort((a, b) => {
     switch (sortBy) {

@@ -77,12 +77,6 @@ export default function HomeScreen() {
           setIsAdmin(false);
         }
       }
-      } catch (error) {
-        console.error('관리자 상태 로딩 오류:', error);
-        if (mounted.current) {
-          setIsAdmin(false);
-        }
-      }
     };
     loadAdminStatus();
 

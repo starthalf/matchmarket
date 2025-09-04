@@ -168,6 +168,8 @@ export class AdManager {
     try {
       if (typeof window !== 'undefined') {
       }
+    } catch (error) {
+      console.warn('저장소 접근 실패:', error);
     }
   }
   static async hideAdsToday(): Promise<void> {

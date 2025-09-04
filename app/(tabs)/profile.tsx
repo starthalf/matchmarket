@@ -16,6 +16,7 @@ import { Settings, Award, TrendingUp, Heart, Clock, CircleCheck as CheckCircle, 
 import { Calendar } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { CertificationBadge } from '../../components/CertificationBadge';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
 
 export default function ProfileScreen() {
@@ -23,23 +24,30 @@ export default function ProfileScreen() {
   const [profileImage, setProfileImage] = React.useState<string | null>(null);
 
   // 저장된 프로필 이미지 불러오기
-  React.useEffect(() => {
-    if (currentUser) {
+  React.useEffect(() => { // 이펙트 함수를 async로 변경
+    const loadProfileImage = async () => {
+      if (!currentUser) return;
       try {
+        let savedImage: string | null = null;
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          const savedImage = localStorage.getItem(`profile_image_${currentUser.id}`);
-          if (savedImage) {
-            setProfileImage(savedImage);
-          }
+          savedImage = localStorage.getItem(`profile_image_${currentUser.id}`);
+        } else {
+          savedImage = await AsyncStorage.getItem(`profile_image_${currentUser.id}`);
+        }
+        if (savedImage) {
+          setProfileImage(savedImage);
         }
       } catch (error) {
         console.warn('프로필 이미지 로드 실패:', error);
       }
-    }
+    };
+    loadProfileImage();
   }, [currentUser]);
 
   useEffect(() => {
-    if (!currentUser) {
+    if (currentUser) {
+      // 기존 useEffect 로직은 그대로 유지
+    } else {
       router.replace('/auth/login');
     }
   }, [currentUser]);
@@ -99,11 +107,13 @@ export default function ProfileScreen() {
         const imageUri = result.assets[0].uri;
         setProfileImage(imageUri);
         
-        // 로컬 스토리지에 저장
+        // 플랫폼별 저장
         if (currentUser) {
           try {
             if (Platform.OS === 'web' && typeof window !== 'undefined') {
               localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+            } else {
+              await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
             }
           } catch (error) {
             console.warn('프로필 이미지 저장 실패:', error);
@@ -137,11 +147,13 @@ export default function ProfileScreen() {
         const imageUri = result.assets[0].uri;
         setProfileImage(imageUri);
         
-        // 로컬 스토리지에 저장
+        // 플랫폼별 저장
         if (currentUser) {
           try {
             if (Platform.OS === 'web' && typeof window !== 'undefined') {
               localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
+            } else {
+              await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
             }
           } catch (error) {
             console.warn('프로필 이미지 저장 실패:', error);
@@ -158,11 +170,13 @@ export default function ProfileScreen() {
   const removeProfileImage = () => {
     setProfileImage(null);
     
-    // 로컬 스토리지에서 삭제 (웹에서만)
+    // 플랫폼별 삭제
     if (currentUser) {
       try {
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
           localStorage.removeItem(`profile_image_${currentUser.id}`);
+        } else {
+          AsyncStorage.removeItem(`profile_image_${currentUser.id}`);
         }
       } catch (error) {
         console.warn('프로필 이미지 삭제 실패:', error);

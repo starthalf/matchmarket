@@ -1,3 +1,5 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 // 관리자 설정 관리 유틸리티
 export interface AdminSettings {
   // 시스템 설정
@@ -49,12 +51,18 @@ export class AdminSettingsManager {
     if (typeof window !== 'undefined') {
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
     }
+    if (Platform.OS !== 'web') {
+      AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings))
+        .catch(error => console.error('AsyncStorage 저장 실패:', error));
+    }
   }
 
   /**
    * 설정 불러오기
    */
   static getSettings(): AdminSettings {
+    // Note: AsyncStorage is async, so this sync function will only return default or previously loaded web settings.
+    // For native, settings should ideally be loaded asynchronously in a useEffect or similar.
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem(this.STORAGE_KEY);
       if (stored) {

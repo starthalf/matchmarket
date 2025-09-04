@@ -134,6 +134,9 @@ export class AdManager {
             console.log('Ad hidden for today.');
             return null;
           }
+      }
+      )
+    }
     filteredAds.sort((a, b) => a.priority - b.priority);
     return filteredAds[0] || null;
   }

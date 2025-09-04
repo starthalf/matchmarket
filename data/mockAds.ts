@@ -98,9 +98,10 @@ export class AdManager {
         hideToday = await AsyncStorage.getItem(this.HIDE_TODAY_KEY);
       }
       
-      if (hideToday === today) {
-        return null;
-      }
+      // 임시로 "오늘 하루 그만보기" 기능 비활성화 (디버깅용)
+      // if (hideToday === today) {
+      //   return null;
+      // }
     } catch (error) {
       console.warn('저장소 접근 실패:', error);
     }

@@ -82,18 +82,18 @@ export default function EarningsScreen() {
   const availableForWithdrawal = totalEarnings - totalWithdrawn;
 
   // 출금 가능 여부 확인 (2주일 = 14일)
-  const canWithdraw = () => {
+  const canWithdraw = async () => {
     if (!lastWithdrawalDate) return true;
-    const withdrawalPeriod = AdminSettingsManager.getWithdrawalPeriod();
+    const withdrawalPeriod = await AdminSettingsManager.getWithdrawalPeriod();
     const lastDate = new Date(lastWithdrawalDate);
     const now = new Date();
     const daysDiff = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
     return daysDiff >= withdrawalPeriod;
   };
 
-  const getDaysUntilNextWithdrawal = () => {
+  const getDaysUntilNextWithdrawal = async () => {
     if (!lastWithdrawalDate) return 0;
-    const withdrawalPeriod = AdminSettingsManager.getWithdrawalPeriod();
+    const withdrawalPeriod = await AdminSettingsManager.getWithdrawalPeriod();
     const lastDate = new Date(lastWithdrawalDate);
     const now = new Date();
     const daysDiff = Math.floor((now.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -104,10 +104,11 @@ export default function EarningsScreen() {
     router.push('/withdrawal-history');
   };
 
-  const handleWithdrawal = () => {
-    if (!canWithdraw()) {
-      const daysLeft = getDaysUntilNextWithdrawal();
-      const withdrawalPeriod = AdminSettingsManager.getWithdrawalPeriod();
+  const handleWithdrawal = async () => {
+    const canWithdrawResult = await canWithdraw();
+    if (!canWithdrawResult) {
+      const daysLeft = await getDaysUntilNextWithdrawal();
+      const withdrawalPeriod = await AdminSettingsManager.getWithdrawalPeriod();
       Alert.alert(
         '출금 제한',
         `출금은 ${withdrawalPeriod}일에 1번만 가능합니다.\n${daysLeft}일 후에 출금할 수 있습니다.`

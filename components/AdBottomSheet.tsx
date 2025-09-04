@@ -31,7 +31,9 @@ export function AdBottomSheet({ ad, visible, onClose }: AdBottomSheetProps) {
 
   const handleClose = () => {
     if (hideToday) {
-      AdManager.hideAdsToday();
+      AdManager.hideAdsToday().catch(error => {
+        console.error('광고 숨김 설정 오류:', error);
+      });
     }
     onClose();
   };

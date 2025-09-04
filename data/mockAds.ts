@@ -1,4 +1,6 @@
 import { Ad } from '../types/ad';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 export const mockAds: Ad[] = [
   {
@@ -77,34 +79,35 @@ export class AdManager {
    * 사용자에게 표시할 광고 선택
    */
   static async getAdToShow(user?: any): Promise<Ad | null> {
-    console.log('getAdToShow 함수 호출됨, user:', user);
     const activeAds = this.getActiveAds();
-    console.log('활성 광고 수:', activeAds.length);
     
     if (activeAds.length === 0) {
-      console.log('활성 광고가 없음');
       return null;
     }
 
-    // 오늘 하루 그만보기 체크 (웹에서만)
+    // 오늘 하루 그만보기 체크
     try {
-      if (typeof window !== 'undefined') {
-        const hideToday = localStorage.getItem(this.HIDE_TODAY_KEY);
-        const today = new Date().toDateString();
-        console.log('오늘 하루 그만보기 체크:', hideToday, today);
-        
-        if (hideToday === today) {
-          console.log('오늘 하루 그만보기 설정됨');
-          return null;
+      const today = new Date().toDateString();
+      let hideToday: string | null = null;
+      
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          hideToday = localStorage.getItem(this.HIDE_TODAY_KEY);
         }
+      } else {
+        hideToday = await AsyncStorage.getItem(this.HIDE_TODAY_KEY);
       }
+      
+      // 임시로 "오늘 하루 그만보기" 기능 비활성화 (디버깅용)
+      // if (hideToday === today) {
+      //   return null;
+      // }
     } catch (error) {
-      console.warn('localStorage 접근 실패 (네이티브 환경에서는 정상):', error);
+      console.warn('저장소 접근 실패:', error);
     }
 
     // 타겟 오디언스 필터링
     let filteredAds = activeAds;
-    console.log('필터링 전 광고 수:', filteredAds.length);
     
     if (user) {
       filteredAds = activeAds.filter(ad => {
@@ -127,18 +130,15 @@ export class AdManager {
             return false;
           }
         }
-        
-        return true;
-      });
+          if (hideToday === today) {
+            console.log('Ad hidden for today.');
+            return null;
+          }
+      }
+      )
     }
-    
-    console.log('필터링 후 광고 수:', filteredAds.length);
-
-    // 우선순위 순으로 정렬하여 첫 번째 광고 반환
     filteredAds.sort((a, b) => a.priority - b.priority);
-    const selectedAd = filteredAds[0] || null;
-    console.log('선택된 광고:', selectedAd?.title);
-    return selectedAd;
+    return filteredAds[0] || null;
   }
 
   /**
@@ -169,11 +169,23 @@ export class AdManager {
   static hideAdsToday(): void {
     try {
       if (typeof window !== 'undefined') {
-        const today = new Date().toDateString();
-        localStorage.setItem(this.HIDE_TODAY_KEY, today);
       }
     } catch (error) {
-      console.warn('localStorage 저장 실패 (네이티브 환경에서는 정상):', error);
+      console.warn('저장소 접근 실패:', error);
+    }
+  }
+  static async hideAdsToday(): Promise<void> {
+    try {
+      const today = new Date().toDateString();
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(this.HIDE_TODAY_KEY, today);
+        }
+      } else {
+        await AsyncStorage.setItem(this.HIDE_TODAY_KEY, today);
+      }
+    } catch (error) {
+      console.warn('저장소 저장 실패:', error);
     }
   }
 

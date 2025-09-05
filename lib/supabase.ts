@@ -18,7 +18,7 @@ const supabaseServiceKey = getEnvVar('EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY') ||
 // Supabase 클라이언트 생성 (환경변수가 없으면 null)
 export const supabase = (() => {
   try {
-    if (supabaseUrl && supabaseAnonKey) {
+    if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
       return createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           persistSession: Platform.OS !== 'web',
@@ -26,6 +26,12 @@ export const supabase = (() => {
         }
       });
     }
+    console.warn('⚠️ Supabase 환경변수가 올바르지 않습니다:', {
+      hasUrl: !!supabaseUrl,
+      hasAnonKey: !!supabaseAnonKey,
+      urlValid: supabaseUrl ? supabaseUrl.startsWith('https://') : false,
+      keyValid: supabaseAnonKey ? supabaseAnonKey.length > 20 : false
+    });
     return null;
   } catch (error) {
     console.warn('Supabase 클라이언트 생성 실패:', error);
@@ -35,7 +41,7 @@ export const supabase = (() => {
 
 export const supabaseAdmin = (() => {
   try {
-    if (supabaseUrl && supabaseServiceKey) {
+    if (supabaseUrl && supabaseServiceKey && supabaseUrl.startsWith('https://') && supabaseServiceKey.length > 20) {
       return createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
           autoRefreshToken: false,
@@ -52,7 +58,12 @@ export const supabaseAdmin = (() => {
 
 // Supabase 연결 상태 확인
 export const isSupabaseConfigured = () => {
-  return !!(supabaseUrl && supabaseAnonKey);
+  return !!(supabase && typeof supabase.from === 'function');
+};
+
+// Supabase Admin 연결 상태 확인
+export const isSupabaseAdminConfigured = () => {
+  return !!(supabaseAdmin && typeof supabaseAdmin.from === 'function');
 };
 
 // 환경변수 상태 로깅

@@ -165,7 +165,6 @@ export function MatchProvider({ children }: { children: ReactNode }) {
             weather: newMatch.weather,
             location: newMatch.location,
             is_dummy: false,
-            is_closed: newMatch.isClosed || false,
           };
 
           const { error } = await supabaseAdmin

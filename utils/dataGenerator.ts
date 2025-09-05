@@ -492,7 +492,7 @@ export class DataGenerator {
   /**
    * Match 객체를 Supabase 형식으로 변환
    */
-  private static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
+  private static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at' | 'is_closed'> {
     return {
       id: match.id,
       seller_id: match.sellerId,
@@ -537,7 +537,6 @@ export class DataGenerator {
       weather: match.weather,
       location: match.location,
       is_dummy: true,
-      is_closed: match.isClosed || false,
     };
   }
 
@@ -604,7 +603,7 @@ export class DataGenerator {
       weather: supabaseMatch.weather as '맑음' | '흐림',
       location: supabaseMatch.location,
       createdAt: supabaseMatch.created_at,
-      isClosed: supabaseMatch.is_closed,
+      isClosed: false, // 데이터베이스에 is_closed 컬럼이 없으므로 기본값 false 사용
     };
   }
 
@@ -667,7 +666,17 @@ export class DataGenerator {
       try {
         const { data: supabaseMatches, error } = await supabase
           .from('matches')
-          .select('*')
+          .select(`
+            id, seller_id, seller_name, seller_gender, seller_age_group, seller_ntrp, seller_experience,
+            seller_play_style, seller_career_type, seller_certification_ntrp, seller_certification_career,
+            seller_certification_youtube, seller_certification_instagram, seller_profile_image,
+            seller_view_count, seller_like_count, seller_avg_rating, title, date, time, end_time, court,
+            description, base_price, initial_price, current_price, max_price, expected_views,
+            expected_waiting_applicants, expected_participants_male, expected_participants_female,
+            expected_participants_total, current_applicants_male, current_applicants_female,
+            current_applicants_total, match_type, waiting_applicants, ad_enabled, ntrp_min, ntrp_max,
+            weather, location, is_dummy, created_at
+          `)
           .order('created_at', { ascending: false });
         
         if (error) {

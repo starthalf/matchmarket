@@ -121,7 +121,7 @@ export interface SupabaseMatch {
   location: string;
   created_at: string;
   is_dummy: boolean; // 더미 데이터 구분용
-  is_closed: boolean; // 판매자가 수동으로 마감한 상태
+  is_closed?: boolean; // 판매자가 수동으로 마감한 상태 (선택적 - 데이터베이스에 없을 수 있음)
 }
 
 // 앱 설정 타입

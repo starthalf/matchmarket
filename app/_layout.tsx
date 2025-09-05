@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { MatchProvider } from '@/contexts/MatchContext';
+import { AdminProvider } from '@/contexts/AdminContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -33,11 +34,13 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <MatchProvider>
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="+not-found" />
-          </Stack>
-        </MatchProvider>
+        <AdminProvider>
+          <MatchProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </MatchProvider>
+        </AdminProvider>
         <StatusBar style="auto" />
       </AuthProvider>
     </SafeAreaProvider>

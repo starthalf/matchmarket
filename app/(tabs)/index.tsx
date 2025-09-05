@@ -201,48 +201,51 @@ export default function HomeScreen() {
       </View>
 
       {/* 데모용 인증 컨트롤 */}
-      <View style={styles.demoControls}>
-        <Text style={styles.demoTitle}>
-          🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
-          {!user ? (
-            <>
+      {/* 개발 모드에서만 표시되는 데모 컨트롤 */}
+      {__DEV__ && (
+        <View style={styles.demoControls}>
+          <Text style={styles.demoTitle}>
+            🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
+            {!user ? (
+              <>
+                <TouchableOpacity 
+                  style={styles.demoButton}
+                  onPress={() => handleQuickLogin('aesthetic.vibes')}
+                >
+                  <Text style={styles.demoButtonText}>aesthetic.vibes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.demoButton}
+                  onPress={() => handleQuickLogin('urban.explorer')}
+                >
+                  <Text style={styles.demoButtonText}>urban.explorer</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.demoButton}
+                  onPress={() => handleQuickLogin('midnight.rider')}
+                >
+                  <Text style={styles.demoButtonText}>midnight.rider</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.demoButton, styles.adminToggleButton]}
+                  onPress={toggleAdminMode}
+                >
+                  <Text style={styles.adminToggleButtonText}>관리자 모드 토글</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
               <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('aesthetic.vibes')}
+                style={[styles.demoButton, styles.logoutButton]}
+                onPress={logout}
               >
-                <Text style={styles.demoButtonText}>aesthetic.vibes</Text>
+                <Text style={styles.logoutButtonText}>로그아웃</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('urban.explorer')}
-              >
-                <Text style={styles.demoButtonText}>urban.explorer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('midnight.rider')}
-              >
-                <Text style={styles.demoButtonText}>midnight.rider</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.demoButton, styles.adminToggleButton]}
-                onPress={toggleAdminMode}
-              >
-                <Text style={styles.adminToggleButtonText}>관리자 모드 토글</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity 
-              style={[styles.demoButton, styles.logoutButton]}
-              onPress={logout}
-            >
-              <Text style={styles.logoutButtonText}>로그아웃</Text>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </View>
+            )}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={styles.searchSection}>
         <View style={styles.searchBar}>

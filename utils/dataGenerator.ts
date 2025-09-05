@@ -427,7 +427,7 @@ export class DataGenerator {
     // 대기자 수 (0-2명으로 제한)
     const waitingApplicants = Math.floor(Math.random() * 3); // 0-2명
     
-    // 랜덤으로 마감 상태 결정 (20% 확률)
+    // 랜덤으로 마감 상태 결정 (80% 확률)
     const isClosed = Math.random() < 0.8;
     
     // NTRP 요구사항

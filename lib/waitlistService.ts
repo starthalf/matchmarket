@@ -25,30 +25,25 @@ export class WaitlistService {
   static async getWaitingList(matchId: string): Promise<WaitingApplicant[]> {
     try {
       if (!supabase) {
-        console.log('ℹ️ Supabase가 설정되지 않음, 빈 대기자 목록 반환');
-        return [];
+        console.error('❌ Supabase 클라이언트가 초기화되지 않았습니다.');
+        throw new Error('Supabase 연결이 필요합니다.');
       }
 
-      try {
-        const { data, error } = await supabase
-          .from('waiting_applicants')
-          .select('*')
-          .eq('match_id', matchId)
-          .order('joined_at', { ascending: true });
+      const { data, error } = await supabase
+        .from('waiting_applicants')
+        .select('*')
+        .eq('match_id', matchId)
+        .order('joined_at', { ascending: true });
 
-        if (error) {
-          console.log('ℹ️ 대기자 목록 조회 오류:', error);
-          return [];
-        }
-
-        return data.map(this.dbToWaitingApplicant);
-      } catch (fetchError) {
-        console.log('ℹ️ Supabase 연결 실패:', fetchError);
-        return [];
+      if (error) {
+        console.error('대기자 목록 조회 오류:', error);
+        throw new Error(`대기자 목록 조회 실패: ${error.message}`);
       }
+
+      return data.map(this.dbToWaitingApplicant);
     } catch (error) {
-      console.log('ℹ️ 대기자 목록 조회 중 오류:', error);
-      return [];
+      console.error('대기자 목록 조회 중 오류:', error);
+      throw error;
     }
   }
 
@@ -60,12 +55,12 @@ export class WaitlistService {
     user: User
   ): Promise<{ success: boolean; error?: string; position?: number }> {
     try {
-      if (!supabase) {
-        return { success: false, error: 'Supabase not available' };
+      if (!supabaseAdmin) {
+        return { success: false, error: 'Supabase Admin 클라이언트가 초기화되지 않았습니다.' };
       }
 
       // 이미 대기 중인지 확인
-      const { data: existing } = await supabase
+      const { data: existing } = await supabaseAdmin
         .from('waiting_applicants')
         .select('id')
         .eq('match_id', matchId)
@@ -121,8 +116,8 @@ export class WaitlistService {
     userId: string
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      if (!supabase) {
-        return { success: false, error: 'Supabase not available' };
+      if (!supabaseAdmin) {
+        return { success: false, error: 'Supabase Admin 클라이언트가 초기화되지 않았습니다.' };
       }
 
       const { error } = await supabaseAdmin
@@ -155,8 +150,8 @@ export class WaitlistService {
     additionalData?: Partial<WaitingApplicantDB>
   ): Promise<{ success: boolean; error?: string }> {
     try {
-      if (!supabase) {
-        return { success: false, error: 'Supabase not available' };
+      if (!supabaseAdmin) {
+        return { success: false, error: 'Supabase Admin 클라이언트가 초기화되지 않았습니다.' };
       }
 
       const updateData = {
@@ -191,6 +186,7 @@ export class WaitlistService {
   static async getWaitingCount(matchId: string): Promise<number> {
     try {
       if (!supabase) {
+        console.error('❌ Supabase 클라이언트가 초기화되지 않았습니다.');
         return 0;
       }
 
@@ -221,6 +217,7 @@ export class WaitlistService {
   ): Promise<WaitingApplicant | null> {
     try {
       if (!supabase) {
+        console.error('❌ Supabase 클라이언트가 초기화되지 않았습니다.');
         return null;
       }
 

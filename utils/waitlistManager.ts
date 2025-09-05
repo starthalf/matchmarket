@@ -438,6 +438,14 @@ export class WaitlistManager {
    */
   static async syncWaitingListFromDB(match: Match): Promise<Match> {
     try {
+      if (!supabase) {
+        console.warn('⚠️ Supabase 클라이언트가 초기화되지 않았습니다. 로컬 대기자 목록을 유지합니다.');
+        return {
+          ...match,
+          waitingApplicants: match.waitingList.length
+        };
+      }
+
       const waitingList = await WaitlistService.getWaitingList(match.id);
       const waitingCount = await WaitlistService.getWaitingCount(match.id);
 
@@ -448,7 +456,11 @@ export class WaitlistManager {
       };
     } catch (error) {
       console.error('대기자 목록 동기화 중 오류:', error);
-      return match;
+      // 오류 발생 시 기존 목록 유지
+      return {
+        ...match,
+        waitingApplicants: match.waitingList.length
+      };
     }
   }
 

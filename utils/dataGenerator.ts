@@ -427,7 +427,7 @@ export class DataGenerator {
     // 대기자 수 (0-2명으로 제한)
     const waitingApplicants = Math.floor(Math.random() * 3); // 0-2명
     
-    // 랜덤으로 마감 상태 결정 (20% 확률)
+    // 랜덤으로 마감 상태 결정 (80% 확률)
     const isClosed = Math.random() < 0.8;
     
     // NTRP 요구사항
@@ -492,7 +492,7 @@ export class DataGenerator {
   /**
    * Match 객체를 Supabase 형식으로 변환
    */
-  private static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
+  private static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at' | 'is_closed'> {
     return {
       id: match.id,
       seller_id: match.sellerId,
@@ -537,7 +537,6 @@ export class DataGenerator {
       weather: match.weather,
       location: match.location,
       is_dummy: true,
-      is_closed: match.isClosed || false,
     };
   }
 
@@ -604,7 +603,7 @@ export class DataGenerator {
       weather: supabaseMatch.weather as '맑음' | '흐림',
       location: supabaseMatch.location,
       createdAt: supabaseMatch.created_at,
-      isClosed: supabaseMatch.is_closed,
+      isClosed: false, // 데이터베이스에 is_closed 컬럼이 없으므로 기본값 false 사용
     };
   }
 
@@ -615,7 +614,7 @@ export class DataGenerator {
     try {
       // Supabase 연결 확인
       if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase가 설정되지 않음. 로컬 더미 데이터만 사용합니다.');
+        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 로컬 더미 데이터만 사용합니다.');
         return [];
       }
 
@@ -634,7 +633,7 @@ export class DataGenerator {
           .insert(supabaseMatches);
         
         if (error) {
-          console.log('ℹ️ Supabase 저장 실패:', error.message);
+          console.log('ℹ️ Supabase 저장 실패 (환경변수 미설정 또는 권한 부족):', error.message);
           console.log('로컬 더미 데이터를 사용합니다.');
           return [];
         }
@@ -642,7 +641,7 @@ export class DataGenerator {
         console.log(`✅ ${newMatches.length}개의 새로운 더미 매치가 Supabase에 저장되었습니다.`);
         return newMatches;
       } catch (fetchError) {
-        console.log('ℹ️ Supabase 연결 실패 (환경변수 미설정):', fetchError);
+        console.warn('Supabase 저장 중 오류 (환경변수 미설정):', supabaseError);
         console.log('로컬 더미 데이터를 사용합니다.');
         return [];
       }
@@ -667,7 +666,17 @@ export class DataGenerator {
       try {
         const { data: supabaseMatches, error } = await supabase
           .from('matches')
-          .select('*')
+          .select(`
+            id, seller_id, seller_name, seller_gender, seller_age_group, seller_ntrp, seller_experience,
+            seller_play_style, seller_career_type, seller_certification_ntrp, seller_certification_career,
+            seller_certification_youtube, seller_certification_instagram, seller_profile_image,
+            seller_view_count, seller_like_count, seller_avg_rating, title, date, time, end_time, court,
+            description, base_price, initial_price, current_price, max_price, expected_views,
+            expected_waiting_applicants, expected_participants_male, expected_participants_female,
+            expected_participants_total, current_applicants_male, current_applicants_female,
+            current_applicants_total, match_type, waiting_applicants, ad_enabled, ntrp_min, ntrp_max,
+            weather, location, is_dummy, created_at
+          `)
           .order('created_at', { ascending: false });
         
         if (error) {
@@ -700,6 +709,7 @@ export class DataGenerator {
     try {
       // Supabase 연결 확인
       if (!supabase) {
+        console.log('ℹ️ Supabase 클라이언트가 초기화되지 않음');
         return null;
       }
 
@@ -711,17 +721,39 @@ export class DataGenerator {
           .single();
         
         if (error || !data) {
+          console.log('ℹ️ 마지막 생성 날짜 데이터 없음 또는 오류:', error?.message);
           return null;
         }
         
         return data.value;
       } catch (fetchError) {
-        console.log('ℹ️ Supabase 연결 실패:', fetchError);
+        console.log('ℹ️ Supabase 연결 실패 (환경변수 미설정):', fetchError);
         return null;
       }
     } catch (error) {
-      console.log('ℹ️ 마지막 생성 날짜 조회 실패:', error);
+      console.log('ℹ️ 마지막 생성 날짜 조회 실패 (환경변수 미설정):', error);
       return null;
+    }
+  }
+
+  /**
+   * 새로운 더미 매치 생성이 필요한지 확인
+   */
+  static async shouldGenerateNewMatches(): Promise<boolean> {
+    try {
+      // Supabase 연결 확인
+      if (!supabase) {
+        console.log('ℹ️ Supabase 미연결 또는 네이티브 환경 - 더미 매치 생성 건너뜀');
+        return false;
+      }
+
+      const lastDate = await this.getLastGenerationDate();
+      const today = new Date().toDateString();
+      
+      return !lastDate || lastDate !== today;
+    } catch (error) {
+      console.log('ℹ️ 더미 매치 생성 확인 중 오류:', error);
+      return false;
     }
   }
 
@@ -758,29 +790,7 @@ export class DataGenerator {
   }
 
   /**
-   * 오늘 새로운 더미 매치를 생성해야 하는지 확인
-   */
-  static async shouldGenerateNewMatches(): Promise<boolean> {
-    try {
-      // Supabase 연결 확인
-      if (!supabase) {
-        console.log('ℹ️ Supabase 미연결 또는 네이티브 환경 - 더미 매치 생성 건너뜀');
-        return false;
-      }
-
-      const lastDate = await this.getLastGenerationDate();
-      const today = new Date().toDateString();
-      
-      return !lastDate || lastDate !== today;
-    } catch (error) {
-      console.warn('⚠️ 생성 필요 여부 확인 중 오류 (네이티브 환경에서는 정상):', error);
-      return false;
-    }
-  }
-
-  /**
    * 더미 매치 개수 조회
-   */
   static async getDummyMatchCount(): Promise<number> {
     try {
       if (!supabaseAdmin) {

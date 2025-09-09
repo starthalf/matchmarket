@@ -2,9 +2,11 @@ import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { MatchProvider } from '@/contexts/MatchContext';
+import { AdminProvider } from '@/contexts/AdminContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -30,13 +32,17 @@ export default function RootLayout() {
     }
   }, []);
   return (
-    <AuthProvider>
-      <MatchProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="+not-found" />
-        </Stack>
-      </MatchProvider>
-      <StatusBar style="auto" />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AdminProvider>
+          <MatchProvider>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="+not-found" />
+            </Stack>
+          </MatchProvider>
+        </AdminProvider>
+        <StatusBar style="auto" />
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

@@ -17,44 +17,71 @@ import { CertificationBadge } from '../../components/CertificationBadge';
 
 // Mock 인증 신청 데이터
 const mockCertificationRequests = {
-  '1': {
-    id: 'cert_1',
-    userId: '1',
-    type: 'ntrp',
-    requestedNtrp: 4.5,
-    description: '대학교 테니스부에서 4년간 활동했으며, 지역 대회에서 여러 차례 입상 경험이 있습니다. 현재 NTRP 4.5 수준으로 평가받고 있습니다.',
-    evidenceFiles: ['대회성적표_2024.jpg', '선수증명서.pdf', '코치추천서.pdf'],
-    status: 'pending',
-    submittedAt: '2024-12-27T10:30:00Z',
+  'dummy_f1': {
+    ntrp: {
+      id: 'cert_ntrp_f1',
+      userId: 'dummy_f1',
+      type: 'ntrp',
+      requestedNtrp: 4.2,
+      description: '대학교 테니스부에서 4년간 활동했으며, 지역 대회에서 여러 차례 입상 경험이 있습니다.',
+      evidenceFiles: ['대회성적표_2024.jpg', '선수증명서.pdf'],
+      status: 'pending',
+      submittedAt: '2024-12-27T10:30:00Z',
+    },
+    instagram: {
+      id: 'cert_ig_f1',
+      userId: 'dummy_f1',
+      type: 'instagram',
+      description: '테니스 관련 인스타그램 계정을 운영하고 있으며, 팔로워 1.5만명을 보유하고 있습니다.',
+      evidenceFiles: ['인스타그램_프로필.jpg', '팔로워수_증명.jpg'],
+      status: 'pending',
+      submittedAt: '2024-12-26T14:20:00Z',
+    }
   },
-  '2': {
-    id: 'cert_2',
-    userId: '2',
-    type: 'ntrp',
-    requestedNtrp: 4.0,
-    description: '실업팀에서 5년간 선수 생활을 했으며, 현재는 코치로 활동하고 있습니다.',
-    evidenceFiles: ['선수경력증명서.jpg', '코치자격증.pdf'],
-    status: 'pending',
-    submittedAt: '2024-12-26T15:20:00Z',
+  'dummy_m1': {
+    youtube: {
+      id: 'cert_yt_m1',
+      userId: 'dummy_m1',
+      type: 'youtube',
+      description: '테니스 관련 유튜브 채널을 운영하고 있으며, 구독자 3만명을 보유하고 있습니다.',
+      evidenceFiles: ['유튜브채널_스크린샷.jpg', '구독자수_증명.jpg'],
+      status: 'pending',
+      submittedAt: '2024-12-25T14:20:00Z',
+    }
   },
-  '3': {
-    id: 'cert_3',
-    userId: '3',
-    type: 'youtube',
-    description: '테니스 관련 유튜브 채널을 운영하고 있으며, 구독자 5만명을 보유하고 있습니다.',
-    evidenceFiles: ['유튜브채널_스크린샷.jpg', '구독자수_증명.jpg'],
-    status: 'pending',
-    submittedAt: '2024-12-25T14:20:00Z',
+  'dummy_m2': {
+    ntrp: {
+      id: 'cert_ntrp_m2',
+      userId: 'dummy_m2',
+      type: 'ntrp',
+      requestedNtrp: 3.8,
+      description: '실업팀에서 3년간 선수 생활을 했으며, 현재는 코치로 활동하고 있습니다.',
+      evidenceFiles: ['선수경력증명서.jpg', '코치자격증.pdf'],
+      status: 'pending',
+      submittedAt: '2024-12-26T15:20:00Z',
+    },
+    instagram: {
+      id: 'cert_ig_m2',
+      userId: 'dummy_m2',
+      type: 'instagram',
+      description: '테니스 관련 인스타그램 계정을 운영하고 있으며, 팔로워 8천명을 보유하고 있습니다.',
+      evidenceFiles: ['인스타그램_프로필.jpg', '팔로워수_증명.jpg'],
+      status: 'pending',
+      submittedAt: '2024-12-25T09:15:00Z',
+    }
   },
-  '4': {
-    id: 'cert_4',
-    userId: '4',
-    type: 'instagram',
-    description: '테니스 관련 인스타그램 계정을 운영하고 있으며, 팔로워 2만명을 보유하고 있습니다.',
-    evidenceFiles: ['인스타그램_프로필.jpg', '팔로워수_증명.jpg'],
-    status: 'pending',
-    submittedAt: '2024-12-25T09:15:00Z',
-  },
+  'dummy_f3': {
+    ntrp: {
+      id: 'cert_ntrp_f3',
+      userId: 'dummy_f3',
+      type: 'ntrp',
+      requestedNtrp: 3.5,
+      description: '동호회에서 2년간 활동하며 꾸준히 실력을 향상시켜왔습니다.',
+      evidenceFiles: ['동호회활동증명서.jpg', '대회참가증.jpg'],
+      status: 'pending',
+      submittedAt: '2024-12-24T11:45:00Z',
+    }
+  }
 };
 
 export default function AdminUsersScreen() {
@@ -119,22 +146,24 @@ export default function AdminUsersScreen() {
     });
 
   const handleViewCertification = (userId: string) => {
-    const certRequest = mockCertificationRequests[userId as keyof typeof mockCertificationRequests];
+    const userCertRequests = mockCertificationRequests[userId as keyof typeof mockCertificationRequests];
     const user = mockUsers.find(u => u.id === userId);
-    if (certRequest) {
-      setSelectedUser({ ...user, certRequest });
+    if (userCertRequests) {
+      setSelectedUser({ ...user, certRequests: userCertRequests });
       setShowCertRequestModal(true);
     } else {
       Alert.alert('알림', '해당 사용자의 인증 신청이 없습니다.');
     }
   };
 
-  const handleCertificationAction = (action: 'approve' | 'reject') => {
-    if (!selectedUser?.certRequest) return;
+  const handleCertificationAction = (action: 'approve' | 'reject', certType: 'ntrp' | 'youtube' | 'instagram') => {
+    if (!selectedUser?.certRequests) return;
+
+    const certRequest = selectedUser.certRequests[certType];
+    if (!certRequest) return;
 
     const user = selectedUser;
     const actionText = action === 'approve' ? '승인' : '거부';
-    const certType = selectedUser.certRequest?.type;
     const certTypeText = certType === 'ntrp' ? 'NTRP' : 
                         certType === 'youtube' ? '유튜버' : 
                         certType === 'instagram' ? '인플루언서' : '인증';
@@ -144,9 +173,44 @@ export default function AdminUsersScreen() {
       `${user?.name}님의 ${certTypeText} 인증을 ${actionText}하시겠습니까?`,
       [
         { text: '취소', style: 'cancel' },
-        { text: actionText, onPress: () => {
-          setShowCertRequestModal(false);
-          Alert.alert('완료', `인증이 ${actionText}되었습니다.`);
+        { text: actionText, onPress: async () => {
+          try {
+            // Supabase에서 사용자 인증 상태 업데이트
+            if (supabase) {
+              const certificationField = `certification_${certType}`;
+              const newStatus = action === 'approve' ? 'verified' : 'none';
+              
+              const { error } = await supabase
+                .from('users')
+                .update({ [certificationField]: newStatus })
+                .eq('id', user.id);
+              
+              if (error) {
+                console.error('인증 상태 업데이트 오류:', error);
+                Alert.alert('오류', '인증 상태 업데이트에 실패했습니다.');
+                return;
+              }
+            }
+            
+            // 로컬 mockUsers도 업데이트 (UI 즉시 반영용)
+            const userIndex = mockUsers.findIndex(u => u.id === user.id);
+            if (userIndex !== -1) {
+              if (action === 'approve') {
+                mockUsers[userIndex].certification[certType] = 'verified';
+              } else {
+                mockUsers[userIndex].certification[certType] = 'none';
+              }
+            }
+            
+            // 인증 요청에서 제거
+            delete selectedUser.certRequests[certType];
+            
+            setShowCertRequestModal(false);
+            Alert.alert('완료', `${certTypeText} 인증이 ${actionText}되었습니다.`);
+          } catch (error) {
+            console.error('인증 처리 중 오류:', error);
+            Alert.alert('오류', '인증 처리 중 오류가 발생했습니다.');
+          }
         }}
       ]
     );
@@ -411,7 +475,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 10,
     paddingBottom: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
@@ -832,5 +895,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  certActionButtons: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
   },
 });

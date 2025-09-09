@@ -487,9 +487,6 @@ export default function MatchDetailScreen() {
           <TouchableOpacity style={styles.actionButton}>
             <Heart size={20} color="#6b7280" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Share size={20} color="#6b7280" />
-          </TouchableOpacity>
         </View>
       </View>
 

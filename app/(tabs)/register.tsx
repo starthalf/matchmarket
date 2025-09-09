@@ -17,10 +17,13 @@ import { UserRound } from 'lucide-react-native';
 import { CertificationBadge } from '../../components/CertificationBadge';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../contexts/AuthContext';
+import { useMatches } from '../../contexts/MatchContext';
+import { Match } from '../../types/tennis';
 import { router } from 'expo-router';
 
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();
+  const { addMatch } = useMatches();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -41,6 +44,7 @@ export default function RegisterScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   useEffect(() => {
     if (!currentUser) {
@@ -58,17 +62,92 @@ export default function RegisterScreen() {
     );
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!formData.title || !formData.court || !formData.basePrice || 
         (!formData.maleCount && !formData.femaleCount) || !formData.ntrpMin || !formData.ntrpMax) {
       Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
       return;
     }
 
-    Alert.alert(
-      '매치 판매 등록 완료',
-      '매치가 성공적으로 판매 등록되었습니다!\n실시간 가격 시스템이 활성화됩니다.',
-      [{ text: '확인', onPress: () => {
+    if (!currentUser) {
+      Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
+      router.replace('/auth/login');
+      return;
+    }
+
+    // 숫자 변환 및 유효성 검사
+    const basePriceNum = parseInt(formData.basePrice);
+    const maleCountNum = parseInt(formData.maleCount) || 0;
+    const femaleCountNum = parseInt(formData.femaleCount) || 0;
+    const ntrpMinNum = parseFloat(formData.ntrpMin);
+    const ntrpMaxNum = parseFloat(formData.ntrpMax);
+
+    if (isNaN(basePriceNum) || basePriceNum <= 0) {
+      Alert.alert('입력 오류', '올바른 가격을 입력해주세요.');
+      return;
+    }
+
+    if (maleCountNum + femaleCountNum === 0) {
+      Alert.alert('입력 오류', '최소 1명 이상의 참가자가 필요합니다.');
+      return;
+    }
+
+    if (isNaN(ntrpMinNum) || isNaN(ntrpMaxNum) || ntrpMinNum > ntrpMaxNum) {
+      Alert.alert('입력 오류', 'NTRP 범위를 올바르게 입력해주세요.');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // 새로운 매치 객체 생성
+      const newMatchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      const newMatch: Match = {
+        id: newMatchId,
+        sellerId: currentUser.id,
+        seller: currentUser,
+        title: formData.title,
+        date: formData.date.toISOString().split('T')[0],
+        time: formatTime(formData.time),
+        endTime: formatTime(formData.endTime),
+        court: formData.court,
+        description: formData.description || '매치에 대한 설명이 없습니다.',
+        basePrice: basePriceNum,
+        initialPrice: basePriceNum,
+        currentPrice: basePriceNum,
+        maxPrice: basePriceNum * 3,
+        expectedViews: Math.floor(Math.random() * 500) + 200, // 200-700 예상 조회수
+        expectedWaitingApplicants: Math.floor(Math.random() * 5) + 1, // 1-5명 예상 대기자
+        expectedParticipants: {
+          male: maleCountNum,
+          female: femaleCountNum,
+          total: maleCountNum + femaleCountNum,
+        },
+        currentApplicants: {
+          male: 0,
+          female: 0,
+          total: 0,
+        },
+        matchType: formData.matchType,
+        waitingApplicants: 0,
+        waitingList: [],
+        participants: [],
+        adEnabled: formData.adEnabled,
+        ntrpRequirement: {
+          min: ntrpMinNum,
+          max: ntrpMaxNum,
+        },
+        weather: '맑음',
+        location: '서울',
+        createdAt: new Date().toISOString(),
+        isClosed: false,
+      };
+
+      // MatchContext에 매치 추가
+      const success = await addMatch(newMatch);
+
+      if (success) {
         // 폼 초기화
         setFormData({
           title: '',
@@ -85,8 +164,26 @@ export default function RegisterScreen() {
           ntrpMin: '',
           ntrpMax: '',
         });
-      }}]
-    );
+
+        Alert.alert(
+          '매치 등록 완료! 🎾',
+          '매치가 성공적으로 등록되었습니다!\n실시간 가격 시스템이 활성화됩니다.',
+          [{ 
+            text: '매치 보기', 
+            onPress: () => {
+              router.push(`/match/${newMatch.id}`);
+            }
+          }]
+        );
+      } else {
+        Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+      }
+    } catch (error) {
+      console.error('매치 등록 중 오류:', error);
+      Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const formatDate = (date: Date) => {
@@ -449,7 +546,9 @@ export default function RegisterScreen() {
         </View>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>매치 판매하기</Text>
+          <Text style={styles.submitButtonText}>
+            {isSubmitting ? '등록 중...' : '매치 판매하기'}
+          </Text>
         </TouchableOpacity>
 
         <View style={styles.bottomPadding} />
@@ -465,7 +564,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 10,
     paddingBottom: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,

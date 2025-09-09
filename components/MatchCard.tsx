@@ -218,8 +218,8 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#ffffff',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   headerRight: {
     alignItems: 'flex-end',
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   profileImageContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     overflow: 'hidden',
     borderWidth: 2,
     borderColor: '#d1d5db',
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   sellerInfo: {
     flexDirection: 'row',
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 8,
     gap: 12,
   },
   title: {
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   matchInfo: {
     gap: 6,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   separator: {
     fontSize: 12,
@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   ntrpRequirement: {
     backgroundColor: '#f0f9ff',
@@ -501,10 +501,10 @@ const styles = StyleSheet.create({
   },
   footer: {
     backgroundColor: '#fafafa',
-    marginHorizontal: -20,
-    marginBottom: -20,
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    marginHorizontal: -16,
+    marginBottom: -16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     borderBottomLeftRadius: 16,
     borderBottomRightRadius: 16,
     borderTopWidth: 1,

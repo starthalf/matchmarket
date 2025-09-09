@@ -1,6 +1,7 @@
 import { Match, WaitingApplicant, PaymentRequest } from '../types/tennis';
 import { User } from '../types/tennis';
 import { WaitlistService } from '../lib/waitlistService';
+import { isSupabaseConfigured } from '../lib/supabase';
 
 export class WaitlistManager {
   private static PAYMENT_TIMEOUT_MINUTES = 10; // 결제 제한시간 10분
@@ -438,6 +439,14 @@ export class WaitlistManager {
    */
   static async syncWaitingListFromDB(match: Match): Promise<Match> {
     try {
+      if (!isSupabaseConfigured()) {
+        console.warn('⚠️ Supabase가 설정되지 않음, 로컬 대기자 목록 유지');
+        return {
+          ...match,
+          waitingApplicants: match.waitingList.length
+        };
+      }
+
       const waitingList = await WaitlistService.getWaitingList(match.id);
       const waitingCount = await WaitlistService.getWaitingCount(match.id);
 
@@ -447,8 +456,12 @@ export class WaitlistManager {
         waitingApplicants: waitingCount
       };
     } catch (error) {
-      console.error('대기자 목록 동기화 중 오류:', error);
-      return match;
+      console.warn('대기자 목록 동기화 중 오류:', error);
+      // Supabase 호출 실패 시에도 기존 목록 유지
+      return {
+        ...match,
+        waitingApplicants: match.waitingList.length
+      };
     }
   }
 

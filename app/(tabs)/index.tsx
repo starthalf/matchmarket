@@ -13,8 +13,6 @@ import {
 import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
 import { Database } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
-import { AdBottomSheet } from '../../components/AdBottomSheet';
-import { AdManager } from '../../data/mockAds';
 import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
@@ -27,8 +25,6 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'female' | 'time' | 'ntrp'>('popular');
   const [showFemaleOnly, setShowFemaleOnly] = useState(false);
-  const [currentAd, setCurrentAd] = useState<any>(null);
-  const [showAd, setShowAd] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
 
   // Track component mount status
@@ -81,38 +77,6 @@ export default function HomeScreen() {
     loadAdminStatus();
 
   }, []);
-
-  // 광고 표시 로직
-  const showAdWithDelay = async () => {
-    if (!mounted.current) return; // 컴포넌트가 언마운트되면 실행 중지
-
-    try {
-      // AdManager를 통해 표시할 광고를 가져옵니다.
-      // AdManager.getAdToShow는 '오늘 하루 그만보기' 설정과 타겟팅을 고려합니다.
-      const ad = await AdManager.getAdToShow(user); // user 정보를 넘겨 타겟팅 광고를 가져옵니다.
-
-      if (ad && mounted.current) {
-        // 광고가 표시될 때 조회수를 증가시킵니다.
-        AdManager.incrementViewCount(ad.id);
-
-        // 2초 후에 광고를 표시합니다.
-        setTimeout(() => {
-          if (mounted.current) { // setTimeout 내부에서도 마운트 상태 확인
-            setCurrentAd(ad);
-            setShowAd(true);
-          }
-        }, 2000); // 2초 (2000ms) 지연
-      } else {
-        console.log('표시할 광고가 없거나 이미 숨김 처리되었습니다.');
-      }
-    } catch (error) {
-      console.error('광고 표시 중 오류:', error);
-    }
-  };
-
-  useEffect(() => {
-    showAdWithDelay();
-  }, [user]); // user 객체가 변경될 때마다 광고 로직을 다시 실행
 
   const sortedMatches = [...displayMatches].sort((a, b) => {
     switch (sortBy) {
@@ -237,48 +201,51 @@ export default function HomeScreen() {
       </View>
 
       {/* 데모용 인증 컨트롤 */}
-      <View style={styles.demoControls}>
-        <Text style={styles.demoTitle}>
-          🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
-        </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
-          {!user ? (
-            <>
+      {/* 개발 모드에서만 표시되는 데모 컨트롤 */}
+      {__DEV__ && (
+        <View style={styles.demoControls}>
+          <Text style={styles.demoTitle}>
+            🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
+          </Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
+            {!user ? (
+              <>
+                <TouchableOpacity 
+                  style={styles.demoButton}
+                  onPress={() => handleQuickLogin('aesthetic.vibes')}
+                >
+                  <Text style={styles.demoButtonText}>aesthetic.vibes</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.demoButton}
+                  onPress={() => handleQuickLogin('urban.explorer')}
+                >
+                  <Text style={styles.demoButtonText}>urban.explorer</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.demoButton}
+                  onPress={() => handleQuickLogin('midnight.rider')}
+                >
+                  <Text style={styles.demoButtonText}>midnight.rider</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.demoButton, styles.adminToggleButton]}
+                  onPress={toggleAdminMode}
+                >
+                  <Text style={styles.adminToggleButtonText}>관리자 모드 토글</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
               <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('aesthetic.vibes')}
+                style={[styles.demoButton, styles.logoutButton]}
+                onPress={logout}
               >
-                <Text style={styles.demoButtonText}>aesthetic.vibes</Text>
+                <Text style={styles.logoutButtonText}>로그아웃</Text>
               </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('urban.explorer')}
-              >
-                <Text style={styles.demoButtonText}>urban.explorer</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.demoButton}
-                onPress={() => handleQuickLogin('midnight.rider')}
-              >
-                <Text style={styles.demoButtonText}>midnight.rider</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.demoButton, styles.adminToggleButton]}
-                onPress={toggleAdminMode}
-              >
-                <Text style={styles.adminToggleButtonText}>관리자 모드 토글</Text>
-              </TouchableOpacity>
-            </>
-          ) : (
-            <TouchableOpacity 
-              style={[styles.demoButton, styles.logoutButton]}
-              onPress={logout}
-            >
-              <Text style={styles.logoutButtonText}>로그아웃</Text>
-            </TouchableOpacity>
-          )}
-        </ScrollView>
-      </View>
+            )}
+          </ScrollView>
+        </View>
+      )}
 
       <View style={styles.searchSection}>
         <View style={styles.searchBar}>
@@ -351,13 +318,6 @@ export default function HomeScreen() {
         
         <View style={styles.bottomPadding} />
       </ScrollView>
-
-      {/* 광고 바텀 시트 */}
-      <AdBottomSheet
-        ad={currentAd}
-        visible={showAd}
-        onClose={() => setShowAd(false)}
-      />
     </SafeAreaView>
   );
 }
@@ -369,7 +329,6 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 10,
     paddingBottom: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
@@ -420,7 +379,7 @@ const styles = StyleSheet.create({
   searchSection: {
     flexDirection: 'row',
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 8,
     gap: 12,
     backgroundColor: '#ffffff',
   },
@@ -431,7 +390,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     gap: 12,
   },
   searchInput: {
@@ -442,7 +401,7 @@ const styles = StyleSheet.create({
   filterButton: {
     backgroundColor: '#f3f4f6',
     borderRadius: 12,
-    padding: 12,
+    padding: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -450,14 +409,14 @@ const styles = StyleSheet.create({
   },
   sortSection: {
     backgroundColor: '#ffffff',
-    paddingBottom: 16,
+    paddingBottom: 8,
   },
   sortScroll: {
     paddingHorizontal: 20,
   },
   sortButton: {
     paddingHorizontal: 16,
-    paddingVertical: 8,
+    paddingVertical: 6,
     marginRight: 8,
     borderRadius: 20,
     backgroundColor: '#f3f4f6',

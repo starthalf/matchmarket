@@ -209,7 +209,7 @@ ${formData.description || '없음'}
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
           <Send size={18} color="#ffffff" />
-          <Text style={styles.submitButtonText}>NTRP 인증 신청하기</Text>
+          <Text style={styles.submitButtonText}>인증 신청하기</Text>
         </TouchableOpacity>
 
         <View style={styles.bottomPadding} />

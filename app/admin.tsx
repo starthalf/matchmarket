@@ -5,26 +5,24 @@ import {
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Shield, ArrowRight } from 'lucide-react-native';
+import { useAdmin } from '../contexts/AdminContext';
 
 export default function AdminLoginScreen() {
-  const handleAdminLogin = () => {
-    // 실제로는 관리자 인증 로직 구현
-    Alert.alert(
-      '관리자 로그인',
-      '관리자 권한으로 로그인하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '로그인', onPress: () => {
-          router.push('/(admin)/dashboard');
-        }}
-      ]
-    );
-  };
+  const { isAdmin } = useAdmin();
 
+  // 이미 관리자로 로그인된 경우 대시보드로 리다이렉트
+  React.useEffect(() => {
+    if (isAdmin) {
+      router.replace('/(admin)/dashboard');
+    }
+  }, [isAdmin]);
+
+  const handleAdminLogin = () => {
+    router.push('/admin-login');
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
@@ -36,12 +34,12 @@ export default function AdminLoginScreen() {
 
         <View style={styles.loginSection}>
           <TouchableOpacity style={styles.loginButton} onPress={handleAdminLogin}>
-            <Text style={styles.loginButtonText}>관리자로 로그인</Text>
+            <Text style={styles.loginButtonText}>관리자 로그인</Text>
             <ArrowRight size={20} color="#ffffff" />
           </TouchableOpacity>
           
           <Text style={styles.notice}>
-            * 데모 버전에서는 인증 없이 바로 접근 가능합니다
+            * 실제 관리자 인증이 필요합니다
           </Text>
         </View>
       </View>

@@ -5,17 +5,19 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   TextInput,
   Alert,
   Switch,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, User, Mail, Lock, Bell, Shield, Trash2, LogOut } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { useSafeStyles } from '../constants/Styles';
 
 export default function ProfileSettingsScreen() {
   const { user: currentUser, logout } = useAuth();
+  const safeStyles = useSafeStyles();
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
     email: currentUser?.name || '', // 임시로 name을 email로 사용
@@ -78,23 +80,25 @@ export default function ProfileSettingsScreen() {
 
   if (!currentUser) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={safeStyles.safeContainer}>
         <Text>로그인이 필요합니다.</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>설정</Text>
-        <View style={styles.placeholder} />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>설정</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

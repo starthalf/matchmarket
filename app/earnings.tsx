@@ -5,16 +5,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   TextInput,
   Modal,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, DollarSign, TrendingUp, Calendar, Eye, Users, CreditCard, Building, Clock } from 'lucide-react-native';
 import { getCurrentUser } from '../data/mockData';
 import { AdminSettingsManager } from '../utils/adminSettings';
 import { getMockEarnings, EarningsData } from '../data/mockData';
+import { useSafeStyles } from '../constants/Styles';
 
 interface WithdrawalHistory {
   id: string;
@@ -52,6 +53,7 @@ const mockWithdrawalHistory: WithdrawalHistory[] = [
 
 export default function EarningsScreen() {
   const currentUser = getCurrentUser();
+  const safeStyles = useSafeStyles();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'all'>('month');
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [accountInfo, setAccountInfo] = useState({
@@ -168,16 +170,18 @@ export default function EarningsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>수익 정산</Text>
-        <View style={styles.placeholder} />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>수익 정산</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

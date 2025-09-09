@@ -4,12 +4,13 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { DollarSign, Users, Calendar, TrendingUp, CreditCard, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, User } from 'lucide-react-native';
 import { router } from 'expo-router';
+import { useSafeStyles } from '../../constants/Styles';
 
 // Mock 입금 확인 대기 데이터
 const mockPendingPayments = [
@@ -46,6 +47,7 @@ const mockPendingPayments = [
 ];
 
 export default function AdminDashboardScreen() {
+  const safeStyles = useSafeStyles();
   const [pendingPayments, setPendingPayments] = React.useState(mockPendingPayments);
 
   // Mock 데이터
@@ -98,10 +100,12 @@ export default function AdminDashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>관리자 대시보드</Text>
-        <Text style={styles.subtitle}>MatchMarket 운영 현황</Text>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <Text style={styles.title}>관리자 대시보드</Text>
+          <Text style={styles.subtitle}>MatchMarket 운영 현황</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

@@ -6,11 +6,11 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Image,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Settings, Award, TrendingUp, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, DollarSign, Users, Eye, Camera, User, CreditCard } from 'lucide-react-native';
 import { Calendar } from 'lucide-react-native';
@@ -18,9 +18,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { CertificationBadge } from '../../components/CertificationBadge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
+import { useSafeStyles } from '../../constants/Styles';
 
 export default function ProfileScreen() {
   const { user: currentUser, logout } = useAuth();
+  const safeStyles = useSafeStyles();
   const [profileImage, setProfileImage] = React.useState<string | null>(null);
 
   // 저장된 프로필 이미지 불러오기
@@ -54,7 +56,7 @@ export default function ProfileScreen() {
 
   if (!currentUser) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={safeStyles.safeContainer}>
         <View style={styles.loadingContainer}>
           <Text>로그인이 필요합니다...</Text>
         </View>
@@ -197,12 +199,14 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>프로필</Text>
-        <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
-          <Settings size={20} color="#6b7280" />
-        </TouchableOpacity>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <Text style={styles.title}>프로필</Text>
+          <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
+            <Settings size={20} color="#6b7280" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

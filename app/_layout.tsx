@@ -31,17 +31,27 @@ export default function RootLayout() {
       };
     }
   }, []);
+
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <AdminProvider>
           <MatchProvider>
-            <Stack screenOptions={{ headerShown: false }}>
+            {/* StatusBar를 맨 위로 이동하고 더 명확한 설정 */}
+            <StatusBar 
+              style="dark" 
+              backgroundColor="transparent" 
+              translucent={true}
+            />
+            <Stack screenOptions={{ 
+              headerShown: false,
+              // Stack 네비게이션에서도 SafeArea 고려
+              contentStyle: { backgroundColor: '#f9fafb' }
+            }}>
               <Stack.Screen name="+not-found" />
             </Stack>
           </MatchProvider>
         </AdminProvider>
-        <StatusBar style="auto" />
       </AuthProvider>
     </SafeAreaProvider>
   );

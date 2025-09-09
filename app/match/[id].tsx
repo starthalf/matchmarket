@@ -5,13 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Modal,
   TextInput,
   Clipboard,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, MapPin, Clock, Users, Heart, Share, Copy, CreditCard, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { UserRound } from 'lucide-react-native';
@@ -23,16 +23,18 @@ import { WaitlistManager } from '../../utils/waitlistManager';
 import { BankTransferManager, PaymentRequest } from '@/utils/bankTransferManager';
 import { CancelParticipationModal } from '../../components/CancelParticipationModal';
 import { WaitlistService } from '../../lib/waitlistService';
+import { useSafeStyles } from '../../constants/Styles';
 
 export default function MatchDetailScreen() {
   const { user } = useAuth();
   const { matches, refreshMatches, updateMatch } = useMatches();
   const { id } = useLocalSearchParams<{ id: string }>();
   const match = (matches || []).find(m => m.id === id);
+  const safeStyles = useSafeStyles();
 
   if (!match) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={safeStyles.safeContainer}>
         <Text>매치를 찾을 수 없습니다.</Text>
       </SafeAreaView>
     );
@@ -474,19 +476,21 @@ export default function MatchDetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>매치 상세</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Heart size={20} color="#6b7280" />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>매치 상세</Text>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Heart size={20} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 

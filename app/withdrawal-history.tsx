@@ -5,11 +5,12 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, CreditCard, Calendar, CircleCheck as CheckCircle, Clock, CircleAlert as AlertCircle } from 'lucide-react-native';
 import { AdminSettingsManager } from '../utils/adminSettings';
+import { useSafeStyles } from '../constants/Styles';
 
 interface WithdrawalHistory {
   id: string;
@@ -65,6 +66,7 @@ const mockWithdrawalHistory: WithdrawalHistory[] = [
 ];
 
 export default function WithdrawalHistoryScreen() {
+  const safeStyles = useSafeStyles();
   const totalWithdrawn = mockWithdrawalHistory
     .filter(w => w.status === 'completed')
     .reduce((sum, w) => sum + w.amount, 0);
@@ -131,16 +133,18 @@ export default function WithdrawalHistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>출금 내역</Text>
-        <View style={styles.placeholder} />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>출금 내역</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

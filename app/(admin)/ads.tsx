@@ -5,18 +5,20 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Modal,
   TextInput,
   Switch,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, Eye, MousePointer, CreditCard as Edit, Trash2, ToggleLeft, ToggleRight, ExternalLink } from 'lucide-react-native';
 import { mockAds, AdManager } from '../../data/mockAds';
 import { Ad } from '../../types/ad';
+import { useSafeStyles } from '../../constants/Styles';
 
 export default function AdminAdsScreen() {
+  const safeStyles = useSafeStyles();
   const [ads, setAds] = useState(mockAds);
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingAd, setEditingAd] = useState<Ad | null>(null);
@@ -161,10 +163,12 @@ export default function AdminAdsScreen() {
   const totalClicks = ads.reduce((sum, ad) => sum + ad.clickCount, 0);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>광고 관리</Text>
-        <Text style={styles.subtitle}>앱 내 광고 생성 및 관리</Text>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <Text style={styles.title}>광고 관리</Text>
+          <Text style={styles.subtitle}>앱 내 광고 생성 및 관리</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

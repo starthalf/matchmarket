@@ -6,10 +6,10 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
 import { Database } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
@@ -17,10 +17,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
+import { useSafeStyles } from '../../constants/Styles';
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
   const { matches: displayMatches, isLoadingMatches } = useMatches();
+  const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'female' | 'time' | 'ntrp'>('popular');
@@ -171,9 +173,9 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.headerContent}>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
           <View>
             <Text style={styles.title}>MatchMarket</Text>
             <Text style={styles.subtitle}>인기가 높은 매치에 참여하세요</Text>

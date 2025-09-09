@@ -5,15 +5,16 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   TextInput,
   Alert,
   Modal,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, User, Star, Award, Calendar, TrendingUp, Eye, Heart, FileText, X } from 'lucide-react-native';
 import { mockUsers } from '../../data/mockData';
 import { CertificationBadge } from '../../components/CertificationBadge';
+import { useSafeStyles } from '../../constants/Styles';
 
 // Mock 인증 신청 데이터
 const mockCertificationRequests = {
@@ -85,6 +86,7 @@ const mockCertificationRequests = {
 };
 
 export default function AdminUsersScreen() {
+  const safeStyles = useSafeStyles();
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'rating' | 'revenue' | 'matches'>('name');
   const [filterCertification, setFilterCertification] = useState<'all' | 'verified' | 'pending' | 'none'>('all');
@@ -257,10 +259,12 @@ export default function AdminUsersScreen() {
   ).length;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>사용자 관리</Text>
-        <Text style={styles.subtitle}>전체 사용자 현황 및 관리</Text>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <Text style={styles.title}>사용자 관리</Text>
+          <Text style={styles.subtitle}>전체 사용자 현황 및 관리</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

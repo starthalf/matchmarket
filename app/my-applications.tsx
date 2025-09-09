@@ -5,23 +5,25 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Calendar, Clock, MapPin, CreditCard, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, User, X } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useMatches } from '../contexts/MatchContext';
 import { MatchParticipant } from '../types/tennis';
+import { useSafeStyles } from '../constants/Styles';
 
 export default function MyApplicationsScreen() {
   const { user } = useAuth();
   const { matches } = useMatches();
+  const safeStyles = useSafeStyles();
   const [filterStatus, setFilterStatus] = useState<'all' | 'confirmed' | 'pending' | 'waiting' | 'cancelled'>('all');
 
   if (!user) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={safeStyles.safeContainer}>
         <Text>로그인이 필요합니다.</Text>
       </SafeAreaView>
     );
@@ -151,16 +153,18 @@ export default function MyApplicationsScreen() {
   const waitingCount = myApplications.filter(app => app?.type === 'waiting').length;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>내 참가신청</Text>
-        <View style={styles.placeholder} />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>내 참가신청</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

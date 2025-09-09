@@ -5,15 +5,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   TextInput,
   Alert,
   Clipboard,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail } from 'lucide-react-native';
+import { useSafeStyles } from '../constants/Styles';
 
 export default function CertificationScreen() {
+  const safeStyles = useSafeStyles();
   const [selectedType, setSelectedType] = useState('ntrp');
   const [formData, setFormData] = useState({
     requestedNtrp: '',
@@ -99,16 +101,18 @@ ${formData.description || '없음'}
   };
   
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>인증 신청</Text>
-        <View style={styles.placeholder} />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>인증 신청</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

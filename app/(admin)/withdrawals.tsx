@@ -5,12 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Modal,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { CreditCard, Calendar, CircleCheck as CheckCircle, Clock, TriangleAlert as AlertTriangle, Building, User, Copy } from 'lucide-react-native';
+import { useSafeStyles } from '../../constants/Styles';
 
 interface WithdrawalRequest {
   id: string;
@@ -80,6 +81,7 @@ const mockWithdrawalRequests: WithdrawalRequest[] = [
 ];
 
 export default function AdminWithdrawalsScreen() {
+  const safeStyles = useSafeStyles();
   const [requests, setRequests] = useState(mockWithdrawalRequests);
   const [selectedRequest, setSelectedRequest] = useState<WithdrawalRequest | null>(null);
   const [showProcessModal, setShowProcessModal] = useState(false);
@@ -176,10 +178,12 @@ export default function AdminWithdrawalsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>출금 관리</Text>
-        <Text style={styles.subtitle}>사용자 출금 신청 처리</Text>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <Text style={styles.title}>출금 관리</Text>
+          <Text style={styles.subtitle}>사용자 출금 신청 처리</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

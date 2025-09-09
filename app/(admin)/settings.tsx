@@ -5,15 +5,17 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Switch,
   TextInput,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, Bell, DollarSign, Shield, Database, Mail, Smartphone } from 'lucide-react-native';
 import { AdminSettingsManager } from '../../utils/adminSettings';
+import { useSafeStyles } from '../../constants/Styles';
 
 export default function AdminSettingsScreen() {
+  const safeStyles = useSafeStyles();
   const [settings, setSettings] = useState<AdminSettings>({
     maintenanceMode: false,
     autoBackup: true,
@@ -91,10 +93,12 @@ export default function AdminSettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>시스템 설정</Text>
-        <Text style={styles.subtitle}>관리자 시스템 설정 및 관리</Text>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <Text style={styles.title}>시스템 설정</Text>
+          <Text style={styles.subtitle}>관리자 시스템 설정 및 관리</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

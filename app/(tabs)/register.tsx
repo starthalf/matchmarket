@@ -7,11 +7,11 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   Switch,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Calendar, Clock, MapPin, Users, DollarSign } from 'lucide-react-native';
 import { UserRound } from 'lucide-react-native';
 import { CertificationBadge } from '../../components/CertificationBadge';
@@ -20,10 +20,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { Match } from '../../types/tennis';
 import { router } from 'expo-router';
+import { useSafeStyles } from '../../constants/Styles';
 
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();
   const { addMatch } = useMatches();
+  const safeStyles = useSafeStyles();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -54,7 +56,7 @@ export default function RegisterScreen() {
   
   if (!currentUser) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={safeStyles.safeContainer}>
         <View style={styles.loadingContainer}>
           <Text>로그인이 필요합니다...</Text>
         </View>
@@ -223,14 +225,16 @@ export default function RegisterScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>매치 판매</Text>
-          <DollarSign size={24} color="#16a34a" />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <View style={styles.titleRow}>
+            <Text style={styles.title}>매치 판매</Text>
+            <DollarSign size={24} color="#16a34a" />
+          </View>
+          <Text style={styles.subtitle}>당신의 테니스를 판매하세요</Text>
+          <Text style={styles.subtitle}>인기가 높으면 가격이 올라갑니다</Text>
         </View>
-        <Text style={styles.subtitle}>당신의 테니스를 판매하세요</Text>
-        <Text style={styles.subtitle}>인기가 높으면 가격이 올라갑니다</Text>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

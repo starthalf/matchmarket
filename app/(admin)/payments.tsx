@@ -5,13 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { TriangleAlert as AlertTriangle, User, Calendar, CircleCheck as CheckCircle, Clock } from 'lucide-react-native';
 import { WaitlistManager } from '../../utils/waitlistManager';
 import { mockMatches } from '../../data/mockData';
 import { useMatches } from '../../contexts/MatchContext';
+import { useSafeStyles } from '../../constants/Styles';
 
 interface PendingPayment {
   id: string;
@@ -78,6 +79,7 @@ const mockPendingPayments: PendingPayment[] = [
 ];
 
 export default function AdminPaymentsScreen() {
+  const safeStyles = useSafeStyles();
   const [pendingPayments, setPendingPayments] = useState(mockPendingPayments);
   const { refreshMatches } = useMatches();
 
@@ -172,10 +174,12 @@ export default function AdminPaymentsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>입금 확인</Text>
-        <Text style={styles.subtitle}>사용자 입금 신고 확인 및 처리</Text>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <Text style={styles.title}>입금 확인</Text>
+          <Text style={styles.subtitle}>사용자 입금 신고 확인 및 처리</Text>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

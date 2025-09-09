@@ -4,14 +4,16 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Shield, ArrowRight } from 'lucide-react-native';
 import { useAdmin } from '../contexts/AdminContext';
+import { useSafeStyles } from '../constants/Styles';
 
 export default function AdminLoginScreen() {
   const { isAdmin } = useAdmin();
+  const safeStyles = useSafeStyles();
 
   // 이미 관리자로 로그인된 경우 대시보드로 리다이렉트
   React.useEffect(() => {
@@ -23,8 +25,9 @@ export default function AdminLoginScreen() {
   const handleAdminLogin = () => {
     router.push('/admin-login');
   };
+
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={safeStyles.safeContainer}>
       <View style={styles.content}>
         <View style={styles.logoSection}>
           <Shield size={64} color="#dc2626" />

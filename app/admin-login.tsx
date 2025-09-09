@@ -4,18 +4,20 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   TextInput,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Shield, ArrowRight, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAdmin } from '../contexts/AdminContext';
+import { useSafeStyles } from '../constants/Styles';
 
 export default function AdminLoginScreen() {
   const { adminLogin } = useAdmin();
+  const safeStyles = useSafeStyles();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -54,7 +56,7 @@ export default function AdminLoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={safeStyles.safeContainer}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}

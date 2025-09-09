@@ -5,22 +5,24 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   Image,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, Star, User } from 'lucide-react-native';
 import { mockUsers, mockReviews } from '../../../data/mockData';
 import { CertificationBadge } from '../../../components/CertificationBadge';
+import { useSafeStyles } from '../../../constants/Styles';
 
 export default function SellerReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const seller = mockUsers.find(u => u.id === id);
   const reviews = mockReviews.filter(r => r.sellerId === id);
+  const safeStyles = useSafeStyles();
 
   if (!seller) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={safeStyles.safeContainer}>
         <Text>판매자를 찾을 수 없습니다.</Text>
       </SafeAreaView>
     );
@@ -44,16 +46,18 @@ export default function SellerReviewsScreen() {
   }));
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>리뷰</Text>
-        <View style={styles.placeholder} />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>리뷰</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

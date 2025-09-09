@@ -5,13 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
 import { SupabaseConnectionTest } from '../utils/supabaseConnectionTest';
+import { useSafeStyles } from '../constants/Styles';
 
 interface ConnectionTestResult {
   isConfigured: boolean;
@@ -31,6 +32,7 @@ interface DatabaseStats {
 }
 
 export default function SupabaseTestScreen() {
+  const safeStyles = useSafeStyles();
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -71,22 +73,24 @@ export default function SupabaseTestScreen() {
   const envVars = SupabaseConnectionTest.checkEnvironmentVariables();
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton} 
-          onPress={() => router.back()}
-        >
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Supabase 연결 테스트</Text>
-        <TouchableOpacity 
-          style={styles.refreshButton}
-          onPress={runConnectionTest}
-          disabled={isLoading}
-        >
-          <RefreshCw size={20} color="#6b7280" />
-        </TouchableOpacity>
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>Supabase 연결 테스트</Text>
+          <TouchableOpacity 
+            style={styles.refreshButton}
+            onPress={runConnectionTest}
+            disabled={isLoading}
+          >
+            <RefreshCw size={20} color="#6b7280" />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

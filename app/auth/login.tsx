@@ -5,18 +5,20 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  SafeAreaView,
   Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSafeStyles } from '../../constants/Styles';
 
 export default function LoginScreen() {
   const { login } = useAuth();
+  const safeStyles = useSafeStyles();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -42,7 +44,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={safeStyles.safeContainer}>
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -53,71 +55,6 @@ export default function LoginScreen() {
             <Text style={styles.subtitle}>테니스 매치 플랫폼에 오신 것을 환영합니다</Text>
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>이메일</Text>
-              <View style={styles.inputContainer}>
-                <Mail size={20} color="#6b7280" />
-                <TextInput
-                  style={styles.textInput}
-                  value={formData.email}
-                  onChangeText={(text) => setFormData({...formData, email: text})}
-                  placeholder="이메일을 입력하세요"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>비밀번호</Text>
-              <View style={styles.inputContainer}>
-                <Lock size={20} color="#6b7280" />
-                <TextInput
-                  style={styles.textInput}
-                  value={formData.password}
-                  onChangeText={(text) => setFormData({...formData, password: text})}
-                  placeholder="비밀번호를 입력하세요"
-                  placeholderTextColor="#9ca3af"
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity 
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#6b7280" />
-                  ) : (
-                    <Eye size={20} color="#6b7280" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-              onPress={handleLogin}
-              disabled={isLoading}
-            >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? '로그인 중...' : '로그인'}
-              </Text>
-            </TouchableOpacity>
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>또는</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity 
-              style={styles.signupButton}
-              onPress={() => router.push('/auth/signup')}
-            >
-              <Text style={styles.signupButtonText}>회원가입</Text>
-            </TouchableOpacity>
-          </View>
 
           <View style={styles.demoInfo}>
             <Text style={styles.demoTitle}>🎾 데모 계정</Text>

@@ -640,8 +640,8 @@ export class DataGenerator {
         
         console.log(`✅ ${newMatches.length}개의 새로운 더미 매치가 Supabase에 저장되었습니다.`);
         return newMatches;
-      } catch (fetchError) {
-        console.warn('Supabase 저장 중 오류 (환경변수 미설정):', supabaseError);
+      } catch (supabaseError) {
+        console.log('ℹ️ Supabase 저장 중 네트워크 오류 (환경변수 미설정 또는 연결 실패):', supabaseError);
         console.log('로컬 더미 데이터를 사용합니다.');
         return [];
       }
@@ -690,8 +690,8 @@ export class DataGenerator {
         
         // 더미 매치들과 기본 매치들 합치기
         return [...convertedMatches, ...originalMatches];
-      } catch (fetchError) {
-        console.log('ℹ️ Supabase 연결 실패 (네이티브 환경에서는 정상):', fetchError);
+      } catch (networkError) {
+        console.log('ℹ️ Supabase 네트워크 연결 실패 (환경변수 미설정 또는 네트워크 오류):', networkError);
         console.log('로컬 데이터를 사용합니다.');
         return originalMatches;
       }
@@ -726,8 +726,8 @@ export class DataGenerator {
         }
         
         return data.value;
-      } catch (fetchError) {
-        console.log('ℹ️ Supabase 연결 실패 (환경변수 미설정):', fetchError);
+      } catch (networkError) {
+        console.log('ℹ️ Supabase 네트워크 연결 실패 (환경변수 미설정 또는 네트워크 오류):', networkError);
         return null;
       }
     } catch (error) {
@@ -747,10 +747,15 @@ export class DataGenerator {
         return false;
       }
 
-      const lastDate = await this.getLastGenerationDate();
-      const today = new Date().toDateString();
-      
-      return !lastDate || lastDate !== today;
+      try {
+        const lastDate = await this.getLastGenerationDate();
+        const today = new Date().toDateString();
+        
+        return !lastDate || lastDate !== today;
+      } catch (networkError) {
+        console.log('ℹ️ 더미 매치 생성 확인 중 네트워크 오류:', networkError);
+        return false;
+      }
     } catch (error) {
       console.log('ℹ️ 더미 매치 생성 확인 중 오류:', error);
       return false;
@@ -781,8 +786,8 @@ export class DataGenerator {
         if (error) {
           console.log('ℹ️ 마지막 생성 날짜 업데이트 실패:', error.message);
         }
-      } catch (fetchError) {
-        console.log('ℹ️ Supabase 연결 실패:', fetchError);
+      } catch (networkError) {
+        console.log('ℹ️ Supabase 네트워크 연결 실패:', networkError);
       }
     } catch (error) {
       console.log('ℹ️ 마지막 생성 날짜 업데이트 중 오류:', error);

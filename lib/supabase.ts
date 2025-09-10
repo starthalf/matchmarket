@@ -1,56 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
-// 디버깅 로그 추가
-console.log('🔧 DEBUG: Supabase 모듈 로드 시작');
-console.log('🔧 DEBUG: Platform.OS:', Platform.OS);
-console.log('🔧 DEBUG: process.env 객체 존재 여부:', typeof process !== 'undefined' && typeof process.env !== 'undefined');
+// 하드코딩된 Supabase 설정 (환경변수 시스템 문제로 인해)
+const supabaseUrl = 'https://xroiblqjsxxoewfyrzjy.supabase.co';
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyb2libHFqc3h4b2V3Znlyemp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NjYwNDUsImV4cCI6MjA3MjQ0MjA0NX0.fmgpJ8m2kJTDMi4YjCE2HVL8oLOEJ8Zm-XhjTKYgpKU';
+const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyb2libHFqc3h4b2V3Znlyemp5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Njg2NjA0NSwiZXhwIjoyMDcyNDQyMDQ1fQ.ZKkFNqnlt3IJKLUizIaC4oOKXp9NAao8YOW5Z_fZduA';
 
-// 환경변수 직접 접근 테스트
-try {
-  console.log('🔧 DEBUG: 직접 환경변수 접근 테스트');
-  console.log('🔧 DEBUG: EXPO_PUBLIC_SUPABASE_URL (직접):', process.env.EXPO_PUBLIC_SUPABASE_URL ? `${process.env.EXPO_PUBLIC_SUPABASE_URL.substring(0, 30)}...` : 'undefined');
-  console.log('🔧 DEBUG: EXPO_PUBLIC_SUPABASE_ANON_KEY (직접):', process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ? `${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY.substring(0, 30)}...` : 'undefined');
-  console.log('🔧 DEBUG: EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY (직접):', process.env.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? `${process.env.EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY.substring(0, 30)}...` : 'undefined');
-} catch (directAccessError) {
-  console.error('🔧 DEBUG: 직접 환경변수 접근 실패:', directAccessError);
-}
+console.log('🔧 DEBUG: 하드코딩된 설정 사용:', {
+  url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
+  anonKey: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'undefined',
+  serviceKey: supabaseServiceKey ? `${supabaseServiceKey.substring(0, 20)}...` : 'undefined'
+});
 
-// 환경변수 안전하게 가져오기
-const getEnvVar = (key: string): string | undefined => {
-  try {
-    const value = process.env[key];
-    console.log(`🔧 DEBUG: getEnvVar(${key}) 호출됨`);
-    console.log(`🔧 DEBUG: getEnvVar(${key}) 결과:`, value ? `${value.substring(0, 30)}...` : 'undefined');
-    console.log(`🔧 DEBUG: getEnvVar(${key}) 타입:`, typeof value);
-    console.log(`🔧 DEBUG: getEnvVar(${key}) 길이:`, value ? value.length : 0);
-    return value;
-  } catch (error) {
-    console.error(`🔧 DEBUG: 환경변수 ${key} 접근 실패:`, error);
-    return undefined;
-  }
-};
-
-console.log('🔧 DEBUG: getEnvVar 함수 정의 완료');
-
-const supabaseUrl = getEnvVar('EXPO_PUBLIC_SUPABASE_URL');
-const supabaseAnonKey = getEnvVar('EXPO_PUBLIC_SUPABASE_ANON_KEY');
-const supabaseServiceKey = getEnvVar('EXPO_PUBLIC_SUPABASE_SERVICE_ROLE_KEY') || getEnvVar('SUPABASE_SERVICE_ROLE_KEY');
-
-console.log('🔧 DEBUG: 환경변수 추출 완료');
-console.log('🔧 DEBUG: supabaseUrl 최종값:', supabaseUrl ? `${supabaseUrl.substring(0, 30)}...` : 'undefined');
-console.log('🔧 DEBUG: supabaseAnonKey 최종값:', supabaseAnonKey ? `${supabaseAnonKey.substring(0, 30)}...` : 'undefined');
-console.log('🔧 DEBUG: supabaseServiceKey 최종값:', supabaseServiceKey ? `${supabaseServiceKey.substring(0, 30)}...` : 'undefined');
-
-// Supabase 클라이언트 생성 (환경변수가 없으면 null)
+// Supabase 클라이언트 생성
 export const supabase = (() => {
   try {
-    console.log('🔧 DEBUG: Supabase 클라이언트 생성 시도 시작');
-    console.log('🔧 DEBUG: URL 유효성 검사:', supabaseUrl ? supabaseUrl.startsWith('https://') : false);
-    console.log('🔧 DEBUG: Anon Key 유효성 검사:', supabaseAnonKey ? supabaseAnonKey.length > 20 : false);
-    
     if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
-      console.log('🔧 DEBUG: 조건 충족 - createClient 호출');
       const client = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
           persistSession: Platform.OS !== 'web',
@@ -60,7 +25,7 @@ export const supabase = (() => {
       console.log('🔧 DEBUG: Supabase 클라이언트 생성 성공:', !!client);
       return client;
     }
-    console.error('🔧 DEBUG: ⚠️ Supabase 환경변수가 올바르지 않습니다:', {
+    console.warn('⚠️ Supabase 설정이 올바르지 않습니다:', {
       hasUrl: !!supabaseUrl,
       hasAnonKey: !!supabaseAnonKey,
       urlValid: supabaseUrl ? supabaseUrl.startsWith('https://') : false,
@@ -68,16 +33,14 @@ export const supabase = (() => {
     });
     return null;
   } catch (error) {
-    console.error('🔧 DEBUG: Supabase 클라이언트 생성 실패:', error);
+    console.warn('Supabase 클라이언트 생성 실패:', error);
     return null;
   }
 })();
 
 export const supabaseAdmin = (() => {
   try {
-    console.log('🔧 DEBUG: Supabase Admin 클라이언트 생성 시도 시작');
     if (supabaseUrl && supabaseServiceKey && supabaseUrl.startsWith('https://') && supabaseServiceKey.length > 20) {
-      console.log('🔧 DEBUG: Admin 조건 충족 - createClient 호출');
       const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
           autoRefreshToken: false,
@@ -85,50 +48,41 @@ export const supabaseAdmin = (() => {
         }
       });
       console.log('🔧 DEBUG: Supabase Admin 클라이언트 생성 성공:', !!adminClient);
+      console.log('🔧 DEBUG: 최종 supabaseAdmin 클라이언트 상태:', !!adminClient);
       return adminClient;
     }
-    console.log('🔧 DEBUG: Admin 클라이언트 조건 미충족');
+    console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다:', {
+      hasUrl: !!supabaseUrl,
+      hasServiceKey: !!supabaseServiceKey,
+      urlValid: supabaseUrl ? supabaseUrl.startsWith('https://') : false,
+      keyValid: supabaseServiceKey ? supabaseServiceKey.length > 20 : false
+    });
     return null;
   } catch (error) {
-    console.error('🔧 DEBUG: Supabase Admin 클라이언트 생성 실패:', error);
+    console.warn('Supabase Admin 클라이언트 생성 실패:', error);
     return null;
   }
 })();
 
 // Supabase 연결 상태 확인
 export const isSupabaseConfigured = () => {
-  const configured = !!(supabase && typeof supabase.from === 'function');
-  console.log('🔧 DEBUG: isSupabaseConfigured 호출됨, 결과:', configured);
-  return configured;
+  return !!(supabase && typeof supabase.from === 'function');
 };
 
 // Supabase Admin 연결 상태 확인
 export const isSupabaseAdminConfigured = () => {
-  const configured = !!(supabaseAdmin && typeof supabaseAdmin.from === 'function');
-  console.log('🔧 DEBUG: isSupabaseAdminConfigured 호출됨, 결과:', configured);
-  return configured;
+  return !!(supabaseAdmin && typeof supabaseAdmin.from === 'function');
 };
 
-// 환경변수 상태 로깅
+// 하드코딩 상태 로깅
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  console.log('🔧 DEBUG: 웹 환경 - Supabase 환경변수 상태:', {
-    hasUrl: !!supabaseUrl,
-    hasAnonKey: !!supabaseAnonKey,
-    hasServiceKey: !!supabaseServiceKey,
-    url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined'
-  });
-} else {
-  console.log('🔧 DEBUG: 네이티브 환경 - Supabase 환경변수 상태:', {
+  console.log('🔧 Supabase 하드코딩 설정 상태:', {
     hasUrl: !!supabaseUrl,
     hasAnonKey: !!supabaseAnonKey,
     hasServiceKey: !!supabaseServiceKey,
     url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined'
   });
 }
-
-console.log('🔧 DEBUG: Supabase 모듈 로드 완료');
-console.log('🔧 DEBUG: 최종 supabase 클라이언트 상태:', !!supabase);
-console.log('🔧 DEBUG: 최종 supabaseAdmin 클라이언트 상태:', !!supabaseAdmin);
 
 // 사용자 프로필 타입 정의
 export interface UserProfile {

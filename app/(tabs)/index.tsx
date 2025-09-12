@@ -186,12 +186,14 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.dynamicPriceIcon}>
               <TrendingUp size={20} color="#16a34a" />
             </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.supabaseTestIcon}
-              onPress={() => router.push('/supabase-test')}
-            >
-              <Database size={20} color="#3b82f6" />
-            </TouchableOpacity>
+            {__DEV__ && (
+              <TouchableOpacity 
+                style={styles.supabaseTestIcon}
+                onPress={() => router.push('/supabase-test')}
+              >
+                <Database size={20} color="#3b82f6" />
+              </TouchableOpacity>
+            )}
             {(isAdmin || localAdminToggleStatus) && (
               <TouchableOpacity 
                 style={styles.adminButton}

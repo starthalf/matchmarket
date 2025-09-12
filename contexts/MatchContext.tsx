@@ -60,7 +60,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         const shouldGenerate = await DataGenerator.shouldGenerateNewMatches();
         if (shouldGenerate) {
           console.log('새로운 더미 매치 생성 중...');
-          const newMatches = await DataGenerator.generateAndSaveDailyMatches(20);
+          const newMatches = await DataGenerator.generateAndSaveDailyMatches(10);
           
           if (newMatches.length > 0) {
             // 새 매치들을 맨 앞에 추가

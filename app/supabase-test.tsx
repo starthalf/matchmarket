@@ -11,7 +11,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
+import { Trash2 } from 'lucide-react-native';
 import { SupabaseConnectionTest } from '../utils/supabaseConnectionTest';
+import { DataGenerator } from '../utils/dataGenerator';
 import { useSafeStyles } from '../constants/Styles';
 
 interface ConnectionTestResult {
@@ -36,6 +38,7 @@ export default function SupabaseTestScreen() {
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
   const [dbStats, setDbStats] = useState<DatabaseStats | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeletingDummy, setIsDeletingDummy] = useState(false);
 
   useEffect(() => {
     runConnectionTest();
@@ -56,6 +59,36 @@ export default function SupabaseTestScreen() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteDummyData = async () => {
+    Alert.alert(
+      '더미 데이터 삭제',
+      '모든 더미 매치 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '삭제', style: 'destructive', onPress: async () => {
+          setIsDeletingDummy(true);
+          try {
+            const result = await DataGenerator.deleteAllDummyMatches();
+            
+            if (result.success) {
+              Alert.alert(
+                '삭제 완료',
+                `${result.deletedCount}개의 더미 매치가 삭제되었습니다.`,
+                [{ text: '확인', onPress: () => runConnectionTest() }]
+              );
+            } else {
+              Alert.alert('삭제 실패', result.error || '더미 데이터 삭제에 실패했습니다.');
+            }
+          } catch (error) {
+            Alert.alert('오류', '더미 데이터 삭제 중 오류가 발생했습니다.');
+          } finally {
+            setIsDeletingDummy(false);
+          }
+        }}
+      ]
+    );
   };
 
   const getStatusIcon = (status: boolean) => {
@@ -229,6 +262,23 @@ export default function SupabaseTestScreen() {
                 <Text style={styles.statLabel}>앱 설정</Text>
               </View>
             </View>
+            
+            {/* 더미 데이터 관리 */}
+            {dbStats.dummyMatches > 0 && (
+              <View style={styles.dummyDataSection}>
+                <Text style={styles.dummyDataTitle}>🗑️ 더미 데이터 관리</Text>
+                <TouchableOpacity 
+                  style={[styles.deleteDummyButton, isDeletingDummy && styles.deleteDummyButtonDisabled]}
+                  onPress={handleDeleteDummyData}
+                  disabled={isDeletingDummy}
+                >
+                  <Trash2 size={16} color="#ffffff" />
+                  <Text style={styles.deleteDummyButtonText}>
+                    {isDeletingDummy ? '삭제 중...' : `더미 매치 ${dbStats.dummyMatches}개 삭제`}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         )}
 
@@ -466,5 +516,35 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  dummyDataSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  dummyDataTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  deleteDummyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#dc2626',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+  },
+  deleteDummyButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+  deleteDummyButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
   },
 });

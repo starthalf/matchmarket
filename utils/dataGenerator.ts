@@ -796,6 +796,75 @@ export class DataGenerator {
 
   /**
    * 더미 매치 개수 조회
+   */
+  static async getDummyMatchCount(): Promise<number> {
+    try {
+      if (!supabaseAdmin) {
+        return 0;
+      }
+      
+      const { count, error } = await supabaseAdmin
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_dummy', true);
+      
+      if (error) {
+        console.error('더미 매치 개수 조회 오류:', error);
+        return 0;
+      }
+      
+      return count || 0;
+    } catch (error) {
+      console.error('더미 매치 개수 조회 중 오류:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * 모든 더미 매치 삭제
+   */
+  static async deleteAllDummyMatches(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+    try {
+      if (!supabaseAdmin) {
+        return { success: false, deletedCount: 0, error: 'Supabase Admin 클라이언트가 설정되지 않았습니다.' };
+      }
+
+      console.log('🗑️ 기존 더미 매치 삭제 시작...');
+
+      // 먼저 삭제할 더미 매치 개수 확인
+      const beforeCount = await this.getDummyMatchCount();
+      console.log(`삭제 대상 더미 매치: ${beforeCount}개`);
+
+      if (beforeCount === 0) {
+        return { success: true, deletedCount: 0 };
+      }
+
+      // 더미 매치 삭제
+      const { error } = await supabaseAdmin
+        .from('matches')
+        .delete()
+        .eq('is_dummy', true);
+
+      if (error) {
+        console.error('더미 매치 삭제 오류:', error);
+        return { success: false, deletedCount: 0, error: error.message };
+      }
+
+      // 삭제 후 개수 확인
+      const afterCount = await this.getDummyMatchCount();
+      const deletedCount = beforeCount - afterCount;
+
+      console.log(`✅ 더미 매치 삭제 완료: ${deletedCount}개 삭제됨`);
+      
+      return { success: true, deletedCount };
+    } catch (error) {
+      console.error('더미 매치 삭제 중 오류:', error);
+      return { success: false, deletedCount: 0, error: '더미 매치 삭제 중 오류가 발생했습니다.' };
+    }
+  }
+
+  /**
+   * 더미 매치 개수 조회
   static async getDummyMatchCount(): Promise<number> {
     try {
       if (!supabaseAdmin) {

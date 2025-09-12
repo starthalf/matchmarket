@@ -14,6 +14,7 @@ import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
 import { Database } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAdmin } from '../../contexts/AdminContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
@@ -21,13 +22,14 @@ import { useSafeStyles } from '../../constants/Styles';
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
+  const { isAdmin } = useAdmin();
   const { matches: displayMatches, isLoadingMatches } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'female' | 'time' | 'ntrp'>('popular');
   const [showFemaleOnly, setShowFemaleOnly] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
+  const [localAdminToggleStatus, setLocalAdminToggleStatus] = useState(false);
 
   // Track component mount status
   useEffect(() => {
@@ -37,7 +39,7 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // 관리자 상태 실시간 감지
+  // 로컬 관리자 토글 상태 로드
   useEffect(() => {
     const loadAdminStatus = async () => {
       try {
@@ -48,7 +50,7 @@ export default function HomeScreen() {
             const handleStorageChange = (e: StorageEvent) => {
               if (e.key === 'isAdmin') {
                 if (mounted.current) {
-                  setIsAdmin(e.newValue === 'true');
+                  setLocalAdminToggleStatus(e.newValue === 'true');
                 }
               }
             };
@@ -67,12 +69,12 @@ export default function HomeScreen() {
           adminStatus = stored === 'true';
         }
         if (mounted.current) {
-          setIsAdmin(adminStatus);
+          setLocalAdminToggleStatus(adminStatus);
         }
       } catch (error) {
         console.error('관리자 상태 로딩 오류:', error);
         if (mounted.current) {
-          setIsAdmin(false);
+          setLocalAdminToggleStatus(false);
         }
       }
     };
@@ -141,7 +143,7 @@ export default function HomeScreen() {
   const toggleAdminMode = () => {
     const toggleAdminStatus = async () => {
       try {
-        const currentAdminStatus = isAdmin;
+        const currentAdminStatus = localAdminToggleStatus;
         const newAdminStatus = !currentAdminStatus;
         
         if (Platform.OS === 'web') {
@@ -153,7 +155,7 @@ export default function HomeScreen() {
           await AsyncStorage.setItem('isAdmin', newAdminStatus.toString());
         }
         
-        setIsAdmin(newAdminStatus);
+        setLocalAdminToggleStatus(newAdminStatus);
         Alert.alert(
           '관리자 모드 변경',
           `관리자 모드가 ${newAdminStatus ? '활성화' : '비활성화'}되었습니다.`,
@@ -190,12 +192,30 @@ export default function HomeScreen() {
             >
               <Database size={20} color="#3b82f6" />
             </TouchableOpacity>
-            {isAdmin && (
+            {(isAdmin || localAdminToggleStatus) && (
               <TouchableOpacity 
                 style={styles.adminButton}
                 onPress={handleAdminPress}
               >
                 <Shield size={24} color="#dc2626" />
+              </TouchableOpacity>
+            )}
+            {/* Preview 빌드에서도 관리자 토글 버튼 추가 */}
+            {!__DEV__ && (
+              <TouchableOpacity 
+                style={styles.previewAdminToggle}
+                onPress={toggleAdminMode}
+                onLongPress={() => {
+                  Alert.alert(
+                    '관리자 모드',
+                    `현재 상태: ${localAdminToggleStatus ? '활성' : '비활성'}\n\n이 버튼을 눌러 관리자 모드를 토글할 수 있습니다.`,
+                    [{ text: '확인' }]
+                  );
+                }}
+              >
+                <Text style={styles.previewAdminText}>
+                  {localAdminToggleStatus ? '🔓' : '🔒'}
+                </Text>
               </TouchableOpacity>
             )}
           </View>
@@ -234,7 +254,9 @@ export default function HomeScreen() {
                   style={[styles.demoButton, styles.adminToggleButton]}
                   onPress={toggleAdminMode}
                 >
-                  <Text style={styles.adminToggleButtonText}>관리자 모드 토글</Text>
+                  <Text style={styles.adminToggleButtonText}>
+                    관리자 {localAdminToggleStatus ? '🔓' : '🔒'}
+                  </Text>
                 </TouchableOpacity>
               </>
             ) : (
@@ -505,6 +527,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  previewAdminToggle: {
+    padding: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    minWidth: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  previewAdminText: {
+    fontSize: 16,
   },
   loadingContainer: {
     paddingVertical: 40,

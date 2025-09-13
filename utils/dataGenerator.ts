@@ -179,9 +179,10 @@ export class DataGenerator {
   /**
    * Match를 Supabase 형식으로 변환
    */
-  static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'id' | 'created_at'> {
-    return {
-      seller_id: match.seller.id,
+static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
+  return {
+    id: match.id, // 이 라인 추가
+    seller_id: match.seller.id,
       seller_name: match.seller.name,
       seller_gender: match.seller.gender,
       seller_age_group: match.seller.ageGroup,

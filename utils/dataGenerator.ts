@@ -1,188 +1,501 @@
-import { Match, Seller } from '../types/tennis';
-import { supabase, supabaseAdmin } from '../lib/supabase';
+import { Match, User } from '../types/tennis';
+import { supabase, supabaseAdmin, SupabaseMatch } from '../lib/supabase';
 
-interface SupabaseMatch {
-  id: string;
-  seller_id: string;
-  seller_name: string;
-  seller_gender: string;
-  seller_age_group: string;
-  seller_ntrp: number;
-  seller_experience: number;
-  seller_play_style: string;
-  seller_career_type: string;
-  seller_certification_ntrp: string;
-  seller_certification_career: string;
-  seller_certification_youtube: string;
-  seller_certification_instagram: string;
-  seller_profile_image: string;
-  seller_view_count: number;
-  seller_like_count: number;
-  seller_avg_rating: number;
-  title: string;
-  date: string;
-  time: string;
-  end_time: string;
-  court: string;
-  description: string;
-  base_price: number;
-  initial_price: number;
-  current_price: number;
-  max_price: number;
-  expected_views: number;
-  expected_waiting_applicants: number;
-  expected_participants_male: number;
-  expected_participants_female: number;
-  expected_participants_total: number;
-  current_applicants_male: number;
-  current_applicants_female: number;
-  current_applicants_total: number;
-  match_type: string;
-  waiting_applicants: number;
-  ad_enabled: boolean;
-  ntrp_min: number;
-  ntrp_max: number;
-  weather: string;
-  location: string;
-  is_dummy: boolean;
-  created_at: string;
-}
+// 더 자연스럽고 다양한 더미 사용자 데이터
+const dummyUsers: User[] = [
+  // 여성 사용자들
+  {
+    id: 'dummy_f1',
+    name: 'aesthetic.vibes',
+    gender: '여성',
+    ageGroup: '20대',
+    ntrp: 4.2,
+    experience: 30,
+    playStyle: '공격형',
+    careerType: '대학선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'none', instagram: 'verified' },
+    profileImage: 'https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 1850,
+    likeCount: 142,
+    avgRating: 4.7,
+  },
+  {
+    id: 'dummy_f2',
+    name: 'moonlight.cafe',
+    gender: '여성',
+    ageGroup: '30대',
+    ntrp: 3.8,
+    experience: 42,
+    playStyle: '올라운드',
+    careerType: '실업선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'verified', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 2100,
+    likeCount: 189,
+    avgRating: 4.8,
+  },
+  {
+    id: 'dummy_f3',
+    name: 'cherry.blossom',
+    gender: '여성',
+    ageGroup: '20대',
+    ntrp: 3.5,
+    experience: 24,
+    playStyle: '수비형',
+    careerType: '동호인',
+    certification: { ntrp: 'pending', career: 'none', youtube: 'none', instagram: 'verified' },
+    profileImage: 'https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 980,
+    likeCount: 76,
+    avgRating: 4.4,
+  },
+  {
+    id: 'dummy_f4',
+    name: 'golden.hour',
+    gender: '여성',
+    ageGroup: '30대',
+    ntrp: 4.0,
+    experience: 36,
+    playStyle: '공격형',
+    careerType: '대학선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'none', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1484794/pexels-photo-1484794.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 1650,
+    likeCount: 128,
+    avgRating: 4.6,
+  },
+  {
+    id: 'dummy_f5',
+    name: 'vintage.soul',
+    gender: '여성',
+    ageGroup: '40대',
+    ntrp: 3.2,
+    experience: 18,
+    playStyle: '올라운드',
+    careerType: '동호인',
+    certification: { ntrp: 'none', career: 'none', youtube: 'none', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1858144/pexels-photo-1858144.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 720,
+    likeCount: 54,
+    avgRating: 4.2,
+  },
+  // 남성 사용자들
+  {
+    id: 'dummy_m1',
+    name: 'urban.explorer',
+    gender: '남성',
+    ageGroup: '30대',
+    ntrp: 4.5,
+    experience: 48,
+    playStyle: '공격형',
+    careerType: '실업선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'verified', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 2350,
+    likeCount: 198,
+    avgRating: 4.9,
+  },
+  {
+    id: 'dummy_m2',
+    name: 'midnight.rider',
+    gender: '남성',
+    ageGroup: '20대',
+    ntrp: 3.8,
+    experience: 30,
+    playStyle: '수비형',
+    careerType: '대학선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'none', instagram: 'pending' },
+    profileImage: 'https://images.pexels.com/photos/1674752/pexels-photo-1674752.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 1420,
+    likeCount: 89,
+    avgRating: 4.5,
+  },
+  {
+    id: 'dummy_m3',
+    name: 'coffee.addict',
+    gender: '남성',
+    ageGroup: '40대',
+    ntrp: 3.5,
+    experience: 60,
+    playStyle: '올라운드',
+    careerType: '동호인',
+    certification: { ntrp: 'pending', career: 'none', youtube: 'none', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 890,
+    likeCount: 67,
+    avgRating: 4.3,
+  },
+  {
+    id: 'dummy_m4',
+    name: 'pixel.artist',
+    gender: '남성',
+    ageGroup: '30대',
+    ntrp: 4.2,
+    experience: 54,
+    playStyle: '공격형',
+    careerType: '실업선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'none', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1484794/pexels-photo-1484794.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 1780,
+    likeCount: 134,
+    avgRating: 4.6,
+  },
+  {
+    id: 'dummy_m5',
+    name: 'vintage.dad',
+    gender: '남성',
+    ageGroup: '50대+',
+    ntrp: 3.0,
+    experience: 72,
+    playStyle: '수비형',
+    careerType: '동호인',
+    certification: { ntrp: 'none', career: 'none', youtube: 'none', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 650,
+    likeCount: 45,
+    avgRating: 4.1,
+  },
+  {
+    id: 'dummy_m6',
+    name: 'fresh.start',
+    gender: '남성',
+    ageGroup: '20대',
+    ntrp: 3.3,
+    experience: 18,
+    playStyle: '올라운드',
+    careerType: '동호인',
+    certification: { ntrp: 'none', career: 'none', youtube: 'pending', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 420,
+    likeCount: 32,
+    avgRating: 4.0,
+  },
+  {
+    id: 'dummy_f6',
+    name: 'ocean.breeze',
+    gender: '여성',
+    ageGroup: '30대',
+    ntrp: 3.7,
+    experience: 33,
+    playStyle: '수비형',
+    careerType: '대학선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'none', instagram: 'verified' },
+    profileImage: 'https://images.pexels.com/photos/1542085/pexels-photo-1542085.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 1320,
+    likeCount: 98,
+    avgRating: 4.5,
+  },
+  {
+    id: 'dummy_f7',
+    name: 'starry.night',
+    gender: '여성',
+    ageGroup: '20대',
+    ntrp: 4.3,
+    experience: 27,
+    playStyle: '공격형',
+    careerType: '대학선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'verified', instagram: 'verified' },
+    profileImage: 'https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 2890,
+    likeCount: 245,
+    avgRating: 4.9,
+  },
+  {
+    id: 'dummy_m7',
+    name: 'silent.storm',
+    gender: '남성',
+    ageGroup: '40대',
+    ntrp: 3.8,
+    experience: 45,
+    playStyle: '올라운드',
+    careerType: '실업선수',
+    certification: { ntrp: 'verified', career: 'verified', youtube: 'none', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1681010/pexels-photo-1681010.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 1560,
+    likeCount: 112,
+    avgRating: 4.4,
+  },
+  {
+    id: 'dummy_f8',
+    name: 'cozy.home',
+    gender: '여성',
+    ageGroup: '40대',
+    ntrp: 2.8,
+    experience: 15,
+    playStyle: '수비형',
+    careerType: '동호인',
+    certification: { ntrp: 'none', career: 'none', youtube: 'none', instagram: 'none' },
+    profileImage: 'https://images.pexels.com/photos/1858144/pexels-photo-1858144.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+    viewCount: 380,
+    likeCount: 28,
+    avgRating: 3.9,
+  },
+];
+
+// 매치 제목 템플릿 (스매시 앱, 테니스 프렌즈 카페 스타일)
+const matchTitleTemplates = [
+  '강남 테니스클럽에서 함께 치실 분!',
+  '홍대 실내코트 복식 파트너 구해요~',
+  '잠실 테니스장 레슨형 매치 (초보 환영)',
+  '신촌 테니스클럽 주말 특별 매치',
+  '서초 테니스센터 평일 오후 게임 모집',
+  '여의도 테니스장 황금시간대 매치',
+  '건대 스포츠센터에서 복식 한 게임!',
+  '압구정 테니스클럽 고수들과 함께',
+  '성수동 테니스장 초중급자 대환영',
+  '이태원 실내코트 여성분들만!',
+  '용산 테니스장 남성 단식 게임',
+  '마포 스포츠센터 혼복 매치 모집중',
+  '송파 테니스클럽 레슨 후 게임해요',
+  '노원 테니스장 주말 오전 매치',
+  '분당 테니스클럽 프리미엄 게임',
+  '강동 테니스센터 복식 매치 참여자 모집',
+  '관악 테니스장 초급자도 환영해요!',
+  '동작 스포츠센터 평일 저녁 게임',
+  '영등포 테니스클럽 단식 매치',
+  '중구 테니스장 점심시간 게임 어때요?',
+  '올림픽공원 테니스장 토너먼트식 매치',
+  '반포 테니스클럽 여성 복식 모집',
+  '청담 프리미엄 테니스장 특별 매치',
+  '한강공원 테니스장 야외 게임',
+  '목동 테니스센터 실력자 매치',
+  '양재 테니스클럽 평일 모닝 게임',
+  '강서 테니스장 핫한 매치',
+  '노량진 테니스센터 직장인 매치',
+  '상암 테니스장 주말 특별 이벤트',
+  '종로 테니스클럽 도심 속 힐링 게임'
+];
+
+// 코트 위치 템플릿
+const courtTemplates = [
+  '양재테니스장',
+  '내곡테니스장',
+  '올림픽공원테니스장',
+  '초안산테니스장',
+  '목동테니스장',
+  '양천테니스장',
+  '항공대테니스장',
+  '귀뚜라미테니스장',
+  '장충테니스장',
+  '한남테니스장',
+  '반포테니스장',
+  '시립대테니스장',
+  '다락원테니스장',
+  '테니스마스터',
+  '테니스엠파이어',
+  '루트82테니스장',
+  '송도달빛공원테니스장',
+  '부천종합운동장',
+  '호원실내테니스장',
+  '김포테니스장',
+  '서울대테니스장',
+  '성사테니스장',
+  '구리왕숙테니스장',
+  '만석테니스장',
+  '동백테니스장',
+  '성남시립테니스장',
+  '봉은테니스장',
+  '서울숲테니스장',
+  '성서체육공원테니스장',
+  '남구종합운동장',
+  '사직운동장테니스장',
+  '망원한강공원테니스장',
+  '서남물테니스장',
+  '중랑구립테니스장',
+  '관문테니스장',
+  '문원테니스장',
+  '계양테니스장',
+  '학익배수지테니스장',
+  '지금배수지테니스장',
+  '안양시민운동장테니스장',
+  '운정체육공원테니스장',
+  '용인시민체육공원',
+  '탄천체육공원',
+  '히든테니스파크',
+  '파미르테니스장'
+];
+
+// 매치 설명 템플릿
+const descriptionTemplates = [
+  '함께 재미있게 운동해요! 초보자도 대환영입니다 😊',
+  '실력 향상을 위한 좋은 기회예요. 많은 참여 부탁드려요!',
+  '편안한 분위기에서 테니스를 즐겨봐요~',
+  '경험 많은 플레이어들과 함께하는 매치입니다 🎾',
+  '실력 상관없이 모두 환영해요! 함께 즐겨요!',
+  '좋은 코트에서 최고의 게임을 만들어봐요 ⭐',
+  '테니스 실력 향상과 새로운 인맥을 만들어보세요!',
+  '프리미엄 코트에서 진행되는 특별한 매치예요 🏆',
+  '초중급자 환영! 함께 성장해요 💪',
+  '고수들과 함께하는 수준 높은 게임입니다',
+  '운동 후 간단한 식사도 함께 해요 🍽️',
+  '정기 모임으로 발전시켜 나가요!',
+  '매너 있는 분들만 참여해주세요 🙏',
+  '즐거운 테니스, 건강한 만남! 💚',
+  '새로운 테니스 친구들을 만나보세요 👥',
+  '실력보다는 매너가 우선이에요!',
+  '코치님과 함께하는 레슨형 매치예요 📚',
+  '주말 특별 이벤트 매치입니다 🎉',
+  '평일 오후 여유로운 시간에 함께해요 ☀️',
+  '테니스 동호회 정기 모임이에요!',
+  '날씨 좋은 날 야외 코트에서 🌤️',
+  '스트레스 해소하러 오세요! 💆‍♀️',
+  '테니스로 건강한 하루 시작해요 🌅',
+  '실내 코트라 날씨 걱정 없어요!',
+  '친목 도모와 실력 향상 두 마리 토끼 🐰',
+  '게임 후 카페에서 수다도 떨어요 ☕',
+  '운동 부족한 직장인들 모여라! 💼',
+  '주부님들 환영! 오전 시간 활용해요 🏠',
+  '학생들도 환영! 방학 특별 매치 🎓',
+  '시니어분들과 함께하는 여유로운 게임 👴👵'
+];
+
+// 지역 템플릿
+const locationTemplates = [
+  '강남구', '서초구', '마포구', '송파구', '서대문구',
+  '용산구', '성동구', '광진구', '노원구', '분당구',
+  '강동구', '관악구', '동작구', '영등포구', '중구'
+];
 
 export class DataGenerator {
-  private static readonly LOCATIONS = [
-    '강남구 테니스장', '서초구 테니스장', '송파구 테니스장', '강동구 테니스장',
-    '마포구 테니스장', '용산구 테니스장', '성동구 테니스장', '광진구 테니스장',
-    '종로구 테니스장', '중구 테니스장', '성북구 테니스장', '강북구 테니스장',
-    '도봉구 테니스장', '노원구 테니스장', '은평구 테니스장', '서대문구 테니스장'
-  ];
-
-  private static readonly COURTS = ['A코트', 'B코트', 'C코트', 'D코트', 'E코트'];
-
-  private static readonly PLAY_STYLES = [
-    '베이스라이너', '올라운드', '공격형', '수비형', 
-    '네트플레이어', '파워형', '컨트롤형', '카운터형'
-  ];
-
-  private static readonly CAREER_TYPES = [
-    '레슨프로', '생활체육', '대학선수', '실업팀', 
-    '주니어코치', '체육관 운영', '프리랜서', '동호회 회장'
-  ];
-
-  private static readonly MATCH_TITLES = [
-    '강남 프리미엄 매치', '서초 주말 특별전', '송파 실력자 모임',
-    '마포 친선 경기', '용산 레벨업 매치', '성동 테니스 클럽',
-  ];
-
-  private static readonly DESCRIPTIONS = [
-    '실력 향상을 위한 진지한 매치입니다. 매너있는 분들만 참여 부탁드립니다.',
-    '즐거운 테니스를 위한 친선 경기입니다. 초보자도 환영합니다!',
-    '레벨 높은 매치를 원하시는 분들을 위한 특별 경기입니다.',
-    '주말 오후 여유로운 테니스 매치입니다. 편안한 분위기에서 즐겨요.',
-    '실전 감각을 기르고 싶은 분들을 위한 실력향상 매치입니다.'
-  ];
-
   /**
-   * 새로운 매치 하나 생성
+   * 새로운 더미 매치 생성 (마감 상태로)
    */
   static generateNewMatch(): Match {
-    const sellerId = `seller_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
-    const matchId = `match_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    // 랜덤 판매자 선택
+    const seller = dummyUsers[Math.floor(Math.random() * dummyUsers.length)];
     
-    // 판매자 정보 생성
-    const sellerGender = Math.random() > 0.3 ? '남성' : '여성';
-    const sellerName = sellerGender === '남성' ? 
-      `김코치${Math.floor(Math.random() * 100)}` : 
-      `이코치${Math.floor(Math.random() * 100)}`;
+    // 랜덤 날짜 생성 (오늘부터 7일 이내)
+    const today = new Date();
+    const futureDate = new Date(today.getTime() + Math.random() * 7 * 24 * 60 * 60 * 1000);
+    const dateString = futureDate.toISOString().split('T')[0];
     
-    const seller: Seller = {
-      id: sellerId,
-      name: sellerName,
-      gender: sellerGender,
-      ageGroup: ['20-25', '26-30', '31-35', '36-40', '41-45'][Math.floor(Math.random() * 5)] as any,
-      ntrp: Math.round((3.0 + Math.random() * 3.5) * 10) / 10, // 3.0 ~ 6.5
-      experience: 12 + Math.floor(Math.random() * 120), // 1~10년 경력
-      playStyle: this.PLAY_STYLES[Math.floor(Math.random() * this.PLAY_STYLES.length)],
-      careerType: this.CAREER_TYPES[Math.floor(Math.random() * this.CAREER_TYPES.length)],
-      certification: {
-        ntrp: Math.random() > 0.7 ? 'verified' : 'pending',
-        career: Math.random() > 0.8 ? 'verified' : 'none',
-        youtube: Math.random() > 0.9 ? 'verified' : 'none',
-        instagram: Math.random() > 0.6 ? 'verified' : 'none',
-      },
-      profileImage: `https://picsum.photos/seed/${sellerId}/400/400`,
-      viewCount: 50 + Math.floor(Math.random() * 1000),
-      likeCount: 10 + Math.floor(Math.random() * 200),
-      avgRating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10, // 3.5 ~ 5.0
-    };
+    // 랜덤 시간 생성
+    const hours = Math.floor(Math.random() * 12) + 9; // 9시-21시
+    const minutes = Math.random() < 0.5 ? '00' : '30';
+    const timeString = `${hours.toString().padStart(2, '0')}:${minutes}`;
+    
+    // 종료 시간 (2시간 후)
+    const endHours = hours + 2;
+    const endTimeString = `${endHours.toString().padStart(2, '0')}:${minutes}`;
+    
+    // 매치 타입 랜덤 선택
+    const matchType = Math.random() < 0.7 ? '복식' : '단식';
+    
+    // 예상 참가자 수 설정
+    const expectedParticipants = matchType === '복식' 
+      ? { male: 2, female: 2, total: 4 }
+      : { male: 1, female: 0, total: 1 };
+    
+    // 마감 상태로 설정 (currentApplicants = expectedParticipants)
+    const currentApplicants = { ...expectedParticipants };
+    
+    // 기본 가격 설정
+    const basePrice = Math.floor(Math.random() * 20000) + 25000; // 25,000-45,000원
+    
+    // 초기 가격 계산 (판매자 특성 반영)
+    let initialPrice = basePrice;
+    
+    // 특별 조건: 모집인원이 남성만이고 판매자 NTRP가 3.7 이하인 경우
+    const isMaleOnlyLowNtrp = expectedParticipants.male > 0 && expectedParticipants.female === 0 && seller.ntrp <= 3.7;
+    
+    if (isMaleOnlyLowNtrp) {
+      // 특별 조건: basePrice와 initialPrice를 같게 설정
+      initialPrice = basePrice;
+    } else {
+      // 일반적인 초기가격 계산
+      // 여성 판매자 할증
+      if (seller.gender === '여성') {
+        initialPrice *= 1.15;
+      }
+      
+      // 고수 할증
+      if (seller.ntrp >= 4.0) {
+        initialPrice *= 1.1;
+      }
+      
+      // 황금시간대 할증 (18-21시)
+      if (hours >= 18 && hours <= 21) {
+        initialPrice *= 1.1;
+      }
+    }
+    
+    initialPrice = Math.round(initialPrice / 1000) * 1000;
+    
+    // 현재 가격 (초기가격에서 약간 상승)
+    const currentPrice = Math.round(initialPrice * (1 + Math.random() * 0.3) / 1000) * 1000;
+    
+    // 대기자 수 (0-2명으로 제한)
+    const waitingApplicants = Math.floor(Math.random() * 3); // 0-2명
+    
+    // 랜덤으로 마감 상태 결정 (80% 확률)
+    const isClosed = Math.random() < 0.8;
+    
+    // NTRP 요구사항
+    const ntrpMin = Math.floor(Math.random() * 3) + 2; // 2-4
+    const ntrpMax = ntrpMin + Math.floor(Math.random() * 2) + 1; // ntrpMin + 1-2
+    
+    // 대기자 목록 생성 (적은 수)
+    const waitingList = [];
+    for (let i = 0; i < waitingApplicants; i++) {
+      const waiterUser = dummyUsers[Math.floor(Math.random() * dummyUsers.length)];
+      waitingList.push({
+        id: `waiter_${Date.now()}_${i}`,
+        userId: waiterUser.id,
+        userName: waiterUser.name,
+        gender: waiterUser.gender,
+        ntrp: waiterUser.ntrp,
+        joinedAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'waiting' as const,
+      });
+    }
 
-    // 매치 기본 정보
-    const basePrice = 15000 + Math.floor(Math.random() * 35000); // 15,000 ~ 50,000
-    const initialPrice = basePrice + Math.floor(Math.random() * 10000);
-    const maxPrice = Math.min(initialPrice * 2, 100000);
-    
-    // 날짜 설정 (오늘부터 7일 이내)
-    const matchDate = new Date();
-    matchDate.setDate(matchDate.getDate() + Math.floor(Math.random() * 7));
-    
-    // 시간 설정 (오전 9시 ~ 오후 8시)
-    const startHour = 9 + Math.floor(Math.random() * 12);
-    const startTime = `${startHour.toString().padStart(2, '0')}:00`;
-    const endTime = `${(startHour + 2).toString().padStart(2, '0')}:00`;
-
-    // 참가자 수 설정
-    const isDoubles = Math.random() > 0.3;
-    const expectedParticipants = isDoubles ? 
-      { male: 2, female: 2, total: 4 } : 
-      { male: 1, female: 1, total: 2 };
-    
-    const currentMale = Math.floor(Math.random() * (expectedParticipants.male + 1));
-    const currentFemale = Math.floor(Math.random() * (expectedParticipants.female + 1));
-
-    return {
-      id: matchId,
+    const newMatch: Match = {
+      id: `generated_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       sellerId: seller.id,
       seller: seller,
-      title: this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)],
-      date: matchDate.toISOString().split('T')[0],
-      time: startTime,
-      endTime: endTime,
-      court: this.COURTS[Math.floor(Math.random() * this.COURTS.length)],
-      description: this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)],
+      title: matchTitleTemplates[Math.floor(Math.random() * matchTitleTemplates.length)],
+      date: dateString,
+      time: timeString,
+      endTime: endTimeString,
+      court: courtTemplates[Math.floor(Math.random() * courtTemplates.length)],
+      description: descriptionTemplates[Math.floor(Math.random() * descriptionTemplates.length)],
       basePrice: basePrice,
       initialPrice: initialPrice,
-      currentPrice: initialPrice + Math.floor(Math.random() * (maxPrice - initialPrice)),
-      maxPrice: maxPrice,
-      expectedViews: 100 + Math.floor(Math.random() * 500),
-      expectedWaitingApplicants: Math.floor(Math.random() * 10),
+      currentPrice: currentPrice,
+      maxPrice: basePrice * 3,
+      expectedViews: Math.floor(Math.random() * 1000) + 500,
+      expectedWaitingApplicants: Math.floor(waitingApplicants / 2),
       expectedParticipants: expectedParticipants,
-      currentApplicants: {
-        male: currentMale,
-        female: currentFemale, 
-        total: currentMale + currentFemale 
-      },
-      matchType: isDoubles ? '복식' : '단식',
-      waitingApplicants: Math.floor(Math.random() * 8),
-      waitingList: [], // 빈 배열로 시작
-      participants: [], // 빈 배열로 시작
-      adEnabled: Math.random() > 0.7,
-      ntrpRequirement: {
-        min: 3.0 + Math.floor(Math.random() * 2),
-        max: 4.5 + Math.floor(Math.random() * 2)
-      },
-      weather: Math.random() > 0.8 ? '흐림' : '맑음',
-      location: this.LOCATIONS[Math.floor(Math.random() * this.LOCATIONS.length)],
+      currentApplicants: currentApplicants, // 마감 상태
+      matchType: matchType,
+      waitingApplicants: waitingApplicants,
+      waitingList: waitingList,
+      participants: [], // 새로 생성되는 매치는 참가자 없음
+      adEnabled: Math.random() < 0.6, // 60% 확률로 광고 활성화
+      ntrpRequirement: { min: ntrpMin, max: ntrpMax },
+      weather: ['맑음', '흐림'][Math.floor(Math.random() * 2)] as '맑음' | '흐림',
+      location: locationTemplates[Math.floor(Math.random() * locationTemplates.length)],
       createdAt: new Date().toISOString(),
-      isClosed: false,
+      isClosed: isClosed,
     };
+    
+    // 마감된 매치의 경우 참가자 수를 예상 참가자 수와 동일하게 설정하고 대기자 수를 0으로 설정
+    if (isClosed) {
+      newMatch.currentApplicants = { ...newMatch.expectedParticipants };
+      newMatch.waitingApplicants = 0;
+      newMatch.waitingList = [];
+    }
+
+    return newMatch;
   }
 
   /**
-   * Match를 Supabase 형식으로 변환
+   * Match 객체를 Supabase 형식으로 변환
    */
-static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
-  return {
-    id: match.id, // 이 라인 추가
-    seller_id: match.seller.id,
+  private static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at' | 'is_closed'> {
+    return {
+      id: match.id,
+      seller_id: match.sellerId,
       seller_name: match.seller.name,
       seller_gender: match.seller.gender,
       seller_age_group: match.seller.ageGroup,
@@ -228,18 +541,18 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
   }
 
   /**
-   * Supabase 형식을 Match로 변환
+   * Supabase 형식을 Match 객체로 변환
    */
-  static supabaseToMatchFormat(supabaseMatch: SupabaseMatch): Match {
-    const seller: Seller = {
+  private static supabaseToMatchFormat(supabaseMatch: SupabaseMatch): Match {
+    const seller: User = {
       id: supabaseMatch.seller_id,
       name: supabaseMatch.seller_name,
       gender: supabaseMatch.seller_gender as '남성' | '여성',
-      ageGroup: supabaseMatch.seller_age_group as any,
+      ageGroup: supabaseMatch.seller_age_group as '20대' | '30대' | '40대' | '50대+',
       ntrp: supabaseMatch.seller_ntrp,
       experience: supabaseMatch.seller_experience,
-      playStyle: supabaseMatch.seller_play_style,
-      careerType: supabaseMatch.seller_career_type,
+      playStyle: supabaseMatch.seller_play_style as '공격형' | '수비형' | '올라운드',
+      careerType: supabaseMatch.seller_career_type as '동호인' | '대학선수' | '실업선수',
       certification: {
         ntrp: supabaseMatch.seller_certification_ntrp as 'none' | 'pending' | 'verified',
         career: supabaseMatch.seller_certification_career as 'none' | 'pending' | 'verified',
@@ -295,11 +608,11 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
   }
 
   /**
-   * 매일 새로운 더미 매치들 생성 및 Supabase에 저장 - 10개로 변경
+   * 매일 새로운 더미 매치들 생성 및 Supabase에 저장
    */
-  static async generateAndSaveDailyMatches(count: number = 10): Promise<Match[]> {
+  static async generateAndSaveDailyMatches(count: number = 20): Promise<Match[]> {
     try {
-      // Supabase Admin 연결 확인
+      // Supabase 연결 확인
       if (!supabaseAdmin) {
         console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 로컬 더미 데이터만 사용합니다.');
         return [];
@@ -312,7 +625,7 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
       }
       
       try {
-        // Supabase에 저장 (supabaseAdmin 사용)
+        // Supabase에 저장
         const supabaseMatches = newMatches.map(match => this.matchToSupabaseFormat(match));
         
         const { data, error } = await supabaseAdmin
@@ -320,55 +633,38 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
           .insert(supabaseMatches);
         
         if (error) {
-          console.log('ℹ️ Supabase 저장 실패:', {
-            message: error.message,
-            code: error.code,
-            details: error.details,
-            hint: error.hint
-          });
+          console.log('ℹ️ Supabase 저장 실패 (환경변수 미설정 또는 권한 부족):', error.message);
           console.log('로컬 더미 데이터를 사용합니다.');
           return [];
         }
         
         console.log(`✅ ${newMatches.length}개의 새로운 더미 매치가 Supabase에 저장되었습니다.`);
         return newMatches;
-      } catch (supabaseError: any) {
-        console.log('ℹ️ Supabase 저장 중 네트워크 오류:', {
-          message: supabaseError?.message || '알 수 없는 오류',
-          code: supabaseError?.code,
-          name: supabaseError?.name
-        });
+      } catch (supabaseError) {
+        console.log('ℹ️ Supabase 저장 중 네트워크 오류 (환경변수 미설정 또는 연결 실패):', supabaseError);
         console.log('로컬 더미 데이터를 사용합니다.');
         return [];
       }
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 생성 중 오류:', {
-        message: error?.message || '알 수 없는 오류',
-        name: error?.name
-      });
+    } catch (error) {
+      console.log('ℹ️ 더미 매치 생성 중 오류:', error);
       console.log('로컬 더미 데이터를 사용합니다.');
       return [];
     }
   }
 
   /**
-   * Supabase에서 모든 매치 가져오기 - 오류 처리 강화
+   * Supabase에서 모든 매치 가져오기
    */
   static async getAllMatches(originalMatches: Match[]): Promise<Match[]> {
     try {
-      // Supabase 연결 확인 (일반 클라이언트로 읽기)
+      // Supabase 연결 확인
       if (!supabase) {
         console.log('ℹ️ Supabase가 설정되지 않음 또는 네이티브 환경. 로컬 데이터만 사용합니다.');
         return originalMatches;
       }
 
       try {
-        // 타임아웃 설정
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('데이터 로드 시간 초과')), 10000); // 10초 타임아웃
-        });
-
-        const queryPromise = supabase
+        const { data: supabaseMatches, error } = await supabase
           .from('matches')
           .select(`
             id, seller_id, seller_name, seller_gender, seller_age_group, seller_ntrp, seller_experience,
@@ -383,14 +679,8 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
           `)
           .order('created_at', { ascending: false });
         
-        const { data: supabaseMatches, error } = await Promise.race([queryPromise, timeoutPromise]);
-        
         if (error) {
-          console.log('ℹ️ Supabase 조회 실패:', {
-            message: error.message,
-            code: error.code,
-            details: error.details
-          });
+          console.log('ℹ️ Supabase 조회 실패:', error.message);
           console.log('로컬 데이터를 사용합니다.');
           return originalMatches;
         }
@@ -400,52 +690,35 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
         
         // 더미 매치들과 기본 매치들 합치기
         return [...convertedMatches, ...originalMatches];
-      } catch (networkError: any) {
-        if (networkError?.message?.includes('시간 초과')) {
-          console.log('ℹ️ 데이터 로드 시간 초과. 로컬 데이터를 사용합니다.');
-        } else if (networkError?.message?.includes('Failed to fetch')) {
-          console.log('ℹ️ Supabase 네트워크 연결 실패 (환경변수 미설정 또는 네트워크 오류). 로컬 데이터를 사용합니다.');
-        } else {
-          console.log('ℹ️ Supabase 연결 중 예상치 못한 오류:', {
-            message: networkError?.message || '알 수 없는 오류',
-            name: networkError?.name
-          });
-        }
+      } catch (networkError) {
+        console.log('ℹ️ Supabase 네트워크 연결 실패 (환경변수 미설정 또는 네트워크 오류):', networkError);
+        console.log('로컬 데이터를 사용합니다.');
         return originalMatches;
       }
-    } catch (error: any) {
-      console.log('ℹ️ 매치 데이터 조회 중 오류 (네이티브 환경에서는 정상):', {
-        message: error?.message || '알 수 없는 오류',
-        name: error?.name
-      });
+    } catch (error) {
+      console.log('ℹ️ 매치 데이터 조회 중 오류 (네이티브 환경에서는 정상):', error);
       console.log('로컬 데이터를 사용합니다.');
       return originalMatches;
     }
   }
 
   /**
-   * 마지막 생성 날짜 확인 (Supabase에서) - supabaseAdmin 사용
+   * 마지막 생성 날짜 확인 (Supabase에서)
    */
   static async getLastGenerationDate(): Promise<string | null> {
     try {
-      // Supabase Admin 연결 확인 (app_settings는 service_role만 쓸 수 있음)
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 클라이언트가 초기화되지 않음');
+      // Supabase 연결 확인
+      if (!supabase) {
+        console.log('ℹ️ Supabase 클라이언트가 초기화되지 않음');
         return null;
       }
 
       try {
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('요청 시간 초과')), 5000);
-        });
-
-        const queryPromise = supabaseAdmin
+        const { data, error } = await supabase
           .from('app_settings')
           .select('value')
           .eq('key', 'last_dummy_generation_date')
           .single();
-
-        const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
         
         if (error || !data) {
           console.log('ℹ️ 마지막 생성 날짜 데이터 없음 또는 오류:', error?.message);
@@ -453,30 +726,24 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
         }
         
         return data.value;
-      } catch (networkError: any) {
-        if (networkError?.message?.includes('시간 초과')) {
-          console.log('ℹ️ 마지막 생성 날짜 확인 시간 초과');
-        } else if (networkError?.message?.includes('Failed to fetch')) {
-          console.log('ℹ️ Supabase Admin 네트워크 연결 실패');
-        } else {
-          console.log('ℹ️ 마지막 생성 날짜 확인 중 네트워크 오류:', networkError?.message);
-        }
+      } catch (networkError) {
+        console.log('ℹ️ Supabase 네트워크 연결 실패 (환경변수 미설정 또는 네트워크 오류):', networkError);
         return null;
       }
-    } catch (error: any) {
-      console.log('ℹ️ 마지막 생성 날짜 조회 실패:', error?.message);
+    } catch (error) {
+      console.log('ℹ️ 마지막 생성 날짜 조회 실패 (환경변수 미설정):', error);
       return null;
     }
   }
 
   /**
-   * 새로운 더미 매치 생성이 필요한지 확인 - 오류 처리 강화
+   * 새로운 더미 매치 생성이 필요한지 확인
    */
   static async shouldGenerateNewMatches(): Promise<boolean> {
     try {
-      // Supabase Admin 연결 확인
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 미연결 - 더미 매치 생성 건너뜀');
+      // Supabase 연결 확인
+      if (!supabase) {
+        console.log('ℹ️ Supabase 미연결 또는 네이티브 환경 - 더미 매치 생성 건너뜀');
         return false;
       }
 
@@ -485,35 +752,30 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
         const today = new Date().toDateString();
         
         return !lastDate || lastDate !== today;
-      } catch (networkError: any) {
-        console.log('ℹ️ 더미 매치 생성 확인 중 네트워크 오류:', networkError?.message);
+      } catch (networkError) {
+        console.log('ℹ️ 더미 매치 생성 확인 중 네트워크 오류:', networkError);
         return false;
       }
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 생성 확인 중 오류:', error?.message);
+    } catch (error) {
+      console.log('ℹ️ 더미 매치 생성 확인 중 오류:', error);
       return false;
     }
   }
 
   /**
-   * 마지막 생성 날짜 업데이트 (Supabase에) - supabaseAdmin 사용
+   * 마지막 생성 날짜 업데이트 (Supabase에)
    */
   static async updateLastGenerationDate(): Promise<void> {
     try {
-      // Supabase Admin 연결 확인 (app_settings 쓰기는 service_role만 가능)
+      // Supabase 연결 확인
       if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음');
         return;
       }
 
       try {
         const today = new Date().toDateString();
         
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('업데이트 시간 초과')), 5000);
-        });
-
-        const updatePromise = supabaseAdmin
+        const { error } = await supabaseAdmin
           .from('app_settings')
           .upsert({
             key: 'last_dummy_generation_date',
@@ -521,27 +783,19 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
             updated_at: new Date().toISOString(),
           }, { onConflict: 'key' });
         
-        const { error } = await Promise.race([updatePromise, timeoutPromise]);
-        
         if (error) {
           console.log('ℹ️ 마지막 생성 날짜 업데이트 실패:', error.message);
-        } else {
-          console.log('✅ 마지막 생성 날짜 업데이트 완료');
         }
-      } catch (networkError: any) {
-        if (networkError?.message?.includes('시간 초과')) {
-          console.log('ℹ️ 마지막 생성 날짜 업데이트 시간 초과');
-        } else {
-          console.log('ℹ️ Supabase Admin 네트워크 연결 실패:', networkError?.message);
-        }
+      } catch (networkError) {
+        console.log('ℹ️ Supabase 네트워크 연결 실패:', networkError);
       }
-    } catch (error: any) {
-      console.log('ℹ️ 마지막 생성 날짜 업데이트 중 오류:', error?.message);
+    } catch (error) {
+      console.log('ℹ️ 마지막 생성 날짜 업데이트 중 오류:', error);
     }
   }
 
   /**
-   * 더미 매치 개수 조회 - 오류 처리 강화
+   * 더미 매치 개수 조회
    */
   static async getDummyMatchCount(): Promise<number> {
     try {
@@ -549,35 +803,93 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
         return 0;
       }
       
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('카운트 조회 시간 초과')), 5000);
-      });
-
-      const queryPromise = supabaseAdmin
+      const { count, error } = await supabaseAdmin
         .from('matches')
         .select('*', { count: 'exact', head: true })
         .eq('is_dummy', true);
       
-      const { count, error } = await Promise.race([queryPromise, timeoutPromise]);
-      
       if (error) {
-        console.error('더미 매치 개수 조회 오류:', error.message);
+        console.error('더미 매치 개수 조회 오류:', error);
         return 0;
       }
       
       return count || 0;
-    } catch (error: any) {
-      if (error?.message?.includes('시간 초과')) {
-        console.error('더미 매치 개수 조회 시간 초과');
-      } else {
-        console.error('더미 매치 개수 조회 중 오류:', error?.message);
-      }
+    } catch (error) {
+      console.error('더미 매치 개수 조회 중 오류:', error);
       return 0;
     }
   }
 
   /**
-   * 오래된 더미 매치 정리 (선택적) - 오류 처리 강화
+   * 모든 더미 매치 삭제
+   */
+  static async deleteAllDummyMatches(): Promise<{ success: boolean; deletedCount: number; error?: string }> {
+    try {
+      if (!supabaseAdmin) {
+        return { success: false, deletedCount: 0, error: 'Supabase Admin 클라이언트가 설정되지 않았습니다.' };
+      }
+
+      console.log('🗑️ 기존 더미 매치 삭제 시작...');
+
+      // 먼저 삭제할 더미 매치 개수 확인
+      const beforeCount = await this.getDummyMatchCount();
+      console.log(`삭제 대상 더미 매치: ${beforeCount}개`);
+
+      if (beforeCount === 0) {
+        return { success: true, deletedCount: 0 };
+      }
+
+      // 더미 매치 삭제
+      const { error } = await supabaseAdmin
+        .from('matches')
+        .delete()
+        .eq('is_dummy', true);
+
+      if (error) {
+        console.error('더미 매치 삭제 오류:', error);
+        return { success: false, deletedCount: 0, error: error.message };
+      }
+
+      // 삭제 후 개수 확인
+      const afterCount = await this.getDummyMatchCount();
+      const deletedCount = beforeCount - afterCount;
+
+      console.log(`✅ 더미 매치 삭제 완료: ${deletedCount}개 삭제됨`);
+      
+      return { success: true, deletedCount };
+    } catch (error) {
+      console.error('더미 매치 삭제 중 오류:', error);
+      return { success: false, deletedCount: 0, error: '더미 매치 삭제 중 오류가 발생했습니다.' };
+    }
+  }
+
+  /**
+   * 더미 매치 개수 조회
+  static async getDummyMatchCount(): Promise<number> {
+    try {
+      if (!supabaseAdmin) {
+        return 0;
+      }
+      
+      const { count, error } = await supabaseAdmin
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_dummy', true);
+      
+      if (error) {
+        console.error('더미 매치 개수 조회 오류:', error);
+        return 0;
+      }
+      
+      return count || 0;
+    } catch (error) {
+      console.error('더미 매치 개수 조회 중 오류:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * 오래된 더미 매치 정리 (선택적)
    */
   static async cleanupOldDummyMatches(keepCount: number = 500): Promise<void> {
     try {
@@ -586,21 +898,15 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
       }
       
       // 가장 오래된 더미 매치들 조회
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('정리 작업 시간 초과')), 10000);
-      });
-
-      const queryPromise = supabaseAdmin
+      const { data: oldMatches, error: selectError } = await supabaseAdmin
         .from('matches')
         .select('id')
         .eq('is_dummy', true)
         .order('created_at', { ascending: true })
-        .limit(1000);
-      
-      const { data: oldMatches, error: selectError } = await Promise.race([queryPromise, timeoutPromise]);
+        .limit(1000); // 충분히 많은 수로 조회
       
       if (selectError || !oldMatches) {
-        console.error('오래된 매치 조회 오류:', selectError?.message);
+        console.error('오래된 매치 조회 오류:', selectError);
         return;
       }
       
@@ -609,25 +915,19 @@ static matchToSupabaseFormat(match: Match): Omit<SupabaseMatch, 'created_at'> {
         const toDelete = oldMatches.slice(0, oldMatches.length - keepCount);
         const idsToDelete = toDelete.map(m => m.id);
         
-        const deletePromise = supabaseAdmin
+        const { error: deleteError } = await supabaseAdmin
           .from('matches')
           .delete()
           .in('id', idsToDelete);
-
-        const { error: deleteError } = await Promise.race([deletePromise, timeoutPromise]);
         
         if (deleteError) {
-          console.error('오래된 매치 삭제 오류:', deleteError.message);
+          console.error('오래된 매치 삭제 오류:', deleteError);
         } else {
           console.log(`🗑️ ${toDelete.length}개의 오래된 더미 매치가 삭제되었습니다.`);
         }
       }
-    } catch (error: any) {
-      if (error?.message?.includes('시간 초과')) {
-        console.error('오래된 매치 정리 시간 초과');
-      } else {
-        console.error('오래된 매치 정리 중 오류:', error?.message);
-      }
+    } catch (error) {
+      console.error('오래된 매치 정리 중 오류:', error);
     }
   }
 }

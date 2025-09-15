@@ -24,6 +24,7 @@ export default function HomeScreen() {
   const { user, login, logout } = useAuth();
   const { isAdmin } = useAdmin();
   const { matches: displayMatches, isLoadingMatches } = useMatches();
+  const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'female' | 'time' | 'ntrp'>('popular');
@@ -36,6 +37,49 @@ export default function HomeScreen() {
     return () => {
       mounted.current = false;
     };
+  }, []);
+
+  // 로컬 관리자 토글 상태 로드
+  useEffect(() => {
+    const loadAdminStatus = async () => {
+      try {
+        let adminStatus = false;
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined') {
+            adminStatus = localStorage.getItem('isAdmin') === 'true';
+            const handleStorageChange = (e: StorageEvent) => {
+              if (e.key === 'isAdmin') {
+                if (mounted.current) {
+                  setLocalAdminToggleStatus(e.newValue === 'true');
+                }
+              }
+            };
+            const handleAdminToggle = () => {
+              loadAdminStatus();
+            };
+            window.addEventListener('storage', handleStorageChange);
+            window.addEventListener('adminToggle', handleAdminToggle);
+            return () => {
+              window.removeEventListener('storage', handleStorageChange);
+              window.removeEventListener('adminToggle', handleAdminToggle);
+            };
+          }
+        } else {
+          const stored = await AsyncStorage.getItem('isAdmin');
+          adminStatus = stored === 'true';
+        }
+        if (mounted.current) {
+          setLocalAdminToggleStatus(adminStatus);
+        }
+      } catch (error) {
+        console.error('관리자 상태 로딩 오류:', error);
+        if (mounted.current) {
+          setLocalAdminToggleStatus(false);
+        }
+      }
+    };
+    loadAdminStatus();
+
   }, []);
 
   const sortedMatches = [...displayMatches].sort((a, b) => {
@@ -96,6 +140,36 @@ export default function HomeScreen() {
     await login(username, '1234');
   };
 
+  const toggleAdminMode = () => {
+    const toggleAdminStatus = async () => {
+      try {
+        const currentAdminStatus = localAdminToggleStatus;
+        const newAdminStatus = !currentAdminStatus;
+        
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('isAdmin', newAdminStatus.toString());
+            window.dispatchEvent(new Event('adminToggle'));
+          }
+        } else {
+          await AsyncStorage.setItem('isAdmin', newAdminStatus.toString());
+        }
+        
+        setLocalAdminToggleStatus(newAdminStatus);
+        Alert.alert(
+          '관리자 모드 변경',
+          `관리자 모드가 ${newAdminStatus ? '활성화' : '비활성화'}되었습니다.`,
+          [{ text: '확인' }]
+        );
+      } catch (error) {
+        console.error('관리자 모드 변경 오류:', error);
+        Alert.alert('오류', '관리자 모드 변경에 실패했습니다.');
+      }
+    };
+    
+    toggleAdminStatus();
+  };
+
   const handleAdminPress = () => {
     router.push('/(admin)/dashboard');
   };
@@ -112,8 +186,7 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.dynamicPriceIcon}>
               <TrendingUp size={20} color="#16a34a" />
             </TouchableOpacity>
-            {/* 관리자 로그인 시에만 Supabase 테스트 버튼 표시 */}
-            {isAdmin && (
+            {__DEV__ && (
               <TouchableOpacity 
                 style={styles.supabaseTestIcon}
                 onPress={() => router.push('/supabase-test')}
@@ -121,8 +194,7 @@ export default function HomeScreen() {
                 <Database size={20} color="#3b82f6" />
               </TouchableOpacity>
             )}
-            {/* 관리자 로그인 시에만 관리자 버튼 표시 */}
-            {isAdmin && (
+            {(isAdmin || localAdminToggleStatus) && (
               <TouchableOpacity 
                 style={styles.adminButton}
                 onPress={handleAdminPress}
@@ -130,15 +202,31 @@ export default function HomeScreen() {
                 <Shield size={24} color="#dc2626" />
               </TouchableOpacity>
             )}
+            {/* Preview 빌드에서도 관리자 토글 버튼 추가 */}
+            {!__DEV__ && (
+              <TouchableOpacity 
+                style={styles.previewAdminToggle}
+                onPress={toggleAdminMode}
+                onLongPress={() => {
+                  Alert.alert(
+                    '관리자 모드',
+                    `현재 상태: ${localAdminToggleStatus ? '활성' : '비활성'}\n\n이 버튼을 눌러 관리자 모드를 토글할 수 있습니다.`,
+                    [{ text: '확인' }]
+                  );
+                }}
+              >
+                <Text style={styles.previewAdminText}>
+                  {localAdminToggleStatus ? '🔓' : '🔒'}
+                </Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </View>
 
       {/* 데모용 인증 컨트롤 */}
-      {/* 데모 컨트롤은 개발 모드에서만 표시 */}
-      {/* 이메일 자동 채우기 기능은 제거됨 */}
-      {/* 로그인 화면 자체를 건너뛰는 로직은 Expo Router의 인증 흐름에 따라 자동으로 처리됨 */}
-      {__DEV__ && user && ( // 로그인된 상태에서만 데모 컨트롤 표시
+      {/* 개발 모드에서만 표시되는 데모 컨트롤 */}
+      {__DEV__ && (
         <View style={styles.demoControls}>
           <Text style={styles.demoTitle}>
             🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
@@ -163,6 +251,14 @@ export default function HomeScreen() {
                   onPress={() => handleQuickLogin('midnight.rider')}
                 >
                   <Text style={styles.demoButtonText}>midnight.rider</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.demoButton, styles.adminToggleButton]}
+                  onPress={toggleAdminMode}
+                >
+                  <Text style={styles.adminToggleButtonText}>
+                    관리자 {localAdminToggleStatus ? '🔓' : '🔒'}
+                  </Text>
                 </TouchableOpacity>
               </>
             ) : (
@@ -425,6 +521,27 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  adminToggleButton: {
+    backgroundColor: '#7c3aed',
+  },
+  adminToggleButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  previewAdminToggle: {
+    padding: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 20,
+    minWidth: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  previewAdminText: {
+    fontSize: 16,
   },
   loadingContainer: {
     paddingVertical: 40,

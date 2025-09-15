@@ -29,7 +29,7 @@ export default function SignupScreen() {
     ntrp: '',
     experience: '',
     playStyle: '올라운드' as '공격형' | '수비형' | '올라운드',
-    careerType: '동호인' as '동호인' | '대학선수' | '실업선수',
+    careerType: '동호인' as '동호인' | '선수',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -287,24 +287,24 @@ export default function SignupScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>선수 출신 *</Text>
                 <View style={styles.radioGroup}>
-                  <TouchableOpacity
-                    style={[
-                      styles.radioButton,
-                      styles.radioButtonActive
-                    ]}
-                    disabled
-                  >
-                    <Text style={[
-                      styles.radioText,
-                      styles.radioTextActive
-                    ]}>
-                      {formData.careerType}
-                    </Text>
-                  </TouchableOpacity>
+                  {['동호인', '선수'].map((career) => (
+                    <TouchableOpacity
+                      key={career}
+                      style={[
+                        styles.radioButton,
+                        formData.careerType === career && styles.radioButtonActive
+                      ]}
+                      onPress={() => setFormData({...formData, careerType: career as any})}
+                    >
+                      <Text style={[
+                        styles.radioText,
+                        formData.careerType === career && styles.radioTextActive
+                      ]}>
+                        {career}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
                 </View>
-                <Text style={styles.helperText}>
-                  * 현재는 동호인으로만 가입 가능합니다
-                </Text>
               </View>
             </View>
 

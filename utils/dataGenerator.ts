@@ -64,8 +64,7 @@ export class DataGenerator {
   ];
 
   private static readonly CAREER_TYPES = [
-    '레슨프로', '생활체육', '대학선수', '실업팀', 
-    '주니어코치', '체육관 운영', '프리랜서', '동호회 회장'
+    '동호인', '선수'
   ];
 
   private static readonly MATCH_TITLES = [
@@ -240,7 +239,9 @@ export class DataGenerator {
       ntrp: supabaseMatch.seller_ntrp,
       experience: supabaseMatch.seller_experience,
       playStyle: supabaseMatch.seller_play_style,
-      careerType: supabaseMatch.seller_career_type,
+      careerType: supabaseMatch.seller_career_type === '대학선수' || supabaseMatch.seller_career_type === '실업선수' 
+        ? '선수' 
+        : supabaseMatch.seller_career_type as '동호인' | '선수',
       certification: {
         ntrp: supabaseMatch.seller_certification_ntrp as 'none' | 'pending' | 'verified',
         career: supabaseMatch.seller_certification_career as 'none' | 'pending' | 'verified',

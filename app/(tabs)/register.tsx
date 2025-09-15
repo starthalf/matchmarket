@@ -1,33 +1,58 @@
+// app/(tabs)/register.tsx - 완전한 코드 (매치 타입과 인원수 독립적 관리)
+
 import React, { useState } from 'react';
-import { useEffect } from 'react';
 import {
   View,
   Text,
-  StyleSheet,
   ScrollView,
   TextInput,
   TouchableOpacity,
   Alert,
+  StyleSheet,
   Switch,
-  Platform,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Calendar, Clock, MapPin, Users, DollarSign } from 'lucide-react-native';
-import { UserRound } from 'lucide-react-native';
-import { CertificationBadge } from '../../components/CertificationBadge';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuth } from '../../contexts/AuthContext';
-import { useMatches } from '../../contexts/MatchContext';
-import { Match } from '../../types/tennis';
 import { router } from 'expo-router';
-import { useSafeStyles } from '../../constants/Styles';
+import { useMatch } from '../../contexts/MatchContext';
+import { useAuth } from '../../contexts/AuthContext';
+import { Match, MatchTypeHelper } from '../../types/tennis';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  DollarSign,
+  Users,
+  Trophy,
+  Info,
+} from 'lucide-react-native';
+
+// FormData 타입
+interface FormData {
+  title: string;
+  date: Date;
+  time: Date;
+  endTime: Date;
+  court: string;
+  description: string;
+  basePrice: string;
+  matchType: '단식' | '남복' | '여복' | '혼복'; // 경기 방식
+  maleCount: string;    // 모집할 남성 인원 (매치 타입과 독립적)
+  femaleCount: string;  // 모집할 여성 인원 (매치 타입과 독립적)
+  adEnabled: boolean;
+  ntrpMin: string;
+  ntrpMax: string;
+}
 
 export default function RegisterScreen() {
-  const { user: currentUser } = useAuth();
-  const { addMatch } = useMatches();
-  const safeStyles = useSafeStyles();
-  
-  const [formData, setFormData] = useState({
+  const { addMatch } = useMatch();
+  const { currentUser } = useAuth();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
+
+  // 폼 데이터 상태
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     date: new Date(),
     time: new Date(),
@@ -35,65 +60,117 @@ export default function RegisterScreen() {
     court: '',
     description: '',
     basePrice: '',
-    matchType: '복식' as '단식' | '복식',
-    maleCount: '2',
-    femaleCount: '2',
+    matchType: '혼복', // 기본 경기 방식
+    maleCount: '2',     // 기본 남성 모집 인원
+    femaleCount: '2',   // 기본 여성 모집 인원
     adEnabled: false,
     ntrpMin: '',
     ntrpMax: '',
   });
-  
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [showEndTimePicker, setShowEndTimePicker] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  useEffect(() => {
-    if (!currentUser) {
-      router.replace('/auth/login');
-    }
-  }, [currentUser]);
-  
-  if (!currentUser) {
-    return (
-      <SafeAreaView style={safeStyles.safeContainer}>
-        <View style={styles.loadingContainer}>
-          <Text>로그인이 필요합니다...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
+  // 시간 포맷팅 함수
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
+  };
+
+  // 날짜 포맷팅 함수
+  const formatDate = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    return `${year}.${month}.${day}`;
+  };
+
+  // 매치 타입 변경 핸들러 (인원수 자동 조정 없음)
+  const handleMatchTypeChange = (matchType: FormData['matchType']) => {
+    setFormData(prev => ({
+      ...prev,
+      matchType,
+    }));
+  };
+
+  // 날짜/시간 변경 핸들러들
+  const handleDateChange = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setFormData(prev => ({ ...prev, date: selectedDate }));
+    }
+  };
+
+  const handleTimeChange = (event: any, selectedTime?: Date) => {
+    setShowTimePicker(false);
+    if (selectedTime) {
+      setFormData(prev => ({ ...prev, time: selectedTime }));
+      
+      // 종료 시간을 시작 시간 + 2시간으로 자동 설정
+      const endTime = new Date(selectedTime);
+      endTime.setHours(endTime.getHours() + 2);
+      setFormData(prev => ({ ...prev, endTime }));
+    }
+  };
+
+  const handleEndTimeChange = (event: any, selectedTime?: Date) => {
+    setShowEndTimePicker(false);
+    if (selectedTime) {
+      setFormData(prev => ({ ...prev, endTime: selectedTime }));
+    }
+  };
+
+  // 폼 검증 및 제출
   const handleSubmit = async () => {
-    if (!formData.title || !formData.court || !formData.basePrice || 
-        (!formData.maleCount && !formData.femaleCount) || !formData.ntrpMin || !formData.ntrpMax) {
-      Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
-      return;
-    }
-
     if (!currentUser) {
-      Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
-      router.replace('/auth/login');
+      Alert.alert('오류', '로그인이 필요합니다.');
       return;
     }
 
-    // 숫자 변환 및 유효성 검사
-    const basePriceNum = parseInt(formData.basePrice);
+    // 필수 필드 검증
+    if (!formData.title.trim()) {
+      Alert.alert('입력 오류', '매치 제목을 입력해주세요.');
+      return;
+    }
+
+    if (!formData.court.trim()) {
+      Alert.alert('입력 오류', '코트명을 입력해주세요.');
+      return;
+    }
+
+    if (!formData.basePrice || isNaN(Number(formData.basePrice))) {
+      Alert.alert('입력 오류', '올바른 기본 가격을 입력해주세요.');
+      return;
+    }
+
     const maleCountNum = parseInt(formData.maleCount) || 0;
     const femaleCountNum = parseInt(formData.femaleCount) || 0;
-    const ntrpMinNum = parseFloat(formData.ntrpMin);
-    const ntrpMaxNum = parseFloat(formData.ntrpMax);
+    const basePriceNum = parseInt(formData.basePrice);
+    const ntrpMinNum = parseFloat(formData.ntrpMin) || 1.0;
+    const ntrpMaxNum = parseFloat(formData.ntrpMax) || 7.0;
 
-    if (isNaN(basePriceNum) || basePriceNum <= 0) {
-      Alert.alert('입력 오류', '올바른 가격을 입력해주세요.');
+    // 가격 검증
+    if (basePriceNum < 5000 || basePriceNum > 200000) {
+      Alert.alert('입력 오류', '기본 가격은 5,000원 이상 200,000원 이하로 입력해주세요.');
       return;
     }
 
+    // 인원수 검증
     if (maleCountNum + femaleCountNum === 0) {
       Alert.alert('입력 오류', '최소 1명 이상의 참가자가 필요합니다.');
       return;
     }
 
+    // 매치 타입별 성별 제한 검증
+    if (formData.matchType === '남복' && femaleCountNum > 0) {
+      Alert.alert('입력 오류', '남자복식에서는 여성 참가자를 모집할 수 없습니다.');
+      return;
+    }
+
+    if (formData.matchType === '여복' && maleCountNum > 0) {
+      Alert.alert('입력 오류', '여자복식에서는 남성 참가자를 모집할 수 없습니다.');
+      return;
+    }
+
+    // NTRP 검증
     if (isNaN(ntrpMinNum) || isNaN(ntrpMaxNum) || ntrpMinNum > ntrpMaxNum) {
       Alert.alert('입력 오류', 'NTRP 범위를 올바르게 입력해주세요.');
       return;
@@ -119,8 +196,8 @@ export default function RegisterScreen() {
         initialPrice: basePriceNum,
         currentPrice: basePriceNum,
         maxPrice: basePriceNum * 3,
-        expectedViews: Math.floor(Math.random() * 500) + 200, // 200-700 예상 조회수
-        expectedWaitingApplicants: Math.floor(Math.random() * 5) + 1, // 1-5명 예상 대기자
+        expectedViews: Math.floor(Math.random() * 500) + 200,
+        expectedWaitingApplicants: Math.floor(Math.random() * 5) + 1,
         expectedParticipants: {
           male: maleCountNum,
           female: femaleCountNum,
@@ -131,7 +208,7 @@ export default function RegisterScreen() {
           female: 0,
           total: 0,
         },
-        matchType: formData.matchType,
+        matchType: formData.matchType, // 경기 방식
         waitingApplicants: 0,
         waitingList: [],
         participants: [],
@@ -159,7 +236,7 @@ export default function RegisterScreen() {
           court: '',
           description: '',
           basePrice: '',
-          matchType: '복식',
+          matchType: '혼복',
           maleCount: '2',
           femaleCount: '2',
           adEnabled: false,
@@ -188,706 +265,580 @@ export default function RegisterScreen() {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('ko-KR', {
-      month: '2-digit',
-      day: '2-digit'
-    }).replace(/\./g, '/').replace(/ /g, '').slice(0, -1);
-  };
-
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('ko-KR', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false
-    });
-  };
-
-  const onDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(false);
-    if (selectedDate) {
-      setFormData({...formData, date: selectedDate});
-    }
-  };
-
-  const onTimeChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(false);
-    if (selectedTime) {
-      setFormData({...formData, time: selectedTime});
-    }
-  };
-
-  const onEndTimeChange = (event: any, selectedTime?: Date) => {
-    setShowEndTimePicker(false);
-    if (selectedTime) {
-      setFormData({...formData, endTime: selectedTime});
-    }
-  };
-
   return (
-    <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={safeStyles.safeHeader}>
-        <View style={safeStyles.safeHeaderContent}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>매치 판매</Text>
-            <DollarSign size={24} color="#16a34a" />
-          </View>
-          <Text style={styles.subtitle}>당신의 테니스를 판매하세요</Text>
-          <Text style={styles.subtitle}>인기가 높으면 가격이 올라갑니다</Text>
-        </View>
-      </View>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.content}>
+        <Text style={styles.mainTitle}>새로운 매치 등록</Text>
+        <Text style={styles.subtitle}>
+          함께할 테니스 파트너를 찾아보세요
+        </Text>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* 판매자 정보 카드 */}
-        <View style={styles.sellerPreview}>
-          <Text style={styles.sectionTitle}>매치 판매자 정보</Text>
-          <View style={styles.sellerInfo}>
-            <View style={styles.sellerBasic}>
-              <Text style={styles.sellerName}>{currentUser.name}</Text>
-              <CertificationBadge 
-                ntrpCert={currentUser.certification.ntrp}
-                careerCert={currentUser.certification.career}
-                youtubeCert={currentUser.certification.youtube}
-                instagramCert={currentUser.certification.instagram}
-                size="medium"
-              />
-            </View>
-            <Text style={styles.sellerDetails}>
-              {currentUser.gender} · {currentUser.ageGroup} · NTRP {currentUser.ntrp} · {currentUser.careerType}
-            </Text>
-          </View>
-        </View>
-
-        {/* 매치 기본 정보 */}
+        {/* 매치 제목 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>매치 정보</Text>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>판매 매치 제목 *</Text>
-            <TextInput
-              style={styles.textInput}
-              value={formData.title}
-              onChangeText={(text) => setFormData({...formData, title: text})}
-              placeholder="예) 강남에서 함께 치실 분을 위한 매치!"
-              placeholderTextColor="#9ca3af"
-            />
-          </View>
+          <Text style={styles.sectionTitle}>매치 제목</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.title}
+            onChangeText={(text) => setFormData(prev => ({ ...prev, title: text }))}
+            placeholder="예: 강남 테니스장에서 함께 치실 분!"
+            maxLength={50}
+          />
+        </View>
 
-          <View style={styles.inputRow}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>날짜 *</Text>
-              <TouchableOpacity 
-                style={styles.inputWithIcon}
-                onPress={() => setShowDatePicker(true)}
+        {/* 매치 타입 선택 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>경기 방식</Text>
+          <Text style={styles.sectionDescription}>
+            어떤 방식으로 경기를 진행할지 선택하세요
+          </Text>
+          
+          <View style={styles.matchTypeGrid}>
+            {[
+              { value: '단식', label: '단식', icon: '🎾', desc: '개인전 방식' },
+              { value: '남복', label: '남자복식', icon: '👨‍🤝‍👨', desc: '남성만 참여' },
+              { value: '여복', label: '여자복식', icon: '👩‍🤝‍👩', desc: '여성만 참여' },
+              { value: '혼복', label: '혼합복식', icon: '👫', desc: '남녀 모두 참여' },
+            ].map((type) => (
+              <TouchableOpacity
+                key={type.value}
+                style={[
+                  styles.matchTypeCard,
+                  formData.matchType === type.value && styles.matchTypeCardActive,
+                ]}
+                onPress={() => handleMatchTypeChange(type.value as FormData['matchType'])}
               >
-                <Calendar size={18} color="#6b7280" />
-                <Text style={styles.dateTimeText}>
-                  {formatDate(formData.date)}
+                <Text style={styles.matchTypeIcon}>{type.icon}</Text>
+                <Text style={[
+                  styles.matchTypeLabel,
+                  formData.matchType === type.value && styles.matchTypeLabelActive,
+                ]}>
+                  {type.label}
                 </Text>
+                <Text style={styles.matchTypeDesc}>{type.desc}</Text>
               </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>시간 *</Text>
-              <TouchableOpacity 
-                style={styles.inputWithIcon}
-                onPress={() => setShowTimePicker(true)}
-              >
-                <Clock size={18} color="#6b7280" />
-                <Text style={styles.dateTimeText}>
-                  {formatTime(formData.time)}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>종료 시간 *</Text>
-              <TouchableOpacity 
-                style={styles.inputWithIcon}
-                onPress={() => setShowEndTimePicker(true)}
-              >
-                <Clock size={18} color="#6b7280" />
-                <Text style={styles.dateTimeText}>
-                  {formatTime(formData.endTime)}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          {/* Date Picker */}
-          {showDatePicker && (
-            <DateTimePicker
-              value={formData.date}
-              mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onDateChange}
-              minimumDate={new Date()}
-            />
-          )}
-          
-          {/* Time Picker */}
-          {showTimePicker && (
-            <DateTimePicker
-              value={formData.time}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onTimeChange}
-            />
-          )}
-          
-          {/* End Time Picker */}
-          {showEndTimePicker && (
-            <DateTimePicker
-              value={formData.endTime}
-              mode="time"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-              onChange={onEndTimeChange}
-            />
-          )}
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>코트 위치 *</Text>
-            <View style={styles.inputWithIcon}>
-              <MapPin size={18} color="#6b7280" />
-              <TextInput
-                style={styles.textInputWithIcon}
-                value={formData.court}
-                onChangeText={(text) => setFormData({...formData, court: text})}
-                placeholder="예) 강남 테니스클럽 A코트"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>매치 설명</Text>
-            <TextInput
-              style={[styles.textInput, styles.textArea]}
-              value={formData.description}
-              onChangeText={(text) => setFormData({...formData, description: text})}
-              placeholder="판매하는 매치에 대한 자세한 설명을 입력하세요..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={4}
-            />
+            ))}
           </View>
         </View>
 
-        {/* 가격 및 인원 설정 */}
+        {/* 모집 인원 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>매치 설정</Text>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>매치 유형 *</Text>
-            <View style={styles.matchTypeContainer}>
-              <TouchableOpacity
-                style={[
-                  styles.matchTypeButton,
-                  formData.matchType === '단식' && styles.matchTypeButtonActive
-                ]}
-                onPress={() => setFormData({
-                  ...formData, 
-                  matchType: '단식',
-                  maleCount: '1',
-                  femaleCount: '0'
-                })}
-              >
-                <Text style={[
-                  styles.matchTypeText,
-                  formData.matchType === '단식' && styles.matchTypeTextActive
-                ]}>
-                  단식 (1:1)
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[
-                  styles.matchTypeButton,
-                  formData.matchType === '복식' && styles.matchTypeButtonActive
-                ]}
-                onPress={() => setFormData({
-                  ...formData, 
-                  matchType: '복식',
-                  maleCount: '2',
-                  femaleCount: '2'
-                })}
-              >
-                <Text style={[
-                  styles.matchTypeText,
-                  formData.matchType === '복식' && styles.matchTypeTextActive
-                ]}>
-                  복식 (2:2)
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>판매 기본 가격 *</Text>
-            <View style={styles.inputWithIcon}>
-              <Text style={styles.wonSymbol}>₩</Text>
+          <Text style={styles.sectionTitle}>모집 인원</Text>
+          <Text style={styles.sectionDescription}>
+            참가를 원하는 인원수를 설정하세요
+          </Text>
+
+          <View style={styles.participantInputs}>
+            {/* 남성 인원 */}
+            <View style={styles.participantInput}>
+              <Text style={styles.participantLabel}>남성</Text>
               <TextInput
-                style={styles.textInputWithIcon}
-                value={formData.basePrice}
-                onChangeText={(text) => setFormData({...formData, basePrice: text})}
-                placeholder="코트비+공값의 1/N을 입력하세요 (예: 35000)"
-                placeholderTextColor="#9ca3af"
+                style={[
+                  styles.input,
+                  styles.participantCount,
+                  formData.matchType === '여복' && styles.inputDisabled,
+                ]}
+                value={formData.maleCount}
+                onChangeText={(text) => {
+                  if (formData.matchType !== '여복') {
+                    setFormData(prev => ({ ...prev, maleCount: text }));
+                  }
+                }}
+                placeholder="0"
                 keyboardType="numeric"
+                maxLength={2}
+                editable={formData.matchType !== '여복'}
+              />
+              <Text style={styles.participantUnit}>명</Text>
+            </View>
+
+            {/* 여성 인원 */}
+            <View style={styles.participantInput}>
+              <Text style={styles.participantLabel}>여성</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.participantCount,
+                  formData.matchType === '남복' && styles.inputDisabled,
+                ]}
+                value={formData.femaleCount}
+                onChangeText={(text) => {
+                  if (formData.matchType !== '남복') {
+                    setFormData(prev => ({ ...prev, femaleCount: text }));
+                  }
+                }}
+                placeholder="0"
+                keyboardType="numeric"
+                maxLength={2}
+                editable={formData.matchType !== '남복'}
+              />
+              <Text style={styles.participantUnit}>명</Text>
+            </View>
+          </View>
+
+          {/* 매치 타입별 안내 메시지 */}
+          <View style={styles.matchTypeInfo}>
+            <Info size={16} color="#0369a1" />
+            <Text style={styles.infoText}>
+              {formData.matchType === '단식' && '단식은 개인전 방식입니다. 원하는 만큼 참가자를 모집하세요.'}
+              {formData.matchType === '남복' && '남자복식은 남성만 참여할 수 있습니다. 여성 인원은 0으로 고정됩니다.'}
+              {formData.matchType === '여복' && '여자복식은 여성만 참여할 수 있습니다. 남성 인원은 0으로 고정됩니다.'}
+              {formData.matchType === '혼복' && '혼합복식은 남녀 모두 참여할 수 있습니다. 원하는 비율로 설정하세요.'}
+            </Text>
+          </View>
+        </View>
+
+        {/* 날짜 및 시간 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>매치 일정</Text>
+          
+          <View style={styles.dateTimeContainer}>
+            {/* 날짜 선택 */}
+            <TouchableOpacity
+              style={styles.dateTimeButton}
+              onPress={() => setShowDatePicker(true)}
+            >
+              <Calendar size={20} color="#3b82f6" />
+              <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
+            </TouchableOpacity>
+
+            {/* 시작 시간 */}
+            <TouchableOpacity
+              style={styles.dateTimeButton}
+              onPress={() => setShowTimePicker(true)}
+            >
+              <Clock size={20} color="#3b82f6" />
+              <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
+            </TouchableOpacity>
+
+            {/* 종료 시간 */}
+            <TouchableOpacity
+              style={styles.dateTimeButton}
+              onPress={() => setShowEndTimePicker(true)}
+            >
+              <Clock size={20} color="#6b7280" />
+              <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* 코트명 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>코트명</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.court}
+            onChangeText={(text) => setFormData(prev => ({ ...prev, court: text }))}
+            placeholder="예: A코트, 1번 코트"
+            maxLength={20}
+          />
+        </View>
+
+        {/* 기본 가격 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>기본 가격</Text>
+          <Text style={styles.sectionDescription}>
+            참가자 1명당 기본 참가비를 설정하세요
+          </Text>
+          <View style={styles.priceInputContainer}>
+            <DollarSign size={20} color="#6b7280" />
+            <TextInput
+              style={styles.priceInput}
+              value={formData.basePrice}
+              onChangeText={(text) => setFormData(prev => ({ ...prev, basePrice: text }))}
+              placeholder="25000"
+              keyboardType="numeric"
+              maxLength={6}
+            />
+            <Text style={styles.priceUnit}>원</Text>
+          </View>
+        </View>
+
+        {/* NTRP 요구사항 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>NTRP 요구사항</Text>
+          <View style={styles.ntrpInputs}>
+            <View style={styles.ntrpInput}>
+              <Text style={styles.ntrpLabel}>최소</Text>
+              <TextInput
+                style={[styles.input, styles.ntrpValue]}
+                value={formData.ntrpMin}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, ntrpMin: text }))}
+                placeholder="3.0"
+                keyboardType="decimal-pad"
+                maxLength={3}
+              />
+            </View>
+            <Text style={styles.ntrpSeparator}>~</Text>
+            <View style={styles.ntrpInput}>
+              <Text style={styles.ntrpLabel}>최대</Text>
+              <TextInput
+                style={[styles.input, styles.ntrpValue]}
+                value={formData.ntrpMax}
+                onChangeText={(text) => setFormData(prev => ({ ...prev, ntrpMax: text }))}
+                placeholder="4.5"
+                keyboardType="decimal-pad"
+                maxLength={3}
               />
             </View>
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>모집 인원 *</Text>
-            <View style={styles.genderCountContainer}>
-              <View style={styles.genderCountItem}>
-                <UserRound size={16} color="#3b82f6" />
-                <Text style={styles.genderLabel}>남성</Text>
-                <TextInput
-                  style={styles.genderCountInput}
-                  value={formData.maleCount}
-                  onChangeText={(text) => setFormData({...formData, maleCount: text})}
-                  placeholder="0"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="numeric"
-                />
-                <Text style={styles.genderUnit}>명</Text>
-              </View>
-              
-              <View style={styles.genderCountItem}>
-                <UserRound size={16} color="#ec4899" />
-                <Text style={styles.genderLabel}>여성</Text>
-                <TextInput
-                  style={styles.genderCountInput}
-                  value={formData.femaleCount}
-                  onChangeText={(text) => setFormData({...formData, femaleCount: text})}
-                  placeholder="0"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="numeric"
-                />
-                <Text style={styles.genderUnit}>명</Text>
-              </View>
-            </View>
-            
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>모집 실력 (NTRP) *</Text>
-            <View style={styles.ntrpRangeContainer}>
-              <View style={styles.ntrpInputItem}>
-                <Text style={styles.ntrpLabel}>최소</Text>
-                <TextInput
-                  style={styles.ntrpInput}
-                  value={formData.ntrpMin}
-                  onChangeText={(text) => setFormData({...formData, ntrpMin: text})}
-                  placeholder="3.0"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="numeric"
-                />
-              </View>
-              
-              <Text style={styles.ntrpSeparator}>~</Text>
-              
-              <View style={styles.ntrpInputItem}>
-                <Text style={styles.ntrpLabel}>최대</Text>
-                <TextInput
-                  style={styles.ntrpInput}
-                  value={formData.ntrpMax}
-                  onChangeText={(text) => setFormData({...formData, ntrpMax: text})}
-                  placeholder="4.5"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="numeric"
-                />
-              </View>
-            </View>
-            
-            <Text style={styles.ntrpHint}>
-              참가자의 NTRP 실력 범위를 설정하세요 (1.0-7.0)
-            </Text>
-          </View>
         </View>
 
-        {/* 가격 정보 */}
+        {/* 매치 설명 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>판매 가격 정보</Text>
-          
-          <View style={styles.priceNote}>
-            <Text style={styles.noteText}>
-              💡 AI 기반 실시간 가격 변동
-            </Text>
-            <Text style={styles.noteSubtext}>
-              인기도에 기반해 가격이 증가합니다. 판매자가 설정한 코트비+공값 이하로는 떨어지지 않습니다.
-            </Text>
-          </View>
+          <Text style={styles.sectionTitle}>매치 설명 (선택)</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            value={formData.description}
+            onChangeText={(text) => setFormData(prev => ({ ...prev, description: text }))}
+            placeholder="매치에 대한 추가 정보나 참가자들에게 전하고 싶은 메시지를 적어주세요."
+            multiline
+            numberOfLines={4}
+            maxLength={200}
+            textAlignVertical="top"
+          />
         </View>
 
-        {/* 광고 수익 배분 */}
+        {/* 광고 활성화 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>광고 수익 배분</Text>
-          
-          <View style={styles.switchRow}>
+          <View style={styles.switchContainer}>
             <View style={styles.switchInfo}>
-              <Text style={styles.switchLabel}>광고 수익 배분 참여</Text>
+              <Text style={styles.switchTitle}>광고 활성화</Text>
               <Text style={styles.switchDescription}>
-                매치 페이지에 광고가 표시되고 수익의 50%를 받습니다 (준비중)
+                광고를 통해 추가 수익을 얻고 더 많은 참가자를 모집하세요
               </Text>
             </View>
             <Switch
               value={formData.adEnabled}
-              onValueChange={(value) => setFormData({...formData, adEnabled: value})}
-              disabled={true}
-              trackColor={{ false: '#d1d5db', true: '#86efac' }}
-              thumbColor={'#9ca3af'}
+              onValueChange={(value) => setFormData(prev => ({ ...prev, adEnabled: value }))}
+              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
+              thumbColor={formData.adEnabled ? '#3b82f6' : '#f3f4f6'}
             />
           </View>
-
-          {formData.adEnabled && (
-            <View style={styles.adBenefit}>
-              <Text style={styles.adBenefitText}>
-                ✅ 광고 수익의 50% 배분
-              </Text>
-            </View>
-          )}
         </View>
 
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+        {/* 등록 버튼 */}
+        <TouchableOpacity
+          style={[styles.submitButton, isSubmitting && styles.submitButtonDisabled]}
+          onPress={handleSubmit}
+          disabled={isSubmitting}
+        >
           <Text style={styles.submitButtonText}>
-            {isSubmitting ? '등록 중...' : '매치 판매하기'}
+            {isSubmitting ? '등록 중...' : '매치 등록하기'}
           </Text>
         </TouchableOpacity>
 
         <View style={styles.bottomPadding} />
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+
+      {/* Date/Time Pickers */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={formData.date}
+          mode="date"
+          display="default"
+          onChange={handleDateChange}
+          minimumDate={new Date()}
+        />
+      )}
+
+      {showTimePicker && (
+        <DateTimePicker
+          value={formData.time}
+          mode="time"
+          display="default"
+          onChange={handleTimeChange}
+        />
+      )}
+
+      {showEndTimePicker && (
+        <DateTimePicker
+          value={formData.endTime}
+          mode="time"
+          display="default"
+          onChange={handleEndTimeChange}
+        />
+      )}
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 2,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
+
   content: {
-    flex: 1,
-    paddingTop: 16,
+    paddingHorizontal: 24,
+    paddingTop: 32,
   },
-  sellerPreview: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+
+  mainTitle: {
+    fontSize: 28,
+    fontWeight: '800',
     color: '#111827',
-    marginBottom: 12,
+    marginBottom: 8,
   },
-  sellerInfo: {
-    gap: 8,
+
+  subtitle: {
+    fontSize: 16,
+    color: '#6b7280',
+    marginBottom: 32,
   },
-  sellerBasic: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+
+  section: {
+    marginBottom: 32,
   },
-  sellerName: {
+
+  sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
+    marginBottom: 8,
   },
-  sellerDetails: {
+
+  sectionDescription: {
     fontSize: 14,
     color: '#6b7280',
-    fontWeight: '500',
-  },
-  section: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
     marginBottom: 16,
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  inputGroup: {
-    marginBottom: 16,
-    flex: 1,
-  },
-  inputRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
-  },
-  textInput: {
+
+  input: {
     borderWidth: 1,
     borderColor: '#d1d5db',
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 16,
-    color: '#374151',
+    color: '#111827',
     backgroundColor: '#ffffff',
   },
+
+  inputDisabled: {
+    backgroundColor: '#f3f4f6',
+    color: '#9ca3af',
+  },
+
   textArea: {
-    height: 100,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
-  inputWithIcon: {
+
+  matchTypeGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    backgroundColor: '#ffffff',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 12,
+    marginTop: 12,
   },
-  textInputWithIcon: {
+
+  matchTypeCard: {
     flex: 1,
-    fontSize: 14,
-    color: '#374151',
-  },
-  dateTimeText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#374151',
-    paddingVertical: 2,
-  },
-  priceNote: {
-    backgroundColor: '#f0f9ff',
+    minWidth: '47%',
+    backgroundColor: '#f8fafc',
+    borderRadius: 12,
     padding: 16,
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  noteText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e40af',
-    marginBottom: 4,
-  },
-  noteSubtext: {
-    fontSize: 12,
-    color: '#3730a3',
-    lineHeight: 18,
-  },
-  switchRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
   },
-  switchInfo: {
-    flex: 1,
+
+  matchTypeCardActive: {
+    backgroundColor: '#eff6ff',
+    borderColor: '#3b82f6',
   },
-  switchLabel: {
+
+  matchTypeIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+
+  matchTypeLabel: {
     fontSize: 16,
     fontWeight: '600',
     color: '#374151',
     marginBottom: 4,
   },
-  switchDescription: {
+
+  matchTypeLabelActive: {
+    color: '#3b82f6',
+  },
+
+  matchTypeDesc: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center',
+  },
+
+  participantInputs: {
+    flexDirection: 'row',
+    gap: 16,
+    marginTop: 12,
+  },
+
+  participantInput: {
+    flex: 1,
+    alignItems: 'center',
+  },
+
+  participantLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+
+  participantCount: {
+    textAlign: 'center',
+    width: '100%',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+
+  participantUnit: {
     fontSize: 14,
     color: '#6b7280',
-    lineHeight: 20,
+    marginTop: 8,
   },
-  adBenefit: {
-    backgroundColor: '#fdf2f8',
+
+  matchTypeInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 16,
     padding: 12,
+    backgroundColor: '#f0f9ff',
     borderRadius: 8,
-    marginTop: 12,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderLeftWidth: 4,
+    borderLeftColor: '#0ea5e9',
+    gap: 8,
   },
-  adBenefitText: {
+
+  infoText: {
+    flex: 1,
     fontSize: 13,
-    color: '#be185d',
+    color: '#0369a1',
     lineHeight: 18,
   },
-  matchTypeContainer: {
+
+  dateTimeContainer: {
     flexDirection: 'row',
     gap: 12,
   },
-  matchTypeButton: {
+
+  dateTimeButton: {
     flex: 1,
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#f8fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 12,
+    paddingVertical: 16,
+    gap: 8,
+  },
+
+  dateTimeText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+
+  priceInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
     paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
     backgroundColor: '#ffffff',
-    alignItems: 'center',
   },
-  matchTypeButtonActive: {
-    borderColor: '#d1d5db',
-    backgroundColor: '#fdf2f8',
+
+  priceInput: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#111827',
+    textAlign: 'right',
   },
-  matchTypeText: {
-    fontSize: 14,
-    fontWeight: '600',
+
+  priceUnit: {
+    fontSize: 16,
     color: '#6b7280',
+    marginLeft: 8,
   },
-  matchTypeTextActive: {
-    color: '#ec4899',
-  },
-  genderCountContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  genderCountItem: {
-    flex: 1,
+
+  ntrpInputs: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    gap: 16,
   },
-  genderLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#374151',
-    minWidth: 24,
-  },
-  genderCountInput: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ec4899',
-    textAlign: 'center',
-    paddingVertical: 4,
-    backgroundColor: '#ffffff',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    minWidth: 40,
-  },
-  genderUnit: {
-    fontSize: 12,
-    color: '#6b7280',
-    minWidth: 16,
-  },
-  totalCount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ec4899',
-    textAlign: 'center',
-    marginTop: 8,
-    paddingVertical: 8,
-    backgroundColor: '#fdf2f8',
-    borderRadius: 6,
-  },
-  ntrpRangeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  ntrpInputItem: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  ntrpLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#374151',
-    minWidth: 24,
-  },
+
   ntrpInput: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e40af',
-    textAlign: 'center',
-    paddingVertical: 4,
-    backgroundColor: '#ffffff',
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    minWidth: 40,
-  },
-  ntrpSeparator: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-    paddingHorizontal: 6,
-  },
-  ntrpHint: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 4,
-    lineHeight: 16,
-  },
-  submitButton: {
-    backgroundColor: '#ec4899',
-    marginHorizontal: 16,
-    paddingVertical: 16,
-    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
   },
-  submitButtonText: {
+
+  ntrpLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+
+  ntrpValue: {
+    textAlign: 'center',
     fontSize: 16,
+    fontWeight: '600',
+  },
+
+  ntrpSeparator: {
+    fontSize: 18,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+
+  switchContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  switchInfo: {
+    flex: 1,
+    marginRight: 16,
+  },
+
+  switchTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
+  },
+
+  switchDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+
+  submitButton: {
+    backgroundColor: '#3b82f6',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+
+  submitButtonDisabled: {
+    backgroundColor: '#9ca3af',
+  },
+
+  submitButtonText: {
+    fontSize: 18,
     fontWeight: '700',
     color: '#ffffff',
   },
+
   bottomPadding: {
     height: 40,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

@@ -61,13 +61,11 @@ export class DataGenerator {
   private static readonly COURTS = ['A코트', 'B코트', 'C코트', 'D코트', 'E코트'];
 
   private static readonly PLAY_STYLES = [
-    '베이스라이너', '올라운드', '공격형', '수비형', 
-    '네트플레이어', '파워형', '컨트롤형', '카운터형'
+    '공격형', '수비형', '올라운드'  // 🔥 Supabase CHECK 제약조건과 일치
   ];
 
   private static readonly CAREER_TYPES = [
-    '레슨프로', '생활체육', '대학선수', '실업팀', 
-    '주니어코치', '체육관 운영', '프리랜서', '동호회 회장'
+    '동호인', '대학선수', '실업선수'  // 🔥 Supabase CHECK 제약조건과 일치
   ];
 
   private static readonly MATCH_TITLES = [

@@ -261,7 +261,7 @@ export default function ProfileScreen() {
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>경력</Text>
               <Text style={styles.detailValue}>
-                {Math.floor(currentUser.experience / 12)}년 {currentUser.experience % 12}개월
+                {currentUser.experience}년
               </Text>
             </View>
             <View style={styles.detailRow}>

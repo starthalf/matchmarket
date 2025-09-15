@@ -94,7 +94,7 @@ export function MatchCard({ match }: MatchCardProps) {
               <View style={styles.sellerStats}>
                 <View style={styles.sellerDetails}>
                   <Text style={styles.sellerDetailText}>
-                    {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · {match.seller.experience}년
+                    {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType}
                   </Text>
                   <View style={styles.ratingRow}>
                     <Star size={12} color="#f59e0b" fill="#f59e0b" />

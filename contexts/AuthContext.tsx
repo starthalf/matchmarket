@@ -279,8 +279,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             name: userData.name,
             gender: userData.gender,
             age_group: userData.ageGroup,
-            ntrp: userData.ntrp, 
-            experience: userData.experience, 
+            ntrp: userData.ntrp,
+            experience: userData.experience,
             play_style: userData.playStyle,
             career_type: userData.careerType,
           });

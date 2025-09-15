@@ -106,8 +106,8 @@ export default function SignupScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>기본 정보</Text>
               
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>이름 *</Text>
+              <View style={styles.inputGroup}> 
+                <Text style={styles.inputLabel}>닉네임 *</Text>
                 <View style={styles.inputContainer}>
                   <User size={20} color="#6b7280" />
                   <TextInput
@@ -250,7 +250,7 @@ export default function SignupScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>테니스 경력 (개월) *</Text>
+                <Text style={styles.inputLabel}>테니스 경력 (년) *</Text>
                 <TextInput
                   style={styles.simpleInput}
                   value={formData.experience}
@@ -258,7 +258,7 @@ export default function SignupScreen() {
                   placeholder="예: 24"
                   placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
-                />
+                /> 
               </View>
 
               <View style={styles.inputGroup}>

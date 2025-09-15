@@ -650,75 +650,6 @@ export default function MatchDetailScreen() {
           </Text>
         </View>
 
-        {/* 테스트 섹션 (개발용) */}
-        <View style={styles.testSection}>
-          <Text style={styles.testTitle}>🔧 개발자 테스트</Text>
-          <TouchableOpacity 
-            style={styles.testButton}
-            onPress={handleCancelParticipant}
-          >
-            <Text style={styles.testButtonText}>참가자 취소 시뮬레이션</Text>
-          </TouchableOpacity>
-          
-          {/* 디버깅용 테스트 버튼 추가 */}
-          {userParticipationStatus === 'payment_pending' && (
-            <TouchableOpacity
-              style={[styles.testButton, styles.adminTestButton]}
-              onPress={async () => {
-                if (!user) {
-                  Alert.alert('오류', '로그인이 필요합니다.');
-                  return;
-                }
-                
-                // 실제 입금 신고에서 사용된 paymentRequestId 찾기
-                let actualPaymentRequestId = null;
-                
-                // participants에서 현재 사용자의 payment_pending 상태 찾기
-                const userParticipant = match.participants.find(p => 
-                  p.userId === user.id && p.status === 'payment_pending'
-                );
-                
-                if (userParticipant && userParticipant.paymentSubmittedAt) {
-                  // paymentSubmittedAt 시간을 기반으로 paymentRequestId 재구성
-                  const timestamp = new Date(userParticipant.paymentSubmittedAt).getTime();
-                  actualPaymentRequestId = `payment_${match.id}_${user.id}_${timestamp}`;
-                } else if (paymentRequestData) {
-                  // paymentRequestData가 있으면 그것을 사용
-                  actualPaymentRequestId = paymentRequestData.id;
-                } else {
-                  // 마지막 수단: 현재 시간으로 생성 (정확하지 않을 수 있음)
-                  actualPaymentRequestId = `payment_${match.id}_${user.id}_${Date.now()}`;
-                }
-                
-                console.log('관리자 확정 버튼 클릭 - actualPaymentRequestId:', actualPaymentRequestId);
-                
-                Alert.alert(
-                  '관리자 입금 확정',
-                  `${user.name}님의 입금을 확정하시겠습니까?\n\n금액: ${match.currentPrice.toLocaleString()}원`,
-                  [
-                    { text: '취소', style: 'cancel' },
-                    { text: '확정', onPress: async () => {
-                      // 매치 객체의 깊은 복사 생성
-                      const updatedMatch = JSON.parse(JSON.stringify(match));
-                      const result = await WaitlistManager.handleAdminPaymentConfirmation(actualPaymentRequestId, updatedMatch);
-                      if (result.success) {
-                        updateMatch(updatedMatch); // 전역 상태 업데이트
-                        setUserParticipationStatus('confirmed');
-                        setIsUserParticipating(true);
-                        Alert.alert('입금 확정 완료', `${user.name}님의 매치 참가가 확정되었습니다!`);
-                      } else {
-                        Alert.alert('확정 실패', result.error || '입금 확정에 실패했습니다.');
-                      }
-                    }}
-                  ]
-                );
-              }}
-            >
-              <Text style={styles.adminTestButtonText}>👨‍💼 관리자 입금 확정</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-
         <View style={styles.bottomPadding} />
       </ScrollView>
 
@@ -811,10 +742,10 @@ export default function MatchDetailScreen() {
               <Text style={styles.sectionDescription}>
                 입금 시 사용한 입금자명을 정확히 입력해주세요.
               </Text>
-              
+
               <TextInput
                 style={styles.depositorInput}
-                value={depositorName}
+                value={user?.name || ''}
                 onChangeText={setDepositorName}
                 placeholder="입금자명을 입력하세요"
                 placeholderTextColor="#9ca3af"
@@ -1298,42 +1229,6 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     textAlign: 'center',
     fontStyle: 'italic',
-  },
-  testSection: {
-    backgroundColor: '#fef3c7',
-    marginHorizontal: 16,
-    marginTop: 12,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#fbbf24',
-  },
-  testTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#92400e',
-    marginBottom: 8,
-  },
-  testButton: {
-    backgroundColor: '#f59e0b',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  testButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  adminTestButton: {
-    backgroundColor: '#16a34a',
-    marginTop: 8,
-  },
-  adminTestButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ffffff',
   },
   bottomPadding: {
     height: 120,

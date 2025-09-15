@@ -14,6 +14,7 @@ interface PriceDisplayProps {
   expectedWaitingApplicants: number;
   sellerGender: string;
   sellerNtrp: number;
+  sellerCertificationNtrp: 'none' | 'pending' | 'verified';
   isClosed?: boolean;
 }
 
@@ -28,11 +29,12 @@ export function PriceDisplay({
   waitingApplicants,
   expectedWaitingApplicants,
   sellerGender,
-  sellerNtrp,
+  sellerNtrp, 
+  sellerCertificationNtrp,
   isClosed = false
 }: PriceDisplayProps) {
-  const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
   const [isIncreasing, setIsIncreasing] = useState(false);
+  const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
 
   // 초기 가격 계산 함수 (매치 등록 시)
   const calculateInitialPrice = (basePrice: number, sellerGender: string, sellerNtrp: number, hoursUntilMatch: number) => {
@@ -41,7 +43,9 @@ export function PriceDisplay({
     // 1. 기본 할증 (성별 + 실력)
     let basePremium = 0;
     
-    // 성별 할증
+    // 성별 할증 (NTRP 인증된 4.0 이상 남성 판매자에게만 적용)
+    const isCertifiedHighNtrpMale = sellerCertificationNtrp === 'verified' && sellerNtrp >= 4.0;
+
     if (sellerGender === '여성') {
       basePremium += 0.10; // 여성 10% 할증
     } else if (sellerGender === '남성' && sellerNtrp >= 4.0) {
@@ -51,8 +55,9 @@ export function PriceDisplay({
     initialPrice *= (1 + basePremium);
     
     // 2. 황금시간대 할증 (저녁 6-9시)
-    const matchHour = new Date(Date.now() + hoursUntilMatch * 60 * 60 * 1000).getHours();
-    if (matchHour >= 18 && matchHour <= 21 && 
+    const matchDateTime = new Date(Date.now() + hoursUntilMatch * 60 * 60 * 1000);
+    const matchHour = matchDateTime.getHours();
+    if (matchHour >= 18 && matchHour <= 21 &&
         (sellerGender === '여성' || sellerNtrp >= 4.0)) {
       initialPrice *= 1.07; // 황금시간대 7% 할증
     }
@@ -72,9 +77,10 @@ export function PriceDisplay({
   const calculateDynamicPrice = () => {
     let dynamicPrice = initialPrice;
     
-    // 특별 조건: 모집인원이 남성만이고 판매자 NTRP가 3.7 이하인 경우 할증 조건 2배
+    // 특별 조건: NTRP 인증된 4.0 이상 남성 판매자에게만 할증 조건 2배
+    const isCertifiedHighNtrpMale = sellerCertificationNtrp === 'verified' && sellerNtrp >= 4.0;
     const isMaleOnlyLowNtrp = sellerGender === '남성' && sellerNtrp <= 3.7;
-    const conditionMultiplier = isMaleOnlyLowNtrp ? 2 : 1;
+    const conditionMultiplier = (isCertifiedHighNtrpMale || isMaleOnlyLowNtrp) ? 2 : 1;
     
     // 1. 실제 vs 예상 조회수 비교 조정
     const viewRatio = viewCount / Math.max(expectedViews, 1);
@@ -121,7 +127,7 @@ export function PriceDisplay({
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = setInterval(() => { // 5초마다 가격 업데이트
       setAnimatedPrice(prevPrice => {
         // 실시간 동적 가격 계산
         const targetPrice = calculateDynamicPrice();
@@ -141,8 +147,8 @@ export function PriceDisplay({
       });
     }, 5000);
 
-    return () => clearInterval(interval);
-}, [basePrice, initialPrice, maxPrice, hoursUntilMatch, viewCount, waitingApplicants, expectedViews, expectedWaitingApplicants]);
+    return () => clearInterval(interval); // 컴포넌트 언마운트 시 타이머 정리
+  }, [basePrice, initialPrice, maxPrice, hoursUntilMatch, viewCount, waitingApplicants, expectedViews, expectedWaitingApplicants]);
 
   const priceChangePercentage = ((animatedPrice - initialPrice) / initialPrice * 100).toFixed(0);
 

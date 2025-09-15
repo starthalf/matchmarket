@@ -21,7 +21,7 @@ export default function LoginScreen() {
   const safeStyles = useSafeStyles();
   const [formData, setFormData] = useState({
     email: '',
-    password: '',
+    password: '', 
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

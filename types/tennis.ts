@@ -1,4 +1,4 @@
-// types/tennis.ts
+// types/tennis.ts - 완전한 코드
 
 export interface User {
   id: string;
@@ -38,16 +38,16 @@ export interface Match {
   expectedViews: number;
   expectedWaitingApplicants: number;
   expectedParticipants: {
-    male: number;
-    female: number;
-    total: number;
+    male: number;      // 🔥 모집할 남성 인원수 (자유롭게 설정 가능)
+    female: number;    // 🔥 모집할 여성 인원수 (자유롭게 설정 가능)
+    total: number;     // 🔥 총 모집 인원수
   };
   currentApplicants: {
     male: number;
     female: number;
     total: number;
   };
-  matchType: '단식' | '남복' | '여복' | '혼복'; // 🔥 4가지 매치 타입으로 변경
+  matchType: '단식' | '남복' | '여복' | '혼복'; // 🔥 경기 방식만 의미 (인원수와 무관)
   waitingApplicants: number;
   waitingList: WaitingApplicant[];
   participants: MatchParticipant[];
@@ -59,7 +59,7 @@ export interface Match {
   weather: '맑음' | '흐림' | '비';
   location: string;
   createdAt: string;
-  isClosed?: boolean; // 판매자가 수동으로 마감한 상태
+  isClosed?: boolean;
 }
 
 export interface WaitingApplicant {
@@ -131,24 +131,8 @@ export interface CertificationRequest {
   submittedAt: string;
 }
 
-// 매치 타입별 도우미 함수들
+// 🔥 매치 타입별 도우미 함수들 (수정)
 export const MatchTypeHelper = {
-  // 매치 타입별 기본 인원 수 반환
-  getDefaultParticipants(matchType: Match['matchType']): { male: number; female: number; total: number } {
-    switch (matchType) {
-      case '단식':
-        return { male: 1, female: 1, total: 2 }; // 남성 1명, 여성 1명 (상대방)
-      case '남복':
-        return { male: 2, female: 0, total: 2 }; // 남성 2명만
-      case '여복':
-        return { male: 0, female: 2, total: 2 }; // 여성 2명만
-      case '혼복':
-        return { male: 1, female: 1, total: 2 }; // 남성 1명, 여성 1명
-      default:
-        return { male: 1, female: 1, total: 2 };
-    }
-  },
-
   // 매치 타입 표시명 반환
   getDisplayName(matchType: Match['matchType']): string {
     switch (matchType) {
@@ -195,5 +179,127 @@ export const MatchTypeHelper = {
       default:
         return '🎾';
     }
+  },
+
+  // 매치 타입별 설명
+  getDescription(matchType: Match['matchType']): string {
+    switch (matchType) {
+      case '단식':
+        return '개인전 방식의 테니스 경기';
+      case '남복':
+        return '남성만 참여하는 복식 경기';
+      case '여복':
+        return '여성만 참여하는 복식 경기';
+      case '혼복':
+        return '남녀가 함께 참여하는 복식 경기';
+      default:
+        return '테니스 경기';
+    }
+  },
+
+  // 매치 타입별 권장 최소 인원 (참고용)
+  getMinRecommendedParticipants(matchType: Match['matchType']): number {
+    switch (matchType) {
+      case '단식':
+        return 2; // 최소 2명 (1:1)
+      case '남복':
+      case '여복':
+      case '혼복':
+        return 4; // 최소 4명 (2:2)
+      default:
+        return 2;
+    }
+  },
+
+  // 매치 타입별 성별 제한 체크
+  validateParticipantCount(
+    matchType: Match['matchType'], 
+    maleCount: number, 
+    femaleCount: number
+  ): { isValid: boolean; message?: string } {
+    switch (matchType) {
+      case '남복':
+        if (femaleCount > 0) {
+          return { 
+            isValid: false, 
+            message: '남자복식에서는 여성 참가자를 모집할 수 없습니다.' 
+          };
+        }
+        if (maleCount === 0) {
+          return { 
+            isValid: false, 
+            message: '남자복식에서는 최소 1명의 남성 참가자가 필요합니다.' 
+          };
+        }
+        break;
+        
+      case '여복':
+        if (maleCount > 0) {
+          return { 
+            isValid: false, 
+            message: '여자복식에서는 남성 참가자를 모집할 수 없습니다.' 
+          };
+        }
+        if (femaleCount === 0) {
+          return { 
+            isValid: false, 
+            message: '여자복식에서는 최소 1명의 여성 참가자가 필요합니다.' 
+          };
+        }
+        break;
+        
+      case '단식':
+      case '혼복':
+        if (maleCount === 0 && femaleCount === 0) {
+          return { 
+            isValid: false, 
+            message: '최소 1명 이상의 참가자가 필요합니다.' 
+          };
+        }
+        break;
+    }
+    
+    return { isValid: true };
   }
 };
+
+// 🔥 추가 유틸리티 타입들
+export type MatchStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
+export type ParticipantStatus = 'waiting' | 'confirmed' | 'cancelled';
+export type PaymentStatus = 'pending' | 'paid' | 'refunded';
+
+// 🔥 매치 필터링용 인터페이스
+export interface MatchFilter {
+  matchTypes: Array<Match['matchType']>;
+  ntrpRange: { min: number; max: number };
+  priceRange: { min: number; max: number };
+  dateRange?: { start: string; end: string };
+  location?: string;
+  availableOnly: boolean;
+  gender?: '남성' | '여성' | 'all';
+}
+
+// 🔥 매치 통계용 인터페이스
+export interface MatchStats {
+  total: number;
+  byType: Record<Match['matchType'], number>;
+  avgPrice: number;
+  avgParticipants: number;
+  avgNtrp: number;
+  totalRevenue: number;
+}
+
+// 🔥 사용자 선호도 인터페이스
+export interface UserPreferences {
+  preferredMatchTypes: Array<Match['matchType']>;
+  preferredTimeSlots: string[];
+  preferredLocations: string[];
+  maxPrice: number;
+  autoJoinWaitlist: boolean;
+  notificationSettings: {
+    newMatches: boolean;
+    priceChanges: boolean;
+    matchReminders: boolean;
+    paymentRequests: boolean;
+  };
+}

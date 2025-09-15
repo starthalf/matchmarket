@@ -51,44 +51,76 @@ const supabaseAnonKey = getSupabaseAnonKey();
 const supabaseServiceKey = getSupabaseServiceKey();
 
 // Supabase 클라이언트 생성
-let supabase: any = null;
-try {
-  if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
-    supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = (() => {
+  try {
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.warn('⚠️ Supabase 필수 설정이 누락되었습니다');
+      return null;
+    }
+    
+    if (!supabaseUrl.startsWith('https://') || supabaseAnonKey.length < 20) {
+      console.warn('⚠️ Supabase 설정이 올바르지 않습니다:', {
+        hasUrl: !!supabaseUrl,
+        hasAnonKey: !!supabaseAnonKey,
+        urlValid: supabaseUrl.startsWith('https://'),
+        keyValid: supabaseAnonKey.length > 20
+      });
+      return null;
+    }
+
+    const client = createClient(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: Platform.OS !== 'web',
         autoRefreshToken: true,
       }
     });
+    
     console.log('✅ Supabase 클라이언트 생성 성공');
-  } else {
-    console.warn('⚠️ Supabase 설정이 누락되거나 올바르지 않습니다');
+    return client;
+  } catch (error) {
+    console.error('❌ Supabase 클라이언트 생성 실패:', error);
+    return null;
   }
-} catch (error) {
-  console.error('❌ Supabase 클라이언트 생성 실패:', error);
-  supabase = null;
-}
+})();
 
 // Supabase Admin 클라이언트 생성 (Service Role Key 사용)
-let supabaseAdmin: any = null;
-try {
-  if (supabaseUrl && supabaseServiceKey && supabaseUrl.startsWith('https://') && supabaseServiceKey.length > 20) {
-    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+export const supabaseAdmin = (() => {
+  try {
+    if (!supabaseUrl || !supabaseServiceKey) {
+      console.warn('⚠️ Supabase Admin 필수 설정이 누락되었습니다:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey
+      });
+      return null;
+    }
+    
+    if (!supabaseUrl.startsWith('https://') || supabaseServiceKey.length < 20) {
+      console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다:', {
+        hasUrl: !!supabaseUrl,
+        hasServiceKey: !!supabaseServiceKey,
+        urlValid: supabaseUrl.startsWith('https://'),
+        keyValid: supabaseServiceKey.length > 20
+      });
+      return null;
+    }
+
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false
       }
     });
+    
     console.log('✅ Supabase Admin 클라이언트 생성 성공');
-  } else {
-    console.warn('⚠️ Supabase Admin 설정이 누락되거나 올바르지 않습니다');
+    console.log('🔧 DEBUG: Service Role Key 길이:', supabaseServiceKey.length);
+    console.log('🔧 DEBUG: Service Role Key 시작:', supabaseServiceKey.substring(0, 30));
+    
+    return adminClient;
+  } catch (error) {
+    console.error('❌ Supabase Admin 클라이언트 생성 실패:', error);
+    return null;
   }
-} catch (error) {
-  console.error('❌ Supabase Admin 클라이언트 생성 실패:', error);
-  supabaseAdmin = null;
-}
-
-export { supabase, supabaseAdmin };
+})();
 
 // Supabase 연결 상태 확인
 export const isSupabaseConfigured = () => {
@@ -103,3 +135,50 @@ export const isSupabaseAdminConfigured = () => {
   console.log('🔧 DEBUG: isSupabaseAdminConfigured =', configured);
   return configured;
 };
+
+// 디버깅을 위한 상태 출력
+console.log('🔧 DEBUG: 최종 클라이언트 상태:', {
+  supabase: !!supabase,
+  supabaseAdmin: !!supabaseAdmin,
+  isSupabaseConfigured: isSupabaseConfigured(),
+  isSupabaseAdminConfigured: isSupabaseAdminConfigured()
+});
+
+// Admin 클라이언트 테스트 함수 (디버깅용)
+export const testSupabaseAdmin = async () => {
+  try {
+    if (!supabaseAdmin) {
+      console.error('❌ supabaseAdmin 클라이언트가 null입니다');
+      return false;
+    }
+
+    console.log('🧪 supabaseAdmin 테스트 시작...');
+    
+    // 간단한 select 테스트
+    const { data, error } = await supabaseAdmin
+      .from('app_settings')
+      .select('*')
+      .limit(1);
+    
+    if (error) {
+      console.error('❌ supabaseAdmin 테스트 실패:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      return false;
+    }
+    
+    console.log('✅ supabaseAdmin 테스트 성공:', data);
+    return true;
+  } catch (error: any) {
+    console.error('❌ supabaseAdmin 테스트 중 예외 발생:', error?.message || error);
+    return false;
+  }
+};
+
+// 앱 시작 시 Admin 클라이언트 테스트 실행
+setTimeout(async () => {
+  await testSupabaseAdmin();
+}, 2000);

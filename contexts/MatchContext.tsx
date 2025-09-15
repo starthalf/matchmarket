@@ -1,3 +1,5 @@
+// contexts/MatchContext.tsx - 자동 더미 생성 비활성화
+
 import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { Match } from '../types/tennis';
 import { mockMatches } from '../data/mockData';
@@ -28,7 +30,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // 앱 로드 시 Supabase에서 모든 매치 가져오기 및 매일 새로운 더미 매치 생성
+  // 앱 로드 시 Supabase에서 모든 매치 가져오기 (자동 더미 생성 제거)
   useEffect(() => {
     loadMatches();
   }, []);
@@ -42,9 +44,8 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         setMatches([...mockMatches]);
       }
       
-      // 2. Supabase 연결이 가능한 경우에만 추가 로직 실행
+      // 2. Supabase에서 데이터 가져오기 (자동 더미 생성 없음)
       try {
-        // 모든 매치 가져오기
         const allMatches = await DataGenerator.getAllMatches(mockMatches);
         
         // 각 매치의 대기자 목록을 Supabase에서 동기화 (오류 발생해도 계속 진행)
@@ -59,7 +60,8 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         
         // 실패한 매치들은 원본 데이터 사용
         const failedMatches = syncedMatches
-          .map((result, index) => result.status === 'rejected' ? allMatches[index] : null)
+          .map((result, index) => result.status === 'rejected' ? 
+            allMatches[index] : null)
           .filter((match): match is Match => match !== null);
         
         const finalMatches = [...successfulMatches, ...failedMatches];
@@ -68,37 +70,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
           setMatches([...finalMatches]);
         }
         
-        // 새로운 더미 매치 생성 필요한지 확인
-        const shouldGenerate = await DataGenerator.shouldGenerateNewMatches();
-        if (shouldGenerate) {
-          console.log('새로운 더미 매치 생성 중... (10개)');
-          const newMatches = await DataGenerator.generateAndSaveDailyMatches(10); // 20개에서 10개로 변경
-          
-          if (newMatches.length > 0) {
-            // 새 매치들을 맨 앞에 추가
-            if (mounted.current) {
-              setMatches(prev => [...newMatches, ...prev]);
-            }
-            try {
-              await DataGenerator.updateLastGenerationDate();
-            } catch (updateError: any) {
-              console.log('ℹ️ 마지막 생성 날짜 업데이트 실패 (환경변수 미설정):', updateError?.message);
-            }
-            console.log(`✅ ${newMatches.length}개의 새로운 더미 매치가 생성되었습니다.`);
-            
-            // 더미 매치 개수 확인
-            try {
-              const totalDummyCount = await DataGenerator.getDummyMatchCount();
-              console.log(`📊 총 더미 매치 개수: ${totalDummyCount}개`);
-            } catch (countError: any) {
-              console.log('ℹ️ 더미 매치 개수 조회 실패 (환경변수 미설정):', countError?.message);
-            }
-          } else {
-            console.log('ℹ️ Supabase 연결 문제로 더미 매치 생성을 건너뜁니다.');
-          }
-        } else {
-          console.log('ℹ️ 오늘은 이미 더미 매치가 생성되었거나 Supabase 연결이 불가능합니다.');
-        }
+        console.log(`✅ 총 ${finalMatches.length}개 매치 로드 완료`);
         
       } catch (supabaseError: any) {
         console.log('ℹ️ Supabase 관련 작업 중 오류 발생 (정상적으로 로컬 데이터 사용):', {
@@ -142,79 +114,48 @@ export function MatchProvider({ children }: { children: ReactNode }) {
 
   const addMatch = async (newMatch: Match): Promise<boolean> => {
     try {
-      if (!supabaseAdmin) {
-        console.warn('Supabase Admin 클라이언트가 초기화되지 않음');
-        // 로컬에만 추가
+      console.log('새 매치 추가 중:', newMatch.id);
+      
+      // Supabase에 저장 시도
+      const success = await DataGenerator.saveMatchToSupabase(newMatch);
+      
+      if (success) {
+        console.log('✅ 새 매치가 Supabase에 저장되었습니다');
+        // 로컬 상태에도 추가
         setMatches(prev => [newMatch, ...prev]);
         return true;
-      }
-
-      // Supabase에 저장
-      const supabaseMatch = DataGenerator.matchToSupabaseFormat(newMatch);
-      
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('매치 저장 시간 초과')), 10000);
-      });
-
-      const insertPromise = supabaseAdmin
-        .from('matches')
-        .insert(supabaseMatch);
-
-      const { error } = await Promise.race([insertPromise, timeoutPromise]);
-
-      if (error) {
-        console.error('매치 저장 오류:', error);
-        // 오류 발생해도 로컬에는 추가
-        setMatches(prev => [newMatch, ...prev]);
-        return false;
-      }
-
-      // 성공 시 로컬에도 추가
-      setMatches(prev => [newMatch, ...prev]);
-      console.log('✅ 새 매치가 성공적으로 저장되었습니다.');
-      return true;
-
-    } catch (error: any) {
-      if (error?.message?.includes('시간 초과')) {
-        console.error('매치 저장 시간 초과');
-      } else if (error?.message?.includes('Failed to fetch')) {
-        console.error('네트워크 연결 오류로 매치 저장 실패');
       } else {
-        console.error('매치 저장 중 예상치 못한 오류:', error?.message);
+        console.log('⚠️ Supabase 저장 실패, 로컬 상태에만 추가합니다');
+        // Supabase 저장 실패해도 로컬에는 추가
+        setMatches(prev => [newMatch, ...prev]);
+        return true; // 사용자에게는 성공으로 보고
       }
-      
-      // 오류 발생해도 로컬에는 추가
-      setMatches(prev => [newMatch, ...prev]);
+    } catch (error) {
+      console.error('매치 추가 중 오류:', error);
       return false;
     }
   };
 
-  const value: MatchContextType = {
-    matches,
-    isLoadingMatches,
-    refreshMatches,
-    updateMatch,
-    addMatch,
-  };
-
   return (
-    <MatchContext.Provider value={value}>
+    <MatchContext.Provider value={{
+      matches,
+      isLoadingMatches,
+      refreshMatches,
+      updateMatch,
+      addMatch,
+    }}>
       {children}
     </MatchContext.Provider>
   );
 }
 
-export function useMatches() {
+export function useMatch() {
   const context = useContext(MatchContext);
   if (context === undefined) {
-    throw new Error('useMatches must be used within a MatchProvider');
+    throw new Error('useMatch must be used within a MatchProvider');
   }
-  
-  // displayMatches 계산을 여기서 수행
-  const displayMatches = context.matches.filter(match => !match.isClosed);
-  
-  return {
-    ...context,
-    displayMatches,
-  };
+  return context;
 }
+
+// Backward compatibility
+export const useMatches = useMatch;

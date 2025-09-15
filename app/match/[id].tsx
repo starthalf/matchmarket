@@ -322,7 +322,7 @@ export default function MatchDetailScreen() {
       // 입금 모달 표시 및 타이머 시작
       setShowPaymentModal(true);
       setTimeLeft(300); // 5분 타이머 시작
-      setDepositorName(''); // 입금자명 초기화
+      setDepositorName(user?.name || ''); // 로그인한 사용자 이름으로 기본값 설정
     } catch (error) {
       Alert.alert('오류', '결제 요청 생성에 실패했습니다.');
     }

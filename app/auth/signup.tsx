@@ -1,3 +1,4 @@
+// app/auth/signup.tsx
 import React, { useState } from 'react';
 import {
   View,
@@ -66,7 +67,7 @@ export default function SignupScreen() {
     const result = await signup({
       ...formData,
       ntrp: Number(formData.ntrp),
-      experience: Number(formData.experience),
+      experience: Number(formData.experience), // 이제 년 단위로 저장
     });
     setIsLoading(false);
 
@@ -107,14 +108,14 @@ export default function SignupScreen() {
               <Text style={styles.sectionTitle}>기본 정보</Text>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>이름 *</Text>
+                <Text style={styles.inputLabel}>닉네임 *</Text>
                 <View style={styles.inputContainer}>
                   <User size={20} color="#6b7280" />
                   <TextInput
                     style={styles.textInput}
                     value={formData.name}
                     onChangeText={(text) => setFormData({...formData, name: text})}
-                    placeholder="이름을 입력하세요"
+                    placeholder="닉네임을 입력하세요"
                     placeholderTextColor="#9ca3af"
                   />
                 </View>
@@ -250,12 +251,12 @@ export default function SignupScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>테니스 경력 (개월) *</Text>
+                <Text style={styles.inputLabel}>테니스 경력 (년) *</Text>
                 <TextInput
                   style={styles.simpleInput}
                   value={formData.experience}
                   onChangeText={(text) => setFormData({...formData, experience: text})}
-                  placeholder="예: 24"
+                  placeholder="예: 2"
                   placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
                 />
@@ -287,24 +288,24 @@ export default function SignupScreen() {
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>선수 출신 *</Text>
                 <View style={styles.radioGroup}>
-                  {['동호인', '대학선수', '실업선수'].map((career) => (
-                    <TouchableOpacity
-                      key={career}
-                      style={[
-                        styles.radioButton,
-                        formData.careerType === career && styles.radioButtonActive
-                      ]}
-                      onPress={() => setFormData({...formData, careerType: career as any})}
-                    >
-                      <Text style={[
-                        styles.radioText,
-                        formData.careerType === career && styles.radioTextActive
-                      ]}>
-                        {career}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                  <TouchableOpacity
+                    style={[
+                      styles.radioButton,
+                      styles.radioButtonActive
+                    ]}
+                    disabled
+                  >
+                    <Text style={[
+                      styles.radioText,
+                      styles.radioTextActive
+                    ]}>
+                      {formData.careerType}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
+                <Text style={styles.helperText}>
+                  * 현재는 동호인으로만 가입 가능합니다
+                </Text>
               </View>
             </View>
 
@@ -327,31 +328,6 @@ export default function SignupScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  placeholder: {
-    width: 32,
-  },
   keyboardView: {
     flex: 1,
   },
@@ -443,6 +419,12 @@ const styles = StyleSheet.create({
   },
   radioTextActive: {
     color: '#ffffff',
+  },
+  helperText: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   signupButton: {
     backgroundColor: '#ec4899',

@@ -15,7 +15,6 @@ interface PriceDisplayProps {
   sellerGender: string;
   sellerNtrp: number;
   sellerCertificationNtrp: 'none' | 'pending' | 'verified';
-  sellerCertificationNtrp: 'none' | 'pending' | 'verified';
   isClosed?: boolean;
 }
 
@@ -32,9 +31,10 @@ export function PriceDisplay({
   sellerGender,
   sellerNtrp, 
   sellerCertificationNtrp,
-  sellerCertificationNtrp,
   isClosed = false
+}: PriceDisplayProps) {
   const [isIncreasing, setIsIncreasing] = useState(false);
+  const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
 
   // 초기 가격 계산 함수 (매치 등록 시)
   const calculateInitialPrice = (basePrice: number, sellerGender: string, sellerNtrp: number, hoursUntilMatch: number) => {
@@ -58,7 +58,6 @@ export function PriceDisplay({
     const matchDateTime = new Date(Date.now() + hoursUntilMatch * 60 * 60 * 1000);
     const matchHour = matchDateTime.getHours();
     if (matchHour >= 18 && matchHour <= 21 &&
-    if (matchHour >= 18 && matchHour <= 21 &&
         (sellerGender === '여성' || sellerNtrp >= 4.0)) {
       initialPrice *= 1.07; // 황금시간대 7% 할증
     }
@@ -80,10 +79,8 @@ export function PriceDisplay({
     
     // 특별 조건: NTRP 인증된 4.0 이상 남성 판매자에게만 할증 조건 2배
     const isCertifiedHighNtrpMale = sellerCertificationNtrp === 'verified' && sellerNtrp >= 4.0;
-    const conditionMultiplier = isCertifiedHighNtrpMale ? 2 : 1;
-
     const isMaleOnlyLowNtrp = sellerGender === '남성' && sellerNtrp <= 3.7;
-    const conditionMultiplier = isMaleOnlyLowNtrp ? 2 : 1;
+    const conditionMultiplier = (isCertifiedHighNtrpMale || isMaleOnlyLowNtrp) ? 2 : 1;
     
     // 1. 실제 vs 예상 조회수 비교 조정
     const viewRatio = viewCount / Math.max(expectedViews, 1);
@@ -151,7 +148,7 @@ export function PriceDisplay({
     }, 5000);
 
     return () => clearInterval(interval); // 컴포넌트 언마운트 시 타이머 정리
-}, [basePrice, initialPrice, maxPrice, hoursUntilMatch, viewCount, waitingApplicants, expectedViews, expectedWaitingApplicants]);
+  }, [basePrice, initialPrice, maxPrice, hoursUntilMatch, viewCount, waitingApplicants, expectedViews, expectedWaitingApplicants]);
 
   const priceChangePercentage = ((animatedPrice - initialPrice) / initialPrice * 100).toFixed(0);
 

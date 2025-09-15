@@ -605,7 +605,7 @@ export default function MatchDetailScreen() {
                     {match.seller.gender} · {match.seller.ageGroup} · NTRP {match.seller.ntrp.toFixed(1)}
                   </Text>
                   <Text style={styles.sellerDetailText}>
-                    경력 {Math.floor(match.seller.experience / 12)}년 · {match.seller.careerType} · {match.seller.playStyle}
+                    경력 {match.seller.experience}년 · {match.seller.careerType} · {match.seller.playStyle}
                   </Text>
                 </View>
               </View>

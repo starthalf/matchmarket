@@ -12,7 +12,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
 import { Database } from 'lucide-react-native';
-import { MatchCard } from '../../components/MatchCard';
+import { MatchCard } from '@/components/MatchCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';

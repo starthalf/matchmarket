@@ -157,8 +157,8 @@ export class DataGenerator {
       expectedParticipants: expectedParticipants,
       currentApplicants: {
         male: currentMale,
-        female: currentFemale,
-        total: currentMale + currentFemale
+        female: currentFemale, 
+        total: currentMale + currentFemale 
       },
       matchType: isDoubles ? '복식' : '단식',
       waitingApplicants: Math.floor(Math.random() * 8),

@@ -1,3 +1,4 @@
+// app/(tabs)/index.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -22,14 +23,13 @@ import { useSafeStyles } from '../../constants/Styles';
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, adminLogin } = useAdmin();
   const { matches: displayMatches, isLoadingMatches } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'female' | 'time' | 'ntrp'>('popular');
   const [showFemaleOnly, setShowFemaleOnly] = useState(false);
-  const [localAdminToggleStatus, setLocalAdminToggleStatus] = useState(false);
 
   // Track component mount status
   useEffect(() => {
@@ -39,139 +39,44 @@ export default function HomeScreen() {
     };
   }, []);
 
-  // 로컬 관리자 토글 상태 로드
-  useEffect(() => {
-    const loadAdminStatus = async () => {
-      try {
-        let adminStatus = false;
-        if (Platform.OS === 'web') {
-          if (typeof window !== 'undefined') {
-            adminStatus = localStorage.getItem('isAdmin') === 'true';
-            const handleStorageChange = (e: StorageEvent) => {
-              if (e.key === 'isAdmin') {
-                if (mounted.current) {
-                  setLocalAdminToggleStatus(e.newValue === 'true');
-                }
-              }
-            };
-            const handleAdminToggle = () => {
-              loadAdminStatus();
-            };
-            window.addEventListener('storage', handleStorageChange);
-            window.addEventListener('adminToggle', handleAdminToggle);
-            return () => {
-              window.removeEventListener('storage', handleStorageChange);
-              window.removeEventListener('adminToggle', handleAdminToggle);
-            };
-          }
-        } else {
-          const stored = await AsyncStorage.getItem('isAdmin');
-          adminStatus = stored === 'true';
-        }
-        if (mounted.current) {
-          setLocalAdminToggleStatus(adminStatus);
-        }
-      } catch (error) {
-        console.error('관리자 상태 로딩 오류:', error);
-        if (mounted.current) {
-          setLocalAdminToggleStatus(false);
-        }
+  const handleQuickLogin = async (userIdentifier: string) => {
+    try {
+      const result = await login(userIdentifier, 'demo123');
+      if (result.success) {
+        Alert.alert('로그인 성공', `${userIdentifier}로 로그인되었습니다.`);
+      } else {
+        Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
       }
-    };
-    loadAdminStatus();
-
-  }, []);
-
-  const sortedMatches = [...displayMatches].sort((a, b) => {
-    switch (sortBy) {
-      case 'popular':
-        return b.waitingApplicants - a.waitingApplicants;
-      case 'time':
-        return new Date(`${a.date}T${a.time}`).getTime() - new Date(`${b.date}T${b.time}`).getTime();
-      case 'ntrp':
-        return b.seller.ntrp - a.seller.ntrp;
-      default:
-        return 0;
+    } catch (error) {
+      console.error('퀵 로그인 오류:', error);
+      Alert.alert('오류', '로그인 중 오류가 발생했습니다.');
     }
-  });
-
-  const filteredMatches = sortedMatches.filter(match => {
-    // 검색 필터
-    const matchesSearch = match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      match.seller.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      match.location.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    // 여성 필터
-    const matchesGender = !showFemaleOnly || match.seller.gender === '여성';
-    
-    return matchesSearch && matchesGender;
-  });
-
-  const handleFilterPress = (filterKey: string) => {
-    if (filterKey === 'female') {
-      setShowFemaleOnly(!showFemaleOnly);
-    } else {
-      setSortBy(filterKey as any);
-      setShowFemaleOnly(false); // 다른 정렬 선택 시 여성 필터 해제
-    }
-  };
-
-  const isFilterActive = (filterKey: string) => {
-    if (filterKey === 'female') {
-      return showFemaleOnly;
-    }
-    return sortBy === filterKey && !showFemaleOnly;
-  };
-
-  const getFilterLabel = (filterKey: string) => {
-    if (filterKey === 'female') {
-      return showFemaleOnly ? '여성 ✓' : '여성';
-    }
-    const labels = {
-      popular: '인기순',
-      time: '시간순',
-      ntrp: 'NTRP순',
-    };
-    return labels[filterKey as keyof typeof labels];
-  };
-
-  // 데모용 빠른 로그인 함수
-  const handleQuickLogin = async (username: string) => {
-    await login(username, '1234');
-  };
-
-  const toggleAdminMode = () => {
-    const toggleAdminStatus = async () => {
-      try {
-        const currentAdminStatus = localAdminToggleStatus;
-        const newAdminStatus = !currentAdminStatus;
-        
-        if (Platform.OS === 'web') {
-          if (typeof window !== 'undefined') {
-            localStorage.setItem('isAdmin', newAdminStatus.toString());
-            window.dispatchEvent(new Event('adminToggle'));
-          }
-        } else {
-          await AsyncStorage.setItem('isAdmin', newAdminStatus.toString());
-        }
-        
-        setLocalAdminToggleStatus(newAdminStatus);
-        Alert.alert(
-          '관리자 모드 변경',
-          `관리자 모드가 ${newAdminStatus ? '활성화' : '비활성화'}되었습니다.`,
-          [{ text: '확인' }]
-        );
-      } catch (error) {
-        console.error('관리자 모드 변경 오류:', error);
-        Alert.alert('오류', '관리자 모드 변경에 실패했습니다.');
-      }
-    };
-    
-    toggleAdminStatus();
   };
 
   const handleAdminPress = () => {
-    router.push('/(admin)/dashboard');
+    if (isAdmin) {
+      router.push('/(admin)/dashboard');
+    } else {
+      // 관리자가 아닌 경우 로그인 유도
+      Alert.alert(
+        '관리자 로그인',
+        '관리자 기능에 접근하려면 로그인이 필요합니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '로그인', onPress: () => router.push('/admin-login') }
+        ]
+      );
+    }
+  };
+
+  const handleAdminLogin = async () => {
+    // 간단한 데모 관리자 로그인
+    const result = await adminLogin('admin@demo.com', 'admin123');
+    if (result.success) {
+      Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
+    } else {
+      Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
+    }
   };
 
   return (
@@ -186,7 +91,9 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.dynamicPriceIcon}>
               <TrendingUp size={20} color="#16a34a" />
             </TouchableOpacity>
-            {__DEV__ && (
+            
+            {/* 관리자 로그인했을 때만 Supabase 테스트 버튼 표시 */}
+            {isAdmin && (
               <TouchableOpacity 
                 style={styles.supabaseTestIcon}
                 onPress={() => router.push('/supabase-test')}
@@ -194,7 +101,9 @@ export default function HomeScreen() {
                 <Database size={20} color="#3b82f6" />
               </TouchableOpacity>
             )}
-            {(isAdmin || localAdminToggleStatus) && (
+            
+            {/* 관리자 로그인했을 때만 관리자(실드) 버튼 표시 */}
+            {isAdmin && (
               <TouchableOpacity 
                 style={styles.adminButton}
                 onPress={handleAdminPress}
@@ -202,29 +111,10 @@ export default function HomeScreen() {
                 <Shield size={24} color="#dc2626" />
               </TouchableOpacity>
             )}
-            {/* Preview 빌드에서도 관리자 토글 버튼 추가 */}
-            {!__DEV__ && (
-              <TouchableOpacity 
-                style={styles.previewAdminToggle}
-                onPress={toggleAdminMode}
-                onLongPress={() => {
-                  Alert.alert(
-                    '관리자 모드',
-                    `현재 상태: ${localAdminToggleStatus ? '활성' : '비활성'}\n\n이 버튼을 눌러 관리자 모드를 토글할 수 있습니다.`,
-                    [{ text: '확인' }]
-                  );
-                }}
-              >
-                <Text style={styles.previewAdminText}>
-                  {localAdminToggleStatus ? '🔓' : '🔒'}
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </View>
 
-      {/* 데모용 인증 컨트롤 */}
       {/* 개발 모드에서만 표시되는 데모 컨트롤 */}
       {__DEV__ && (
         <View style={styles.demoControls}>
@@ -253,12 +143,10 @@ export default function HomeScreen() {
                   <Text style={styles.demoButtonText}>midnight.rider</Text>
                 </TouchableOpacity>
                 <TouchableOpacity 
-                  style={[styles.demoButton, styles.adminToggleButton]}
-                  onPress={toggleAdminMode}
+                  style={[styles.demoButton, styles.adminDemoButton]}
+                  onPress={handleAdminLogin}
                 >
-                  <Text style={styles.adminToggleButtonText}>
-                    관리자 {localAdminToggleStatus ? '🔓' : '🔒'}
-                  </Text>
+                  <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
                 </TouchableOpacity>
               </>
             ) : (
@@ -273,75 +161,86 @@ export default function HomeScreen() {
         </View>
       )}
 
-      <View style={styles.searchSection}>
-        <View style={styles.searchBar}>
-          <Search size={20} color="#6b7280" />
+      {/* Preview 빌드에서만 표시되는 관리자 로그인 버튼 */}
+      {!__DEV__ && !isAdmin && (
+        <View style={styles.previewAdminSection}>
+          <TouchableOpacity 
+            style={styles.previewAdminButton}
+            onPress={handleAdminLogin}
+          >
+            <Shield size={16} color="#dc2626" />
+            <Text style={styles.previewAdminText}>관리자 로그인</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 검색 및 필터 */}
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputContainer}>
+          <Search size={20} color="#9ca3af" />
           <TextInput
             style={styles.searchInput}
-            placeholder="매치 또는 지역 검색..."
+            placeholder="매치 검색"
+            placeholderTextColor="#9ca3af"
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholderTextColor="#9ca3af"
           />
         </View>
-        
         <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color="#16a34a" />
+          <Filter size={20} color="#6b7280" />
         </TouchableOpacity>
       </View>
 
-      <View style={styles.sortSection}>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.sortScroll}
-        >
+      {/* 정렬 및 필터 옵션 */}
+      <View style={styles.sortContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {[
             { key: 'popular', label: '인기순' },
+            { key: 'female', label: '여성 매치' },
             { key: 'time', label: '시간순' },
             { key: 'ntrp', label: 'NTRP순' },
-            { key: 'female', label: '여성' },
           ].map((option) => (
             <TouchableOpacity
               key={option.key}
               style={[
                 styles.sortButton,
-                isFilterActive(option.key) && styles.sortButtonActive
+                sortBy === option.key && styles.sortButtonActive
               ]}
-              onPress={() => handleFilterPress(option.key)}
+              onPress={() => setSortBy(option.key as any)}
             >
               <Text style={[
-                styles.sortText,
-                isFilterActive(option.key) && styles.sortTextActive
+                styles.sortButtonText,
+                sortBy === option.key && styles.sortButtonTextActive
               ]}>
-                {getFilterLabel(option.key)}
+                {option.label}
               </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
-      <View style={styles.statsBar}>
-        <View style={styles.stat}>
-          <TrendingUp size={16} color="#16a34a" />
-          <Text style={styles.statText}>
-            실시간 {isLoadingMatches ? '로딩중...' : `${filteredMatches.length}개 매치`}
-            {showFemaleOnly && ' (여성 판매자)'}
-          </Text>
-        </View>
-      </View>
-
+      {/* 매치 목록 */}
       <ScrollView style={styles.matchList} showsVerticalScrollIndicator={false}>
         {isLoadingMatches ? (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>매치 데이터를 불러오는 중...</Text>
+            <Text style={styles.loadingText}>매치를 불러오는 중...</Text>
           </View>
         ) : (
-        filteredMatches.map((match) => (
-          <MatchCard key={match.id} match={match} />
-        ))
+          displayMatches
+            .filter(match => 
+              searchQuery === '' || 
+              match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              match.venue.toLowerCase().includes(searchQuery.toLowerCase())
+            )
+            .filter(match => !showFemaleOnly || match.targetGender === '여성')
+            .map((match) => (
+              <MatchCard 
+                key={match.id} 
+                match={match}
+                onPress={() => router.push(`/match/${match.id}`)}
+              />
+            ))
         )}
-        
         <View style={styles.bottomPadding} />
       </ScrollView>
     </SafeAreaView>
@@ -349,75 +248,121 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#ec4899',
-    marginBottom: 2,
+    fontWeight: '700',
+    color: '#111827',
   },
   subtitle: {
     fontSize: 14,
     color: '#6b7280',
-    fontWeight: '500',
+    marginTop: 2,
   },
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   dynamicPriceIcon: {
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#f0fdf4',
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-  },
-  adminButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#fef2f2',
-    borderWidth: 1,
-    borderColor: '#fecaca',
   },
   supabaseTestIcon: {
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#eff6ff',
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
   },
-  searchSection: {
-    flexDirection: 'row',
-    paddingHorizontal: 20,
+  adminButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#fef2f2',
+  },
+  previewAdminSection: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
     paddingVertical: 8,
-    gap: 12,
-    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
-  searchBar: {
+  previewAdminButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fef2f2',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  previewAdminText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#dc2626',
+  },
+  demoControls: {
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  demoTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+  },
+  demoButton: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  demoButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  adminDemoButton: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#dc2626',
+  },
+  adminDemoButtonText: {
+    color: '#dc2626',
+    fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#ef4444',
+  },
+  logoutButtonText: {
+    color: '#ef4444',
+    fontWeight: '600',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    gap: 12,
+  },
+  searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#f9fafb',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 12,
+    paddingVertical: 12,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
@@ -425,131 +370,48 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   filterButton: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
     padding: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderRadius: 8,
+    backgroundColor: '#f9fafb',
   },
-  sortSection: {
-    backgroundColor: '#ffffff',
-    paddingBottom: 8,
-  },
-  sortScroll: {
-    paddingHorizontal: 20,
+  sortContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
   sortButton: {
     paddingHorizontal: 16,
-    paddingVertical: 6,
-    marginRight: 8,
+    paddingVertical: 8,
     borderRadius: 20,
     backgroundColor: '#f3f4f6',
+    marginRight: 8,
   },
   sortButtonActive: {
     backgroundColor: '#ec4899',
   },
-  sortText: {
+  sortButtonText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#6b7280',
   },
-  sortTextActive: {
-    color: '#ffffff',
-  },
-  statsBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    backgroundColor: '#fef3c7',
-    borderBottomWidth: 1,
-    borderBottomColor: '#fbbf24',
-  },
-  stat: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ec4899',
+  sortButtonTextActive: {
+    color: '#fff',
   },
   matchList: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-  },
-  bottomPadding: {
-    height: 100,
-  },
-  demoControls: {
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#fbbf24',
-  },
-  demoTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#92400e',
-    marginBottom: 8,
-  },
-  demoButtons: {
-    flexDirection: 'row',
-  },
-  demoButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 8,
-  },
-  demoButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  logoutButton: {
-    backgroundColor: '#dc2626',
-  },
-  logoutButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  adminToggleButton: {
-    backgroundColor: '#7c3aed',
-  },
-  adminToggleButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  previewAdminToggle: {
-    padding: 8,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    minWidth: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  previewAdminText: {
-    fontSize: 16,
+    backgroundColor: '#f9fafb',
   },
   loadingContainer: {
-    paddingVertical: 40,
+    padding: 32,
     alignItems: 'center',
   },
   loadingText: {
     fontSize: 16,
     color: '#6b7280',
-    fontWeight: '500',
+  },
+  bottomPadding: {
+    height: 20,
   },
 });

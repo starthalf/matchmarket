@@ -10,8 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
-import { Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw, Trash2, Plus } from 'lucide-react-native';
 import { SupabaseConnectionTest } from '../utils/supabaseConnectionTest';
 import { DataGenerator } from '../utils/dataGenerator';
 import { useSafeStyles } from '../constants/Styles';
@@ -91,6 +90,29 @@ export default function SupabaseTestScreen() {
     );
   };
 
+  const handleGenerateOneTimeDummy = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🎾 일회성 더미 데이터 10개 생성 시작...');
+      const newMatches = await DataGenerator.generateOneTimeDummyMatches(10);
+      
+      if (newMatches.length > 0) {
+        Alert.alert(
+          '생성 완료! 🎉',
+          `${newMatches.length}개의 더미 매치가 생성되었습니다!`,
+          [{ text: '확인', onPress: () => runConnectionTest() }]
+        );
+      } else {
+        Alert.alert('생성 실패', '더미 매치 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      Alert.alert('오류', '더미 매치 생성 중 오류가 발생했습니다.');
+      console.error('더미 생성 오류:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const getStatusIcon = (status: boolean) => {
     return status ? (
       <CheckCircle size={20} color="#16a34a" />
@@ -162,33 +184,23 @@ export default function SupabaseTestScreen() {
             <View style={styles.testInfo}>
               <Text style={styles.testLabel}>SUPABASE_SERVICE_ROLE_KEY</Text>
               <Text style={styles.testDetail}>
-                {envVars.hasServiceKey ? '설정됨' : '설정되지 않음 (선택사항)'}
+                {envVars.hasServiceKey ? '설정됨' : '설정되지 않음 (관리자 기능 제한)'}
               </Text>
             </View>
             {getStatusIcon(envVars.hasServiceKey)}
           </View>
         </View>
 
-        {/* 연결 테스트 결과 */}
+        {/* 연결 상태 테스트 */}
         {testResult && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>🔗 연결 테스트 결과</Text>
+            <Text style={styles.sectionTitle}>🔌 연결 상태</Text>
             
-            <View style={styles.testItem}>
-              <View style={styles.testInfo}>
-                <Text style={styles.testLabel}>환경변수 설정</Text>
-                <Text style={styles.testDetail}>
-                  {testResult.isConfigured ? '완료' : '미완료'}
-                </Text>
-              </View>
-              {getStatusIcon(testResult.isConfigured)}
-            </View>
-
             <View style={styles.testItem}>
               <View style={styles.testInfo}>
                 <Text style={styles.testLabel}>클라이언트 연결</Text>
                 <Text style={styles.testDetail}>
-                  {testResult.clientConnection ? '성공' : '실패'}
+                  {testResult.clientConnection ? '정상' : '오류'}
                 </Text>
               </View>
               {getStatusIcon(testResult.clientConnection)}
@@ -198,7 +210,7 @@ export default function SupabaseTestScreen() {
               <View style={styles.testInfo}>
                 <Text style={styles.testLabel}>관리자 연결</Text>
                 <Text style={styles.testDetail}>
-                  {testResult.adminConnection ? '성공' : '실패'}
+                  {testResult.adminConnection ? '정상' : '오류'}
                 </Text>
               </View>
               {getStatusIcon(testResult.adminConnection)}
@@ -208,7 +220,7 @@ export default function SupabaseTestScreen() {
               <View style={styles.testInfo}>
                 <Text style={styles.testLabel}>테이블 존재</Text>
                 <Text style={styles.testDetail}>
-                  {testResult.tablesExist ? '확인됨' : '확인 안됨'}
+                  {testResult.tablesExist ? '정상' : '오류'}
                 </Text>
               </View>
               {getStatusIcon(testResult.tablesExist)}
@@ -263,10 +275,12 @@ export default function SupabaseTestScreen() {
               </View>
             </View>
             
-            {/* 더미 데이터 관리 */}
-            {dbStats.dummyMatches > 0 && (
-              <View style={styles.dummyDataSection}>
-                <Text style={styles.dummyDataTitle}>🗑️ 더미 데이터 관리</Text>
+            {/* 더미 데이터 관리 - 항상 표시 */}
+            <View style={styles.dummyDataSection}>
+              <Text style={styles.dummyDataTitle}>🎾 더미 데이터 관리</Text>
+              
+              {/* 삭제 버튼 - 더미 데이터가 있을 때만 표시 */}
+              {dbStats.dummyMatches > 0 && (
                 <TouchableOpacity 
                   style={[styles.deleteDummyButton, isDeletingDummy && styles.deleteDummyButtonDisabled]}
                   onPress={handleDeleteDummyData}
@@ -277,8 +291,28 @@ export default function SupabaseTestScreen() {
                     {isDeletingDummy ? '삭제 중...' : `더미 매치 ${dbStats.dummyMatches}개 삭제`}
                   </Text>
                 </TouchableOpacity>
-              </View>
-            )}
+              )}
+              
+              {/* 생성 버튼 - 항상 표시 */}
+              <TouchableOpacity
+                style={[
+                  styles.deleteDummyButton, 
+                  { backgroundColor: '#16a34a', marginTop: dbStats.dummyMatches > 0 ? 8 : 0 }, 
+                  isLoading && styles.deleteDummyButtonDisabled
+                ]}
+                onPress={handleGenerateOneTimeDummy}
+                disabled={isLoading}
+              >
+                <Plus size={16} color="#ffffff" />
+                <Text style={styles.deleteDummyButtonText}>
+                  {isLoading ? '생성 중...' : '더미 데이터 10개 생성'}
+                </Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.statusText}>
+                현재 더미 매치: {dbStats.dummyMatches}개
+              </Text>
+            </View>
           </View>
         )}
 
@@ -348,68 +382,46 @@ export default function SupabaseTestScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  refreshButton: {
-    padding: 4,
-  },
   content: {
     flex: 1,
-    paddingTop: 16,
+    backgroundColor: '#ffffff',
+  },
+  refreshButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#f3f4f6',
   },
   loadingSection: {
+    padding: 40,
     alignItems: 'center',
-    paddingVertical: 40,
   },
   loadingText: {
+    marginTop: 16,
     fontSize: 16,
     color: '#6b7280',
-    marginTop: 12,
   },
   section: {
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
+    padding: 16,
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
     color: '#111827',
     marginBottom: 16,
   },
   testItem: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
@@ -421,7 +433,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   testDetail: {
     fontSize: 12,
@@ -431,53 +443,47 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
+    marginBottom: 16,
   },
   statCard: {
     flex: 1,
-    minWidth: '45%',
-    backgroundColor: '#f9fafb',
+    minWidth: 70,
+    backgroundColor: '#f8fafc',
+    padding: 12,
     borderRadius: 8,
-    padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
   },
   statNumber: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#1e40af',
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#64748b',
     textAlign: 'center',
   },
   errorItem: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
     backgroundColor: '#fef2f2',
     borderRadius: 8,
     marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#fecaca',
   },
   errorText: {
     flex: 1,
     fontSize: 14,
     color: '#dc2626',
-    lineHeight: 20,
   },
   instructionCard: {
-    backgroundColor: '#f0f9ff',
-    borderRadius: 8,
+    backgroundColor: '#eff6ff',
     padding: 16,
+    borderRadius: 8,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
   },
   instructionTitle: {
     fontSize: 14,
@@ -546,5 +552,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
+  },
+  statusText: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 8,
+    textAlign: 'center',
   },
 });

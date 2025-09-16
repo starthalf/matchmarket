@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,23 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Settings, Bell, DollarSign, Shield, Database, Mail, Smartphone } from 'lucide-react-native';
 import { AdminSettingsManager } from '../../utils/adminSettings';
 import { useSafeStyles } from '../../constants/Styles';
+
+// AdminSettings 타입 정의 추가
+interface AdminSettings {
+  maintenanceMode: boolean;
+  autoBackup: boolean;
+  debugMode: boolean;
+  pushNotifications: boolean;
+  emailNotifications: boolean;
+  smsNotifications: boolean;
+  platformFee: string;
+  withdrawalFee: string;
+  minWithdrawalAmount: string;
+  withdrawalPeriod: string;
+  twoFactorAuth: boolean;
+  sessionTimeout: string;
+  maxLoginAttempts: string;
+}
 
 export default function AdminSettingsScreen() {
   const safeStyles = useSafeStyles();
@@ -92,16 +109,58 @@ export default function AdminSettingsScreen() {
     }
   };
 
+  const renderToggleSetting = (
+    key: keyof AdminSettings,
+    label: string,
+    description: string
+  ) => (
+    <View style={styles.settingItem}>
+      <View style={styles.settingInfo}>
+        <Text style={styles.settingLabel}>{label}</Text>
+        <Text style={styles.settingDescription}>{description}</Text>
+      </View>
+      <Switch
+        value={settings[key] as boolean}
+        onValueChange={(value) => updateSetting(key, value)}
+        trackColor={{ false: '#e5e7eb', true: '#dc2626' }}
+        thumbColor={settings[key] ? '#ffffff' : '#f9fafb'}
+      />
+    </View>
+  );
+
+  const renderTextSetting = (
+    key: keyof AdminSettings,
+    label: string,
+    description: string,
+    suffix?: string
+  ) => (
+    <View style={styles.settingItem}>
+      <View style={styles.settingInfo}>
+        <Text style={styles.settingLabel}>{label}</Text>
+        <Text style={styles.settingDescription}>{description}</Text>
+      </View>
+      <View style={styles.textInputContainer}>
+        <TextInput
+          style={styles.textInput}
+          value={settings[key] as string}
+          onChangeText={(value) => updateSetting(key, value)}
+          keyboardType="numeric"
+          placeholder="0"
+        />
+        {suffix && <Text style={styles.inputSuffix}>{suffix}</Text>}
+      </View>
+    </View>
+  );
+
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={safeStyles.safeHeader}>
-        <View style={safeStyles.safeHeaderContent}>
-          <Text style={styles.title}>시스템 설정</Text>
-          <Text style={styles.subtitle}>관리자 시스템 설정 및 관리</Text>
-        </View>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <Text style={styles.title}>관리자 설정</Text>
+        <Text style={styles.subtitle}>시스템 및 플랫폼 설정 관리</Text>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.content}>
         {/* 시스템 설정 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
@@ -109,234 +168,142 @@ export default function AdminSettingsScreen() {
             <Text style={styles.sectionTitle}>시스템 설정</Text>
           </View>
           
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>점검 모드</Text>
-              <Text style={styles.settingDescription}>
-                시스템 점검 시 사용자 접근 차단
-              </Text>
-            </View>
-            <Switch
-              value={settings.maintenanceMode}
-              onValueChange={(value) => updateSetting('maintenanceMode', value)}
-              trackColor={{ false: '#d1d5db', true: '#fca5a5' }}
-              thumbColor={settings.maintenanceMode ? '#dc2626' : '#f4f3f4'}
-            />
-          </View>
+          {renderToggleSetting(
+            'maintenanceMode',
+            '유지보수 모드',
+            '시스템 점검 시 사용자 접근을 제한합니다'
+          )}
           
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>자동 백업</Text>
-              <Text style={styles.settingDescription}>
-                매일 자정에 자동으로 데이터 백업
-              </Text>
-            </View>
-            <Switch
-              value={settings.autoBackup}
-              onValueChange={(value) => updateSetting('autoBackup', value)}
-              trackColor={{ false: '#d1d5db', true: '#86efac' }}
-              thumbColor={settings.autoBackup ? '#16a34a' : '#f4f3f4'}
-            />
-          </View>
+          {renderToggleSetting(
+            'autoBackup',
+            '자동 백업',
+            '매일 자정에 자동으로 데이터를 백업합니다'
+          )}
           
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>디버그 모드</Text>
-              <Text style={styles.settingDescription}>
-                개발자 디버깅 정보 표시
-              </Text>
-            </View>
-            <Switch
-              value={settings.debugMode}
-              onValueChange={(value) => updateSetting('debugMode', value)}
-              trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
-              thumbColor={settings.debugMode ? '#f59e0b' : '#f4f3f4'}
-            />
-          </View>
+          {renderToggleSetting(
+            'debugMode',
+            '디버그 모드',
+            '개발자용 로그를 활성화합니다'
+          )}
         </View>
 
         {/* 알림 설정 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Bell size={20} color="#3b82f6" />
+            <Bell size={20} color="#dc2626" />
             <Text style={styles.sectionTitle}>알림 설정</Text>
           </View>
           
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>푸시 알림</Text>
-              <Text style={styles.settingDescription}>
-                앱 푸시 알림 활성화
-              </Text>
-            </View>
-            <Switch
-              value={settings.pushNotifications}
-              onValueChange={(value) => updateSetting('pushNotifications', value)}
-              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-              thumbColor={settings.pushNotifications ? '#3b82f6' : '#f4f3f4'}
-            />
-          </View>
+          {renderToggleSetting(
+            'pushNotifications',
+            '푸시 알림',
+            '앱 푸시 알림을 전송합니다'
+          )}
           
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>이메일 알림</Text>
-              <Text style={styles.settingDescription}>
-                중요 알림 이메일 발송
-              </Text>
-            </View>
-            <Switch
-              value={settings.emailNotifications}
-              onValueChange={(value) => updateSetting('emailNotifications', value)}
-              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-              thumbColor={settings.emailNotifications ? '#3b82f6' : '#f4f3f4'}
-            />
-          </View>
+          {renderToggleSetting(
+            'emailNotifications',
+            '이메일 알림',
+            '이메일로 알림을 전송합니다'
+          )}
           
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>SMS 알림</Text>
-              <Text style={styles.settingDescription}>
-                긴급 알림 SMS 발송
-              </Text>
-            </View>
-            <Switch
-              value={settings.smsNotifications}
-              onValueChange={(value) => updateSetting('smsNotifications', value)}
-              trackColor={{ false: '#d1d5db', true: '#93c5fd' }}
-              thumbColor={settings.smsNotifications ? '#3b82f6' : '#f4f3f4'}
-            />
-          </View>
+          {renderToggleSetting(
+            'smsNotifications',
+            'SMS 알림',
+            '문자메시지로 알림을 전송합니다'
+          )}
         </View>
 
         {/* 결제 설정 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <DollarSign size={20} color="#16a34a" />
+            <DollarSign size={20} color="#dc2626" />
             <Text style={styles.sectionTitle}>결제 설정</Text>
           </View>
           
-          <View style={styles.inputItem}>
-            <Text style={styles.inputLabel}>플랫폼 수수료 (%)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={settings.platformFee}
-              onChangeText={(value) => updateSetting('platformFee', value)}
-              keyboardType="numeric"
-              placeholder="15"
-            />
-          </View>
+          {renderTextSetting(
+            'platformFee',
+            '플랫폼 수수료',
+            '매치당 플랫폼 수수료율',
+            '%'
+          )}
           
-          <View style={styles.inputItem}>
-            <Text style={styles.inputLabel}>출금 수수료 (원)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={settings.withdrawalFee}
-              onChangeText={(value) => updateSetting('withdrawalFee', value)}
-              keyboardType="numeric"
-              placeholder="0"
-            />
-          </View>
+          {renderTextSetting(
+            'withdrawalFee',
+            '출금 수수료',
+            '출금 시 부과되는 고정 수수료',
+            '원'
+          )}
           
-          <View style={styles.inputItem}>
-            <Text style={styles.inputLabel}>최소 출금 금액 (원)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={settings.minWithdrawalAmount}
-              onChangeText={(value) => updateSetting('minWithdrawalAmount', value)}
-              keyboardType="numeric"
-              placeholder="10000"
-            />
-          </View>
+          {renderTextSetting(
+            'minWithdrawalAmount',
+            '최소 출금 금액',
+            '최소 출금 가능 금액',
+            '원'
+          )}
           
-          <View style={styles.inputItem}>
-            <Text style={styles.inputLabel}>출금 주기 (일)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={settings.withdrawalPeriod}
-              onChangeText={(value) => updateSetting('withdrawalPeriod', value)}
-              keyboardType="numeric"
-              placeholder="14"
-            />
-            <Text style={styles.inputHint}>
-              사용자가 출금할 수 있는 최소 간격 (기본: 14일)
-            </Text>
-          </View>
+          {renderTextSetting(
+            'withdrawalPeriod',
+            '출금 주기',
+            '출금 요청 처리 기간',
+            '일'
+          )}
         </View>
 
         {/* 보안 설정 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Shield size={20} color="#f59e0b" />
+            <Shield size={20} color="#dc2626" />
             <Text style={styles.sectionTitle}>보안 설정</Text>
           </View>
           
-          <View style={styles.settingItem}>
-            <View style={styles.settingInfo}>
-              <Text style={styles.settingLabel}>2단계 인증</Text>
-              <Text style={styles.settingDescription}>
-                관리자 계정 2단계 인증 필수
-              </Text>
-            </View>
-            <Switch
-              value={settings.twoFactorAuth}
-              onValueChange={(value) => updateSetting('twoFactorAuth', value)}
-              trackColor={{ false: '#d1d5db', true: '#fbbf24' }}
-              thumbColor={settings.twoFactorAuth ? '#f59e0b' : '#f4f3f4'}
-            />
-          </View>
+          {renderToggleSetting(
+            'twoFactorAuth',
+            '2단계 인증',
+            '관리자 로그인 시 2단계 인증을 요구합니다'
+          )}
           
-          <View style={styles.inputItem}>
-            <Text style={styles.inputLabel}>세션 타임아웃 (분)</Text>
-            <TextInput
-              style={styles.textInput}
-              value={settings.sessionTimeout}
-              onChangeText={(value) => updateSetting('sessionTimeout', value)}
-              keyboardType="numeric"
-              placeholder="30"
-            />
-          </View>
+          {renderTextSetting(
+            'sessionTimeout',
+            '세션 만료',
+            '비활성 상태 유지 시간',
+            '분'
+          )}
           
-          <View style={styles.inputItem}>
-            <Text style={styles.inputLabel}>최대 로그인 시도 횟수</Text>
-            <TextInput
-              style={styles.textInput}
-              value={settings.maxLoginAttempts}
-              onChangeText={(value) => updateSetting('maxLoginAttempts', value)}
-              keyboardType="numeric"
-              placeholder="5"
-            />
-          </View>
+          {renderTextSetting(
+            'maxLoginAttempts',
+            '최대 로그인 시도',
+            '계정 잠금 전 최대 시도 횟수',
+            '회'
+          )}
         </View>
 
-        {/* 시스템 관리 */}
+        {/* 시스템 작업 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Database size={20} color="#6b7280" />
-            <Text style={styles.sectionTitle}>시스템 관리</Text>
+            <Database size={20} color="#dc2626" />
+            <Text style={styles.sectionTitle}>시스템 작업</Text>
           </View>
           
-          <View style={styles.actionButtons}>
+          <View style={styles.actionGrid}>
             <TouchableOpacity 
-              style={[styles.actionButton, styles.backupButton]}
+              style={styles.actionButton}
               onPress={() => handleSystemAction('backup')}
             >
-              <Text style={styles.backupButtonText}>수동 백업</Text>
+              <Text style={styles.actionButtonText}>수동 백업</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={[styles.actionButton, styles.logsButton]}
+              style={styles.actionButton}
               onPress={() => handleSystemAction('logs')}
             >
-              <Text style={styles.logsButtonText}>로그 확인</Text>
+              <Text style={styles.actionButtonText}>로그 확인</Text>
             </TouchableOpacity>
-          </View>
-          
-          <View style={styles.actionButtons}>
+            
             <TouchableOpacity 
-              style={[styles.actionButton, styles.cacheButton]}
+              style={styles.actionButton}
               onPress={() => handleSystemAction('cache')}
             >
-              <Text style={styles.cacheButtonText}>캐시 삭제</Text>
+              <Text style={styles.actionButtonText}>캐시 삭제</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -428,7 +395,7 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
+    color: '#111827',
     marginBottom: 2,
   },
   settingDescription: {
@@ -436,89 +403,62 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     lineHeight: 16,
   },
-  inputItem: {
-    marginBottom: 16,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
+  textInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   textInput: {
     borderWidth: 1,
     borderColor: '#d1d5db',
-    borderRadius: 8,
+    borderRadius: 6,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 8,
     fontSize: 14,
-    color: '#374151',
+    color: '#111827',
     backgroundColor: '#ffffff',
+    minWidth: 80,
+    textAlign: 'center',
   },
-  inputHint: {
+  inputSuffix: {
     fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 4,
-    lineHeight: 16,
+    color: '#6b7280',
+    fontWeight: '500',
   },
-  actionButtons: {
+  actionGrid: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 12,
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 10,
+    minWidth: '45%',
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     borderRadius: 8,
     alignItems: 'center',
-  },
-  backupButton: {
-    backgroundColor: '#dbeafe',
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#e5e7eb',
   },
-  backupButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1e40af',
-  },
-  logsButton: {
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#6b7280',
-  },
-  logsButtonText: {
-    fontSize: 14,
+  actionButtonText: {
+    fontSize: 13,
     fontWeight: '600',
     color: '#374151',
   },
-  cacheButton: {
-    backgroundColor: '#fef3c7',
-    borderWidth: 1,
-    borderColor: '#f59e0b',
-  },
-  cacheButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#92400e',
-  },
   restartButton: {
     backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#dc2626',
+    borderColor: '#fca5a5',
   },
   restartButtonText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#dc2626',
   },
-  bottomPadding: {
-    height: 40,
-  },
   saveSection: {
+    backgroundColor: '#ffffff',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
     borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
   },
@@ -532,5 +472,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#ffffff',
+  },
+  bottomPadding: {
+    height: 20,
   },
 });

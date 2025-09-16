@@ -439,4 +439,259 @@ export class DataGenerator {
 
     return stats;
   }
+  // utils/dataGenerator.ts 파일의 마지막 부분에 추가할 모든 누락된 함수들
+// (generateMatchStats 함수 바로 아래, 클래스 닫는 중괄호 } 앞에 추가하세요)
+
+  /**
+   * 현재 더미 매치 개수 조회
+   */
+  static async getDummyMatchCount(): Promise<number> {
+    try {
+      if (!supabase) {
+        console.log('ℹ️ Supabase가 설정되지 않아 더미 매치 개수를 조회할 수 없습니다.');
+        return 0;
+      }
+
+      const { count, error } = await supabase
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_dummy', true);
+
+      if (error) {
+        console.log('ℹ️ 더미 매치 개수 조회 실패:', error.message);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error: any) {
+      console.log('ℹ️ 더미 매치 개수 조회 중 오류:', error?.message);
+      return 0;
+    }
+  }
+
+  /**
+   * 모든 더미 매치 삭제
+   */
+  static async deleteAllDummyMatches(): Promise<{
+    success: boolean;
+    deletedCount: number;
+    error?: string;
+  }> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 삭제를 건너뜁니다.');
+        return {
+          success: false,
+          deletedCount: 0,
+          error: 'Supabase Admin 연결이 설정되지 않았습니다.'
+        };
+      }
+
+      // 현재 더미 매치 개수 먼저 확인
+      const currentCount = await this.getDummyMatchCount();
+      console.log(`📊 삭제할 더미 매치: ${currentCount}개`);
+
+      // 더미 매치 삭제 (is_dummy = true인 모든 데이터)
+      const { error } = await supabaseAdmin
+        .from('matches')
+        .delete()
+        .eq('is_dummy', true);
+
+      if (error) {
+        console.log('ℹ️ 더미 매치 삭제 실패:', {
+          message: error.message,
+          code: error.code,
+          details: error.details,
+          hint: error.hint
+        });
+        return {
+          success: false,
+          deletedCount: 0,
+          error: error.message
+        };
+      }
+
+      console.log(`✅ ${currentCount}개의 더미 매치가 성공적으로 삭제되었습니다.`);
+      
+      return {
+        success: true,
+        deletedCount: currentCount,
+      };
+
+    } catch (error: any) {
+      console.log('ℹ️ 더미 매치 삭제 중 오류:', {
+        message: error?.message || '알 수 없는 오류',
+        name: error?.name
+      });
+      return {
+        success: false,
+        deletedCount: 0,
+        error: error?.message || '알 수 없는 오류'
+      };
+    }
+  }
+
+  /**
+   * 일회성으로 지정된 개수만큼 더미 매치 생성 (날짜 제한 없음)
+   */
+  static async generateOneTimeDummyMatches(count: number = 10): Promise<Match[]> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 로컬 더미 데이터만 사용합니다.');
+        return [];
+      }
+
+      const newMatches: Match[] = [];
+      
+      console.log(`🎾 일회성 더미 매치 ${count}개 생성 시작...`);
+      
+      for (let i = 0; i < count; i++) {
+        newMatches.push(this.generateNewMatch());
+      }
+      
+      try {
+        // Supabase에 저장 (supabaseAdmin 사용)
+        const savePromises = newMatches.map(match => this.saveMatchToSupabase(match));
+        const results = await Promise.all(savePromises);
+        
+        const successCount = results.filter(result => result).length;
+        
+        if (successCount === 0) {
+          console.log('❌ 모든 매치 저장 실패');
+          return [];
+        }
+        
+        console.log(`✅ ${successCount}개의 일회성 더미 매치가 Supabase에 저장되었습니다.`);
+        
+        // 총 더미 매치 개수 확인
+        try {
+          const totalDummyCount = await this.getDummyMatchCount();
+          console.log(`📊 현재 총 더미 매치 개수: ${totalDummyCount}개`);
+        } catch (countError: any) {
+          console.log('ℹ️ 더미 매치 개수 조회 실패:', countError?.message);
+        }
+        
+        return newMatches.slice(0, successCount); // 성공한 만큼만 반환
+        
+      } catch (supabaseError: any) {
+        console.log('ℹ️ Supabase 저장 중 네트워크 오류:', {
+          message: supabaseError?.message || '알 수 없는 오류',
+          code: supabaseError?.code,
+          name: supabaseError?.name
+        });
+        return [];
+      }
+      
+    } catch (error: any) {
+      console.log('ℹ️ 일회성 더미 매치 생성 중 오류:', {
+        message: error?.message || '알 수 없는 오류',
+        name: error?.name
+      });
+      return [];
+    }
+  }
+
+  /**
+   * 매일 새로운 더미 매치들 생성 및 Supabase에 저장
+   */
+  static async generateAndSaveDailyMatches(count: number = 10): Promise<Match[]> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 로컬 더미 데이터만 사용합니다.');
+        return [];
+      }
+
+      const newMatches: Match[] = [];
+      
+      for (let i = 0; i < count; i++) {
+        newMatches.push(this.generateNewMatch());
+      }
+      
+      try {
+        const savePromises = newMatches.map(match => this.saveMatchToSupabase(match));
+        const results = await Promise.all(savePromises);
+        
+        const successCount = results.filter(result => result).length;
+        console.log(`✅ ${successCount}개의 새로운 더미 매치가 Supabase에 저장되었습니다.`);
+        return newMatches.slice(0, successCount);
+        
+      } catch (supabaseError: any) {
+        console.log('ℹ️ Supabase 저장 중 네트워크 오류:', {
+          message: supabaseError?.message || '알 수 없는 오류',
+          code: supabaseError?.code,
+          name: supabaseError?.name
+        });
+        return [];
+      }
+    } catch (error: any) {
+      console.log('ℹ️ 더미 매치 생성 중 오류:', {
+        message: error?.message || '알 수 없는 오류',
+        name: error?.name
+      });
+      return [];
+    }
+  }
+
+  /**
+   * 새로운 더미 매치 생성이 필요한지 확인
+   */
+  static async shouldGenerateNewMatches(): Promise<boolean> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin 설정되지 않음. 더미 매치 생성을 건너뜁니다.');
+        return false;
+      }
+
+      const { data, error } = await supabaseAdmin
+        .from('app_settings')
+        .select('value')
+        .eq('key', 'last_dummy_generation_date')
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116은 "not found" 에러
+        console.log('ℹ️ 설정 조회 실패:', error.message);
+        return false;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const lastGenDate = data?.value || '2024-01-01';
+
+      return lastGenDate !== today;
+    } catch (error: any) {
+      console.log('ℹ️ 더미 매치 생성 필요 여부 확인 중 오류:', error?.message);
+      return false;
+    }
+  }
+
+  /**
+   * 마지막 더미 매치 생성 날짜 업데이트
+   */
+  static async updateLastGenerationDate(): Promise<void> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin이 설정되지 않아 날짜 업데이트를 건너뜁니다.');
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      
+      const { error } = await supabaseAdmin
+        .from('app_settings')
+        .upsert({ 
+          key: 'last_dummy_generation_date', 
+          value: today 
+        });
+
+      if (error) {
+        console.log('ℹ️ 마지막 생성 날짜 업데이트 실패:', error.message);
+      } else {
+        console.log(`✅ 마지막 더미 매치 생성 날짜가 ${today}로 업데이트되었습니다.`);
+      }
+    } catch (error: any) {
+      console.log('ℹ️ 날짜 업데이트 중 오류:', error?.message);
+    }
+  }
+
+// 👆 이 모든 함수들을 추가한 후 클래스를 닫아주세요:
+} // DataGenerator 클래스 닫는 중괄호
 }

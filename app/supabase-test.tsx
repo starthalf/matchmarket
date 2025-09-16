@@ -10,8 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw } from 'lucide-react-native';
-import { Trash2 } from 'lucide-react-native';
+import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw, Trash2, Plus } from 'lucide-react-native';
 import { SupabaseConnectionTest } from '../utils/supabaseConnectionTest';
 import { DataGenerator } from '../utils/dataGenerator';
 import { useSafeStyles } from '../constants/Styles';
@@ -90,7 +89,29 @@ export default function SupabaseTestScreen() {
       ]
     );
   };
-
+  
+const handleGenerateOneTimeDummy = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🎾 일회성 더미 데이터 10개 생성 시작...');
+      const newMatches = await DataGenerator.generateOneTimeDummyMatches(10);
+      
+      if (newMatches.length > 0) {
+        Alert.alert(
+          '생성 완료! 🎉',
+          `${newMatches.length}개의 더미 매치가 생성되었습니다!`,
+          [{ text: '확인', onPress: () => runConnectionTest() }]
+        );
+      } else {
+        Alert.alert('생성 실패', '더미 매치 생성에 실패했습니다.');
+      }
+    } catch (error) {
+      Alert.alert('오류', '더미 매치 생성 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const getStatusIcon = (status: boolean) => {
     return status ? (
       <CheckCircle size={20} color="#16a34a" />
@@ -277,6 +298,16 @@ export default function SupabaseTestScreen() {
                     {isDeletingDummy ? '삭제 중...' : `더미 매치 ${dbStats.dummyMatches}개 삭제`}
                   </Text>
                 </TouchableOpacity>
+                <TouchableOpacity
+  style={[styles.deleteDummyButton, { backgroundColor: '#16a34a', marginTop: 8 }, isLoading && styles.deleteDummyButtonDisabled]}
+  onPress={handleGenerateOneTimeDummy}
+  disabled={isLoading}
+>
+  <Plus size={16} color="#ffffff" />
+  <Text style={styles.deleteDummyButtonText}>
+    {isLoading ? '생성 중...' : '더미 데이터 10개 생성'}
+  </Text>
+</TouchableOpacity>
               </View>
             )}
           </View>

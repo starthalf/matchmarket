@@ -1,3 +1,4 @@
+// contexts/AdminContext.tsx
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AdminService, AdminUser } from '../lib/adminService';
 
@@ -23,11 +24,23 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const checkAdminStatus = async () => {
     setIsAdminLoading(true);
     try {
-      const isAdmin = await AdminService.isCurrentUserAdmin();
-      if (!isAdmin) {
+      const isAdminResult = await AdminService.isCurrentUserAdmin();
+      if (isAdminResult) {
+        // 관리자인 경우 더미 AdminUser 객체 생성
+        const dummyAdminUser: AdminUser = {
+          id: 'demo-admin-id',
+          userId: 'demo-user-id', 
+          email: 'admin@demo.com',
+          role: 'admin',
+          permissions: ['read', 'write', 'admin'],
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        setAdminUser(dummyAdminUser);
+      } else {
         setAdminUser(null);
       }
-      // 관리자인 경우 추가 정보 로드 필요
     } catch (error) {
       console.error('관리자 상태 확인 오류:', error);
       setAdminUser(null);
@@ -37,13 +50,36 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   };
 
   const adminLogin = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
-    const result = await AdminService.adminLogin(email, password);
-    
-    if (result.success && result.adminUser) {
-      setAdminUser(result.adminUser);
+    try {
+      // 데모 환경에서의 간단한 로그인 처리
+      if (email === 'admin@demo.com' && password === 'admin123') {
+        const demoAdminUser: AdminUser = {
+          id: 'demo-admin-id',
+          userId: 'demo-user-id',
+          email: 'admin@demo.com', 
+          role: 'admin',
+          permissions: ['read', 'write', 'admin'],
+          isActive: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        setAdminUser(demoAdminUser);
+        return { success: true };
+      }
+
+      // 실제 Supabase 로그인
+      const result = await AdminService.adminLogin(email, password);
+      
+      if (result.success && result.adminUser) {
+        setAdminUser(result.adminUser);
+      }
+      
+      return { success: result.success, error: result.error };
+    } catch (error) {
+      console.error('관리자 로그인 오류:', error);
+      return { success: false, error: '로그인 중 오류가 발생했습니다.' };
     }
-    
-    return { success: result.success, error: result.error };
   };
 
   const adminLogout = async () => {
@@ -64,7 +100,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     <AdminContext.Provider value={{
       adminUser,
       isAdminLoading,
-      isAdmin: !!adminUser,
+      isAdmin: !!adminUser, // adminUser가 있으면 관리자
       adminLogin,
       adminLogout,
       checkAdminStatus

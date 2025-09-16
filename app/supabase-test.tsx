@@ -285,19 +285,43 @@ const handleGenerateOneTimeDummy = async () => {
             </View>
             
             {/* 더미 데이터 관리 */}
-            {dbStats.dummyMatches > 0 && (
-              <View style={styles.dummyDataSection}>
-                <Text style={styles.dummyDataTitle}>🗑️ 더미 데이터 관리</Text>
-                <TouchableOpacity 
-                  style={[styles.deleteDummyButton, isDeletingDummy && styles.deleteDummyButtonDisabled]}
-                  onPress={handleDeleteDummyData}
-                  disabled={isDeletingDummy}
-                >
-                  <Trash2 size={16} color="#ffffff" />
-                  <Text style={styles.deleteDummyButtonText}>
-                    {isDeletingDummy ? '삭제 중...' : `더미 매치 ${dbStats.dummyMatches}개 삭제`}
-                  </Text>
-                </TouchableOpacity>
+            {/* 더미 데이터 관리 - 항상 보이도록 수정 */}
+<View style={styles.dummyDataSection}>
+  <Text style={styles.dummyDataTitle}>🎾 더미 데이터 관리</Text>
+  
+  {/* 삭제 버튼 - 더미 데이터가 있을 때만 표시 */}
+  {dbStats.dummyMatches > 0 && (
+    <TouchableOpacity 
+      style={[styles.deleteDummyButton, isDeletingDummy && styles.deleteDummyButtonDisabled]}
+      onPress={handleDeleteDummyData}
+      disabled={isDeletingDummy}
+    >
+      <Trash2 size={16} color="#ffffff" />
+      <Text style={styles.deleteDummyButtonText}>
+        {isDeletingDummy ? '삭제 중...' : `더미 매치 ${dbStats.dummyMatches}개 삭제`}
+      </Text>
+    </TouchableOpacity>
+  )}
+  
+  {/* 생성 버튼 - 항상 표시 */}
+  <TouchableOpacity
+    style={[
+      styles.deleteDummyButton, 
+      { backgroundColor: '#16a34a', marginTop: dbStats.dummyMatches > 0 ? 8 : 0 }, 
+      isLoading && styles.deleteDummyButtonDisabled
+    ]}
+    onPress={handleGenerateOneTimeDummy}
+    disabled={isLoading}
+  >
+    <Plus size={16} color="#ffffff" />
+    <Text style={styles.deleteDummyButtonText}>
+      {isLoading ? '생성 중...' : '더미 데이터 10개 생성'}
+    </Text>
+  </TouchableOpacity>
+  
+  <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 8, textAlign: 'center' }}>
+    현재 더미 매치: {dbStats.dummyMatches}개
+  </Text>
                 <TouchableOpacity
   style={[styles.deleteDummyButton, { backgroundColor: '#16a34a', marginTop: 8 }, isLoading && styles.deleteDummyButtonDisabled]}
   onPress={handleGenerateOneTimeDummy}

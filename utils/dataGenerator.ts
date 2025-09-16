@@ -1,4 +1,4 @@
-// utils/dataGenerator.ts - 완전한 코드
+// utils/dataGenerator.ts - 완전한 코드 (Career Type 단순화)
 
 import { Match, User } from '../types/tennis';
 import { supabase, supabaseAdmin } from '../lib/supabase';
@@ -60,12 +60,14 @@ export class DataGenerator {
 
   private static readonly COURTS = ['A코트', 'B코트', 'C코트', 'D코트', 'E코트'];
 
+  // 🔥 단순화된 플레이 스타일 (3개만)
   private static readonly PLAY_STYLES = [
-    '공격형', '수비형', '올라운드'  // 🔥 Supabase CHECK 제약조건과 일치
+    '공격형', '수비형', '올라운드'
   ];
 
+  // 🔥 단순화된 커리어 타입 (2개만)
   private static readonly CAREER_TYPES = [
-    '동호인', '대학선수', '실업선수'  // 🔥 Supabase CHECK 제약조건과 일치
+    '동호인', '선수'
   ];
 
   private static readonly MATCH_TITLES = [
@@ -87,7 +89,7 @@ export class DataGenerator {
   ];
 
   private static readonly MATCH_TYPES: Array<'단식' | '남복' | '여복' | '혼복'> = [
-    '단식', '남복', '여복', '혼복'  // 🔥 4가지 매치 타입
+    '단식', '남복', '여복', '혼복'
   ];
 
   /**
@@ -111,7 +113,7 @@ export class DataGenerator {
       ntrp: 3.0 + Math.floor(Math.random() * 3) * 0.5, // 3.0, 3.5, 4.0, 4.5, 5.0
       experience: 12 + Math.floor(Math.random() * 48), // 12-60개월
       playStyle: this.PLAY_STYLES[Math.floor(Math.random() * this.PLAY_STYLES.length)] as any,
-      careerType: this.CAREER_TYPES[Math.floor(Math.random() * this.CAREER_TYPES.length)] as any,
+      careerType: this.CAREER_TYPES[Math.floor(Math.random() * this.CAREER_TYPES.length)] as any, // 🔥 단순화된 커리어 타입
       certification: {
         ntrp: Math.random() > 0.7 ? 'verified' : 'none',
         career: Math.random() > 0.8 ? 'verified' : 'none',
@@ -206,8 +208,8 @@ export class DataGenerator {
       },
       matchType: selectedMatchType,
       waitingApplicants: Math.floor(Math.random() * 8),
-      waitingList: [], // 빈 배열로 시작
-      participants: [], // 빈 배열로 시작
+      waitingList: [],
+      participants: [],
       adEnabled: Math.random() > 0.7,
       ntrpRequirement: {
         min: 3.0 + Math.floor(Math.random() * 2),
@@ -235,8 +237,6 @@ export class DataGenerator {
     return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
   }
 
-
-
   /**
    * Supabase에서 모든 매치 가져오기
    */
@@ -256,7 +256,7 @@ export class DataGenerator {
 
       if (!supabaseMatches || supabaseMatches.length === 0) {
         console.log('📝 Supabase에 저장된 매치가 없습니다. 로컬 데이터만 사용합니다.');
-        return fallbackMatches; // 🔥 더미 데이터 자동 생성 제거
+        return fallbackMatches;
       }
 
       // Supabase 데이터를 Match 형태로 변환
@@ -439,6 +439,10 @@ export class DataGenerator {
 
     return stats;
   }
+
+  /**
+   * 현재 더미 매치 개수 조회
+   */
   static async getDummyMatchCount(): Promise<number> {
     try {
       if (!supabase) {

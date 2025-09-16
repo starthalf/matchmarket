@@ -148,39 +148,39 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
                 </TouchableOpacity>
-                // 관리자 로그인 버튼 뒤에 추가
+               // 기존 디버그 버튼을 이것으로 교체
 <TouchableOpacity 
   style={{ backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: '#f59e0b' }}
   onPress={async () => {
     try {
       const { SupabaseDebug } = await import('../../utils/supabaseDebug');
-      const result = await SupabaseDebug.debugUserStatus('hcgkhlee@gmail.com');
       
-      console.log('🔍 전체 디버그 결과:', result);
+      // 간단한 체크부터 시작
+      const simpleResult = await SupabaseDebug.simpleCheck('hcgkhlee@gmail.com');
+      console.log('🔍 간단한 체크:', simpleResult);
       
-      // 사용자에게 요약 표시
-      if (result.error) {
-        Alert.alert('디버그 실패', result.error);
+      if (simpleResult.canLogin) {
+        Alert.alert('디버그 결과', `✅ 로그인 가능!\n프로필: ${simpleResult.hasProfile ? '있음' : '없음'}`);
         return;
       }
       
-      const authUser = result.authUser;
-      const profile = result.profile;
-      const loginTest = result.loginTest;
+      // 로그인이 안 되면 상세 디버깅
+      const detailResult = await SupabaseDebug.debugUserStatus('hcgkhlee@gmail.com');
+      console.log('🔍 상세 디버그:', detailResult);
+      
+      if (detailResult.error) {
+        Alert.alert('디버그 실패', detailResult.error);
+        return;
+      }
       
       let message = `=== 계정 상태 ===\n`;
-      message += `이메일: ${authUser?.email}\n`;
-      message += `이메일 확인: ${authUser?.emailConfirmed ? '✅' : '❌'}\n`;
-      message += `계정 확인: ${authUser?.confirmed ? '✅' : '❌'}\n`;
-      message += `밴 상태: ${authUser?.banned ? '❌ 밴됨' : '✅ 정상'}\n\n`;
-      
-      message += `=== 프로필 ===\n`;
-      message += `프로필 존재: ${profile?.exists ? '✅' : '❌'}\n`;
-      if (profile?.error) message += `프로필 오류: ${profile.error}\n\n`;
-      
-      message += `=== 로그인 테스트 ===\n`;
-      message += `결과: ${loginTest?.success ? '✅ 성공' : '❌ 실패'}\n`;
-      if (loginTest?.error) message += `오류: ${loginTest.error}\n`;
+      message += `이메일: ${detailResult.authUser?.email || '없음'}\n`;
+      message += `이메일 확인: ${detailResult.authUser?.emailConfirmed ? '✅' : '❌'}\n`;
+      message += `프로필: ${detailResult.profile?.exists ? '✅' : '❌'}\n`;
+      message += `로그인 테스트: ${detailResult.loginTest?.success ? '✅' : '❌'}\n`;
+      if (detailResult.loginTest?.error) {
+        message += `로그인 오류: ${detailResult.loginTest.error}`;
+      }
       
       Alert.alert('디버그 결과', message);
       

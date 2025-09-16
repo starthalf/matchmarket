@@ -21,6 +21,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export default function LoginScreen() {
   const { login } = useAuth();
   const safeStyles = useSafeStyles();
+
+  // ✅ 안전한 뒤로 가기 함수 추가
+  const handleSafeBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -86,7 +96,7 @@ export default function LoginScreen() {
         <View style={safeStyles.safeHeaderContent}>
           <TouchableOpacity 
             style={safeStyles.backButton} 
-            onPress={() => router.back()}
+            onPress={handleSafeBack}
           >
             <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>

@@ -148,6 +148,63 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
                 </TouchableOpacity>
+                // 기존 데모 컨트롤 섹션에 추가
+<TouchableOpacity 
+  style={{ backgroundColor: '#f59e0b', padding: 8, borderRadius: 4, margin: 2 }}
+  onPress={async () => {
+    try {
+      // 직접 여기서 디버깅
+      const { supabaseAdmin } = await import('../lib/supabase');
+      if (!supabaseAdmin) {
+        Alert.alert('오류', 'Supabase Admin이 설정되지 않았습니다.');
+        return;
+      }
+
+      const email = 'hcgkhlee@gmail.com';
+      
+      // 사용자 상태 확인
+      const { data: userData, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(email);
+      
+      if (userError) {
+        Alert.alert('오류', userError.message);
+        return;
+      }
+
+      const user = userData.user;
+      console.log('🔍 사용자 정보:', {
+        id: user?.id,
+        email: user?.email,
+        emailConfirmed: !!user?.email_confirmed_at,
+        confirmed: !!user?.confirmed_at,
+        banned: user?.banned_until
+      });
+
+      // 프로필 확인
+      const { data: profile, error: profileError } = await supabaseAdmin
+        .from('users')
+        .select('*')
+        .eq('id', user!.id)
+        .single();
+
+      console.log('👤 프로필 정보:', { 
+        exists: !!profile, 
+        error: profileError?.message 
+      });
+
+      let message = `사용자: ${user?.email}\n`;
+      message += `이메일 확인: ${!!user?.email_confirmed_at ? '✅' : '❌'}\n`;
+      message += `프로필: ${!!profile ? '✅' : '❌'}\n`;
+      if (profileError) message += `프로필 오류: ${profileError.message}\n`;
+
+      Alert.alert('디버그 결과', message);
+
+    } catch (error) {
+      Alert.alert('오류', `디버깅 실패: ${error}`);
+    }
+  }}
+>
+  <Text style={{ color: 'white', fontSize: 10 }}>디버그</Text>
+</TouchableOpacity>
               </>
             ) : (
               <TouchableOpacity 

@@ -61,34 +61,57 @@ export default function SupabaseTestScreen() {
   };
 
   const handleDeleteDummyData = async () => {
-    Alert.alert(
-      '더미 데이터 삭제',
-      '모든 더미 매치 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '삭제', style: 'destructive', onPress: async () => {
-          setIsDeletingDummy(true);
-          try {
-            const result = await DataGenerator.deleteAllDummyMatches();
-            
-            if (result.success) {
-              Alert.alert(
-                '삭제 완료',
-                `${result.deletedCount}개의 더미 매치가 삭제되었습니다.`,
-                [{ text: '확인', onPress: () => runConnectionTest() }]
-              );
-            } else {
-              Alert.alert('삭제 실패', result.error || '더미 데이터 삭제에 실패했습니다.');
-            }
-          } catch (error) {
-            Alert.alert('오류', '더미 데이터 삭제 중 오류가 발생했습니다.');
-          } finally {
-            setIsDeletingDummy(false);
+  console.log('🔧 더미 데이터 삭제 버튼이 클릭되었습니다!');
+  console.log('현재 상태:', { isDeletingDummy, dbStats });
+  
+  // 즉시 콘솔 로그를 찍어서 함수가 호출되는지 확인
+  Alert.alert('디버그', '더미 데이터 삭제 함수가 호출되었습니다!');
+  
+  // 추가 로깅
+  console.log('더미 매치 개수:', dbStats?.dummyMatches);
+  console.log('DataGenerator.deleteAllDummyMatches 함수 존재 여부:', typeof DataGenerator.deleteAllDummyMatches);
+  
+  Alert.alert(
+    '더미 데이터 삭제',
+    '모든 더미 매치 데이터를 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없습니다.',
+    [
+      { text: '취소', style: 'cancel', onPress: () => {
+        console.log('❌ 사용자가 삭제를 취소했습니다.');
+      }},
+      { text: '삭제', style: 'destructive', onPress: async () => {
+        console.log('✅ 사용자가 삭제를 확인했습니다. 삭제 프로세스 시작...');
+        setIsDeletingDummy(true);
+        
+        try {
+          console.log('🔄 DataGenerator.deleteAllDummyMatches() 호출 시작...');
+          const result = await DataGenerator.deleteAllDummyMatches();
+          console.log('🔄 DataGenerator.deleteAllDummyMatches() 결과:', result);
+          
+          if (result.success) {
+            console.log('✅ 삭제 성공!');
+            Alert.alert(
+              '삭제 완료',
+              `${result.deletedCount}개의 더미 매치가 삭제되었습니다.`,
+              [{ text: '확인', onPress: () => {
+                console.log('🔄 테스트 새로고침 시작...');
+                runConnectionTest();
+              }}]
+            );
+          } else {
+            console.log('❌ 삭제 실패:', result.error);
+            Alert.alert('삭제 실패', result.error || '더미 데이터 삭제에 실패했습니다.');
           }
-        }}
-      ]
-    );
-  };
+        } catch (error) {
+          console.log('💥 삭제 중 예외 발생:', error);
+          Alert.alert('오류', '더미 데이터 삭제 중 오류가 발생했습니다.');
+        } finally {
+          console.log('🔄 삭제 프로세스 종료. isDeletingDummy를 false로 설정...');
+          setIsDeletingDummy(false);
+        }
+      }}
+    ]
+  );
+};
 
   const handleGenerateOneTimeDummy = async () => {
     setIsLoading(true);
@@ -279,19 +302,46 @@ export default function SupabaseTestScreen() {
             <View style={styles.dummyDataSection}>
               <Text style={styles.dummyDataTitle}>🎾 더미 데이터 관리</Text>
               
-              {/* 삭제 버튼 - 더미 데이터가 있을 때만 표시 */}
-              {dbStats.dummyMatches > 0 && (
-                <TouchableOpacity 
-                  style={[styles.deleteDummyButton, isDeletingDummy && styles.deleteDummyButtonDisabled]}
-                  onPress={handleDeleteDummyData}
-                  disabled={isDeletingDummy}
-                >
-                  <Trash2 size={16} color="#ffffff" />
-                  <Text style={styles.deleteDummyButtonText}>
-                    {isDeletingDummy ? '삭제 중...' : `더미 매치 ${dbStats.dummyMatches}개 삭제`}
-                  </Text>
-                </TouchableOpacity>
-              )}
+              {/* 더미 데이터 관리 - 디버깅 개선된 버전 */}
+{dbStats && (
+  <View style={styles.dummyDataSection}>
+    <Text style={styles.dummyDataTitle}>🗑️ 더미 데이터 관리</Text>
+    
+    {/* 디버깅 정보 추가 */}
+    <Text style={{ fontSize: 12, color: '#666', marginBottom: 8 }}>
+      더미 매치: {dbStats.dummyMatches}개, 삭제 중: {isDeletingDummy ? 'Yes' : 'No'}
+    </Text>
+    
+    {/* 버튼 조건을 단순화해서 테스트 */}
+    <TouchableOpacity 
+      style={[
+        styles.deleteDummyButton, 
+        isDeletingDummy && styles.deleteDummyButtonDisabled
+      ]}
+      onPress={() => {
+        console.log('🔘 TouchableOpacity onPress 이벤트 발생!');
+        handleDeleteDummyData();
+      }}
+      disabled={isDeletingDummy}
+    >
+      <Trash2 size={16} color="#ffffff" />
+      <Text style={styles.deleteDummyButtonText}>
+        {isDeletingDummy ? '삭제 중...' : `더미 매치 ${dbStats.dummyMatches}개 삭제`}
+      </Text>
+    </TouchableOpacity>
+
+    {/* 강제 삭제 테스트 버튼 추가 */}
+    <TouchableOpacity 
+      style={[styles.deleteDummyButton, { backgroundColor: '#f59e0b', marginTop: 8 }]}
+      onPress={() => {
+        console.log('🧪 강제 테스트 버튼 클릭됨');
+        Alert.alert('테스트', '강제 테스트 버튼이 정상 작동합니다!');
+      }}
+    >
+      <Text style={styles.deleteDummyButtonText}>🧪 테스트 버튼</Text>
+    </TouchableOpacity>
+  </View>
+)}
               
               {/* 생성 버튼 - 항상 표시 */}
               <TouchableOpacity

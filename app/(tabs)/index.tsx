@@ -148,6 +148,50 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
                 </TouchableOpacity>
+                // 관리자 로그인 버튼 뒤에 추가
+<TouchableOpacity 
+  style={{ backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: '#f59e0b' }}
+  onPress={async () => {
+    try {
+      const { SupabaseDebug } = await import('../../utils/supabaseDebug');
+      const result = await SupabaseDebug.debugUserStatus('hcgkhlee@gmail.com');
+      
+      console.log('🔍 전체 디버그 결과:', result);
+      
+      // 사용자에게 요약 표시
+      if (result.error) {
+        Alert.alert('디버그 실패', result.error);
+        return;
+      }
+      
+      const authUser = result.authUser;
+      const profile = result.profile;
+      const loginTest = result.loginTest;
+      
+      let message = `=== 계정 상태 ===\n`;
+      message += `이메일: ${authUser?.email}\n`;
+      message += `이메일 확인: ${authUser?.emailConfirmed ? '✅' : '❌'}\n`;
+      message += `계정 확인: ${authUser?.confirmed ? '✅' : '❌'}\n`;
+      message += `밴 상태: ${authUser?.banned ? '❌ 밴됨' : '✅ 정상'}\n\n`;
+      
+      message += `=== 프로필 ===\n`;
+      message += `프로필 존재: ${profile?.exists ? '✅' : '❌'}\n`;
+      if (profile?.error) message += `프로필 오류: ${profile.error}\n\n`;
+      
+      message += `=== 로그인 테스트 ===\n`;
+      message += `결과: ${loginTest?.success ? '✅ 성공' : '❌ 실패'}\n`;
+      if (loginTest?.error) message += `오류: ${loginTest.error}\n`;
+      
+      Alert.alert('디버그 결과', message);
+      
+    } catch (error) {
+      console.error('디버그 버튼 오류:', error);
+      Alert.alert('오류', `디버깅 실패: ${error}`);
+    }
+  }}
+>
+  <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>🔍 디버그</Text>
+</TouchableOpacity>
               </>
             ) : (
               <TouchableOpacity 

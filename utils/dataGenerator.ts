@@ -439,12 +439,6 @@ export class DataGenerator {
 
     return stats;
   }
-  // utils/dataGenerator.ts 파일의 마지막 부분에 추가할 모든 누락된 함수들
-// (generateMatchStats 함수 바로 아래, 클래스 닫는 중괄호 } 앞에 추가하세요)
-
-  /**
-   * 현재 더미 매치 개수 조회
-   */
   static async getDummyMatchCount(): Promise<number> {
     try {
       if (!supabase) {
@@ -691,7 +685,4 @@ export class DataGenerator {
       console.log('ℹ️ 날짜 업데이트 중 오류:', error?.message);
     }
   }
-
-// 👆 이 모든 함수들을 추가한 후 클래스를 닫아주세요:
-} // DataGenerator 클래스 닫는 중괄호
 }

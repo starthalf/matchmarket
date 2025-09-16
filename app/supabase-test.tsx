@@ -285,7 +285,7 @@ const handleGenerateOneTimeDummy = async () => {
             </View>
             
             {/* 더미 데이터 관리 */}
-            {/* 더미 데이터 관리 - 항상 보이도록 수정 */}
+{/* 더미 데이터 관리 - 항상 보이도록 수정 */}
 <View style={styles.dummyDataSection}>
   <Text style={styles.dummyDataTitle}>🎾 더미 데이터 관리</Text>
   
@@ -322,6 +322,7 @@ const handleGenerateOneTimeDummy = async () => {
   <Text style={{ fontSize: 12, color: '#6b7280', marginTop: 8, textAlign: 'center' }}>
     현재 더미 매치: {dbStats.dummyMatches}개
   </Text>
+</View>
                 <TouchableOpacity
   style={[styles.deleteDummyButton, { backgroundColor: '#16a34a', marginTop: 8 }, isLoading && styles.deleteDummyButtonDisabled]}
   onPress={handleGenerateOneTimeDummy}

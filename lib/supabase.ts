@@ -93,7 +93,7 @@ export interface UserProfile {
   ntrp: number;
   experience: number;
   play_style: '공격형' | '수비형' | '올라운드';
-  career_type: '동호인' | '대학선수' | '실업선수';
+  career_type: '동호인' | '선수'; // 🔥 변경
   certification_ntrp: 'none' | 'pending' | 'verified';
   certification_career: 'none' | 'pending' | 'verified';
   certification_youtube: 'none' | 'pending' | 'verified';

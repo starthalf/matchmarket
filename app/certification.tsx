@@ -69,29 +69,9 @@ export default function CertificationScreen() {
   const safeStyles = useSafeStyles();
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [formData, setFormData] = useState({
-    ntrp: {
-      rating: '',
-      description: '',
-      evidenceFiles: [] as string[]
-    },
-    career: {
-      careerType: '',
-      period: '',
-      description: '',
-      evidenceFiles: [] as string[]
-    },
-    youtube: {
-      channelName: '',
-      subscribers: '',
-      description: '',
-      evidenceFiles: [] as string[]
-    },
-    instagram: {
-      username: '',
-      followers: '',
-      description: '',
-      evidenceFiles: [] as string[]
-    }
+    requestedNtrp: '',
+    description: '',
+    evidenceFiles: [] as string[],
   });
 
   const toggleCertificationType = (typeId: string) => {
@@ -102,48 +82,26 @@ export default function CertificationScreen() {
     );
   };
 
-  const handleFileUpload = (certType: string) => {
+  const handleFileUpload = () => {
     Alert.alert(
       '파일 업로드',
       '증빙 자료를 선택해주세요',
       [
         { text: '취소', style: 'cancel' },
         { text: '사진 촬영', onPress: () => {
-          setFormData(prev => ({
-            ...prev,
-            [certType]: {
-              ...prev[certType as keyof typeof prev],
-              evidenceFiles: [
-                ...prev[certType as keyof typeof prev].evidenceFiles,
-                `photo_${Date.now()}.jpg`
-              ]
-            }
-          }));
+          setFormData({
+            ...formData,
+            evidenceFiles: [...formData.evidenceFiles, 'photo_' + Date.now() + '.jpg']
+          });
         }},
         { text: '갤러리에서 선택', onPress: () => {
-          setFormData(prev => ({
-            ...prev,
-            [certType]: {
-              ...prev[certType as keyof typeof prev],
-              evidenceFiles: [
-                ...prev[certType as keyof typeof prev].evidenceFiles,
-                `gallery_${Date.now()}.jpg`
-              ]
-            }
-          }));
+          setFormData({
+            ...formData,
+            evidenceFiles: [...formData.evidenceFiles, 'gallery_' + Date.now() + '.jpg']
+          });
         }},
       ]
     );
-  };
-
-  const removeFile = (certType: string, fileIndex: number) => {
-    setFormData(prev => ({
-      ...prev,
-      [certType]: {
-        ...prev[certType as keyof typeof prev],
-        evidenceFiles: prev[certType as keyof typeof prev].evidenceFiles.filter((_, index) => index !== fileIndex)
-      }
-    }));
   };
 
   const validateForm = () => {
@@ -152,37 +110,16 @@ export default function CertificationScreen() {
       return false;
     }
 
-    for (const type of selectedTypes) {
-      switch (type) {
-        case 'ntrp':
-          if (!formData.ntrp.rating) {
-            Alert.alert('입력 오류', 'NTRP 등급을 입력해주세요.');
-            return false;
-          }
-          const ntrpValue = parseFloat(formData.ntrp.rating);
-          if (isNaN(ntrpValue) || ntrpValue < 1.0 || ntrpValue > 7.0) {
-            Alert.alert('입력 오류', 'NTRP 등급은 1.0~7.0 사이의 값을 입력해주세요.');
-            return false;
-          }
-          break;
-        case 'career':
-          if (!formData.career.careerType) {
-            Alert.alert('입력 오류', '선수 경력 유형을 입력해주세요.');
-            return false;
-          }
-          break;
-        case 'youtube':
-          if (!formData.youtube.channelName) {
-            Alert.alert('입력 오류', '유튜브 채널명을 입력해주세요.');
-            return false;
-          }
-          break;
-        case 'instagram':
-          if (!formData.instagram.username) {
-            Alert.alert('입력 오류', '인스타그램 사용자명을 입력해주세요.');
-            return false;
-          }
-          break;
+    // NTRP가 선택된 경우에만 NTRP 등급 입력 확인
+    if (selectedTypes.includes('ntrp')) {
+      if (!formData.requestedNtrp) {
+        Alert.alert('입력 오류', 'NTRP 등급을 입력해주세요.');
+        return false;
+      }
+      const ntrpValue = parseFloat(formData.requestedNtrp);
+      if (isNaN(ntrpValue) || ntrpValue < 1.0 || ntrpValue > 7.0) {
+        Alert.alert('입력 오류', 'NTRP 등급은 1.0~7.0 사이의 값을 입력해주세요.');
+        return false;
       }
     }
 
@@ -201,45 +138,19 @@ export default function CertificationScreen() {
 
       emailContent += `■ ${certType.title}\n`;
       
-      switch (type) {
-        case 'ntrp':
-          emailContent += `- NTRP 등급: ${formData.ntrp.rating}\n`;
-          if (formData.ntrp.description) {
-            emailContent += `- 추가 설명: ${formData.ntrp.description}\n`;
-          }
-          break;
-        case 'career':
-          emailContent += `- 경력 유형: ${formData.career.careerType}\n`;
-          if (formData.career.period) {
-            emailContent += `- 활동 기간: ${formData.career.period}\n`;
-          }
-          if (formData.career.description) {
-            emailContent += `- 추가 설명: ${formData.career.description}\n`;
-          }
-          break;
-        case 'youtube':
-          emailContent += `- 채널명: ${formData.youtube.channelName}\n`;
-          if (formData.youtube.subscribers) {
-            emailContent += `- 구독자 수: ${formData.youtube.subscribers}\n`;
-          }
-          if (formData.youtube.description) {
-            emailContent += `- 추가 설명: ${formData.youtube.description}\n`;
-          }
-          break;
-        case 'instagram':
-          emailContent += `- 사용자명: ${formData.instagram.username}\n`;
-          if (formData.instagram.followers) {
-            emailContent += `- 팔로워 수: ${formData.instagram.followers}\n`;
-          }
-          if (formData.instagram.description) {
-            emailContent += `- 추가 설명: ${formData.instagram.description}\n`;
-          }
-          break;
+      if (type === 'ntrp') {
+        emailContent += `- NTRP 등급: ${formData.requestedNtrp}\n`;
+        if (formData.description) {
+          emailContent += `- 추가 설명: ${formData.description}\n`;
+        }
+      } else {
+        emailContent += `- 인증 신청\n`;
       }
+      
       emailContent += '\n';
     });
 
-    emailContent += `■ 증빙 자료\n증빙 자료는 이 이메일에 첨부하여 보내드립니다.\n\n검토 후 인증 승인 부탁드립니다.\n\n감사합니다.`;
+    emailContent += `■ 증빙 자료\n증빙 자료는 이 이메일에 첨부하여 보내드립니다.\n- 대회 성적\n- 선수증명\n- 코치 추천서\n- 유튜브 채널 스크린샷\n- 인스타 프로필 스크린샷\n- 기타\n\n검토 후 인증 승인 부탁드립니다.\n\n감사합니다.`;
 
     // 이메일 내용을 클립보드에 복사
     Clipboard.setString(emailContent);
@@ -261,256 +172,6 @@ export default function CertificationScreen() {
     Alert.alert('복사 완료', '관리자 이메일 주소가 클립보드에 복사되었습니다.');
   };
 
-  const renderCertificationForm = (type: CertificationType) => {
-    if (!selectedTypes.includes(type.id)) return null;
-
-    switch (type.id) {
-      case 'ntrp':
-        return (
-          <View key={type.id} style={styles.formSection}>
-            <Text style={styles.formTitle}>{type.title}</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>NTRP 등급 *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.ntrp.rating}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  ntrp: { ...prev.ntrp, rating: text }
-                }))}
-                placeholder="예: 4.5"
-                placeholderTextColor="#9ca3af"
-                keyboardType="numeric"
-              />
-              <Text style={styles.inputHint}>
-                현재 자신의 정확한 NTRP 등급을 입력해주세요 (1.0-7.0)
-              </Text>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>추가 설명</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={formData.ntrp.description}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  ntrp: { ...prev.ntrp, description: text }
-                }))}
-                placeholder="대회 참가 경력, 코치 추천 등 인증에 도움이 될 정보를 적어주세요..."
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            {renderFileUploadSection('ntrp')}
-          </View>
-        );
-
-      case 'career':
-        return (
-          <View key={type.id} style={styles.formSection}>
-            <Text style={styles.formTitle}>{type.title}</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>경력 유형 *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.career.careerType}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  career: { ...prev.career, careerType: text }
-                }))}
-                placeholder="예: 프로선수, 실업팀, 대학팀 등"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>활동 기간</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.career.period}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  career: { ...prev.career, period: text }
-                }))}
-                placeholder="예: 2018년 - 2022년"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>추가 설명</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={formData.career.description}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  career: { ...prev.career, description: text }
-                }))}
-                placeholder="주요 성적, 소속팀, 수상 경력 등을 적어주세요..."
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            {renderFileUploadSection('career')}
-          </View>
-        );
-
-      case 'youtube':
-        return (
-          <View key={type.id} style={styles.formSection}>
-            <Text style={styles.formTitle}>{type.title}</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>채널명 *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.youtube.channelName}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  youtube: { ...prev.youtube, channelName: text }
-                }))}
-                placeholder="유튜브 채널명을 입력해주세요"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>구독자 수</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.youtube.subscribers}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  youtube: { ...prev.youtube, subscribers: text }
-                }))}
-                placeholder="예: 10,000명"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>추가 설명</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={formData.youtube.description}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  youtube: { ...prev.youtube, description: text }
-                }))}
-                placeholder="채널 운영 기간, 주요 콘텐츠 등을 적어주세요..."
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            {renderFileUploadSection('youtube')}
-          </View>
-        );
-
-      case 'instagram':
-        return (
-          <View key={type.id} style={styles.formSection}>
-            <Text style={styles.formTitle}>{type.title}</Text>
-            
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>사용자명 *</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.instagram.username}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  instagram: { ...prev.instagram, username: text }
-                }))}
-                placeholder="@username"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>팔로워 수</Text>
-              <TextInput
-                style={styles.textInput}
-                value={formData.instagram.followers}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  instagram: { ...prev.instagram, followers: text }
-                }))}
-                placeholder="예: 5,000명"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>추가 설명</Text>
-              <TextInput
-                style={[styles.textInput, styles.textArea]}
-                value={formData.instagram.description}
-                onChangeText={(text) => setFormData(prev => ({
-                  ...prev,
-                  instagram: { ...prev.instagram, description: text }
-                }))}
-                placeholder="계정 운영 기간, 주요 콘텐츠 등을 적어주세요..."
-                placeholderTextColor="#9ca3af"
-                multiline
-                numberOfLines={3}
-              />
-            </View>
-
-            {renderFileUploadSection('instagram')}
-          </View>
-        );
-
-      default:
-        return null;
-    }
-  };
-
-  const renderFileUploadSection = (certType: string) => {
-    const files = formData[certType as keyof typeof formData].evidenceFiles;
-
-    return (
-      <View style={styles.uploadSection}>
-        <View style={styles.uploadHeader}>
-          <Text style={styles.uploadTitle}>증빙 자료</Text>
-          <TouchableOpacity 
-            style={styles.uploadButton}
-            onPress={() => handleFileUpload(certType)}
-          >
-            <Upload size={16} color="#ec4899" />
-            <Text style={styles.uploadButtonText}>파일 추가</Text>
-          </TouchableOpacity>
-        </View>
-        
-        <Text style={styles.uploadHint}>
-          관련 증명서, 스크린샷 등을 첨부해주세요
-        </Text>
-
-        {files.length > 0 && (
-          <View style={styles.fileList}>
-            {files.map((file, index) => (
-              <View key={index} style={styles.fileItem}>
-                <Text style={styles.fileName}>{file}</Text>
-                <TouchableOpacity
-                  onPress={() => removeFile(certType, index)}
-                  style={styles.removeFileButton}
-                >
-                  <Text style={styles.removeFileText}>삭제</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
-    );
-  };
-  
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
@@ -529,9 +190,6 @@ export default function CertificationScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.introSection}>
           <Text style={styles.introTitle}>프로필 인증 신청</Text>
-          <Text style={styles.introSubtitle}>
-            원하는 인증을 선택하여 신뢰할 수 있는 프로필을 만들어보세요
-          </Text>
         </View>
 
         {/* 인증 유형 선택 */}
@@ -547,14 +205,14 @@ export default function CertificationScreen() {
               <TouchableOpacity
                 key={type.id}
                 style={[
-                  styles.certTypeCard,
-                  isSelected && styles.certTypeCardSelected
+                  styles.typeCard,
+                  isSelected && styles.typeCardSelected
                 ]}
                 onPress={() => toggleCertificationType(type.id)}
               >
-                <View style={styles.certTypeHeader}>
+                <View style={styles.typeHeader}>
                   <View style={[
-                    styles.certTypeIcon,
+                    styles.typeIcon,
                     { backgroundColor: isSelected ? type.color : '#f3f4f6' }
                   ]}>
                     <IconComponent 
@@ -562,9 +220,14 @@ export default function CertificationScreen() {
                       color={isSelected ? '#ffffff' : '#6b7280'} 
                     />
                   </View>
-                  <View style={styles.certTypeInfo}>
-                    <Text style={styles.certTypeTitle}>{type.title}</Text>
-                    <Text style={styles.certTypeDescription}>{type.description}</Text>
+                  <View style={styles.typeInfo}>
+                    <Text style={[
+                      styles.typeTitle,
+                      isSelected && styles.typeTitleSelected
+                    ]}>
+                      {type.title}
+                    </Text>
+                    <Text style={styles.typeDescription}>{type.description}</Text>
                   </View>
                   <View style={[
                     styles.checkbox,
@@ -578,39 +241,104 @@ export default function CertificationScreen() {
           })}
         </View>
 
-        {/* 선택된 인증 유형별 폼 */}
-        {certificationTypes.map(type => renderCertificationForm(type))}
+        {/* NTRP 인증이 선택된 경우에만 폼 표시 */}
+        {selectedTypes.includes('ntrp') && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>NTRP 등급 인증</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>신청 NTRP 등급 *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.requestedNtrp}
+                onChangeText={(text) => setFormData({...formData, requestedNtrp: text})}
+                placeholder="예: 4.5"
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+              />
+              <Text style={styles.inputHint}>
+                현재 자신의 정확한 NTRP 등급을 입력해주세요 (1.0-7.0)
+              </Text>
+            </View>
 
-        {/* 관리자 이메일 정보 */}
-        <View style={styles.emailSection}>
-          <View style={styles.emailHeader}>
-            <Mail size={20} color="#6b7280" />
-            <Text style={styles.emailTitle}>관리자 이메일</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>추가 설명</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={formData.description}
+                onChangeText={(text) => setFormData({...formData, description: text})}
+                placeholder="인증에 도움이 될 추가 정보가 있다면 적어주세요..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
           </View>
-          <TouchableOpacity 
-            style={styles.emailCard}
-            onPress={copyAdminEmail}
-          >
-            <Text style={styles.emailAddress}>admin@matchmarket.co.kr</Text>
-            <Copy size={16} color="#ec4899" />
-          </TouchableOpacity>
-          <Text style={styles.emailHint}>
-            터치하여 이메일 주소를 복사할 수 있습니다
-          </Text>
-        </View>
-
-        {/* 제출 버튼 */}
-        {selectedTypes.length > 0 && (
-          <TouchableOpacity 
-            style={styles.submitButton}
-            onPress={handleSubmit}
-          >
-            <Send size={20} color="#ffffff" />
-            <Text style={styles.submitButtonText}>인증 신청하기</Text>
-          </TouchableOpacity>
         )}
 
-        <View style={styles.bottomSpacing} />
+        {/* 증빙 자료 업로드 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>증빙 자료 업로드 *</Text>
+          
+          <View style={styles.emailSection}>
+            <Text style={styles.emailSectionTitle}>관리자 이메일로 직접 발송</Text>
+            
+            <View style={styles.adminEmailCard}>
+              <View style={styles.emailRow}>
+                <Mail size={18} color="#3b82f6" />
+                <Text style={styles.adminEmail}>admin@matchmarket.co.kr</Text>
+                <TouchableOpacity 
+                  style={styles.copyEmailButton}
+                  onPress={copyAdminEmail}
+                >
+                  <Copy size={16} color="#3b82f6" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.uploadHint}>
+            <Text style={styles.uploadHintTitle}>
+              인증 증빙 자료
+            </Text>
+            <Text style={styles.uploadHintText}>
+              • 대회 성적{'\n'}• 선수증명{'\n'}• 코치 추천서{'\n'}• 유튜브 채널 스크린샷{'\n'}• 인스타 프로필 스크린샷{'\n'}• 기타
+            </Text>
+          </View>
+        </View>
+
+        {/* 처리 과정 안내 */}
+        <View style={styles.processSection}>
+          <Text style={styles.processSectionTitle}>인증 처리 과정</Text>
+          
+          <View style={styles.processStep}>
+            <View style={styles.stepIndicator}>
+              <Text style={styles.stepNumber}>1</Text>
+            </View>
+            <Text style={styles.stepText}>신청 접수 및 이메일 발송</Text>
+          </View>
+          
+          <View style={styles.processStep}>
+            <View style={styles.stepIndicator}>
+              <Text style={styles.stepNumber}>2</Text>
+            </View>
+            <Text style={styles.stepText}>관리자 검토 (3-5일 소요)</Text>
+          </View>
+          
+          <View style={styles.processStep}>
+            <View style={styles.stepIndicator}>
+              <Text style={styles.stepNumber}>3</Text>
+            </View>
+            <Text style={styles.stepText}>결과 알림 및 배지 부여</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Send size={18} color="#ffffff" />
+          <Text style={styles.submitButtonText}>인증 신청하기</Text>
+        </TouchableOpacity>
+
+        <View style={styles.bottomPadding} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -619,57 +347,59 @@ export default function CertificationScreen() {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    paddingTop: 16,
   },
   introSection: {
-    padding: 20,
-    backgroundColor: '#fafafa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    paddingHorizontal: 20,
+    marginBottom: 24,
   },
   introTitle: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#111827',
     marginBottom: 8,
   },
-  introSubtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
   section: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#111827',
-    marginBottom: 4,
+    marginBottom: 16,
   },
   sectionSubtitle: {
     fontSize: 14,
     color: '#6b7280',
     marginBottom: 16,
   },
-  certTypeCard: {
+  typeCard: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 12,
+    borderRadius: 8,
     padding: 16,
     marginBottom: 12,
-    backgroundColor: '#ffffff',
   },
-  certTypeCardSelected: {
+  typeCardSelected: {
     borderColor: '#ec4899',
-    backgroundColor: '#fef7f7',
+    backgroundColor: '#fdf2f8',
   },
-  certTypeHeader: {
+  typeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  certTypeIcon: {
+  typeIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -677,16 +407,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
   },
-  certTypeInfo: {
+  typeInfo: {
     flex: 1,
   },
-  certTypeTitle: {
+  typeTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#374151',
     marginBottom: 4,
   },
-  certTypeDescription: {
+  typeTitleSelected: {
+    color: '#ec4899',
+  },
+  typeDescription: {
     fontSize: 14,
     color: '#6b7280',
   },
@@ -702,24 +435,12 @@ const styles = StyleSheet.create({
   checkboxSelected: {
     borderColor: '#ec4899',
   },
-  formSection: {
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-    backgroundColor: '#fafafa',
-  },
-  formTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 16,
-  },
   inputGroup: {
     marginBottom: 16,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#374151',
     marginBottom: 6,
   },
@@ -727,142 +448,135 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,
-    padding: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     fontSize: 16,
-    color: '#111827',
+    color: '#374151',
     backgroundColor: '#ffffff',
   },
   textArea: {
-    height: 80,
+    height: 100,
     textAlignVertical: 'top',
   },
   inputHint: {
     fontSize: 12,
-    color: '#6b7280',
+    color: '#9ca3af',
     marginTop: 4,
-  },
-  uploadSection: {
-    marginTop: 8,
-  },
-  uploadHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  uploadTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  uploadButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#ec4899',
-    borderRadius: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 4,
-  },
-  uploadButtonText: {
-    fontSize: 12,
-    color: '#ec4899',
-    fontWeight: '500',
-  },
-  uploadHint: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginBottom: 12,
-  },
-  fileList: {
-    gap: 8,
-  },
-  fileItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 6,
-    padding: 8,
-  },
-  fileName: {
-    flex: 1,
-    fontSize: 12,
-    color: '#374151',
-  },
-  removeFileButton: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  removeFileText: {
-    fontSize: 12,
-    color: '#dc2626',
+    lineHeight: 16,
   },
   emailSection: {
-    padding: 20,
-    backgroundColor: '#fafafa',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    marginBottom: 16,
   },
-  emailHeader: {
+  emailSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  adminEmailCard: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    marginBottom: 12,
+  },
+  emailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
+    gap: 12,
   },
-  emailTitle: {
+  adminEmail: {
+    flex: 1,
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#1e40af',
   },
-  emailCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
+  copyEmailButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#dbeafe',
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: '#3b82f6',
+  },
+  uploadHint: {
+    backgroundColor: '#f0f9ff',
+    padding: 16,
     borderRadius: 8,
-    padding: 12,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  uploadHintTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e40af',
     marginBottom: 8,
   },
-  emailAddress: {
+  uploadHintText: {
+    fontSize: 12,
+    color: '#3730a3',
+    lineHeight: 18,
+  },
+  processSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  processSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  processStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 12,
+  },
+  stepIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ec4899',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumber: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  stepText: {
     fontSize: 14,
     color: '#374151',
-    fontWeight: '500',
-  },
-  emailHint: {
-    fontSize: 12,
-    color: '#6b7280',
+    flex: 1,
   },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#ec4899',
-    borderRadius: 12,
-    padding: 16,
-    margin: 20,
     gap: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    backgroundColor: '#ec4899',
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 12,
   },
   submitButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#ffffff',
   },
-  bottomSpacing: {
-    height: 20,
+  bottomPadding: {
+    height: 40,
   },
 });

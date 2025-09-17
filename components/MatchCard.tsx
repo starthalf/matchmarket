@@ -24,7 +24,7 @@ export function MatchCard({ match }: MatchCardProps) {
   
   // 핫 매치 조건: 조회수가 예상의 150% 이상이거나 참여신청자가 많은 경우
   const isHotMatch = match.seller.viewCount > match.expectedViews * 1.5 || 
-                     match.applications.length > match.expectedParticipants.total * 2;
+                     (match.applications?.length || 0) > match.expectedParticipants.total * 2;
   
   const handlePress = () => {
     router.push(`/match/${match.id}`);
@@ -119,11 +119,11 @@ export function MatchCard({ match }: MatchCardProps) {
           <Text style={styles.recruitmentText}>
             {getRecruitmentStatus()}
           </Text>
-          {match.applications.length > 0 && (
+          {(match.applications?.length || 0) > 0 && (
             <>
               <Text style={styles.separator}>·</Text>
               <Text style={styles.applicationText}>
-                신청 {match.applications.length}건
+                신청 {match.applications?.length || 0}건
               </Text>
             </>
           )}
@@ -145,7 +145,7 @@ export function MatchCard({ match }: MatchCardProps) {
             maxPrice={match.maxPrice}
             hoursUntilMatch={hoursUntilMatch}
             viewCount={match.seller.viewCount}
-            applicationsCount={match.applications.length}
+            applicationsCount={match.applications?.length || 0}
             expectedParticipants={match.expectedParticipants.total}
             isClosed={match.isClosed}
           />

@@ -240,6 +240,8 @@ export default function ProfileScreen() {
               <CertificationBadge 
                 ntrpCert={currentUser.certification.ntrp}
                 careerCert={currentUser.certification.career}
+                youtubeCert={currentUser.certification.youtube}
+                instagramCert={currentUser.certification.instagram}
                 size="large"
               />
             </View>
@@ -290,6 +292,30 @@ export default function ProfileScreen() {
                       <Text style={styles.certVerified}>인증 완료</Text>
                     </>
                   ) : currentUser.certification.ntrp === 'pending' ? (
+                    <>
+                      <Clock size={16} color="#f59e0b" />
+                      <Text style={styles.certPending}>심사 중</Text>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle size={16} color="#6b7280" />
+                      <Text style={styles.certNone}>미인증</Text>
+                    </>
+                  )}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.certItem}>
+              <View style={styles.certInfo}>
+                <Text style={styles.certTitle}>선수 인증</Text>
+                <View style={styles.certStatus}>
+                  {currentUser.certification.career === 'verified' ? (
+                    <>
+                      <CheckCircle size={16} color="#16a34a" />
+                      <Text style={styles.certVerified}>인증 완료</Text>
+                    </>
+                  ) : currentUser.certification.career === 'pending' ? (
                     <>
                       <Clock size={16} color="#f59e0b" />
                       <Text style={styles.certPending}>심사 중</Text>
@@ -362,7 +388,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* 활동 통계 */}
+        {/* 매치판매 관리 */}
         <View style={styles.menuSection}>
           <Text style={styles.sectionTitle}>매치판매 관리</Text>
           

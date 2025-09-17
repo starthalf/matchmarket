@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Users, Plus, User } from 'lucide-react-native';
+import { Users, Plus, User, ClipboardList, MessageCircle } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
@@ -51,6 +51,41 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => (
             <Plus size={size} color={color} />
           ),
+        }}
+        listeners={{
+          tabPress: (e: any) => {
+            if (!user) {
+              e.preventDefault();
+              router.push('/auth/login');
+            }
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="match-management"
+        options={{
+          title: "매치관리",
+          tabBarIcon: ({ size, color }) => (
+            <ClipboardList size={size} color={color} />
+          ),
+        }}
+        listeners={{
+          tabPress: (e: any) => {
+            if (!user) {
+              e.preventDefault();
+              router.push('/auth/login');
+            }
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="chat"
+        options={{
+          title: "채팅",
+          tabBarIcon: ({ size, color }) => (
+            <MessageCircle size={size} color={color} />
+          ),
+          tabBarBadge: undefined, // 채팅 알림을 위한 배지 (동적으로 설정)
         }}
         listeners={{
           tabPress: (e: any) => {

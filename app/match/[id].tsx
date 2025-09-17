@@ -60,9 +60,13 @@ export default function MatchDetailScreen() {
     );
   }
 
+  // 안전한 기본값 설정
+  const safeApplications = match.applications || [];
+  const safeParticipants = match.participants || [];
+
   // 현재 사용자의 참여 상태 확인
-  const myApplication = match.applications.find(app => app.userId === user?.id);
-  const myParticipation = match.participants.find(p => p.userId === user?.id);
+  const myApplication = safeApplications.find(app => app.userId === user?.id);
+  const myParticipation = safeParticipants.find(p => p.userId === user?.id);
   const isOwnMatch = match.sellerId === user?.id;
 
   const currentTime = new Date();
@@ -131,7 +135,7 @@ export default function MatchDetailScreen() {
       // 매치에 참여신청 추가
       const updatedMatch: Match = {
         ...match,
-        applications: [...match.applications, newApplication]
+        applications: [...safeApplications, newApplication]
       };
 
       updateMatch(updatedMatch);
@@ -241,7 +245,7 @@ export default function MatchDetailScreen() {
             <View style={styles.detailRow}>
               <Users size={16} color="#6b7280" />
               <Text style={styles.detailText}>
-                남성 {match.expectedParticipants.male}명, 여성 {match.expectedParticipants.female}명 모집
+                남성 {match.expectedParticipants?.male || 0}명, 여성 {match.expectedParticipants?.female || 0}명 모집
               </Text>
             </View>
           </View>
@@ -264,30 +268,30 @@ export default function MatchDetailScreen() {
               </View>
               <View style={styles.sellerDetails}>
                 <View style={styles.sellerNameRow}>
-                  <Text style={styles.sellerName}>{match.seller.name}</Text>
-                  {match.seller.certification.ntrp === 'verified' && (
+                  <Text style={styles.sellerName}>{match.seller?.name || '알 수 없음'}</Text>
+                  {match.seller?.certification?.ntrp === 'verified' && (
                     <Shield size={16} color="#10b981" />
                   )}
                 </View>
                 <Text style={styles.sellerMeta}>
-                  {match.seller.gender} · {match.seller.ageGroup} · NTRP {match.seller.ntrp.toFixed(1)}
+                  {match.seller?.gender || ''} · {match.seller?.ageGroup || ''} · NTRP {match.seller?.ntrp?.toFixed(1) || '0.0'}
                 </Text>
                 <Text style={styles.sellerDetailText}>
-                  경력 {match.seller.experience}개월 · {match.seller.careerType} · {match.seller.playStyle}
+                  경력 {match.seller?.experience || 0}개월 · {match.seller?.careerType || ''} · {match.seller?.playStyle || ''}
                 </Text>
               </View>
             </View>
             <View style={styles.sellerStats}>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{match.seller.viewCount}</Text>
+                <Text style={styles.statNumber}>{match.seller?.viewCount || 0}</Text>
                 <Text style={styles.statLabel}>조회</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{match.seller.likeCount}</Text>
+                <Text style={styles.statNumber}>{match.seller?.likeCount || 0}</Text>
                 <Text style={styles.statLabel}>좋아요</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statNumber}>{match.seller.avgRating.toFixed(1)}</Text>
+                <Text style={styles.statNumber}>{match.seller?.avgRating?.toFixed(1) || '0.0'}</Text>
                 <Text style={styles.statLabel}>평점</Text>
               </View>
             </View>
@@ -301,11 +305,11 @@ export default function MatchDetailScreen() {
             <PriceDisplay
               currentPrice={match.currentPrice}
               basePrice={match.basePrice}
-              maxPrice={match.maxPrice}
+              maxPrice={match.maxPrice || 200000}
               hoursUntilMatch={hoursUntilMatch}
-              viewCount={match.seller.viewCount}
-              applicationsCount={match.applications.length}
-              expectedParticipants={match.expectedParticipants.total}
+              viewCount={match.seller?.viewCount || 0}
+              applicationsCount={safeApplications.length}
+              expectedParticipants={match.expectedParticipants?.total || 0}
               isClosed={match.isClosed}
             />
           </View>
@@ -315,13 +319,13 @@ export default function MatchDetailScreen() {
         </View>
 
         {/* 참여신청 현황 */}
-        {match.applications.length > 0 && (
+        {safeApplications.length > 0 && (
           <View style={styles.applicationsCard}>
             <Text style={styles.sectionTitle}>
-              참여신청 현황 ({match.applications.length}건)
+              참여신청 현황 ({safeApplications.length}건)
             </Text>
             <View style={styles.applicationsList}>
-              {match.applications.slice(0, 3).map((application) => (
+              {safeApplications.slice(0, 3).map((application) => (
                 <View key={application.id} style={styles.applicationItem}>
                   <View style={styles.applicantInfo}>
                     <Text style={styles.applicantName}>{application.userName}</Text>
@@ -341,9 +345,9 @@ export default function MatchDetailScreen() {
                   </View>
                 </View>
               ))}
-              {match.applications.length > 3 && (
+              {safeApplications.length > 3 && (
                 <Text style={styles.moreApplications}>
-                  +{match.applications.length - 3}건 더
+                  +{safeApplications.length - 3}건 더
                 </Text>
               )}
             </View>
@@ -562,7 +566,152 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
     marginBottom: 16,
+  },
+  summaryItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  summaryLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  priceValue: {
+    color: '#ec4899',
+    fontSize: 16,
+  },
+  applicationNote: {
+    backgroundColor: '#f0f9ff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  noteTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1e40af',
+    marginBottom: 8,
+  },
+  noteText: {
+    fontSize: 13,
+    color: '#1e40af',
+    lineHeight: 20,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  cancelButtonText: {
+    color: '#6b7280',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButton: {
+    flex: 1,
+    backgroundColor: '#ec4899',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  confirmButtonDisabled: {
+    backgroundColor: '#d1d5db',
+  },
+  confirmButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  timerSection: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    padding: 32,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  timerText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#dc2626',
+    marginVertical: 8,
+  },
+  timerLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  paymentInfo: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  paymentTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  paymentDetail: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  paymentLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  paymentAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ec4899',
+  },
+  paymentAccount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  paymentCompleteButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  paymentCompleteButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+});,
     gap: 12,
   },
   matchTitle: {
@@ -865,145 +1014,4 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 16,
-  },
-  summaryItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  summaryLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  summaryValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  priceValue: {
-    color: '#ec4899',
-    fontSize: 16,
-  },
-  applicationNote: {
-    backgroundColor: '#f0f9ff',
-    padding: 16,
-    borderRadius: 12,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#bfdbfe',
-  },
-  noteTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1e40af',
-    marginBottom: 8,
-  },
-  noteText: {
-    fontSize: 13,
-    color: '#1e40af',
-    lineHeight: 20,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  cancelButtonText: {
-    color: '#6b7280',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  confirmButton: {
-    flex: 1,
-    backgroundColor: '#ec4899',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  confirmButtonDisabled: {
-    backgroundColor: '#d1d5db',
-  },
-  confirmButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  timerSection: {
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    padding: 32,
-    borderRadius: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  timerText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#dc2626',
-    marginVertical: 8,
-  },
-  timerLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  paymentInfo: {
-    backgroundColor: '#ffffff',
-    padding: 20,
-    borderRadius: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  paymentTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 16,
-  },
-  paymentDetail: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  paymentLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  paymentAmount: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#ec4899',
-  },
-  paymentAccount: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  paymentCompleteButton: {
-    backgroundColor: '#10b981',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  paymentCompleteButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-});
+    marginBottom: 16

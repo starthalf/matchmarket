@@ -35,7 +35,7 @@ export default function RegisterScreen() {
     court: '',
     description: '',
     basePrice: '',
-    matchType: '복식' as '단식' | '복식' | '혼복' | '그룹',
+    matchType: '혼복' as '단식' | '남복' | '여복' | '혼복',
     maleCount: '2',
     femaleCount: '2',
     adEnabled: false,
@@ -159,7 +159,7 @@ export default function RegisterScreen() {
           court: '',
           description: '',
           basePrice: '',
-          matchType: '복식',
+          matchType: '혼복',
           maleCount: '2',
           femaleCount: '2',
           adEnabled: false,
@@ -329,12 +329,7 @@ export default function RegisterScreen() {
                   styles.matchTypeButton,
                   formData.matchType === '단식' && styles.matchTypeButtonActive
                 ]}
-                onPress={() => setFormData({
-                  ...formData, 
-                  matchType: '단식',
-                  maleCount: '1',
-                  femaleCount: '0'
-                })}
+                onPress={() => setFormData({...formData, matchType: '단식'})}
               >
                 <Text style={styles.matchTypeEmoji}>🎾</Text>
                 <Text style={[
@@ -348,21 +343,32 @@ export default function RegisterScreen() {
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType === '복식' && styles.matchTypeButtonActive
+                  formData.matchType === '남복' && styles.matchTypeButtonActive
                 ]}
-                onPress={() => setFormData({
-                  ...formData, 
-                  matchType: '복식',
-                  maleCount: '2',
-                  femaleCount: '2'
-                })}
+                onPress={() => setFormData({...formData, matchType: '남복'})}
               >
-                <Text style={styles.matchTypeEmoji}>🏸</Text>
+                <Text style={styles.matchTypeEmoji}>👨‍🤝‍👨</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType === '복식' && styles.matchTypeTextActive
+                  formData.matchType === '남복' && styles.matchTypeTextActive
                 ]}>
-                  복식 (2:2)
+                  남복 (2:2)
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.matchTypeButton,
+                  formData.matchType === '여복' && styles.matchTypeButtonActive
+                ]}
+                onPress={() => setFormData({...formData, matchType: '여복'})}
+              >
+                <Text style={styles.matchTypeEmoji}>👩‍🤝‍👩</Text>
+                <Text style={[
+                  styles.matchTypeText,
+                  formData.matchType === '여복' && styles.matchTypeTextActive
+                ]}>
+                  여복 (2:2)
                 </Text>
               </TouchableOpacity>
 
@@ -371,40 +377,14 @@ export default function RegisterScreen() {
                   styles.matchTypeButton,
                   formData.matchType === '혼복' && styles.matchTypeButtonActive
                 ]}
-                onPress={() => setFormData({
-                  ...formData, 
-                  matchType: '혼복',
-                  maleCount: '1',
-                  femaleCount: '1'
-                })}
+                onPress={() => setFormData({...formData, matchType: '혼복'})}
               >
-                <Text style={styles.matchTypeEmoji}>⚡</Text>
+                <Text style={styles.matchTypeEmoji}>👫</Text>
                 <Text style={[
                   styles.matchTypeText,
                   formData.matchType === '혼복' && styles.matchTypeTextActive
                 ]}>
-                  혼복 (1:1)
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.matchTypeButton,
-                  formData.matchType === '그룹' && styles.matchTypeButtonActive
-                ]}
-                onPress={() => setFormData({
-                  ...formData, 
-                  matchType: '그룹',
-                  maleCount: '3',
-                  femaleCount: '3'
-                })}
-              >
-                <Text style={styles.matchTypeEmoji}>👥</Text>
-                <Text style={[
-                  styles.matchTypeText,
-                  formData.matchType === '그룹' && styles.matchTypeTextActive
-                ]}>
-                  그룹
+                  혼복 (2:2)
                 </Text>
               </TouchableOpacity>
             </View>

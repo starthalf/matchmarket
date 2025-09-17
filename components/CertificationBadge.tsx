@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Check, Youtube, Instagram } from 'lucide-react-native';
+import { Check, Youtube, Instagram, Award } from 'lucide-react-native';
 
 interface CertificationBadgeProps {
   ntrpCert: 'none' | 'pending' | 'verified';
@@ -22,16 +22,28 @@ export function CertificationBadge({
 
   const badges = [];
 
-  // NTRP/Career 인증 배지 (기존)
-  const isNtrpOrCareerVerified = ntrpCert === 'verified' || careerCert === 'verified';
-  if (isNtrpOrCareerVerified) {
+  // NTRP 인증 배지
+  if (ntrpCert === 'verified') {
     badges.push(
-      <View key="ntrp-career" style={[
+      <View key="ntrp" style={[
         styles.badge, 
-        styles.verified,
+        styles.ntrpBadge,
         { width: badgeSize, height: badgeSize }
       ]}>
         <Check size={iconSize} color="#ffffff" strokeWidth={3} />
+      </View>
+    );
+  }
+
+  // 선수 인증 배지 (기존 careerCert)
+  if (careerCert === 'verified') {
+    badges.push(
+      <View key="career" style={[
+        styles.badge, 
+        styles.careerBadge,
+        { width: badgeSize, height: badgeSize }
+      ]}>
+        <Award size={iconSize} color="#ffffff" strokeWidth={2} />
       </View>
     );
   }
@@ -91,14 +103,17 @@ const styles = StyleSheet.create({
     shadowRadius: 1.41,
     elevation: 2,
   },
-  verified: {
+  ntrpBadge: {
     backgroundColor: '#ec4899',
+  },
+  careerBadge: {
+    backgroundColor: '#059669',
   },
   youtubeBadge: {
     backgroundColor: '#dc2626',
   },
   instagramBadge: {
-    backgroundColor: '#e1306c', // fallback for React Native
+    backgroundColor: '#e1306c',
   },
   pending: {
     backgroundColor: '#f59e0b',

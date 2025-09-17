@@ -232,7 +232,7 @@ export default function RegisterScreen() {
             <Text style={styles.title}>매치 판매</Text>
             <DollarSign size={24} color="#16a34a" />
           </View>
-          <Text style={styles.subtitle}>당신의 테니스를 판매하세요인기가 높으면 가격이 올라갑니다</Text>
+          <Text style={styles.subtitle}>당신의 테니스를 판매하세요. 인기가 높으면 가격이 올라갑니다</Text>
         </View>
       </View>
 

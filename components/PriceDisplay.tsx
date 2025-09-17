@@ -106,12 +106,11 @@ export function PriceDisplay({
       dynamicPrice *= (1 + extraViewPremium);
     }
     
-    // 4. 시간 할인 (24시간 전부터 할인 시작)
-    if (hoursUntilMatch <= 24 && hoursUntilMatch >= 0) {
-      // 24시간 전부터: 시간당 2% 할인 (최대 48% 할인)
-      const timeDiscount = Math.min(0.48, (24 - hoursUntilMatch) * 0.02);
-      dynamicPrice *= (1 - timeDiscount);
-    }
+    // 4. 시간 할인 (10시간 전부터 할인 시작)
+    if (hoursUntilMatch <= 10 && hoursUntilMatch >= 0) {
+  const timeDiscount = Math.min(0.20, (10 - hoursUntilMatch) * 0.02);
+  dynamicPrice *= (1 - timeDiscount);
+}
     
     // 5. 최소/최대 가격 제한
     dynamicPrice = Math.max(basePrice, dynamicPrice); // 최소: 기본가격

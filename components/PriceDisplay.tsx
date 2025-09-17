@@ -126,9 +126,7 @@ export function PriceDisplay({
         // 실시간 동적 가격 계산
         const targetPrice = calculateDynamicPrice();
         
-        // 실시간 미세 변동 (±2% 범위에서 목표가격으로 수렴)
-        const variation = (Math.random() - 0.5) * 0.04; // -2% ~ +2%
-        const newPrice = targetPrice * (1 + variation);
+        const newPrice = targetPrice; // 무작위 변동 제거
         
         // 최종 가격 제한
         const finalPrice = Math.min(

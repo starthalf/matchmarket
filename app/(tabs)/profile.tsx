@@ -24,7 +24,7 @@ import {
   Instagram,
   Award
 } from 'lucide-react-native';
-import { useSafeStyles } from '../constants/Styles';
+import { useSafeStyles } from '../../constants/Styles';
 
 interface CertificationType {
   id: 'ntrp' | 'youtube' | 'instagram' | 'career';

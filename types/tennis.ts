@@ -1,4 +1,4 @@
-// types/tennis.ts - 완전한 코드
+// types/tennis.ts - 새로운 참여신청 시스템 타입 정의
 
 export interface User {
   id: string;
@@ -21,6 +21,24 @@ export interface User {
   avgRating: number;
 }
 
+// 🆕 새로운 참여신청 인터페이스 - 대기시스템 대신 사용
+export interface MatchApplication {
+  id: string;
+  matchId: string;
+  userId: string;
+  userName: string;
+  userGender: '남성' | '여성';
+  userNtrp: number;
+  userProfileImage?: string;
+  appliedPrice: number; // 참여신청 당시의 가격
+  appliedAt: string;
+  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  approvedAt?: string;
+  rejectedAt?: string;
+  paymentRequestedAt?: string;
+  paymentExpiresAt?: string; // 결제요청 5분 타이머
+}
+
 export interface Match {
   id: string;
   sellerId: string;
@@ -32,24 +50,24 @@ export interface Match {
   court: string;
   description: string;
   basePrice: number;
-  initialPrice: number;
+  // 🗑️ initialPrice 삭제
   currentPrice: number;
   maxPrice: number;
   expectedViews: number;
-  expectedWaitingApplicants: number;
+  // 🗑️ expectedWaitingApplicants 삭제
   expectedParticipants: {
-    male: number;      // 🔥 모집할 남성 인원수 (자유롭게 설정 가능)
-    female: number;    // 🔥 모집할 여성 인원수 (자유롭게 설정 가능)
-    total: number;     // 🔥 총 모집 인원수
+    male: number;
+    female: number;
+    total: number;
   };
   currentApplicants: {
     male: number;
     female: number;
     total: number;
   };
-  matchType: '단식' | '남복' | '여복' | '혼복'; // 🔥 경기 방식만 의미 (인원수와 무관)
-  waitingApplicants: number;
-  waitingList: WaitingApplicant[];
+  matchType: '단식' | '남복' | '여복' | '혼복';
+  // 🗑️ waitingApplicants, waitingList 삭제
+  applications: MatchApplication[]; // 🆕 참여신청 목록
   participants: MatchParticipant[];
   adEnabled: boolean;
   ntrpRequirement: {
@@ -60,20 +78,6 @@ export interface Match {
   location: string;
   createdAt: string;
   isClosed?: boolean;
-}
-
-export interface WaitingApplicant {
-  id: string;
-  userId: string;
-  userName: string;
-  gender: '남성' | '여성';
-  ntrp: number;
-  joinedAt: string;
-  status: 'waiting' | 'payment_requested' | 'payment_submitted' | 'payment_confirmed' | 'payment_failed' | 'cancelled';
-  paymentRequestedAt?: string;
-  paymentExpiresAt?: string;
-  paymentSubmittedAt?: string;
-  depositorName?: string;
 }
 
 export interface MatchParticipant {
@@ -96,6 +100,28 @@ export interface MatchParticipant {
   };
 }
 
+// 🆕 채팅 관련 인터페이스
+export interface ChatRoom {
+  id: string;
+  matchId: string;
+  participantIds: string[]; // 참가자 ID들 (판매자 + 참가자)
+  lastMessage?: ChatMessage;
+  updatedAt: string;
+  createdAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  roomId: string;
+  senderId: string;
+  senderName: string;
+  message: string;
+  type: 'text' | 'system' | 'image';
+  timestamp: string;
+  isRead: boolean;
+}
+
+// 기존 인터페이스들 유지
 export interface PaymentRequest {
   id: string;
   matchId: string;
@@ -131,87 +157,62 @@ export interface CertificationRequest {
   submittedAt: string;
 }
 
-// 🔥 매치 타입별 도우미 함수들 (수정)
+// 🆕 새로운 가격 로직을 위한 인터페이스
+export interface PricingFactors {
+  viewCount: number;
+  applicationsCount: number; // 참여신청자 수
+  expectedApplicants: number; // 모집인원 × 10
+  hoursUntilMatch: number;
+  basePrice: number;
+  maxPrice: number;
+}
+
+// 매치 타입별 도우미 함수들
 export const MatchTypeHelper = {
-  // 매치 타입 표시명 반환
   getDisplayName(matchType: Match['matchType']): string {
     switch (matchType) {
-      case '단식':
-        return '단식';
-      case '남복':
-        return '남자복식';
-      case '여복':
-        return '여자복식';
-      case '혼복':
-        return '혼합복식';
-      default:
-        return matchType;
+      case '단식': return '단식';
+      case '남복': return '남자복식';
+      case '여복': return '여자복식';
+      case '혼복': return '혼합복식';
+      default: return matchType;
     }
   },
 
-  // 매치 타입별 참가 가능 성별 확인
   canParticipate(matchType: Match['matchType'], userGender: '남성' | '여성'): boolean {
     switch (matchType) {
       case '단식':
-        return true; // 단식은 누구나 참가 가능
-      case '남복':
-        return userGender === '남성'; // 남자복식은 남성만
-      case '여복':
-        return userGender === '여성'; // 여자복식은 여성만
       case '혼복':
-        return true; // 혼합복식은 누구나 참가 가능
+        return true;
+      case '남복':
+        return userGender === '남성';
+      case '여복':
+        return userGender === '여성';
       default:
         return true;
     }
   },
 
-  // 매치 타입별 아이콘 이모지
   getIcon(matchType: Match['matchType']): string {
     switch (matchType) {
-      case '단식':
-        return '🎾';
-      case '남복':
-        return '👨‍🤝‍👨';
-      case '여복':
-        return '👩‍🤝‍👩';
-      case '혼복':
-        return '👫';
-      default:
-        return '🎾';
+      case '단식': return '🎾';
+      case '남복': return '👨‍🤝‍👨';
+      case '여복': return '👩‍🤝‍👩';
+      case '혼복': return '👫';
+      default: return '🎾';
     }
   },
 
-  // 매치 타입별 설명
   getDescription(matchType: Match['matchType']): string {
     switch (matchType) {
-      case '단식':
-        return '개인전 방식의 테니스 경기';
-      case '남복':
-        return '남성만 참여하는 복식 경기';
-      case '여복':
-        return '여성만 참여하는 복식 경기';
-      case '혼복':
-        return '남녀가 함께 참여하는 복식 경기';
-      default:
-        return '테니스 경기';
+      case '단식': return '개인전 방식의 테니스 경기';
+      case '남복': return '남성만 참여하는 복식 경기';
+      case '여복': return '여성만 참여하는 복식 경기';
+      case '혼복': return '남녀가 함께 참여하는 복식 경기';
+      default: return '테니스 경기';
     }
   },
 
-  // 매치 타입별 권장 최소 인원 (참고용)
-  getMinRecommendedParticipants(matchType: Match['matchType']): number {
-    switch (matchType) {
-      case '단식':
-        return 2; // 최소 2명 (1:1)
-      case '남복':
-      case '여복':
-      case '혼복':
-        return 4; // 최소 4명 (2:2)
-      default:
-        return 2;
-    }
-  },
-
-  // 매치 타입별 성별 제한 체크
   validateParticipantCount(
     matchType: Match['matchType'], 
     maleCount: number, 
@@ -263,12 +264,48 @@ export const MatchTypeHelper = {
   }
 };
 
-// 🔥 추가 유틸리티 타입들
+// 🆕 새로운 가격 계산 유틸리티
+export class PricingCalculator {
+  /**
+   * 간소화된 동적 가격 계산
+   * - 조회수 할증: 500회 이상부터 (최대 10%)
+   * - 참여신청자 할증: 모집인원수의 10배 이상부터 (최대 100%)
+   * - 시간 할인: 10시간 전부터 (최대 20%)
+   */
+  static calculateDynamicPrice(factors: PricingFactors): number {
+    let price = factors.basePrice;
+    
+    // 1. 조회수 할증 (500회 이상부터, 최대 10%)
+    if (factors.viewCount >= 500) {
+      const viewMultiplier = Math.min(0.1, (factors.viewCount - 500) / 2000 * 0.1);
+      price *= (1 + viewMultiplier);
+    }
+    
+    // 2. 참여신청자 할증 (모집인원 × 10배 이상부터, 최대 100%)
+    if (factors.applicationsCount >= factors.expectedApplicants) {
+      const applicationMultiplier = Math.min(1.0, (factors.applicationsCount - factors.expectedApplicants) / factors.expectedApplicants);
+      price *= (1 + applicationMultiplier);
+    }
+    
+    // 3. 시간 할인 (10시간 전부터, 최대 20%)
+    if (factors.hoursUntilMatch <= 10 && factors.hoursUntilMatch >= 0) {
+      const timeDiscount = Math.min(0.2, (10 - factors.hoursUntilMatch) / 10 * 0.2);
+      price *= (1 - timeDiscount);
+    }
+    
+    // 4. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
+    price = Math.max(factors.basePrice, price);
+    price = Math.min(factors.maxPrice, price);
+    
+    return Math.round(price / 1000) * 1000; // 1000원 단위 반올림
+  }
+}
+
+// 추가 유틸리티 타입들
 export type MatchStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
 export type ParticipantStatus = 'waiting' | 'confirmed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'refunded';
 
-// 🔥 매치 필터링용 인터페이스
 export interface MatchFilter {
   matchTypes: Array<Match['matchType']>;
   ntrpRange: { min: number; max: number };
@@ -279,7 +316,6 @@ export interface MatchFilter {
   gender?: '남성' | '여성' | 'all';
 }
 
-// 🔥 매치 통계용 인터페이스
 export interface MatchStats {
   total: number;
   byType: Record<Match['matchType'], number>;
@@ -289,7 +325,6 @@ export interface MatchStats {
   totalRevenue: number;
 }
 
-// 🔥 사용자 선호도 인터페이스
 export interface UserPreferences {
   preferredMatchTypes: Array<Match['matchType']>;
   preferredTimeSlots: string[];

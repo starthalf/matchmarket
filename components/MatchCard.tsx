@@ -1,118 +1,80 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
-import { Alert } from 'react-native';
-import { MapPin, Clock, Eye, Crown, Zap, User, Users, UserCheck, Star, UserRound } from 'lucide-react-native';
+import { 
+  Clock, 
+  MapPin, 
+  UserRound, 
+  Eye, 
+  Zap, 
+  Shield,
+  Users
+} from 'lucide-react-native';
 import { Match } from '../types/tennis';
-import { CertificationBadge } from './CertificationBadge';
 import { PriceDisplay } from './PriceDisplay';
-import { useAuth } from '../contexts/AuthContext';
 
 interface MatchCardProps {
   match: Match;
 }
 
 export function MatchCard({ match }: MatchCardProps) {
-  const { user } = useAuth();
-  const hoursUntilMatch = Math.max(0, 
-    (new Date(`${match.date}T${match.time}`).getTime() - new Date().getTime()) / (1000 * 60 * 60)
-  );
+  const currentTime = new Date();
+  const matchDateTime = new Date(`${match.date}T${match.time}`);
+  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
   
-  const { expectedParticipants, currentApplicants } = match;
-  const isCompleted = currentApplicants.total >= expectedParticipants.total;
-
+  // 핫 매치 조건: 조회수가 예상의 150% 이상이거나 참여신청자가 많은 경우
+  const isHotMatch = match.seller.viewCount > match.expectedViews * 1.5 || 
+                     match.applications.length > match.expectedParticipants.total * 2;
+  
   const handlePress = () => {
-    if (!user) {
-      router.replace('/auth/login');
-      return;
-    }
     router.push(`/match/${match.id}`);
   };
 
-  // 성별 아이콘 및 스타일
-  const getGenderStyle = (gender: string) => {
-    return gender === '여성' ? styles.femaleIcon : styles.maleIcon;
+  const getRecruitmentStatus = () => {
+    const { male, female, total } = match.expectedParticipants;
+    
+    if (male > 0 && female > 0) {
+      return `남성 ${male}명, 여성 ${female}명 모집`;
+    } else if (male > 0) {
+      return `남성 ${male}명 모집`;
+    } else if (female > 0) {
+      return `여성 ${female}명 모집`;
+    } else {
+      return `${total}명 모집`;
+    }
   };
-
-  // 나이대 아이콘
-  const getAgeIcon = (ageGroup: string) => {
-    const ageMap: { [key: string]: string } = {
-      '20대': '2️⃣',
-      '30대': '3️⃣', 
-      '40대': '4️⃣',
-      '50대+': '5️⃣'
-    };
-    return ageMap[ageGroup] || '🎾';
-  };
-
-  // 모집 진행률 계산
-  const isHotMatch = match.waitingApplicants > 5;
-  const isPremiumSeller = match.seller.certification.ntrp === 'verified' || match.seller.certification.career === 'verified';
 
   return (
-    <TouchableOpacity 
-      style={[
-        styles.card, 
-        isPremiumSeller && styles.premiumCard,
-        match.isClosed && styles.closedCard
-      ]} 
-      onPress={match.isClosed ? undefined : handlePress}
-      disabled={match.isClosed}
-    >
-      {/* 상단 헤더 - 판매자 정보 */}
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
+      {/* 상단 - 판매자 정보 */}
       <View style={styles.header}>
-        <View style={styles.sellerSection}>
-          <View style={styles.profileSection}>
-            <View style={styles.profileImageContainer}>
-              {match.seller.profileImage ? (
-                <Image 
-                  source={{ uri: match.seller.profileImage }} 
-                  style={styles.profileImage}
-                />
-              ) : (
-                <View style={styles.defaultProfileImage}>
-                  <User size={24} color="#9ca3af" />
-                </View>
-              )}
+        <View style={styles.sellerInfo}>
+          {match.seller.profileImage ? (
+            <Image source={{ uri: match.seller.profileImage }} style={styles.sellerAvatar} />
+          ) : (
+            <View style={styles.sellerAvatarPlaceholder}>
+              <UserRound size={20} color="#6b7280" />
             </View>
-            
-            <View style={styles.sellerMainInfo}>
-              <View style={styles.sellerNameRow}>
-                <CertificationBadge 
-                  ntrpCert={match.seller.certification.ntrp}
-                  careerCert={match.seller.certification.career}
-                  youtubeCert={match.seller.certification.youtube}
-                  instagramCert={match.seller.certification.instagram}
-                  size="tiny"
-                />
-                <Text style={styles.sellerName} numberOfLines={1} ellipsizeMode="tail">
-                  {match.seller.name}
-                </Text>
-                <Text style={styles.ntrpBadge}>{match.seller.ntrp.toFixed(1)}</Text>
-              </View>
-              
-              <View style={styles.sellerStats}>
-                <View style={styles.sellerDetails}>
-                  <Text style={styles.sellerDetailText}>
-                    {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType}
-                  </Text>
-                  <View style={styles.ratingRow}>
-                    <Star size={12} color="#f59e0b" fill="#f59e0b" />
-                    <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
-                    <TouchableOpacity 
-                      onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
-                      style={styles.reviewLink}
-                    >
-                      <Text style={styles.reviewLinkText}>리뷰 보기</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </View>
+          )}
+          <View style={styles.sellerDetails}>
+            <Text style={styles.sellerName}>{match.seller.name}</Text>
+            <View style={styles.sellerMeta}>
+              <Text style={styles.sellerMetaText}>
+                {match.seller.gender} · NTRP {match.seller.ntrp.toFixed(1)}
+              </Text>
+              {match.seller.certification.ntrp === 'verified' && (
+                <Shield size={12} color="#10b981" />
+              )}
             </View>
           </View>
         </View>
 
         <View style={styles.headerRight}>
+          {match.adEnabled && (
+            <View style={styles.adBadge}>
+              <Text style={styles.adText}>AD</Text>
+            </View>
+          )}
         </View>
 
         {/* 핫 매치 배지 */}
@@ -132,9 +94,8 @@ export function MatchCard({ match }: MatchCardProps) {
         </View>
       </View>
       
-      {/* 매치 기본 정보 - 두 줄로 구성 */}
+      {/* 매치 기본 정보 */}
       <View style={styles.matchInfo}>
-        {/* 첫 번째 줄: 시간과 테니스 코트 */}
         <View style={styles.infoRow}>
           <Clock size={14} color="#6b7280" />
           <Text style={styles.infoText}>
@@ -146,7 +107,7 @@ export function MatchCard({ match }: MatchCardProps) {
         </View>
       </View>
 
-      {/* 모집 현황 */}
+      {/* 모집 현황 - 새로운 형태 */}
       <View style={styles.recruitmentStatus}>
         <View style={styles.ntrpRequirement}>
           <Text style={styles.ntrpText}>
@@ -154,24 +115,18 @@ export function MatchCard({ match }: MatchCardProps) {
           </Text>
         </View>
         <View style={styles.recruitmentInfo}>
-          <Text style={styles.genderText}>
-            {match.expectedParticipants.male > 0 && (
-              <View style={styles.genderItem}>
-                <UserRound size={14} color="#3b82f6" />
-                <Text style={styles.genderCount}>{match.currentApplicants.male}/{match.expectedParticipants.male}</Text>
-              </View>
-            )}
-            {match.expectedParticipants.male > 0 && match.expectedParticipants.female > 0 && (
-              <Text style={styles.genderSeparator}>·</Text>
-            )}
-            {match.expectedParticipants.female > 0 && (
-              <View style={styles.genderItem}>
-                <UserRound size={14} color="#ec4899" />
-                <Text style={styles.genderCount}>{match.currentApplicants.female}/{match.expectedParticipants.female}</Text>
-              </View>
-            )}
-            {match.waitingApplicants > 0 && ` · 대기 ${match.waitingApplicants}명`}
+          <Users size={14} color="#6b7280" />
+          <Text style={styles.recruitmentText}>
+            {getRecruitmentStatus()}
           </Text>
+          {match.applications.length > 0 && (
+            <>
+              <Text style={styles.separator}>·</Text>
+              <Text style={styles.applicationText}>
+                신청 {match.applications.length}건
+              </Text>
+            </>
+          )}
         </View>
       </View>
 
@@ -187,19 +142,14 @@ export function MatchCard({ match }: MatchCardProps) {
           <PriceDisplay
             currentPrice={match.currentPrice}
             basePrice={match.basePrice}
-            initialPrice={match.initialPrice}
-            expectedViews={match.expectedViews}
             maxPrice={match.maxPrice}
             hoursUntilMatch={hoursUntilMatch}
             viewCount={match.seller.viewCount}
-            waitingApplicants={match.waitingApplicants}
-            expectedWaitingApplicants={match.expectedWaitingApplicants}
-            sellerGender={match.seller.gender}
-            sellerNtrp={match.seller.ntrp}
+            applicationsCount={match.applications.length}
+            expectedParticipants={match.expectedParticipants.total}
             isClosed={match.isClosed}
           />
         </View>
-        
       </View>
       
       {/* 마감 오버레이 */}
@@ -231,162 +181,78 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  premiumCard: {
-    borderColor: '#d1d5db',
-    borderWidth: 2,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 6,
-  },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 12,
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-    gap: 8,
-  },
-  sellerSection: {
-    flex: 1,
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 6,
-  },
-  profileImageContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  defaultProfileImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sellerMainInfo: {
-    flex: 1,
-  },
-  sellerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 2,
+    position: 'relative',
   },
   sellerInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
+  sellerAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  sellerAvatarPlaceholder: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sellerDetails: {
+    flex: 1,
   },
   sellerName: {
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
+    marginBottom: 2,
   },
-  ntrpBadge: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6b7280',
-    backgroundColor: '#f3f4f6',
-    paddingHorizontal: 6,
-    paddingVertical: 1,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  sellerTags: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  genderTag: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-  },
-  femaleIcon: {
-    backgroundColor: '#fdf2f8',
-    borderColor: '#ec4899',
-  },
-  maleIcon: {
-    backgroundColor: '#eff6ff',
-    borderColor: '#3b82f6',
-  },
-  ageTag: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  ageIcon: {
-    fontSize: 12,
-  },
-  sellerStats: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  sellerDetails: {
-    flex: 1,
-  },
-  sellerDetailText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  ratingRow: {
+  sellerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  ratingText: {
+  sellerMetaText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#f59e0b',
-  },
-  reviewLink: {
-    marginLeft: 4,
-  },
-  reviewLinkText: {
-    fontSize: 11,
-    color: '#ec4899',
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
-  careerType: {
-    fontSize: 13,
-    fontWeight: '600',
     color: '#6b7280',
+  },
+  headerRight: {
+    alignItems: 'flex-end',
+  },
+  adBadge: {
+    backgroundColor: '#fbbf24',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  adText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   hotBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: '#dc2626',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#ec4899',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    gap: 4,
   },
   hotText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '700',
     color: '#ffffff',
   },
   titleSection: {
@@ -394,140 +260,96 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-between',
     marginBottom: 8,
-    gap: 12,
+    gap: 8,
   },
   title: {
-    flex: 1,
     fontSize: 16,
     fontWeight: '700',
-    color: '#374151',
+    color: '#111827',
+    flex: 1,
     lineHeight: 22,
   },
   matchTypeBadge: {
-    backgroundColor: '#fdf2f8',
+    backgroundColor: '#fef3c7',
     paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingVertical: 2,
+    borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#fbbf24',
   },
   matchTypeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ec4899',
-  },
-  matchType: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ec4899',
-    backgroundColor: '#fdf2f8',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    marginBottom: 8,
-    overflow: 'hidden',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#92400e',
   },
   matchInfo: {
-    gap: 6,
-    marginBottom: 8,
-  },
-  separator: {
-    fontSize: 12,
-    color: '#d1d5db',
-    fontWeight: '500',
+    marginBottom: 12,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flexWrap: 'wrap',
   },
   infoText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#6b7280',
     fontWeight: '500',
   },
+  separator: {
+    fontSize: 12,
+    color: '#d1d5db',
+    marginHorizontal: 2,
+  },
   recruitmentStatus: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   ntrpRequirement: {
-    backgroundColor: '#f0f9ff',
+    backgroundColor: '#eff6ff',
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderRadius: 6,
   },
   ntrpText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#1e40af',
   },
-  rightSection: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
   recruitmentInfo: {
-    alignItems: 'flex-end',
-  },
-  genderText: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 6,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
-  genderItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  genderCount: {
+  recruitmentText: {
     fontSize: 12,
     color: '#374151',
-    fontWeight: '500',
-  },
-  genderSeparator: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginHorizontal: 4,
-  },
-  waitingText: {
-    fontSize: 12,
     fontWeight: '600',
-    color: '#f59e0b',
+  },
+  applicationText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '600',
   },
   footer: {
-    backgroundColor: '#fafafa',
-    marginHorizontal: -16,
-    marginBottom: -16,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#f1f5f9',
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  priceSection: {
-    flex: 1,
   },
   viewCount: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
   },
   viewText: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#9ca3af',
-    fontWeight: '500',
   },
-  closedCard: {
-    opacity: 0.7,
+  priceSection: {
+    alignItems: 'flex-end',
   },
   closedOverlay: {
     position: 'absolute',
@@ -535,26 +357,20 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closedBadge: {
-    backgroundColor: '#dc2626',
+    backgroundColor: '#374151',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    paddingVertical: 8,
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
   },
   closedBadgeText: {
-    fontSize: 16,
-    fontWeight: '800',
     color: '#ffffff',
-    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

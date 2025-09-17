@@ -393,7 +393,7 @@ export default function RegisterScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>판매 기본 가격 *</Text>
             <View style={styles.inputWithIcon}>
-              <Text style={styles.wonSymbol}>#</Text>
+              <Text style={styles.wonSymbol}>₩</Text>
               <TextInput
                 style={styles.textInputWithIcon}
                 value={formData.basePrice}

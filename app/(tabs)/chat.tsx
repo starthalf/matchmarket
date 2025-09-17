@@ -77,302 +77,7 @@ export default function ChatScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
-  }
-
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  unreadBadge: {
-    backgroundColor: '#dc2626',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    minWidth: 24,
-    alignItems: 'center',
-  },
-  unreadBadgeText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  content: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  loginPrompt: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  loginPromptTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  loginPromptText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  loginButton: {
-    backgroundColor: '#ec4899',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 32,
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-    marginTop: 16,
-    marginBottom: 8,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  chatRoomCard: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  chatRoomHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  participantInfo: {
-    flexDirection: 'row',
-    flex: 1,
-    gap: 12,
-  },
-  participantAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-  },
-  participantAvatarPlaceholder: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  participantDetails: {
-    flex: 1,
-  },
-  participantNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  participantName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  unreadIndicator: {
-    marginLeft: 'auto',
-  },
-  matchInfo: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ec4899',
-    marginBottom: 2,
-  },
-  matchDetails: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  chatRoomMeta: {
-    alignItems: 'flex-end',
-    gap: 4,
-  },
-  lastMessageTime: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  messageUnreadBadge: {
-    backgroundColor: '#dc2626',
-    borderRadius: 10,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    minWidth: 20,
-    alignItems: 'center',
-  },
-  messageUnreadBadgeText: {
-    color: '#ffffff',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  lastMessage: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginLeft: 60,
-  },
-  chatModalContainer: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  chatHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  chatTitleInfo: {
-    alignItems: 'center',
-  },
-  chatTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  chatSubtitle: {
-    fontSize: 12,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  matchInfoBanner: {
-    backgroundColor: '#f0f9ff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0f2fe',
-    gap: 4,
-  },
-  matchInfoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  matchInfoText: {
-    fontSize: 12,
-    color: '#0f172a',
-    fontWeight: '500',
-  },
-  messagesContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  messagesContent: {
-    padding: 16,
-    gap: 12,
-  },
-  messageWrapper: {
-    maxWidth: '80%',
-  },
-  myMessageWrapper: {
-    alignSelf: 'flex-end',
-  },
-  otherMessageWrapper: {
-    alignSelf: 'flex-start',
-  },
-  messageBubble: {
-    borderRadius: 16,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  myMessage: {
-    backgroundColor: '#ec4899',
-  },
-  otherMessage: {
-    backgroundColor: '#f3f4f6',
-  },
-  messageText: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 4,
-  },
-  myMessageText: {
-    color: '#ffffff',
-  },
-  otherMessageText: {
-    color: '#111827',
-  },
-  messageTime: {
-    fontSize: 10,
-    textAlign: 'right',
-  },
-  myMessageTime: {
-    color: 'rgba(255, 255, 255, 0.8)',
-  },
-  otherMessageTime: {
-    color: '#9ca3af',
-  },
-  messageInputContainer: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  messageInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    backgroundColor: '#f9fafb',
-    borderRadius: 24,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  messageInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#111827',
-    maxHeight: 100,
-    lineHeight: 22,
-  },
-  sendButton: {
-    backgroundColor: '#ec4899',
-    borderRadius: 20,
-    padding: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sendButtonDisabled: {
-    backgroundColor: '#f3f4f6',
-  },
-});
+    );
   }
 
   // Mock 채팅방 데이터 생성 - 실제로는 백엔드에서 가져올 데이터
@@ -689,3 +394,298 @@ const styles = StyleSheet.create({
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  unreadBadge: {
+    backgroundColor: '#dc2626',
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    minWidth: 24,
+    alignItems: 'center',
+  },
+  unreadBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  content: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  loginPrompt: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  loginPromptTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  loginPromptText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  loginButton: {
+    backgroundColor: '#ec4899',
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  loginButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#111827',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 16,
+    color: '#6b7280',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  chatRoomCard: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  chatRoomHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  participantInfo: {
+    flexDirection: 'row',
+    flex: 1,
+    gap: 12,
+  },
+  participantAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  participantAvatarPlaceholder: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  participantDetails: {
+    flex: 1,
+  },
+  participantNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  participantName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  unreadIndicator: {
+    marginLeft: 'auto',
+  },
+  matchInfo: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ec4899',
+    marginBottom: 2,
+  },
+  matchDetails: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  chatRoomMeta: {
+    alignItems: 'flex-end',
+    gap: 4,
+  },
+  lastMessageTime: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  messageUnreadBadge: {
+    backgroundColor: '#dc2626',
+    borderRadius: 10,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    minWidth: 20,
+    alignItems: 'center',
+  },
+  messageUnreadBadgeText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  lastMessage: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginLeft: 60,
+  },
+  chatModalContainer: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  chatHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  chatTitleInfo: {
+    alignItems: 'center',
+  },
+  chatTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  chatSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  matchInfoBanner: {
+    backgroundColor: '#f0f9ff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0f2fe',
+    gap: 4,
+  },
+  matchInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  matchInfoText: {
+    fontSize: 12,
+    color: '#0f172a',
+    fontWeight: '500',
+  },
+  messagesContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  messagesContent: {
+    padding: 16,
+    gap: 12,
+  },
+  messageWrapper: {
+    maxWidth: '80%',
+  },
+  myMessageWrapper: {
+    alignSelf: 'flex-end',
+  },
+  otherMessageWrapper: {
+    alignSelf: 'flex-start',
+  },
+  messageBubble: {
+    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  myMessage: {
+    backgroundColor: '#ec4899',
+  },
+  otherMessage: {
+    backgroundColor: '#f3f4f6',
+  },
+  messageText: {
+    fontSize: 16,
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  myMessageText: {
+    color: '#ffffff',
+  },
+  otherMessageText: {
+    color: '#111827',
+  },
+  messageTime: {
+    fontSize: 10,
+    textAlign: 'right',
+  },
+  myMessageTime: {
+    color: 'rgba(255, 255, 255, 0.8)',
+  },
+  otherMessageTime: {
+    color: '#9ca3af',
+  },
+  messageInputContainer: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  messageInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    backgroundColor: '#f9fafb',
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  messageInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+    maxHeight: 100,
+    lineHeight: 22,
+  },
+  sendButton: {
+    backgroundColor: '#ec4899',
+    borderRadius: 20,
+    padding: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#f3f4f6',
+  },
+});

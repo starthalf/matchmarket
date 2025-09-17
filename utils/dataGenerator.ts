@@ -179,10 +179,9 @@ export class DataGenerator {
     const initialPrice = basePrice;
     const maxPrice = basePrice * 2; // 최대 2배까지
 
-    // 현재 참가자 수 (랜덤하게 일부 채워짐)
-    const fillRatio = Math.random() * 0.8; // 0-80% 정도 채워짐
-    const currentMale = Math.floor(expectedParticipants.male * fillRatio);
-    const currentFemale = Math.floor(expectedParticipants.female * fillRatio);
+    // 더미에서는 항상 꽉 찬 상태로 설정
+const currentMale = expectedParticipants.male;
+const currentFemale = expectedParticipants.female;
 
     return {
       id: matchId,

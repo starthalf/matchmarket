@@ -1,721 +1,868 @@
-import React from 'react';
-import { useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  TextInput,
   Alert,
-  Image,
-  Platform,
+  Clipboard,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Settings, Award, TrendingUp, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, DollarSign, Users, Eye, Camera, User, CreditCard } from 'lucide-react-native';
-import { Calendar } from 'lucide-react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { CertificationBadge } from '../../components/CertificationBadge';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ImagePicker from 'expo-image-picker';
-import { useSafeStyles } from '../../constants/Styles';
+import { 
+  ArrowLeft, 
+  Upload, 
+  Send, 
+  CheckCircle, 
+  Clock, 
+  Copy, 
+  Mail,
+  Check,
+  Youtube,
+  Instagram,
+  Award
+} from 'lucide-react-native';
+import { useSafeStyles } from '../constants/Styles';
 
-export default function ProfileScreen() {
-  const { user: currentUser, logout } = useAuth();
-  const safeStyles = useSafeStyles();
-  const [profileImage, setProfileImage] = React.useState<string | null>(null);
+interface CertificationType {
+  id: 'ntrp' | 'youtube' | 'instagram' | 'career';
+  title: string;
+  description: string;
+  icon: React.ComponentType<any>;
+  color: string;
+}
 
-  // 저장된 프로필 이미지 불러오기
-  React.useEffect(() => {
-    const loadProfileImage = async () => {
-      if (!currentUser) return;
-      try {
-        let savedImage: string | null = null;
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          savedImage = localStorage.getItem(`profile_image_${currentUser.id}`);
-        } else {
-          savedImage = await AsyncStorage.getItem(`profile_image_${currentUser.id}`);
-        }
-        if (savedImage) {
-          setProfileImage(savedImage);
-        }
-      } catch (error) {
-        console.warn('프로필 이미지 로드 실패:', error);
-      }
-    };
-    loadProfileImage();
-  }, [currentUser]);
-
-  useEffect(() => {
-    if (currentUser) {
-      // 기존 useEffect 로직은 그대로 유지
-    } else {
-      router.replace('/auth/login');
-    }
-  }, [currentUser]);
-
-  if (!currentUser) {
-    return (
-      <SafeAreaView style={safeStyles.safeContainer}>
-        <View style={styles.loadingContainer}>
-          <Text>로그인이 필요합니다...</Text>
-        </View>
-      </SafeAreaView>
-    );
+const certificationTypes: CertificationType[] = [
+  {
+    id: 'ntrp',
+    title: 'NTRP 등급 인증',
+    description: 'NTRP 등급을 인증하여 신뢰할 수 있는 실력을 증명해보세요',
+    icon: Check,
+    color: '#ec4899'
+  },
+  {
+    id: 'youtube',
+    title: '유튜버 인증',
+    description: '테니스 관련 유튜브 채널 운영자 인증',
+    icon: Youtube,
+    color: '#dc2626'
+  },
+  {
+    id: 'instagram',
+    title: '인플루언서 인증',
+    description: '테니스 관련 인스타그램 인플루언서 인증',
+    icon: Instagram,
+    color: '#e1306c'
+  },
+  {
+    id: 'career',
+    title: '선수 인증',
+    description: '프로 선수 출신 또는 실업팀 경력 인증',
+    icon: Award,
+    color: '#059669'
   }
+];
 
-  const handleCertificationRequest = () => {
-    router.push('/certification');
+export default function CertificationScreen() {
+  const safeStyles = useSafeStyles();
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [formData, setFormData] = useState({
+    ntrp: {
+      rating: '',
+      description: '',
+      evidenceFiles: [] as string[]
+    },
+    youtube: {
+      channelName: '',
+      subscribers: '',
+      description: '',
+      evidenceFiles: [] as string[]
+    },
+    instagram: {
+      username: '',
+      followers: '',
+      description: '',
+      evidenceFiles: [] as string[]
+    },
+    career: {
+      careerType: '',
+      period: '',
+      description: '',
+      evidenceFiles: [] as string[]
+    }
+  });
+
+  const toggleCertificationType = (typeId: string) => {
+    setSelectedTypes(prev => 
+      prev.includes(typeId) 
+        ? prev.filter(id => id !== typeId)
+        : [...prev, typeId]
+    );
   };
 
-  const handleEarningsPress = () => {
-    router.push('/earnings');
-  };
-
-  const handleMyMatchesPress = () => {
-    router.push('/my-matches');
-  };
-
-  const handleProfileImagePress = () => {
+  const handleFileUpload = (certType: string) => {
     Alert.alert(
-      '프로필 사진 변경',
-      '프로필 사진을 어떻게 설정하시겠습니까?',
+      '파일 업로드',
+      '증빙 자료를 선택해주세요',
       [
         { text: '취소', style: 'cancel' },
-        { text: '카메라로 촬영', onPress: () => openCamera() },
-        { text: '갤러리에서 선택', onPress: () => openGallery() },
-        ...(profileImage ? [{ text: '사진 삭제', style: 'destructive', onPress: () => removeProfileImage() }] : [])
+        { text: '사진 촬영', onPress: () => {
+          setFormData(prev => ({
+            ...prev,
+            [certType]: {
+              ...prev[certType as keyof typeof prev],
+              evidenceFiles: [
+                ...prev[certType as keyof typeof prev].evidenceFiles,
+                `photo_${Date.now()}.jpg`
+              ]
+            }
+          }));
+        }},
+        { text: '갤러리에서 선택', onPress: () => {
+          setFormData(prev => ({
+            ...prev,
+            [certType]: {
+              ...prev[certType as keyof typeof prev],
+              evidenceFiles: [
+                ...prev[certType as keyof typeof prev].evidenceFiles,
+                `gallery_${Date.now()}.jpg`
+              ]
+            }
+          }));
+        }},
       ]
     );
   };
 
-  const openCamera = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+  const removeFile = (certType: string, fileIndex: number) => {
+    setFormData(prev => ({
+      ...prev,
+      [certType]: {
+        ...prev[certType as keyof typeof prev],
+        evidenceFiles: prev[certType as keyof typeof prev].evidenceFiles.filter((_, index) => index !== fileIndex)
+      }
+    }));
+  };
+
+  const validateForm = () => {
+    if (selectedTypes.length === 0) {
+      Alert.alert('선택 오류', '인증할 항목을 하나 이상 선택해주세요.');
+      return false;
+    }
+
+    for (const type of selectedTypes) {
+      switch (type) {
+        case 'ntrp':
+          if (!formData.ntrp.rating) {
+            Alert.alert('입력 오류', 'NTRP 등급을 입력해주세요.');
+            return false;
+          }
+          const ntrpValue = parseFloat(formData.ntrp.rating);
+          if (isNaN(ntrpValue) || ntrpValue < 1.0 || ntrpValue > 7.0) {
+            Alert.alert('입력 오류', 'NTRP 등급은 1.0~7.0 사이의 값을 입력해주세요.');
+            return false;
+          }
+          break;
+        case 'youtube':
+          if (!formData.youtube.channelName) {
+            Alert.alert('입력 오류', '유튜브 채널명을 입력해주세요.');
+            return false;
+          }
+          break;
+        case 'instagram':
+          if (!formData.instagram.username) {
+            Alert.alert('입력 오류', '인스타그램 사용자명을 입력해주세요.');
+            return false;
+          }
+          break;
+        case 'career':
+          if (!formData.career.careerType) {
+            Alert.alert('입력 오류', '선수 경력 유형을 입력해주세요.');
+            return false;
+          }
+          break;
+      }
+    }
+
+    return true;
+  };
+
+  const handleSubmit = () => {
+    if (!validateForm()) return;
+
+    // 이메일 내용 구성
+    let emailContent = `제목: [MatchMarket] 프로필 인증 신청\n\n안녕하세요, MatchMarket 관리자님.\n\n다음 항목에 대한 인증을 신청합니다:\n\n`;
+
+    selectedTypes.forEach(type => {
+      const certType = certificationTypes.find(ct => ct.id === type);
+      if (!certType) return;
+
+      emailContent += `■ ${certType.title}\n`;
       
-      if (!permissionResult.granted) {
-        Alert.alert('권한 필요', '카메라 사용을 위해 권한이 필요합니다.');
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        setProfileImage(imageUri);
-        
-        // 플랫폼별 저장
-        if (currentUser) {
-          try {
-            if (Platform.OS === 'web') {
-              if (typeof window !== 'undefined') {
-                localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-              }
-            } else {
-              await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-            }
-          } catch (error) {
-            console.warn('프로필 이미지 저장 실패:', error);
+      switch (type) {
+        case 'ntrp':
+          emailContent += `- NTRP 등급: ${formData.ntrp.rating}\n`;
+          if (formData.ntrp.description) {
+            emailContent += `- 추가 설명: ${formData.ntrp.description}\n`;
           }
-        }
-        
-        Alert.alert('완료', '프로필 사진이 변경되었습니다.');
-      }
-    } catch (error) {
-      Alert.alert('오류', '카메라를 열 수 없습니다.');
-    }
-  };
-
-  const openGallery = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (!permissionResult.granted) {
-        Alert.alert('권한 필요', '갤러리 접근을 위해 권한이 필요합니다.');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        setProfileImage(imageUri);
-        
-        // 플랫폼별 저장
-        if (currentUser) {
-          try {
-            if (Platform.OS === 'web') {
-              if (typeof window !== 'undefined') {
-                localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-              }
-            } else {
-              await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-            }
-          } catch (error) {
-            console.warn('프로필 이미지 저장 실패:', error);
+          break;
+        case 'youtube':
+          emailContent += `- 채널명: ${formData.youtube.channelName}\n`;
+          if (formData.youtube.subscribers) {
+            emailContent += `- 구독자 수: ${formData.youtube.subscribers}\n`;
           }
-        }
-        
-        Alert.alert('완료', '프로필 사진이 변경되었습니다.');
+          if (formData.youtube.description) {
+            emailContent += `- 추가 설명: ${formData.youtube.description}\n`;
+          }
+          break;
+        case 'instagram':
+          emailContent += `- 사용자명: ${formData.instagram.username}\n`;
+          if (formData.instagram.followers) {
+            emailContent += `- 팔로워 수: ${formData.instagram.followers}\n`;
+          }
+          if (formData.instagram.description) {
+            emailContent += `- 추가 설명: ${formData.instagram.description}\n`;
+          }
+          break;
+        case 'career':
+          emailContent += `- 경력 유형: ${formData.career.careerType}\n`;
+          if (formData.career.period) {
+            emailContent += `- 활동 기간: ${formData.career.period}\n`;
+          }
+          if (formData.career.description) {
+            emailContent += `- 추가 설명: ${formData.career.description}\n`;
+          }
+          break;
       }
-    } catch (error) {
-      Alert.alert('오류', '갤러리를 열 수 없습니다.');
-    }
-  };
+      emailContent += '\n';
+    });
 
-  const removeProfileImage = () => {
-    setProfileImage(null);
+    emailContent += `■ 증빙 자료\n증빙 자료는 이 이메일에 첨부하여 보내드립니다.\n\n검토 후 인증 승인 부탁드립니다.\n\n감사합니다.`;
+
+    // 이메일 내용을 클립보드에 복사
+    Clipboard.setString(emailContent);
     
-    // 플랫폼별 삭제
-    if (currentUser) {
-      try {
-        if (Platform.OS === 'web') {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem(`profile_image_${currentUser.id}`);
-          }
-        } else {
-          AsyncStorage.removeItem(`profile_image_${currentUser.id}`);
+    Alert.alert(
+      '이메일 내용 복사 완료',
+      `이메일 내용이 클립보드에 복사되었습니다.\n\n📧 관리자 이메일: admin@matchmarket.co.kr\n\n이메일 앱을 열어서 위 주소로 증빙 자료와 함께 이메일을 보내주세요.\n\n심사 결과는 3-5일 내에 알림으로 전달됩니다.`,
+      [
+        { 
+          text: '확인', 
+          onPress: () => router.back() 
         }
-      } catch (error) {
-        console.warn('프로필 이미지 삭제 실패:', error);
-      }
+      ]
+    );
+  };
+
+  const copyAdminEmail = () => {
+    Clipboard.setString('admin@matchmarket.co.kr');
+    Alert.alert('복사 완료', '관리자 이메일 주소가 클립보드에 복사되었습니다.');
+  };
+
+  const renderCertificationForm = (type: CertificationType) => {
+    if (!selectedTypes.includes(type.id)) return null;
+
+    switch (type.id) {
+      case 'ntrp':
+        return (
+          <View style={styles.formSection}>
+            <Text style={styles.formTitle}>{type.title}</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>NTRP 등급 *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.ntrp.rating}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  ntrp: { ...prev.ntrp, rating: text }
+                }))}
+                placeholder="예: 4.5"
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+              />
+              <Text style={styles.inputHint}>
+                현재 자신의 정확한 NTRP 등급을 입력해주세요 (1.0-7.0)
+              </Text>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>추가 설명</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={formData.ntrp.description}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  ntrp: { ...prev.ntrp, description: text }
+                }))}
+                placeholder="대회 참가 경력, 코치 추천 등 인증에 도움이 될 정보를 적어주세요..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            {renderFileUploadSection('ntrp')}
+          </View>
+        );
+
+      case 'youtube':
+        return (
+          <View style={styles.formSection}>
+            <Text style={styles.formTitle}>{type.title}</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>채널명 *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.youtube.channelName}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  youtube: { ...prev.youtube, channelName: text }
+                }))}
+                placeholder="유튜브 채널명을 입력해주세요"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>구독자 수</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.youtube.subscribers}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  youtube: { ...prev.youtube, subscribers: text }
+                }))}
+                placeholder="예: 10,000명"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>추가 설명</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={formData.youtube.description}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  youtube: { ...prev.youtube, description: text }
+                }))}
+                placeholder="채널 운영 기간, 주요 콘텐츠 등을 적어주세요..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            {renderFileUploadSection('youtube')}
+          </View>
+        );
+
+      case 'instagram':
+        return (
+          <View style={styles.formSection}>
+            <Text style={styles.formTitle}>{type.title}</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>사용자명 *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.instagram.username}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  instagram: { ...prev.instagram, username: text }
+                }))}
+                placeholder="@username"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>팔로워 수</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.instagram.followers}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  instagram: { ...prev.instagram, followers: text }
+                }))}
+                placeholder="예: 5,000명"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>추가 설명</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={formData.instagram.description}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  instagram: { ...prev.instagram, description: text }
+                }))}
+                placeholder="계정 운영 기간, 주요 콘텐츠 등을 적어주세요..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            {renderFileUploadSection('instagram')}
+          </View>
+        );
+
+      case 'career':
+        return (
+          <View style={styles.formSection}>
+            <Text style={styles.formTitle}>{type.title}</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>경력 유형 *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.career.careerType}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  career: { ...prev.career, careerType: text }
+                }))}
+                placeholder="예: 프로선수, 실업팀, 대학팀 등"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>활동 기간</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.career.period}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  career: { ...prev.career, period: text }
+                }))}
+                placeholder="예: 2018년 - 2022년"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>추가 설명</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={formData.career.description}
+                onChangeText={(text) => setFormData(prev => ({
+                  ...prev,
+                  career: { ...prev.career, description: text }
+                }))}
+                placeholder="주요 성적, 소속팀, 수상 경력 등을 적어주세요..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
+              />
+            </View>
+
+            {renderFileUploadSection('career')}
+          </View>
+        );
+
+      default:
+        return null;
     }
-    
-    Alert.alert('완료', '프로필 사진이 삭제되었습니다.');
   };
 
-  const handleLogout = () => {
-    router.push('/profile-settings');
-  };
+  const renderFileUploadSection = (certType: string) => {
+    const files = formData[certType as keyof typeof formData].evidenceFiles;
 
+    return (
+      <View style={styles.uploadSection}>
+        <View style={styles.uploadHeader}>
+          <Text style={styles.uploadTitle}>증빙 자료</Text>
+          <TouchableOpacity 
+            style={styles.uploadButton}
+            onPress={() => handleFileUpload(certType)}
+          >
+            <Upload size={16} color="#ec4899" />
+            <Text style={styles.uploadButtonText}>파일 추가</Text>
+          </TouchableOpacity>
+        </View>
+        
+        <Text style={styles.uploadHint}>
+          관련 증명서, 스크린샷 등을 첨부해주세요
+        </Text>
+
+        {files.length > 0 && (
+          <View style={styles.fileList}>
+            {files.map((file, index) => (
+              <View key={index} style={styles.fileItem}>
+                <Text style={styles.fileName}>{file}</Text>
+                <TouchableOpacity
+                  onPress={() => removeFile(certType, index)}
+                  style={styles.removeFileButton}
+                >
+                  <Text style={styles.removeFileText}>삭제</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
+    );
+  };
+  
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
-          <Text style={styles.title}>프로필</Text>
-          <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
-            <Settings size={20} color="#6b7280" />
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>인증 신청</Text>
+          <View style={safeStyles.placeholder} />
         </View>
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* 프로필 기본 정보 */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <TouchableOpacity 
-              style={styles.profileImageSection}
-              onPress={handleProfileImagePress}
-            >
-              <View style={styles.profileImageContainer}>
-                {profileImage ? (
-                  <Image 
-                    source={{ uri: profileImage }} 
-                    style={styles.profileImage}
-                  />
-                ) : (
-                  <View style={styles.defaultProfileImage}>
-                    <User size={32} color="#9ca3af" />
+        <View style={styles.introSection}>
+          <Text style={styles.introTitle}>프로필 인증 신청</Text>
+          <Text style={styles.introSubtitle}>
+            원하는 인증을 선택하여 신뢰할 수 있는 프로필을 만들어보세요
+          </Text>
+        </View>
+
+        {/* 인증 유형 선택 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>인증 유형 선택</Text>
+          <Text style={styles.sectionSubtitle}>여러 항목을 중복 선택할 수 있습니다</Text>
+          
+          {certificationTypes.map((type) => {
+            const IconComponent = type.icon;
+            const isSelected = selectedTypes.includes(type.id);
+            
+            return (
+              <TouchableOpacity
+                key={type.id}
+                style={[
+                  styles.certTypeCard,
+                  isSelected && styles.certTypeCardSelected
+                ]}
+                onPress={() => toggleCertificationType(type.id)}
+              >
+                <View style={styles.certTypeHeader}>
+                  <View style={[
+                    styles.certTypeIcon,
+                    { backgroundColor: isSelected ? type.color : '#f3f4f6' }
+                  ]}>
+                    <IconComponent 
+                      size={20} 
+                      color={isSelected ? '#ffffff' : '#6b7280'} 
+                    />
                   </View>
-                )}
-                <View style={styles.cameraOverlay}>
-                  <Camera size={16} color="#ffffff" />
+                  <View style={styles.certTypeInfo}>
+                    <Text style={styles.certTypeTitle}>{type.title}</Text>
+                    <Text style={styles.certTypeDescription}>{type.description}</Text>
+                  </View>
+                  <View style={[
+                    styles.checkbox,
+                    isSelected && styles.checkboxSelected
+                  ]}>
+                    {isSelected && <CheckCircle size={20} color={type.color} />}
+                  </View>
                 </View>
-              </View>
-              <Text style={styles.changePhotoText}>사진 변경</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{currentUser.name}</Text>
-              <CertificationBadge 
-                ntrpCert={currentUser.certification.ntrp}
-                careerCert={currentUser.certification.career}
-                size="large"
-              />
-            </View>
-          </View>
-          
-          <View style={styles.profileDetails}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>성별</Text>
-              <Text style={styles.detailValue}>{currentUser.gender}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>나이대</Text>
-              <Text style={styles.detailValue}>{currentUser.ageGroup}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>NTRP</Text>
-              <Text style={styles.detailValue}>{currentUser.ntrp.toFixed(1)}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>경력</Text>
-              <Text style={styles.detailValue}>
-                {currentUser.experience}년
-              </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>플레이 스타일</Text>
-              <Text style={styles.detailValue}>{currentUser.playStyle}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>선수 출신</Text>
-              <Text style={styles.detailValue}>{currentUser.careerType}</Text>
-            </View>
-          </View>
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
-        {/* 인증 상태 */}
-        <View style={styles.certificationSection}>
-          <Text style={styles.sectionTitle}>인증 현황</Text>
-          
-          <View style={styles.certificationCard}>
-            <View style={styles.certItem}>
-              <View style={styles.certInfo}>
-                <Text style={styles.certTitle}>NTRP 등급 인증</Text>
-                <View style={styles.certStatus}>
-                  {currentUser.certification.ntrp === 'verified' ? (
-                    <>
-                      <CheckCircle size={16} color="#16a34a" />
-                      <Text style={styles.certVerified}>인증 완료</Text>
-                    </>
-                  ) : currentUser.certification.ntrp === 'pending' ? (
-                    <>
-                      <Clock size={16} color="#f59e0b" />
-                      <Text style={styles.certPending}>심사 중</Text>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={16} color="#6b7280" />
-                      <Text style={styles.certNone}>미인증</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
+        {/* 선택된 인증 유형별 폼 */}
+        {certificationTypes.map(type => renderCertificationForm(type))}
 
-            <View style={styles.certItem}>
-              <View style={styles.certInfo}>
-                <Text style={styles.certTitle}>유튜버 인증</Text>
-                <View style={styles.certStatus}>
-                  {currentUser.certification.youtube === 'verified' ? (
-                    <>
-                      <CheckCircle size={16} color="#16a34a" />
-                      <Text style={styles.certVerified}>인증 완료</Text>
-                    </>
-                  ) : currentUser.certification.youtube === 'pending' ? (
-                    <>
-                      <Clock size={16} color="#f59e0b" />
-                      <Text style={styles.certPending}>심사 중</Text>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={16} color="#6b7280" />
-                      <Text style={styles.certNone}>미인증</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.certItem}>
-              <View style={styles.certInfo}>
-                <Text style={styles.certTitle}>인플루언서 인증</Text>
-                <View style={styles.certStatus}>
-                  {currentUser.certification.instagram === 'verified' ? (
-                    <>
-                      <CheckCircle size={16} color="#16a34a" />
-                      <Text style={styles.certVerified}>인증 완료</Text>
-                    </>
-                  ) : currentUser.certification.instagram === 'pending' ? (
-                    <>
-                      <Clock size={16} color="#f59e0b" />
-                      <Text style={styles.certPending}>심사 중</Text>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={16} color="#6b7280" />
-                      <Text style={styles.certNone}>미인증</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={styles.certButton} 
-              onPress={handleCertificationRequest}
-            >
-              <Award size={18} color="#16a34a" />
-              <Text style={styles.certButtonText}>인증 신청하기</Text>
-            </TouchableOpacity>
+        {/* 관리자 이메일 정보 */}
+        <View style={styles.emailSection}>
+          <View style={styles.emailHeader}>
+            <Mail size={20} color="#6b7280" />
+            <Text style={styles.emailTitle}>관리자 이메일</Text>
           </View>
-        </View>
-
-        {/* 활동 통계 */}
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>매치판매 관리</Text>
-          
-          <View style={styles.noticeBox}>
-            <Text style={styles.noticeText}>
-              경기완료 버튼을 눌러야 수익금을 정산받을 수 있습니다.
-            </Text>
-          </View>
-          
           <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={handleMyMatchesPress}
+            style={styles.emailCard}
+            onPress={copyAdminEmail}
           >
-            <View style={styles.menuItemLeft}>
-              <Calendar size={20} color="#ec4899" />
-              <Text style={styles.menuItemText}>내 매치판매 관리</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
+            <Text style={styles.emailAddress}>admin@matchmarket.co.kr</Text>
+            <Copy size={16} color="#ec4899" />
           </TouchableOpacity>
-          
+          <Text style={styles.emailHint}>
+            터치하여 이메일 주소를 복사할 수 있습니다
+          </Text>
+        </View>
+
+        {/* 제출 버튼 */}
+        {selectedTypes.length > 0 && (
           <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/earnings')}
+            style={styles.submitButton}
+            onPress={handleSubmit}
           >
-            <View style={styles.menuItemLeft}>
-              <CreditCard size={20} color="#16a34a" />
-              <Text style={styles.menuItemText}>수익 정산</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
+            <Send size={20} color="#ffffff" />
+            <Text style={styles.submitButtonText}>인증 신청하기</Text>
           </TouchableOpacity>
-        </View>
+        )}
 
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>매치참가 관리</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/my-applications')}
-          >
-            <View style={styles.menuItemLeft}>
-              <Users size={20} color="#3b82f6" />
-              <Text style={styles.menuItemText}>내 참가신청</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>활동 통계</Text>
-          
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Heart size={24} color="#dc2626" />
-              <Text style={styles.statNumber}>{currentUser.likeCount}</Text>
-              <Text style={styles.statLabel}>좋아요</Text>
-            </View>
-            
-            <View style={styles.statCard}>
-              <Award size={24} color="#ec4899" />
-              <Text style={styles.statNumber}>{currentUser.avgRating}</Text>
-              <Text style={styles.statLabel}>평균 평점</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.bottomPadding} />
+        <View style={styles.bottomSpacing} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  settingsButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-  },
   content: {
     flex: 1,
-    paddingTop: 16,
-  },
-  profileCard: {
     backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
+  },
+  introSection: {
     padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: '#fafafa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  profileHeader: {
-    marginBottom: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-  },
-  profileImageSection: {
-    alignItems: 'center',
-    gap: 8,
-  },
-  profileImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#e5e7eb',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  defaultProfileImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cameraOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ec4899',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
-  },
-  changePhotoText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ec4899',
-  },
-  profileInfo: {
-    flex: 1,
-    gap: 8,
-  },
-  userName: {
+  introTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#111827',
+    marginBottom: 8,
   },
-  profileDetails: {
-    gap: 12,
-  },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  detailLabel: {
-    fontSize: 14,
+  introSubtitle: {
+    fontSize: 16,
     color: '#6b7280',
-    fontWeight: '500',
   },
-  detailValue: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '600',
-  },
-  certificationSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+  section: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     color: '#111827',
-    marginBottom: 12,
-  },
-  certificationCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  certItem: {
-    marginBottom: 16,
-  },
-  certInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  certTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  certStatus: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  certVerified: {
-    fontSize: 14,
-    color: '#ec4899',
-    fontWeight: '600',
-  },
-  certPending: {
-    fontSize: 14,
-    color: '#f59e0b',
-    fontWeight: '600',
-  },
-  certNone: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-  certButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#fdf2f8',
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ec4899',
-    marginTop: 8,
-  },
-  certButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ec4899',
-  },
-  statsSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 8,
     marginBottom: 4,
   },
-  statLabel: {
-    fontSize: 12,
+  sectionSubtitle: {
+    fontSize: 14,
     color: '#6b7280',
-    textAlign: 'center',
+    marginBottom: 16,
   },
-  bottomPadding: {
+  certTypeCard: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: '#ffffff',
+  },
+  certTypeCardSelected: {
+    borderColor: '#ec4899',
+    backgroundColor: '#fef7f7',
+  },
+  certTypeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  certTypeIcon: {
+    width: 40,
     height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
-  loadingContainer: {
+  certTypeInfo: {
     flex: 1,
+  },
+  certTypeTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  certTypeDescription: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  menuSection: {
-    marginHorizontal: 16,
+  checkboxSelected: {
+    borderColor: '#ec4899',
+  },
+  formSection: {
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    backgroundColor: '#fafafa',
+  },
+  formTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#111827',
     marginBottom: 16,
   },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+  inputGroup: {
+    marginBottom: 16,
   },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  menuItemText: {
-    fontSize: 16,
-    fontWeight: '600',
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '500',
     color: '#374151',
+    marginBottom: 6,
   },
-  menuItemArrow: {
-    fontSize: 20,
-    color: '#9ca3af',
-  },
-  noticeBox: {
-    backgroundColor: '#fef3c7',
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
     borderRadius: 8,
     padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#fbbf24',
+    fontSize: 16,
+    color: '#111827',
+    backgroundColor: '#ffffff',
   },
-  noticeText: {
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+  inputHint: {
     fontSize: 12,
-    color: '#92400e',
+    color: '#6b7280',
+    marginTop: 4,
+  },
+  uploadSection: {
+    marginTop: 8,
+  },
+  uploadHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  uploadTitle: {
+    fontSize: 14,
     fontWeight: '500',
-    lineHeight: 16,
+    color: '#374151',
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#ec4899',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    gap: 4,
+  },
+  uploadButtonText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '500',
+  },
+  uploadHint: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 12,
+  },
+  fileList: {
+    gap: 8,
+  },
+  fileItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 6,
+    padding: 8,
+  },
+  fileName: {
+    flex: 1,
+    fontSize: 12,
+    color: '#374151',
+  },
+  removeFileButton: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  removeFileText: {
+    fontSize: 12,
+    color: '#dc2626',
+  },
+  emailSection: {
+    padding: 20,
+    backgroundColor: '#fafafa',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  emailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  emailTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  emailCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  emailAddress: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  emailHint: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ec4899',
+    borderRadius: 12,
+    padding: 16,
+    margin: 20,
+    gap: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  bottomSpacing: {
+    height: 20,
   },
 });

@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
                     </Text>
                   </View>
                 )}
-              </div>
+              </View>
             </View>
             
             {chatRoom.lastMessage && (
@@ -688,3 +688,4 @@ const styles = StyleSheet.create({
       </Modal>
     </SafeAreaView>
   );
+}

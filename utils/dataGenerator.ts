@@ -1,4 +1,4 @@
-// utils/dataGenerator.ts - 완전한 코드 (모든 함수 포함)
+// utils/dataGenerator.ts - 개선된 버전 (닉네임, 코트명, 마감 로직 수정)
 
 import { Match, User } from '../types/tennis';
 import { supabase, supabaseAdmin } from '../lib/supabase';
@@ -51,6 +51,7 @@ interface SupabaseMatch {
 }
 
 export class DataGenerator {
+  // 🌍 지역별 테니스장
   private static readonly LOCATIONS = [
     '강남구 테니스장', '서초구 테니스장', '송파구 테니스장', '강동구 테니스장',
     '마포구 테니스장', '용산구 테니스장', '성동구 테니스장', '광진구 테니스장',
@@ -58,7 +59,45 @@ export class DataGenerator {
     '도봉구 테니스장', '노원구 테니스장', '은평구 테니스장', '서대문구 테니스장'
   ];
 
-  private static readonly COURTS = ['A코트', 'B코트', 'C코트', 'D코트', 'E코트'];
+  // 🎾 실제 서울 테니스 코트명 리스트
+  private static readonly SEOUL_COURTS = [
+    // 강남권
+    '강남테니스장 A코트', '강남테니스장 B코트', '강남테니스장 C코트',
+    '서초테니스장 1코트', '서초테니스장 2코트', '서초테니스장 3코트',
+    '송파테니스장 메인코트', '송파테니스장 보조코트',
+    '잠실테니스장 센터코트', '잠실테니스장 사이드코트',
+    
+    // 서북권
+    '마포테니스장 A코트', '마포테니스장 B코트',
+    '홍대테니스클럽 1번코트', '홍대테니스클럽 2번코트',
+    '상암테니스장 메인코트', '상암테니스장 서브코트',
+    
+    // 동북권
+    '성북테니스장 1코트', '성북테니스장 2코트',
+    '노원테니스장 A코트', '노원테니스장 B코트',
+    '도봉테니스장 중앙코트', '도봉테니스장 동편코트',
+    
+    // 중구권
+    '종로테니스장 1번코트', '종로테니스장 2번코트',
+    '중구테니스장 메인코트', '중구테니스장 연습코트',
+    '용산테니스장 A코트', '용산테니스장 B코트'
+  ];
+
+  // 🎭 닉네임 생성용 단어 조합
+  private static readonly NICKNAME_PREFIXES = [
+    'tennis', 'racket', 'serve', 'smash', 'ace', 'net', 'court', 'match', 
+    'game', 'volley', 'spin', 'power', 'speed', 'pro', 'master', 'legend',
+    'moon', 'star', 'sun', 'ocean', 'fire', 'ice', 'wind', 'storm',
+    'gold', 'silver', 'diamond', 'ruby', 'pearl', 'crystal'
+  ];
+  
+  private static readonly NICKNAME_SUFFIXES = [
+    'player', 'king', 'queen', 'ace', 'pro', 'master', 'hero', 'star',
+    'hunter', 'warrior', 'knight', 'ranger', 'wizard', 'ninja', 'samurai',
+    'phoenix', 'dragon', 'tiger', 'eagle', 'lion', 'wolf', 'bear',
+    'vibes', 'dreams', 'soul', 'heart', 'spirit', 'magic', 'power'
+  ];
+
   private static readonly PLAY_STYLES = ['공격형', '수비형', '올라운드'];
   private static readonly CAREER_TYPES = ['동호인', '선수'];
 
@@ -85,7 +124,22 @@ export class DataGenerator {
   ];
 
   /**
-   * 새로운 매치 생성
+   * 🎭 닉네임 생성기
+   */
+  private static generateNickname(): string {
+    const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
+    const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
+    const separator = Math.random() > 0.5 ? '.' : '_';
+    
+    // 숫자 추가 확률 30%
+    const addNumber = Math.random() < 0.3;
+    const number = addNumber ? Math.floor(Math.random() * 999) + 1 : '';
+    
+    return `${prefix}${separator}${suffix}${number}`;
+  }
+
+  /**
+   * 새로운 매치 생성 (개선된 버전)
    */
   static generateNewMatch(): Match {
     const sellerId = `seller_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -93,13 +147,13 @@ export class DataGenerator {
     
     // 판매자 정보 생성
     const sellerGender = Math.random() > 0.3 ? '남성' : '여성';
-    const sellerName = sellerGender === '남성' ? 
-      ['김성훈', '이동현', '박준영', '최민석', '정우진'][Math.floor(Math.random() * 5)] :
-      ['김지영', '이수진', '박혜린', '최민정', '정유나'][Math.floor(Math.random() * 5)];
+    
+    // 🎭 닉네임으로 변경!
+    const sellerName = this.generateNickname();
 
     const seller: User = {
       id: sellerId,
-      name: sellerName,
+      name: sellerName, // 🔥 이제 닉네임으로 표시됨
       gender: sellerGender,
       ageGroup: ['20대', '30대', '40대'][Math.floor(Math.random() * 3)] as any,
       ntrp: Math.round((3.0 + Math.random() * 2.5) * 10) / 10,
@@ -148,7 +202,25 @@ export class DataGenerator {
         break;
     }
 
-    // 가격 설정 (null 방지)
+    // 🔥 70% 이상 매치를 마감 상태로 생성
+    const shouldBeClosed = Math.random() < 0.75; // 75% 확률로 마감
+    
+    // 현재 참가자 수 설정
+    let currentMale = 0;
+    let currentFemale = 0;
+    
+    if (shouldBeClosed) {
+      // 마감된 매치: 모집 인원을 모두 채움
+      currentMale = expectedMale;
+      currentFemale = expectedFemale;
+    } else {
+      // 진행 중인 매치: 부분적으로 채움 (20~80%)
+      const fillRate = 0.2 + Math.random() * 0.6; // 20~80%
+      currentMale = Math.floor(expectedMale * fillRate);
+      currentFemale = Math.floor(expectedFemale * fillRate);
+    }
+
+    // 가격 설정
     const basePrice = [15000, 20000, 25000, 30000, 35000][Math.floor(Math.random() * 5)];
     const initialPrice = basePrice;
     const currentPrice = basePrice;
@@ -171,7 +243,7 @@ export class DataGenerator {
       date: futureDate.toISOString().split('T')[0],
       time: startTime,
       endTime: endTime,
-      court: this.COURTS[Math.floor(Math.random() * this.COURTS.length)],
+      court: this.SEOUL_COURTS[Math.floor(Math.random() * this.SEOUL_COURTS.length)], // 🔥 실제 코트명 사용
       description: this.generateMatchDescription(matchType),
       basePrice: basePrice,
       initialPrice: initialPrice,
@@ -185,12 +257,12 @@ export class DataGenerator {
         total: expectedMale + expectedFemale,
       },
       currentApplicants: {
-        male: 0,
-        female: 0,
-        total: 0,
+        male: currentMale,
+        female: currentFemale,
+        total: currentMale + currentFemale,
       },
       matchType: matchType,
-      waitingApplicants: 0,
+      waitingApplicants: shouldBeClosed ? Math.floor(Math.random() * 5) : 0, // 마감된 매치에만 대기자
       waitingList: [],
       participants: [],
       adEnabled: Math.random() > 0.7,
@@ -202,7 +274,7 @@ export class DataGenerator {
         (Math.random() > 0.5 ? '흐림' : '비') : '맑음',
       location: this.LOCATIONS[Math.floor(Math.random() * this.LOCATIONS.length)],
       createdAt: new Date().toISOString(),
-      isClosed: false,
+      isClosed: shouldBeClosed, // 🔥 75% 확률로 마감 처리
     };
   }
 
@@ -210,7 +282,6 @@ export class DataGenerator {
    * Supabase 데이터를 Match 객체로 변환
    */
   private static convertSupabaseToMatch(supabaseMatch: SupabaseMatch): Match {
-    // null 값 안전 처리
     const basePrice = supabaseMatch.base_price || 0;
     const initialPrice = supabaseMatch.initial_price || basePrice;
     const currentPrice = supabaseMatch.current_price || basePrice;
@@ -273,7 +344,7 @@ export class DataGenerator {
       weather: supabaseMatch.weather as '맑음' | '흐림' | '비',
       location: supabaseMatch.location,
       createdAt: supabaseMatch.created_at,
-      isClosed: false,
+      isClosed: false, // 기본값으로 false 설정, 필요시 로직 추가
     };
   }
 
@@ -287,7 +358,6 @@ export class DataGenerator {
         return false;
       }
 
-      // 가격 필드 안전 처리
       const safeBasePrice = Number(match.basePrice) || 0;
       const safeInitialPrice = Number(match.initialPrice) || safeBasePrice;
       const safeCurrentPrice = Number(match.currentPrice) || safeBasePrice;
@@ -357,6 +427,8 @@ export class DataGenerator {
     }
   }
 
+  // ... (나머지 메서드들은 기존 코드와 동일)
+
   /**
    * Supabase에서 모든 매치 가져오기
    */
@@ -413,7 +485,6 @@ export class DataGenerator {
       }
       
       try {
-        // Supabase에 저장
         const savePromises = newMatches.map(match => this.saveMatchToSupabase(match));
         const results = await Promise.all(savePromises);
         
@@ -425,7 +496,6 @@ export class DataGenerator {
         }
         
         console.log(`✅ ${successCount}개의 일회성 더미 매치가 Supabase에 저장되었습니다.`);
-        
         return newMatches.slice(0, successCount);
         
       } catch (supabaseError: any) {
@@ -437,6 +507,124 @@ export class DataGenerator {
       console.log('ℹ️ 일회성 더미 매치 생성 중 오류:', error?.message);
       return [];
     }
+  }
+
+  /**
+   * 모든 더미 매치 삭제
+   */
+  static async deleteAllDummyMatches(): Promise<{
+    success: boolean;
+    deletedCount: number;
+    error?: string;
+  }> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 삭제를 건너뜁니다.');
+        return {
+          success: false,
+          deletedCount: 0,
+          error: 'Supabase Admin 연결이 설정되지 않았습니다.'
+        };
+      }
+
+      const currentCount = await this.getDummyMatchCount();
+      console.log(`📊 삭제할 더미 매치: ${currentCount}개`);
+
+      const { error } = await supabaseAdmin
+        .from('matches')
+        .delete()
+        .eq('is_dummy', true);
+
+      if (error) {
+        console.log('ℹ️ 더미 매치 삭제 실패:', error.message);
+        return {
+          success: false,
+          deletedCount: 0,
+          error: error.message
+        };
+      }
+
+      console.log(`✅ ${currentCount}개의 더미 매치가 성공적으로 삭제되었습니다.`);
+      
+      return {
+        success: true,
+        deletedCount: currentCount,
+      };
+
+    } catch (error: any) {
+      console.log('ℹ️ 더미 매치 삭제 중 오류:', error?.message);
+      return {
+        success: false,
+        deletedCount: 0,
+        error: error?.message || '알 수 없는 오류'
+      };
+    }
+  }
+
+  /**
+   * 현재 더미 매치 개수 조회
+   */
+  static async getDummyMatchCount(): Promise<number> {
+    try {
+      if (!supabase) {
+        return 0;
+      }
+
+      const { count, error } = await supabase
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_dummy', true);
+
+      if (error) {
+        console.log('ℹ️ 더미 매치 개수 조회 실패:', error.message);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error: any) {
+      console.log('ℹ️ 더미 매치 개수 조회 중 오류:', error?.message);
+      return 0;
+    }
+  }
+
+  // 헬퍼 메소드들
+  private static generateMatchTitle(matchType: '단식' | '남복' | '여복' | '혼복'): string {
+    return this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)];
+  }
+
+  private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
+    return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
+  }
+
+  /**
+   * 매치 통계 생성
+   */
+  static generateMatchStats(matches: Match[]) {
+    const stats = {
+      total: matches.length,
+      closed: matches.filter(m => m.isClosed).length,
+      active: matches.filter(m => !m.isClosed).length,
+      byType: {
+        '단식': 0,
+        '남복': 0,
+        '여복': 0,
+        '혼복': 0,
+      },
+      avgPrice: 0,
+      avgParticipants: 0,
+      totalNicknames: new Set(matches.map(m => m.seller.name)).size, // 고유 닉네임 수
+    };
+
+    matches.forEach(match => {
+      stats.byType[match.matchType]++;
+      stats.avgPrice += match.currentPrice;
+      stats.avgParticipants += match.expectedParticipants.total;
+    });
+
+    stats.avgPrice = Math.round(stats.avgPrice / matches.length);
+    stats.avgParticipants = Math.round((stats.avgParticipants / matches.length) * 10) / 10;
+
+    return stats;
   }
 
   /**
@@ -534,95 +722,6 @@ export class DataGenerator {
   }
 
   /**
-   * 현재 더미 매치 개수 조회
-   */
-  static async getDummyMatchCount(): Promise<number> {
-    try {
-      if (!supabase) {
-        return 0;
-      }
-
-      const { count, error } = await supabase
-        .from('matches')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_dummy', true);
-
-      if (error) {
-        console.log('ℹ️ 더미 매치 개수 조회 실패:', error.message);
-        return 0;
-      }
-
-      return count || 0;
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 개수 조회 중 오류:', error?.message);
-      return 0;
-    }
-  }
-
-  /**
-   * 모든 더미 매치 삭제
-   */
-  static async deleteAllDummyMatches(): Promise<{
-    success: boolean;
-    deletedCount: number;
-    error?: string;
-  }> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 삭제를 건너뜁니다.');
-        return {
-          success: false,
-          deletedCount: 0,
-          error: 'Supabase Admin 연결이 설정되지 않았습니다.'
-        };
-      }
-
-      // 현재 더미 매치 개수 먼저 확인
-      const currentCount = await this.getDummyMatchCount();
-      console.log(`📊 삭제할 더미 매치: ${currentCount}개`);
-
-      // 더미 매치 삭제
-      const { error } = await supabaseAdmin
-        .from('matches')
-        .delete()
-        .eq('is_dummy', true);
-
-      if (error) {
-        console.log('ℹ️ 더미 매치 삭제 실패:', error.message);
-        return {
-          success: false,
-          deletedCount: 0,
-          error: error.message
-        };
-      }
-
-      console.log(`✅ ${currentCount}개의 더미 매치가 성공적으로 삭제되었습니다.`);
-      
-      return {
-        success: true,
-        deletedCount: currentCount,
-      };
-
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 삭제 중 오류:', error?.message);
-      return {
-        success: false,
-        deletedCount: 0,
-        error: error?.message || '알 수 없는 오류'
-      };
-    }
-  }
-
-  // 헬퍼 메소드들
-  private static generateMatchTitle(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)];
-  }
-
-  private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
-  }
-
-  /**
    * 특정 매치 타입의 더미 매치 생성 (테스트용)
    */
   static generateMatchByType(matchType: Match['matchType']): Match {
@@ -631,30 +730,20 @@ export class DataGenerator {
   }
 
   /**
-   * 매치 통계 생성
+   * 닉네임 생성 테스트 메서드 (디버그용)
    */
-  static generateMatchStats(matches: Match[]) {
-    const stats = {
-      total: matches.length,
-      byType: {
-        '단식': 0,
-        '남복': 0,
-        '여복': 0,
-        '혼복': 0,
-      },
-      avgPrice: 0,
-      avgParticipants: 0,
-    };
+  static testNicknameGeneration(count: number = 10): string[] {
+    const nicknames: string[] = [];
+    for (let i = 0; i < count; i++) {
+      nicknames.push(this.generateNickname());
+    }
+    return nicknames;
+  }
 
-    matches.forEach(match => {
-      stats.byType[match.matchType]++;
-      stats.avgPrice += match.currentPrice;
-      stats.avgParticipants += match.expectedParticipants.total;
-    });
-
-    stats.avgPrice = Math.round(stats.avgPrice / matches.length);
-    stats.avgParticipants = Math.round((stats.avgParticipants / matches.length) * 10) / 10;
-
-    return stats;
+  /**
+   * 서울 테니스 코트 리스트 반환 (디버그용)
+   */
+  static getSeoulCourts(): string[] {
+    return [...this.SEOUL_COURTS];
   }
 }

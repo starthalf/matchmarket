@@ -63,18 +63,37 @@ export default function SignupScreen() {
     }
 
     setIsLoading(true);
-    const result = await signup({
-      ...formData,
-      ntrp: Number(formData.ntrp),
-      experience: Number(formData.experience), // 이제 년 단위로 저장
-    });
-    setIsLoading(false);
-
-    if (result.success) {
-      // Alert 없이 바로 매치찾기 화면으로 이동
-      router.replace('/(tabs)');
-    } else {
-      Alert.alert('회원가입 실패', result.error || '회원가입에 실패했습니다.');
+    
+    try {
+      console.log('🔄 회원가입 요청 시작');
+      const result = await signup({
+        ...formData,
+        ntrp: Number(formData.ntrp),
+        experience: Number(formData.experience),
+      });
+      
+      console.log('📋 회원가입 결과:', result);
+      
+      if (result.success) {
+        console.log('✅ 회원가입 성공 - 화면 전환');
+        Alert.alert(
+          '회원가입 완료',
+          '환영합니다! 매치를 찾아보세요.',
+          [{ 
+            text: '확인', 
+            onPress: () => router.replace('/(tabs)')
+          }]
+        );
+      } else {
+        console.error('❌ 회원가입 실패:', result.error);
+        Alert.alert('회원가입 실패', result.error || '회원가입에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('💥 회원가입 예외 발생:', error);
+      Alert.alert('오류', '회원가입 중 예상치 못한 오류가 발생했습니다.');
+    } finally {
+      console.log('🏁 로딩 상태 해제');
+      setIsLoading(false);
     }
   };
 

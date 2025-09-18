@@ -1,379 +1,582 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  Clipboard,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { 
+  ArrowLeft, 
+  Upload, 
+  Send, 
+  CheckCircle, 
   Clock, 
-  MapPin, 
-  UserRound, 
-  Eye, 
-  Users,
-  Star
+  Copy, 
+  Mail,
+  Check,
+  Youtube,
+  Instagram,
+  Award
 } from 'lucide-react-native';
-import { Match } from '../types/tennis';
-import { PriceDisplay } from './PriceDisplay';
-import { CertificationBadge } from './CertificationBadge';
+import { useSafeStyles } from '../constants/Styles';
 
-interface MatchCardProps {
-  match: Match;
+interface CertificationType {
+  id: 'ntrp' | 'youtube' | 'instagram' | 'career';
+  title: string;
+  description: string;
+  icon: React.ComponentType<any>;
+  color: string;
 }
 
-export function MatchCard({ match }: MatchCardProps) {
-  const currentTime = new Date();
-  const matchDateTime = new Date(`${match.date}T${match.time}`);
-  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
-  
-  // 안전한 기본값 설정
-  const applications = match.applications || [];
-  
-  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
-  const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
-  
-  const handlePress = () => {
-    router.push(`/match/${match.id}`);
+const certificationTypes: CertificationType[] = [
+  {
+    id: 'ntrp',
+    title: 'NTRP 등급 인증',
+    description: 'NTRP 등급을 인증하여 신뢰할 수 있는 실력을 증명해보세요',
+    icon: Check,
+    color: '#ec4899'
+  },
+  {
+    id: 'career',
+    title: '선수 인증',
+    description: '프로 선수 출신 또는 실업팀 경력 인증',
+    icon: Award,
+    color: '#059669'
+  },
+  {
+    id: 'youtube',
+    title: '유튜버 인증',
+    description: '테니스 관련 유튜브 채널 운영자 인증',
+    icon: Youtube,
+    color: '#dc2626'
+  },
+  {
+    id: 'instagram',
+    title: '인플루언서 인증',
+    description: '테니스 관련 인스타그램 인플루언서 인증',
+    icon: Instagram,
+    color: '#e1306c'
+  }
+];
+
+export default function CertificationScreen() {
+  const safeStyles = useSafeStyles();
+  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
+  const [formData, setFormData] = useState({
+    requestedNtrp: '',
+    description: '',
+    evidenceFiles: [] as string[],
+  });
+
+  const toggleCertificationType = (typeId: string) => {
+    setSelectedTypes(prev => 
+      prev.includes(typeId) 
+        ? prev.filter(id => id !== typeId)
+        : [...prev, typeId]
+    );
   };
 
-  const getRecruitmentStatus = () => {
-    const { male, female, total } = match.expectedParticipants;
-    
-    if (male > 0 && female > 0) {
-      return `남성 ${male}명, 여성 ${female}명 모집`;
-    } else if (male > 0) {
-      return `남성 ${male}명 모집`;
-    } else if (female > 0) {
-      return `여성 ${female}명 모집`;
-    } else {
-      return `${total}명 모집`;
+  const handleFileUpload = () => {
+    Alert.alert(
+      '파일 업로드',
+      '증빙 자료를 선택해주세요',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '사진 촬영', onPress: () => {
+          setFormData({
+            ...formData,
+            evidenceFiles: [...formData.evidenceFiles, 'photo_' + Date.now() + '.jpg']
+          });
+        }},
+        { text: '갤러리에서 선택', onPress: () => {
+          setFormData({
+            ...formData,
+            evidenceFiles: [...formData.evidenceFiles, 'gallery_' + Date.now() + '.jpg']
+          });
+        }},
+      ]
+    );
+  };
+
+  const validateForm = () => {
+    if (selectedTypes.length === 0) {
+      Alert.alert('선택 오류', '인증할 항목을 하나 이상 선택해주세요.');
+      return false;
     }
+
+    // NTRP가 선택된 경우에만 NTRP 등급 입력 확인
+    if (selectedTypes.includes('ntrp')) {
+      if (!formData.requestedNtrp) {
+        Alert.alert('입력 오류', 'NTRP 등급을 입력해주세요.');
+        return false;
+      }
+      const ntrpValue = parseFloat(formData.requestedNtrp);
+      if (isNaN(ntrpValue) || ntrpValue < 1.0 || ntrpValue > 7.0) {
+        Alert.alert('입력 오류', 'NTRP 등급은 1.0~7.0 사이의 값을 입력해주세요.');
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const handleSubmit = () => {
+    if (!validateForm()) return;
+
+    // 이메일 내용 구성
+    let emailContent = `제목: [MatchMarket] 프로필 인증 신청\n\n안녕하세요, MatchMarket 관리자님.\n\n다음 항목에 대한 인증을 신청합니다:\n\n`;
+
+    selectedTypes.forEach(type => {
+      const certType = certificationTypes.find(ct => ct.id === type);
+      if (!certType) return;
+
+      emailContent += `■ ${certType.title}\n`;
+      
+      if (type === 'ntrp') {
+        emailContent += `- NTRP 등급: ${formData.requestedNtrp}\n`;
+        if (formData.description) {
+          emailContent += `- 추가 설명: ${formData.description}\n`;
+        }
+      } else {
+        emailContent += `- 인증 신청\n`;
+      }
+      
+      emailContent += '\n';
+    });
+
+    emailContent += `■ 증빙 자료\n증빙 자료는 이 이메일에 첨부하여 보내드립니다.\n- 대회 성적\n- 선수증명\n- 코치 추천서\n- 유튜브 채널 스크린샷\n- 인스타 프로필 스크린샷\n- 기타\n\n검토 후 인증 승인 부탁드립니다.\n\n감사합니다.`;
+
+    // 이메일 내용을 클립보드에 복사
+    Clipboard.setString(emailContent);
+    
+    Alert.alert(
+      '이메일 내용 복사 완료',
+      `이메일 내용이 클립보드에 복사되었습니다.\n\n📧 관리자 이메일: admin@matchmarket.co.kr\n\n이메일 앱을 열어서 위 주소로 증빙 자료와 함께 이메일을 보내주세요.\n\n심사 결과는 3-5일 내에 알림으로 전달됩니다.`,
+      [
+        { 
+          text: '확인', 
+          onPress: () => router.back() 
+        }
+      ]
+    );
+  };
+
+  const copyAdminEmail = () => {
+    Clipboard.setString('admin@matchmarket.co.kr');
+    Alert.alert('복사 완료', '관리자 이메일 주소가 클립보드에 복사되었습니다.');
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
-      {/* 상단 - 판매자 정보 */}
-      <View style={styles.header}>
-        <View style={styles.sellerInfo}>
-          {match.seller.profileImage ? (
-            <Image source={{ uri: match.seller.profileImage }} style={styles.sellerAvatar} />
-          ) : (
-            <View style={styles.sellerAvatarPlaceholder}>
-              <UserRound size={20} color="#6b7280" />
+    <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>인증 신청</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
+      </View>
+
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.introSection}>
+          <Text style={styles.introTitle}>프로필 인증 신청</Text>
+        </View>
+
+        {/* 인증 유형 선택 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>인증 유형 선택</Text>
+          <Text style={styles.sectionSubtitle}>여러 항목을 중복 선택할 수 있습니다</Text>
+          
+          {certificationTypes.map((type) => {
+            const IconComponent = type.icon;
+            const isSelected = selectedTypes.includes(type.id);
+            
+            return (
+              <TouchableOpacity
+                key={type.id}
+                style={[
+                  styles.typeCard,
+                  isSelected && styles.typeCardSelected
+                ]}
+                onPress={() => toggleCertificationType(type.id)}
+              >
+                <View style={styles.typeHeader}>
+                  <View style={[
+                    styles.typeIcon,
+                    { backgroundColor: isSelected ? type.color : '#f3f4f6' }
+                  ]}>
+                    <IconComponent 
+                      size={20} 
+                      color={isSelected ? '#ffffff' : '#6b7280'} 
+                    />
+                  </View>
+                  <View style={styles.typeInfo}>
+                    <Text style={[
+                      styles.typeTitle,
+                      isSelected && styles.typeTitleSelected
+                    ]}>
+                      {type.title}
+                    </Text>
+                    <Text style={styles.typeDescription}>{type.description}</Text>
+                  </View>
+                  <View style={[
+                    styles.checkbox,
+                    isSelected && styles.checkboxSelected
+                  ]}>
+                    {isSelected && <CheckCircle size={20} color={type.color} />}
+                  </View>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* NTRP 인증이 선택된 경우에만 폼 표시 */}
+        {selectedTypes.includes('ntrp') && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>NTRP 등급 인증</Text>
+            
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>신청 NTRP 등급 *</Text>
+              <TextInput
+                style={styles.textInput}
+                value={formData.requestedNtrp}
+                onChangeText={(text) => setFormData({...formData, requestedNtrp: text})}
+                placeholder="예: 4.5"
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+              />
+              <Text style={styles.inputHint}>
+                현재 자신의 정확한 NTRP 등급을 입력해주세요 (1.0-7.0)
+              </Text>
             </View>
-          )}
-          <View style={styles.sellerDetails}>
-            <View style={styles.sellerNameRow}>
-              <Text style={styles.sellerName}>{match.seller.name}</Text>
-              <CertificationBadge 
-                ntrpCert={match.seller.certification.ntrp}
-                careerCert={match.seller.certification.career}
-                youtubeCert={match.seller.certification.youtube}
-                instagramCert={match.seller.certification.instagram}
-                size="tiny"
+
+            <View style={styles.inputGroup}>
+              <Text style={styles.inputLabel}>추가 설명</Text>
+              <TextInput
+                style={[styles.textInput, styles.textArea]}
+                value={formData.description}
+                onChangeText={(text) => setFormData({...formData, description: text})}
+                placeholder="인증에 도움이 될 추가 정보가 있다면 적어주세요..."
+                placeholderTextColor="#9ca3af"
+                multiline
+                numberOfLines={3}
               />
             </View>
-            <View style={styles.sellerMeta}>
-              <Text style={styles.sellerMetaText}>
-                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
-              </Text>
-            </View>
-            <View style={styles.ratingRow}>
-              <Star size={12} color="#f59e0b" fill="#f59e0b" />
-              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
-              {!isDummyMatch && (
+          </View>
+        )}
+
+        {/* 증빙 자료 업로드 */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>증빙 자료 업로드 *</Text>
+          
+          <View style={styles.emailSection}>
+            <Text style={styles.emailSectionTitle}>관리자 이메일로 직접 발송</Text>
+            
+            <View style={styles.adminEmailCard}>
+              <View style={styles.emailRow}>
+                <Mail size={18} color="#3b82f6" />
+                <Text style={styles.adminEmail}>admin@matchmarket.co.kr</Text>
                 <TouchableOpacity 
-                  onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
-                  style={styles.reviewLink}
+                  style={styles.copyEmailButton}
+                  onPress={copyAdminEmail}
                 >
-                  <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+                  <Copy size={16} color="#3b82f6" />
                 </TouchableOpacity>
-              )}
+              </View>
             </View>
           </View>
-        </View>
-      </View>
 
-      {/* 매치 제목 및 타입 */}
-      <View style={styles.titleSection}>
-        <Text style={styles.title} numberOfLines={2}>{match.title}</Text>
-        <View style={styles.matchTypeBadge}>
-          <Text style={styles.matchTypeText}>{match.matchType}</Text>
-        </View>
-      </View>
-      
-      {/* 매치 기본 정보 */}
-      <View style={styles.matchInfo}>
-        <View style={styles.infoRow}>
-          <Clock size={14} color="#6b7280" />
-          <Text style={styles.infoText}>
-            {match.date.slice(5)} {match.time}~{match.endTime}
-          </Text>
-          <Text style={styles.separator}>·</Text>
-          <MapPin size={14} color="#6b7280" />
-          <Text style={styles.infoText}>{match.court}</Text>
-        </View>
-      </View>
-
-      {/* 모집 현황 - 새로운 형태 */}
-      <View style={styles.recruitmentStatus}>
-        <View style={styles.ntrpRequirement}>
-          <Text style={styles.ntrpText}>
-            NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
-          </Text>
-        </View>
-        <View style={styles.recruitmentInfo}>
-          <Users size={14} color="#6b7280" />
-          <Text style={styles.recruitmentText}>
-            {getRecruitmentStatus()}
-          </Text>
-          {applications.length > 0 && (
-            <>
-              <Text style={styles.separator}>·</Text>
-              <Text style={styles.applicationText}>
-                신청 {applications.length}건
-              </Text>
-            </>
-          )}
-        </View>
-      </View>
-
-      {/* 하단 - 가격 및 액션 */}
-      <View style={styles.footer}>
-        {/* 조회수 */}
-        <View style={styles.viewCount}>
-          <Eye size={12} color="#9ca3af" />
-          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
-        </View>
-        
-        <View style={styles.priceSection}>
-          <PriceDisplay
-            currentPrice={match.currentPrice}
-            basePrice={match.basePrice}
-            initialPrice={match.initialPrice}
-            expectedViews={match.expectedViews}
-            maxPrice={match.maxPrice}
-            hoursUntilMatch={hoursUntilMatch}
-            viewCount={match.seller.viewCount}
-            waitingApplicants={match.waitingApplicants}
-            expectedWaitingApplicants={match.expectedWaitingApplicants}
-            sellerGender={match.seller.gender}
-            sellerNtrp={match.seller.ntrp}
-            isClosed={match.isClosed}
-          />
-        </View>
-      </View>
-      
-      {/* 마감 오버레이 */}
-      {match.isClosed && (
-        <View style={styles.closedOverlay}>
-          <View style={styles.closedBadge}>
-            <Text style={styles.closedBadgeText}>마감</Text>
+          <View style={styles.uploadHint}>
+            <Text style={styles.uploadHintTitle}>
+              인증 증빙 자료
+            </Text>
+            <Text style={styles.uploadHintText}>
+              • 대회 성적{'\n'}• 선수증명{'\n'}• 코치 추천서{'\n'}• 유튜브 채널 스크린샷{'\n'}• 인스타 프로필 스크린샷{'\n'}• 기타
+            </Text>
           </View>
         </View>
-      )}
-    </TouchableOpacity>
+
+        {/* 처리 과정 안내 */}
+        <View style={styles.processSection}>
+          <Text style={styles.processSectionTitle}>인증 처리 과정</Text>
+          
+          <View style={styles.processStep}>
+            <View style={styles.stepIndicator}>
+              <Text style={styles.stepNumber}>1</Text>
+            </View>
+            <Text style={styles.stepText}>신청 접수 및 이메일 발송</Text>
+          </View>
+          
+          <View style={styles.processStep}>
+            <View style={styles.stepIndicator}>
+              <Text style={styles.stepNumber}>2</Text>
+            </View>
+            <Text style={styles.stepText}>관리자 검토 (3-5일 소요)</Text>
+          </View>
+          
+          <View style={styles.processStep}>
+            <View style={styles.stepIndicator}>
+              <Text style={styles.stepNumber}>3</Text>
+            </View>
+            <Text style={styles.stepText}>결과 알림 및 배지 부여</Text>
+          </View>
+        </View>
+
+        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
+          <Send size={18} color="#ffffff" />
+          <Text style={styles.submitButtonText}>인증 신청하기</Text>
+        </TouchableOpacity>
+
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
+  content: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  introSection: {
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  introTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  section: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 4,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 12,
-    position: 'relative',
-  },
-  sellerInfo: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flex: 1,
-    gap: 10,
-  },
-  sellerAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  sellerAvatarPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  sellerDetails: {
-    flex: 1,
-    gap: 4,
-  },
-  sellerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  sellerName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  sellerMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  sellerMetaText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '600',
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ratingText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#f59e0b',
-  },
-  reviewLink: {
-    marginLeft: 4,
-  },
-  reviewLinkText: {
-    fontSize: 11,
-    color: '#f472b6',
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
-  titleSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    gap: 8,
-  },
-  title: {
+  sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
-    flex: 1,
-    lineHeight: 22,
+    marginBottom: 16,
   },
-  matchTypeBadge: {
-    backgroundColor: '#fdf2f8',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+  sectionSubtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 16,
+  },
+  typeCard: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 12,
   },
-  matchTypeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    backgroundColor: '#ec4899',
+  typeCardSelected: {
+    borderColor: '#ec4899',
+    backgroundColor: '#fdf2f8',
+  },
+  typeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  typeIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  typeInfo: {
+    flex: 1,
+  },
+  typeTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  typeTitleSelected: {
     color: '#ec4899',
   },
-  matchInfo: {
-    marginBottom: 12,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  infoText: {
-    fontSize: 13,
+  typeDescription: {
+    fontSize: 14,
     color: '#6b7280',
-    fontWeight: '500',
   },
-  separator: {
-    fontSize: 12,
-    color: '#d1d5db',
-    marginHorizontal: 2,
-  },
-  recruitmentStatus: {
-    flexDirection: 'row',
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  checkboxSelected: {
+    borderColor: '#ec4899',
+  },
+  inputGroup: {
+    marginBottom: 16,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 6,
+  },
+  textInput: {
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#374151',
+    backgroundColor: '#ffffff',
+  },
+  textArea: {
+    height: 100,
+    textAlignVertical: 'top',
+  },
+  inputHint: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 4,
+    lineHeight: 16,
+  },
+  emailSection: {
+    marginBottom: 16,
+  },
+  emailSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
     marginBottom: 12,
   },
-  ntrpRequirement: {
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+  adminEmailCard: {
+    backgroundColor: '#f0f9ff',
+    borderRadius: 8,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+    marginBottom: 12,
   },
-  ntrpText: {
-    fontSize: 11,
+  emailRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  adminEmail: {
+    flex: 1,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1e40af',
   },
-  recruitmentInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    flex: 1,
-    justifyContent: 'flex-end',
+  copyEmailButton: {
+    padding: 8,
+    borderRadius: 6,
+    backgroundColor: '#dbeafe',
+    borderWidth: 1,
+    borderColor: '#3b82f6',
   },
-  recruitmentText: {
-    fontSize: 12,
-    color: '#374151',
+  uploadHint: {
+    backgroundColor: '#f0f9ff',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
+  },
+  uploadHintTitle: {
+    fontSize: 14,
     fontWeight: '600',
+    color: '#1e40af',
+    marginBottom: 8,
   },
-  applicationText: {
+  uploadHintText: {
     fontSize: 12,
-    color: '#ec4899',
-    fontWeight: '600',
+    color: '#3730a3',
+    lineHeight: 18,
   },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  processSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  viewCount: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  viewText: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  priceSection: {
-    alignItems: 'flex-end',
-  },
-  closedOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  closedBadge: {
-    backgroundColor: '#374151',
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  closedBadgeText: {
-    color: '#ffffff',
+  processSectionTitle: {
     fontSize: 16,
     fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  processStep: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 12,
+  },
+  stepIndicator: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#ec4899',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepNumber: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  stepText: {
+    fontSize: 14,
+    color: '#374151',
+    flex: 1,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#ec4899',
+    marginHorizontal: 16,
+    paddingVertical: 16,
+    borderRadius: 12,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  bottomPadding: {
+    height: 40,
   },
 });

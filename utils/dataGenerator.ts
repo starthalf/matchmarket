@@ -1,4 +1,4 @@
-// utils/dataGenerator.ts - NULL 안전 버전
+// utils/dataGenerator.ts - 깔끔한 버전 (디버그 코드 제거, null 에러 해결)
 
 import { Match, User } from '../types/tennis';
 import { supabase, supabaseAdmin } from '../lib/supabase';
@@ -28,9 +28,9 @@ interface SupabaseMatch {
   court: string;
   description: string;
   base_price: number;
-  initial_price: number;  // 이제 항상 NOT NULL
-  current_price: number;  // 이제 항상 NOT NULL
-  max_price: number;      // 이제 항상 NOT NULL
+  initial_price: number;
+  current_price: number;
+  max_price: number;
   expected_views: number;
   expected_waiting_applicants: number;
   expected_participants_male: number;
@@ -85,7 +85,7 @@ export class DataGenerator {
   ];
 
   /**
-   * 🔥 새로운 매치 생성 (NULL 안전 보장)
+   * 새로운 매치 생성
    */
   static generateNewMatch(): Match {
     const sellerId = `seller_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -148,11 +148,11 @@ export class DataGenerator {
         break;
     }
 
-    // 🔥 가격 필드 완전 안전 처리
+    // 가격 설정 (null 방지)
     const basePrice = [15000, 20000, 25000, 30000, 35000][Math.floor(Math.random() * 5)];
-    const initialPrice = basePrice;     // 항상 basePrice와 동일
-    const currentPrice = basePrice;     // 항상 basePrice와 동일  
-    const maxPrice = basePrice * 3;     // 항상 basePrice의 3배
+    const initialPrice = basePrice;
+    const currentPrice = basePrice;
+    const maxPrice = basePrice * 3;
 
     // 미래 날짜 생성
     const futureDate = new Date();
@@ -174,9 +174,9 @@ export class DataGenerator {
       court: this.COURTS[Math.floor(Math.random() * this.COURTS.length)],
       description: this.generateMatchDescription(matchType),
       basePrice: basePrice,
-      initialPrice: initialPrice,    // ✅ 절대 null 아님
-      currentPrice: currentPrice,    // ✅ 절대 null 아님
-      maxPrice: maxPrice,            // ✅ 절대 null 아님
+      initialPrice: initialPrice,
+      currentPrice: currentPrice,
+      maxPrice: maxPrice,
       expectedViews: Math.floor(Math.random() * 500) + 200,
       expectedWaitingApplicants: Math.floor(Math.random() * 10) + 1,
       expectedParticipants: {
@@ -207,14 +207,14 @@ export class DataGenerator {
   }
 
   /**
-   * 🔥 Supabase 데이터를 Match 객체로 변환 (NULL 안전)
+   * Supabase 데이터를 Match 객체로 변환
    */
   private static convertSupabaseToMatch(supabaseMatch: SupabaseMatch): Match {
-    // 이제 Supabase에서 가져온 데이터는 항상 NOT NULL이므로 안전함
-    const basePrice = supabaseMatch.base_price;
-    const initialPrice = supabaseMatch.initial_price;  // 항상 유효한 값
-    const currentPrice = supabaseMatch.current_price;  // 항상 유효한 값
-    const maxPrice = supabaseMatch.max_price;          // 항상 유효한 값
+    // null 값 안전 처리
+    const basePrice = supabaseMatch.base_price || 0;
+    const initialPrice = supabaseMatch.initial_price || basePrice;
+    const currentPrice = supabaseMatch.current_price || basePrice;
+    const maxPrice = supabaseMatch.max_price || (basePrice * 3);
 
     return {
       id: supabaseMatch.id,
@@ -246,9 +246,9 @@ export class DataGenerator {
       court: supabaseMatch.court,
       description: supabaseMatch.description,
       basePrice: basePrice,
-      initialPrice: initialPrice,    // ✅ 안전한 값
-      currentPrice: currentPrice,    // ✅ 안전한 값
-      maxPrice: maxPrice,            // ✅ 안전한 값
+      initialPrice: initialPrice,
+      currentPrice: currentPrice,
+      maxPrice: maxPrice,
       expectedViews: supabaseMatch.expected_views,
       expectedWaitingApplicants: supabaseMatch.expected_waiting_applicants,
       expectedParticipants: {
@@ -277,135 +277,85 @@ export class DataGenerator {
     };
   }
 
-  // utils/dataGenerator.ts - saveMatchToSupabase 함수 완전 수정
+  /**
+   * 매치를 Supabase에 저장
+   */
+  static async saveMatchToSupabase(match: Match): Promise<boolean> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin이 설정되지 않아 매치 저장을 건너뜁니다.');
+        return false;
+      }
 
-static async saveMatchToSupabase(match: Match): Promise<boolean> {
-  try {
-    if (!supabaseAdmin) {
-      console.log('ℹ️ Supabase Admin이 설정되지 않아 매치 저장을 건너뜁니다.');
+      // 가격 필드 안전 처리
+      const safeBasePrice = Number(match.basePrice) || 0;
+      const safeInitialPrice = Number(match.initialPrice) || safeBasePrice;
+      const safeCurrentPrice = Number(match.currentPrice) || safeBasePrice;
+      const safeMaxPrice = Number(match.maxPrice) || (safeBasePrice * 3);
+
+      const supabaseData = {
+        id: match.id,
+        seller_id: match.sellerId,
+        seller_name: match.seller.name,
+        seller_gender: match.seller.gender,
+        seller_age_group: match.seller.ageGroup,
+        seller_ntrp: match.seller.ntrp,
+        seller_experience: match.seller.experience,
+        seller_play_style: match.seller.playStyle,
+        seller_career_type: match.seller.careerType,
+        seller_certification_ntrp: match.seller.certification.ntrp,
+        seller_certification_career: match.seller.certification.career,
+        seller_certification_youtube: match.seller.certification.youtube,
+        seller_certification_instagram: match.seller.certification.instagram,
+        seller_profile_image: match.seller.profileImage || null,
+        seller_view_count: match.seller.viewCount,
+        seller_like_count: match.seller.likeCount,
+        seller_avg_rating: match.seller.avgRating,
+        title: match.title,
+        date: match.date,
+        time: match.time,
+        end_time: match.endTime,
+        court: match.court,
+        description: match.description,
+        base_price: safeBasePrice,
+        initial_price: safeInitialPrice,
+        current_price: safeCurrentPrice,
+        max_price: safeMaxPrice,
+        expected_views: match.expectedViews,
+        expected_waiting_applicants: match.expectedWaitingApplicants,
+        expected_participants_male: match.expectedParticipants.male,
+        expected_participants_female: match.expectedParticipants.female,
+        expected_participants_total: match.expectedParticipants.total,
+        current_applicants_male: match.currentApplicants.male,
+        current_applicants_female: match.currentApplicants.female,
+        current_applicants_total: match.currentApplicants.total,
+        match_type: match.matchType,
+        waiting_applicants: match.waitingApplicants,
+        ad_enabled: match.adEnabled,
+        ntrp_min: match.ntrpRequirement.min,
+        ntrp_max: match.ntrpRequirement.max,
+        weather: match.weather,
+        location: match.location,
+        is_dummy: true,
+        created_at: match.createdAt,
+      };
+
+      const { error } = await supabaseAdmin
+        .from('matches')
+        .insert([supabaseData]);
+
+      if (error) {
+        console.error('Supabase 매치 저장 오류:', error);
+        return false;
+      }
+
+      console.log(`✅ 매치 ${match.id} Supabase 저장 완료`);
+      return true;
+    } catch (error) {
+      console.error('saveMatchToSupabase 오류:', error);
       return false;
     }
-
-    // 🔍 디버깅: 입력된 매치 객체 확인
-    console.log('🔍 saveMatchToSupabase 입력 매치:', {
-      id: match.id,
-      basePrice: match.basePrice,
-      initialPrice: match.initialPrice,
-      currentPrice: match.currentPrice,
-      maxPrice: match.maxPrice,
-      types: {
-        basePrice: typeof match.basePrice,
-        initialPrice: typeof match.initialPrice,
-        currentPrice: typeof match.currentPrice,
-        maxPrice: typeof match.maxPrice,
-      }
-    });
-
-    // 🔥 NULL 값 강제 방지 및 명시적 타입 보장
-    const safeBasePrice = Number(match.basePrice) || 0;
-    const safeInitialPrice = Number(match.initialPrice) || safeBasePrice;
-    const safeCurrentPrice = Number(match.currentPrice) || safeBasePrice;
-    const safeMaxPrice = Number(match.maxPrice) || (safeBasePrice * 3);
-
-    // 🔍 디버깅: 안전 처리된 값들 확인
-    console.log('🔍 안전 처리된 가격들:', {
-      safeBasePrice,
-      safeInitialPrice,
-      safeCurrentPrice,
-      safeMaxPrice,
-      originalInitialPrice: match.initialPrice,
-      isInitialPriceNull: match.initialPrice === null,
-      isInitialPriceUndefined: match.initialPrice === undefined
-    });
-
-    // Supabase 삽입 데이터 (완전 안전 처리)
-    const supabaseData = {
-      id: match.id,
-      seller_id: match.sellerId,
-      seller_name: match.seller.name,
-      seller_gender: match.seller.gender,
-      seller_age_group: match.seller.ageGroup,
-      seller_ntrp: match.seller.ntrp,
-      seller_experience: match.seller.experience,
-      seller_play_style: match.seller.playStyle,
-      seller_career_type: match.seller.careerType,
-      seller_certification_ntrp: match.seller.certification.ntrp,
-      seller_certification_career: match.seller.certification.career,
-      seller_certification_youtube: match.seller.certification.youtube,
-      seller_certification_instagram: match.seller.certification.instagram,
-      seller_profile_image: match.seller.profileImage || null,
-      seller_view_count: match.seller.viewCount,
-      seller_like_count: match.seller.likeCount,
-      seller_avg_rating: match.seller.avgRating,
-      title: match.title,
-      date: match.date,
-      time: match.time,
-      end_time: match.endTime,
-      court: match.court,
-      description: match.description,
-      base_price: safeBasePrice,               // ✅ 안전한 값
-      initial_price: safeInitialPrice,         // ✅ 절대 null 아님
-      current_price: safeCurrentPrice,         // ✅ 절대 null 아님
-      max_price: safeMaxPrice,                 // ✅ 절대 null 아님
-      expected_views: match.expectedViews,
-      expected_waiting_applicants: match.expectedWaitingApplicants,
-      expected_participants_male: match.expectedParticipants.male,
-      expected_participants_female: match.expectedParticipants.female,
-      expected_participants_total: match.expectedParticipants.total,
-      current_applicants_male: match.currentApplicants.male,
-      current_applicants_female: match.currentApplicants.female,
-      current_applicants_total: match.currentApplicants.total,
-      match_type: match.matchType,
-      waiting_applicants: match.waitingApplicants,
-      ad_enabled: match.adEnabled,
-      ntrp_min: match.ntrpRequirement.min,
-      ntrp_max: match.ntrpRequirement.max,
-      weather: match.weather,
-      location: match.location,
-      is_dummy: true,
-      created_at: match.createdAt,
-    };
-
-    // 🔍 디버깅: 최종 전송 데이터 확인
-    console.log('🔍 최종 Supabase 전송 데이터:', {
-      id: supabaseData.id,
-      base_price: supabaseData.base_price,
-      initial_price: supabaseData.initial_price,
-      current_price: supabaseData.current_price,
-      max_price: supabaseData.max_price,
-      types: {
-        base_price: typeof supabaseData.base_price,
-        initial_price: typeof supabaseData.initial_price,
-        current_price: typeof supabaseData.current_price,
-        max_price: typeof supabaseData.max_price,
-      }
-    });
-
-    const { error } = await supabaseAdmin
-      .from('matches')
-      .insert([supabaseData]);
-
-    if (error) {
-      console.error('❌ Supabase 매치 저장 오류:', error);
-      
-      // 🔍 상세 에러 분석
-      console.error('📋 에러 상세 정보:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
-      
-      return false;
-    }
-
-    console.log(`✅ 매치 ${match.id} Supabase 저장 완료`);
-    return true;
-  } catch (error) {
-    console.error('💥 saveMatchToSupabase 예외 오류:', error);
-    return false;
   }
-}
 
   /**
    * Supabase에서 모든 매치 가져오기
@@ -434,7 +384,6 @@ static async saveMatchToSupabase(match: Match): Promise<boolean> {
         return fallbackMatches;
       }
 
-      // Supabase 데이터를 Match 형태로 변환
       const convertedMatches = supabaseMatches.map(this.convertSupabaseToMatch);
       console.log(`✅ Supabase에서 ${convertedMatches.length}개 매치 로드 완료`);
       
@@ -452,5 +401,31 @@ static async saveMatchToSupabase(match: Match): Promise<boolean> {
 
   private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
     return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
+  }
+
+  /**
+   * 현재 더미 매치 개수 조회
+   */
+  static async getDummyMatchCount(): Promise<number> {
+    try {
+      if (!supabase) {
+        return 0;
+      }
+
+      const { count, error } = await supabase
+        .from('matches')
+        .select('*', { count: 'exact', head: true })
+        .eq('is_dummy', true);
+
+      if (error) {
+        console.log('ℹ️ 더미 매치 개수 조회 실패:', error.message);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error: any) {
+      console.log('ℹ️ 더미 매치 개수 조회 중 오류:', error?.message);
+      return 0;
+    }
   }
 }

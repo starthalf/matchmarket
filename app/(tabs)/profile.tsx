@@ -1,747 +1,379 @@
 import React from 'react';
-import { useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Image,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
-import { Settings, Award, TrendingUp, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, DollarSign, Users, Eye, Camera, User, CreditCard } from 'lucide-react-native';
-import { Calendar } from 'lucide-react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { CertificationBadge } from '../../components/CertificationBadge';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as ImagePicker from 'expo-image-picker';
-import { useSafeStyles } from '../../constants/Styles';
+import { 
+  Clock, 
+  MapPin, 
+  UserRound, 
+  Eye, 
+  Users,
+  Star
+} from 'lucide-react-native';
+import { Match } from '../types/tennis';
+import { PriceDisplay } from './PriceDisplay';
+import { CertificationBadge } from './CertificationBadge';
 
-export default function ProfileScreen() {
-  const { user: currentUser, logout } = useAuth();
-  const safeStyles = useSafeStyles();
-  const [profileImage, setProfileImage] = React.useState<string | null>(null);
+interface MatchCardProps {
+  match: Match;
+}
 
-  // 저장된 프로필 이미지 불러오기
-  React.useEffect(() => {
-    const loadProfileImage = async () => {
-      if (!currentUser) return;
-      try {
-        let savedImage: string | null = null;
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          savedImage = localStorage.getItem(`profile_image_${currentUser.id}`);
-        } else {
-          savedImage = await AsyncStorage.getItem(`profile_image_${currentUser.id}`);
-        }
-        if (savedImage) {
-          setProfileImage(savedImage);
-        }
-      } catch (error) {
-        console.warn('프로필 이미지 로드 실패:', error);
-      }
-    };
-    loadProfileImage();
-  }, [currentUser]);
+export function MatchCard({ match }: MatchCardProps) {
+  const currentTime = new Date();
+  const matchDateTime = new Date(`${match.date}T${match.time}`);
+  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
+  
+  // 안전한 기본값 설정
+  const applications = match.applications || [];
+  
+  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
+  const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
+  
+  const handlePress = () => {
+    router.push(`/match/${match.id}`);
+  };
 
-  useEffect(() => {
-    if (currentUser) {
-      // 기존 useEffect 로직은 그대로 유지
+  const getRecruitmentStatus = () => {
+    const { male, female, total } = match.expectedParticipants;
+    
+    if (male > 0 && female > 0) {
+      return `남성 ${male}명, 여성 ${female}명 모집`;
+    } else if (male > 0) {
+      return `남성 ${male}명 모집`;
+    } else if (female > 0) {
+      return `여성 ${female}명 모집`;
     } else {
-      router.replace('/auth/login');
+      return `${total}명 모집`;
     }
-  }, [currentUser]);
-
-  if (!currentUser) {
-    return (
-      <SafeAreaView style={safeStyles.safeContainer}>
-        <View style={styles.loadingContainer}>
-          <Text>로그인이 필요합니다...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const handleCertificationRequest = () => {
-    router.push('/certification');
-  };
-
-  const handleEarningsPress = () => {
-    router.push('/earnings');
-  };
-
-  const handleMyMatchesPress = () => {
-    router.push('/my-matches');
-  };
-
-  const handleProfileImagePress = () => {
-    Alert.alert(
-      '프로필 사진 변경',
-      '프로필 사진을 어떻게 설정하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '카메라로 촬영', onPress: () => openCamera() },
-        { text: '갤러리에서 선택', onPress: () => openGallery() },
-        ...(profileImage ? [{ text: '사진 삭제', style: 'destructive', onPress: () => removeProfileImage() }] : [])
-      ]
-    );
-  };
-
-  const openCamera = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-      
-      if (!permissionResult.granted) {
-        Alert.alert('권한 필요', '카메라 사용을 위해 권한이 필요합니다.');
-        return;
-      }
-
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        setProfileImage(imageUri);
-        
-        // 플랫폼별 저장
-        if (currentUser) {
-          try {
-            if (Platform.OS === 'web') {
-              if (typeof window !== 'undefined') {
-                localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-              }
-            } else {
-              await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-            }
-          } catch (error) {
-            console.warn('프로필 이미지 저장 실패:', error);
-          }
-        }
-        
-        Alert.alert('완료', '프로필 사진이 변경되었습니다.');
-      }
-    } catch (error) {
-      Alert.alert('오류', '카메라를 열 수 없습니다.');
-    }
-  };
-
-  const openGallery = async () => {
-    try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
-      if (!permissionResult.granted) {
-        Alert.alert('권한 필요', '갤러리 접근을 위해 권한이 필요합니다.');
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const imageUri = result.assets[0].uri;
-        setProfileImage(imageUri);
-        
-        // 플랫폼별 저장
-        if (currentUser) {
-          try {
-            if (Platform.OS === 'web') {
-              if (typeof window !== 'undefined') {
-                localStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-              }
-            } else {
-              await AsyncStorage.setItem(`profile_image_${currentUser.id}`, imageUri);
-            }
-          } catch (error) {
-            console.warn('프로필 이미지 저장 실패:', error);
-          }
-        }
-        
-        Alert.alert('완료', '프로필 사진이 변경되었습니다.');
-      }
-    } catch (error) {
-      Alert.alert('오류', '갤러리를 열 수 없습니다.');
-    }
-  };
-
-  const removeProfileImage = () => {
-    setProfileImage(null);
-    
-    // 플랫폼별 삭제
-    if (currentUser) {
-      try {
-        if (Platform.OS === 'web') {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem(`profile_image_${currentUser.id}`);
-          }
-        } else {
-          AsyncStorage.removeItem(`profile_image_${currentUser.id}`);
-        }
-      } catch (error) {
-        console.warn('프로필 이미지 삭제 실패:', error);
-      }
-    }
-    
-    Alert.alert('완료', '프로필 사진이 삭제되었습니다.');
-  };
-
-  const handleLogout = () => {
-    router.push('/profile-settings');
   };
 
   return (
-    <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={safeStyles.safeHeader}>
-        <View style={safeStyles.safeHeaderContent}>
-          <Text style={styles.title}>프로필</Text>
-          <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
-            <Settings size={20} color="#6b7280" />
-          </TouchableOpacity>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
+      {/* 상단 - 판매자 정보 */}
+      <View style={styles.header}>
+        <View style={styles.sellerInfo}>
+          {match.seller.profileImage ? (
+            <Image source={{ uri: match.seller.profileImage }} style={styles.sellerAvatar} />
+          ) : (
+            <View style={styles.sellerAvatarPlaceholder}>
+              <UserRound size={20} color="#6b7280" />
+            </View>
+          )}
+          <View style={styles.sellerDetails}>
+            <View style={styles.sellerNameRow}>
+              <Text style={styles.sellerName}>{match.seller.name}</Text>
+              <CertificationBadge 
+                ntrpCert={match.seller.certification.ntrp}
+                careerCert={match.seller.certification.career}
+                youtubeCert={match.seller.certification.youtube}
+                instagramCert={match.seller.certification.instagram}
+                size="tiny"
+              />
+            </View>
+            <View style={styles.sellerMeta}>
+              <Text style={styles.sellerMetaText}>
+                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
+              </Text>
+            </View>
+            <View style={styles.ratingRow}>
+              <Star size={12} color="#f59e0b" fill="#f59e0b" />
+              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
+              {!isDummyMatch && (
+                <TouchableOpacity 
+                  onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
+                  style={styles.reviewLink}
+                >
+                  <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* 프로필 기본 정보 */}
-        <View style={styles.profileCard}>
-          <View style={styles.profileHeader}>
-            <TouchableOpacity 
-              style={styles.profileImageSection}
-              onPress={handleProfileImagePress}
-            >
-              <View style={styles.profileImageContainer}>
-                {profileImage ? (
-                  <Image 
-                    source={{ uri: profileImage }} 
-                    style={styles.profileImage}
-                  />
-                ) : (
-                  <View style={styles.defaultProfileImage}>
-                    <User size={32} color="#9ca3af" />
-                  </View>
-                )}
-                <View style={styles.cameraOverlay}>
-                  <Camera size={16} color="#ffffff" />
-                </View>
-              </View>
-              <Text style={styles.changePhotoText}>사진 변경</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.profileInfo}>
-              <Text style={styles.userName}>{currentUser.name}</Text>
-              <CertificationBadge 
-                ntrpCert={currentUser.certification.ntrp}
-                careerCert={currentUser.certification.career}
-                youtubeCert={currentUser.certification.youtube}
-                instagramCert={currentUser.certification.instagram}
-                size="large"
-              />
-            </View>
-          </View>
-          
-          <View style={styles.profileDetails}>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>성별</Text>
-              <Text style={styles.detailValue}>{currentUser.gender}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>나이대</Text>
-              <Text style={styles.detailValue}>{currentUser.ageGroup}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>NTRP</Text>
-              <Text style={styles.detailValue}>{currentUser.ntrp.toFixed(1)}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>경력</Text>
-              <Text style={styles.detailValue}>
-                {currentUser.experience}년
+      {/* 매치 제목 및 타입 */}
+      <View style={styles.titleSection}>
+        <Text style={styles.title} numberOfLines={2}>{match.title}</Text>
+        <View style={styles.matchTypeBadge}>
+          <Text style={styles.matchTypeText}>{match.matchType}</Text>
+        </View>
+      </View>
+      
+      {/* 매치 기본 정보 */}
+      <View style={styles.matchInfo}>
+        <View style={styles.infoRow}>
+          <Clock size={14} color="#6b7280" />
+          <Text style={styles.infoText}>
+            {match.date.slice(5)} {match.time}~{match.endTime}
+          </Text>
+          <Text style={styles.separator}>·</Text>
+          <MapPin size={14} color="#6b7280" />
+          <Text style={styles.infoText}>{match.court}</Text>
+        </View>
+      </View>
+
+      {/* 모집 현황 - 새로운 형태 */}
+      <View style={styles.recruitmentStatus}>
+        <View style={styles.ntrpRequirement}>
+          <Text style={styles.ntrpText}>
+            NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
+          </Text>
+        </View>
+        <View style={styles.recruitmentInfo}>
+          <Users size={14} color="#6b7280" />
+          <Text style={styles.recruitmentText}>
+            {getRecruitmentStatus()}
+          </Text>
+          {applications.length > 0 && (
+            <>
+              <Text style={styles.separator}>·</Text>
+              <Text style={styles.applicationText}>
+                신청 {applications.length}건
               </Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>플레이 스타일</Text>
-              <Text style={styles.detailValue}>{currentUser.playStyle}</Text>
-            </View>
-            <View style={styles.detailRow}>
-              <Text style={styles.detailLabel}>선수 출신</Text>
-              <Text style={styles.detailValue}>{currentUser.careerType}</Text>
-            </View>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* 하단 - 가격 및 액션 */}
+      <View style={styles.footer}>
+        {/* 조회수 */}
+        <View style={styles.viewCount}>
+          <Eye size={12} color="#9ca3af" />
+          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
+        </View>
+        
+        <View style={styles.priceSection}>
+          <PriceDisplay
+            currentPrice={match.currentPrice}
+            basePrice={match.basePrice}
+            initialPrice={match.initialPrice}
+            expectedViews={match.expectedViews}
+            maxPrice={match.maxPrice}
+            hoursUntilMatch={hoursUntilMatch}
+            viewCount={match.seller.viewCount}
+            waitingApplicants={match.waitingApplicants}
+            expectedWaitingApplicants={match.expectedWaitingApplicants}
+            sellerGender={match.seller.gender}
+            sellerNtrp={match.seller.ntrp}
+            isClosed={match.isClosed}
+          />
+        </View>
+      </View>
+      
+      {/* 마감 오버레이 */}
+      {match.isClosed && (
+        <View style={styles.closedOverlay}>
+          <View style={styles.closedBadge}>
+            <Text style={styles.closedBadgeText}>마감</Text>
           </View>
         </View>
-
-        {/* 인증 상태 */}
-        <View style={styles.certificationSection}>
-          <Text style={styles.sectionTitle}>인증 현황</Text>
-          
-          <View style={styles.certificationCard}>
-            <View style={styles.certItem}>
-              <View style={styles.certInfo}>
-                <Text style={styles.certTitle}>NTRP 등급 인증</Text>
-                <View style={styles.certStatus}>
-                  {currentUser.certification.ntrp === 'verified' ? (
-                    <>
-                      <CheckCircle size={16} color="#16a34a" />
-                      <Text style={styles.certVerified}>인증 완료</Text>
-                    </>
-                  ) : currentUser.certification.ntrp === 'pending' ? (
-                    <>
-                      <Clock size={16} color="#f59e0b" />
-                      <Text style={styles.certPending}>심사 중</Text>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={16} color="#6b7280" />
-                      <Text style={styles.certNone}>미인증</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.certItem}>
-              <View style={styles.certInfo}>
-                <Text style={styles.certTitle}>선수 인증</Text>
-                <View style={styles.certStatus}>
-                  {currentUser.certification.career === 'verified' ? (
-                    <>
-                      <CheckCircle size={16} color="#16a34a" />
-                      <Text style={styles.certVerified}>인증 완료</Text>
-                    </>
-                  ) : currentUser.certification.career === 'pending' ? (
-                    <>
-                      <Clock size={16} color="#f59e0b" />
-                      <Text style={styles.certPending}>심사 중</Text>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={16} color="#6b7280" />
-                      <Text style={styles.certNone}>미인증</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.certItem}>
-              <View style={styles.certInfo}>
-                <Text style={styles.certTitle}>유튜버 인증</Text>
-                <View style={styles.certStatus}>
-                  {currentUser.certification.youtube === 'verified' ? (
-                    <>
-                      <CheckCircle size={16} color="#16a34a" />
-                      <Text style={styles.certVerified}>인증 완료</Text>
-                    </>
-                  ) : currentUser.certification.youtube === 'pending' ? (
-                    <>
-                      <Clock size={16} color="#f59e0b" />
-                      <Text style={styles.certPending}>심사 중</Text>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={16} color="#6b7280" />
-                      <Text style={styles.certNone}>미인증</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.certItem}>
-              <View style={styles.certInfo}>
-                <Text style={styles.certTitle}>인플루언서 인증</Text>
-                <View style={styles.certStatus}>
-                  {currentUser.certification.instagram === 'verified' ? (
-                    <>
-                      <CheckCircle size={16} color="#16a34a" />
-                      <Text style={styles.certVerified}>인증 완료</Text>
-                    </>
-                  ) : currentUser.certification.instagram === 'pending' ? (
-                    <>
-                      <Clock size={16} color="#f59e0b" />
-                      <Text style={styles.certPending}>심사 중</Text>
-                    </>
-                  ) : (
-                    <>
-                      <AlertCircle size={16} color="#6b7280" />
-                      <Text style={styles.certNone}>미인증</Text>
-                    </>
-                  )}
-                </View>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={styles.certButton} 
-              onPress={handleCertificationRequest}
-            >
-              <Award size={18} color="#16a34a" />
-              <Text style={styles.certButtonText}>인증 신청하기</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* 매치판매 관리 */}
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>매치판매 관리</Text>
-          
-          <View style={styles.noticeBox}>
-            <Text style={styles.noticeText}>
-              경기완료 버튼을 눌러야 수익금을 정산받을 수 있습니다.
-            </Text>
-          </View>
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={handleMyMatchesPress}
-          >
-            <View style={styles.menuItemLeft}>
-              <Calendar size={20} color="#ec4899" />
-              <Text style={styles.menuItemText}>내 매치판매 관리</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/earnings')}
-          >
-            <View style={styles.menuItemLeft}>
-              <CreditCard size={20} color="#16a34a" />
-              <Text style={styles.menuItemText}>수익 정산</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>매치참가 관리</Text>
-          
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={() => router.push('/my-applications')}
-          >
-            <View style={styles.menuItemLeft}>
-              <Users size={20} color="#3b82f6" />
-              <Text style={styles.menuItemText}>내 참가신청</Text>
-            </View>
-            <Text style={styles.menuItemArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>활동 통계</Text>
-          
-          <View style={styles.statsGrid}>
-            <View style={styles.statCard}>
-              <Heart size={24} color="#dc2626" />
-              <Text style={styles.statNumber}>{currentUser.likeCount}</Text>
-              <Text style={styles.statLabel}>좋아요</Text>
-            </View>
-            
-            <View style={styles.statCard}>
-              <Award size={24} color="#ec4899" />
-              <Text style={styles.statNumber}>{currentUser.avgRating}</Text>
-              <Text style={styles.statLabel}>평균 평점</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.bottomPadding} />
-      </ScrollView>
-    </SafeAreaView>
+      )}
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    position: 'relative',
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#111827',
-  },
-  settingsButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
-  },
-  content: {
-    flex: 1,
-    paddingTop: 16,
-  },
-  profileCard: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  profileHeader: {
-    marginBottom: 16,
+  sellerInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
+    alignItems: 'flex-start',
+    flex: 1,
+    gap: 10,
   },
-  profileImageSection: {
+  sellerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  sellerAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sellerDetails: {
+    flex: 1,
+    gap: 4,
+  },
+  sellerNameRow: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  profileImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#e5e7eb',
-    position: 'relative',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+  sellerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
   },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  defaultProfileImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f3f4f6',
+  sellerMeta: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 4,
   },
-  cameraOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#ec4899',
+  sellerMetaText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  ratingRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
+    gap: 4,
   },
-  changePhotoText: {
+  ratingText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#ec4899',
+    color: '#f59e0b',
   },
-  profileInfo: {
-    flex: 1,
+  reviewLink: {
+    marginLeft: 4,
+  },
+  reviewLinkText: {
+    fontSize: 11,
+    color: '#f472b6',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  titleSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
     gap: 8,
   },
-  userName: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
     color: '#111827',
+    flex: 1,
+    lineHeight: 22,
   },
-  profileDetails: {
-    gap: 12,
+  matchTypeBadge: {
+    backgroundColor: '#fdf2f8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
   },
-  detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+  matchTypeText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '700',
+    color: '#ec4899',
   },
-  detailLabel: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  detailValue: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '600',
-  },
-  certificationSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#111827',
+  matchInfo: {
     marginBottom: 12,
   },
-  certificationCard: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  certItem: {
-    marginBottom: 16,
-  },
-  certInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  certTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  certStatus: {
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  certVerified: {
-    fontSize: 14,
-    color: '#ec4899',
-    fontWeight: '600',
-  },
-  certPending: {
-    fontSize: 14,
-    color: '#f59e0b',
-    fontWeight: '600',
-  },
-  certNone: {
-    fontSize: 14,
+  infoText: {
+    fontSize: 13,
     color: '#6b7280',
-    fontWeight: '600',
+    fontWeight: '500',
   },
-  certButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#fdf2f8',
-    paddingVertical: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ec4899',
-    marginTop: 8,
-  },
-  certButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ec4899',
-  },
-  statsSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statNumber: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#111827',
-    marginTop: 8,
-    marginBottom: 4,
-  },
-  statLabel: {
+  separator: {
     fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: '#d1d5db',
+    marginHorizontal: 2,
   },
-  bottomPadding: {
-    height: 40,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  menuItem: {
+  recruitmentStatus: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: 12,
   },
-  menuItemLeft: {
+  ntrpRequirement: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  ntrpText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  recruitmentInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 6,
+    flex: 1,
+    justifyContent: 'flex-end',
   },
-  menuItemText: {
-    fontSize: 16,
-    fontWeight: '600',
+  recruitmentText: {
+    fontSize: 12,
     color: '#374151',
+    fontWeight: '600',
   },
-  menuItemArrow: {
-    fontSize: 20,
+  applicationText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  viewCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewText: {
+    fontSize: 12,
     color: '#9ca3af',
   },
-  noticeBox: {
-    backgroundColor: '#fef3c7',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#fbbf24',
+  priceSection: {
+    alignItems: 'flex-end',
   },
-  noticeText: {
-    fontSize: 12,
-    color: '#92400e',
-    fontWeight: '500',
-    lineHeight: 16,
+  closedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closedBadge: {
+    backgroundColor: '#374151',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  closedBadgeText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

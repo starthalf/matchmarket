@@ -67,128 +67,134 @@ export default function RegisterScreen() {
   }
 
   const handleSubmit = async () => {
-    if (!formData.title || !formData.court || !formData.basePrice || 
-        (!formData.maleCount && !formData.femaleCount) || !formData.ntrpMin || !formData.ntrpMax) {
-      Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
-      return;
-    }
+  if (!formData.title || !formData.court || !formData.basePrice || 
+      (!formData.maleCount && !formData.femaleCount) || !formData.ntrpMin || !formData.ntrpMax) {
+    Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
+    return;
+  }
 
-    if (!currentUser) {
-      Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
-      router.replace('/auth/login');
-      return;
-    }
+  if (!currentUser) {
+    Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
+    router.replace('/auth/login');
+    return;
+  }
 
-    // 숫자 변환 및 유효성 검사
-    const basePriceNum = parseInt(formData.basePrice);
-    const maleCountNum = parseInt(formData.maleCount) || 0;
-    const femaleCountNum = parseInt(formData.femaleCount) || 0;
-    const ntrpMinNum = parseFloat(formData.ntrpMin);
-    const ntrpMaxNum = parseFloat(formData.ntrpMax);
+  // 숫자 변환 및 유효성 검사
+  const basePriceNum = parseInt(formData.basePrice);
+  const maleCountNum = parseInt(formData.maleCount) || 0;
+  const femaleCountNum = parseInt(formData.femaleCount) || 0;
+  const ntrpMinNum = parseFloat(formData.ntrpMin);
+  const ntrpMaxNum = parseFloat(formData.ntrpMax);
 
-    if (isNaN(basePriceNum) || basePriceNum <= 0) {
-      Alert.alert('입력 오류', '올바른 가격을 입력해주세요.');
-      return;
-    }
+  if (isNaN(basePriceNum) || basePriceNum <= 0) {
+    Alert.alert('입력 오류', '올바른 가격을 입력해주세요.');
+    return;
+  }
 
-    if (maleCountNum + femaleCountNum === 0) {
-      Alert.alert('입력 오류', '최소 1명 이상의 참가자가 필요합니다.');
-      return;
-    }
+  if (maleCountNum + femaleCountNum === 0) {
+    Alert.alert('입력 오류', '최소 1명 이상의 참가자가 필요합니다.');
+    return;
+  }
 
-    if (isNaN(ntrpMinNum) || isNaN(ntrpMaxNum) || ntrpMinNum > ntrpMaxNum) {
-      Alert.alert('입력 오류', 'NTRP 범위를 올바르게 입력해주세요.');
-      return;
-    }
+  if (isNaN(ntrpMinNum) || isNaN(ntrpMaxNum) || ntrpMinNum > ntrpMaxNum) {
+    Alert.alert('입력 오류', 'NTRP 범위를 올바르게 입력해주세요.');
+    return;
+  }
 
-    setIsSubmitting(true);
+  setIsSubmitting(true);
 
-    try {
-      // 새로운 매치 객체 생성
-      const newMatchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      
-      const newMatch: Match = {
-        id: newMatchId,
-        sellerId: currentUser.id,
-        seller: currentUser,
-        title: formData.title,
-        date: formData.date.toISOString().split('T')[0],
-        time: formatTime(formData.time),
-        endTime: formatTime(formData.endTime),
-        court: formData.court,
-        description: formData.description || '매치에 대한 설명이 없습니다.',
-        basePrice: basePriceNum,
-        initialPrice: basePriceNum,     // 🔥 null 방지: basePrice와 동일
-        currentPrice: basePriceNum,     // 🔥 null 방지: basePrice와 동일
-        maxPrice: basePriceNum * 3,     // 🔥 null 방지: basePrice의 3배
-        expectedViews: Math.floor(Math.random() * 500) + 200,
-        expectedWaitingApplicants: Math.floor(Math.random() * 5) + 1,
-        expectedParticipants: {
-          male: maleCountNum,
-          female: femaleCountNum,
-          total: maleCountNum + femaleCountNum,
-        },
-        currentApplicants: {
-          male: 0,
-          female: 0,
-          total: 0,
-        },
-        matchType: formData.matchType,
-        waitingApplicants: 0,
-        waitingList: [],
-        participants: [],
-        adEnabled: formData.adEnabled,
-        ntrpRequirement: {
-          min: ntrpMinNum,
-          max: ntrpMaxNum,
-        },
-        weather: '맑음',
-        location: '서울',
-        createdAt: new Date().toISOString(),
-        isClosed: false,
-      };
+  try {
+    // 새로운 매치 객체 생성
+    const newMatchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    console.log('새 매치 ID 생성:', newMatchId); // 디버깅용
+    
+    const newMatch: Match = {
+      id: newMatchId,
+      sellerId: currentUser.id,
+      seller: currentUser,
+      title: formData.title,
+      date: formData.date.toISOString().split('T')[0],
+      time: formatTime(formData.time),
+      endTime: formatTime(formData.endTime),
+      court: formData.court,
+      description: formData.description || '매치에 대한 설명이 없습니다.',
+      basePrice: basePriceNum,
+      initialPrice: basePriceNum,
+      currentPrice: basePriceNum,
+      maxPrice: basePriceNum * 3,
+      expectedViews: Math.floor(Math.random() * 500) + 200,
+      expectedWaitingApplicants: Math.floor(Math.random() * 5) + 1,
+      expectedParticipants: {
+        male: maleCountNum,
+        female: femaleCountNum,
+        total: maleCountNum + femaleCountNum,
+      },
+      currentApplicants: {
+        male: 0,
+        female: 0,
+        total: 0,
+      },
+      matchType: formData.matchType,
+      waitingApplicants: 0,
+      waitingList: [],
+      participants: [],
+      adEnabled: formData.adEnabled,
+      ntrpRequirement: {
+        min: ntrpMinNum,
+        max: ntrpMaxNum,
+      },
+      weather: '맑음',
+      location: '서울',
+      createdAt: new Date().toISOString(),
+      isClosed: false,
+    };
 
-      // MatchContext에 매치 추가
-      const success = await addMatch(newMatch);
+    console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
 
-      if (success) {
-        // 폼 초기화
-        setFormData({
-          title: '',
-          date: new Date(),
-          time: new Date(),
-          endTime: new Date(),
-          court: '',
-          description: '',
-          basePrice: '',
-          matchType: '혼복',
-          maleCount: '2',
-          femaleCount: '2',
-          adEnabled: false,
-          ntrpMin: '3.0',
-          ntrpMax: '4.5',
-        });
+    // MatchContext에 매치 추가
+    const success = await addMatch(newMatch);
+    console.log('addMatch 결과:', success); // 디버깅용
 
-        Alert.alert(
-          '매치 등록 완료! 🎾',
-          '매치가 성공적으로 등록되었습니다!\n실시간 가격 시스템이 활성화됩니다.',
-          [{ 
-            text: '매치 보기', 
-            onPress: () => {
-              router.push(`/match/${newMatch.id}`);
-            }
-          }]
-        );
-      } else {
-        Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-      }
-    } catch (error) {
-      console.error('매치 등록 중 오류:', error);
+    if (success) {
+      // 폼 초기화
+      setFormData({
+        title: '',
+        date: new Date(),
+        time: new Date(),
+        endTime: new Date(),
+        court: '',
+        description: '',
+        basePrice: '',
+        matchType: '혼복',
+        maleCount: '2',
+        femaleCount: '2',
+        adEnabled: false,
+        ntrpMin: '3.0',
+        ntrpMax: '4.5',
+      });
+
+      Alert.alert(
+        '매치 등록 완료! 🎾',
+        '매치가 성공적으로 등록되었습니다!\n실시간 가격 시스템이 활성화됩니다.',
+        [{ 
+          text: '매치 보기', 
+          onPress: () => {
+            console.log('매치 상세페이지로 이동 시도:', newMatchId); // 디버깅용
+            router.replace(`/match/${newMatchId}`); // push -> replace로 변경, newMatchId 사용
+          }
+        }]
+      );
+    } else {
+      console.log('매치 추가 실패'); // 디버깅용
       Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+  } catch (error) {
+    console.error('매치 등록 중 오류:', error);
+    Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ko-KR', {

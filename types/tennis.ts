@@ -8,7 +8,7 @@ export interface User {
   ntrp: number;
   experience: number; // 개월 수
   playStyle: '공격형' | '수비형' | '올라운드';
-  careerType: '동호인' | '대학선수' | '실업선수';
+  careerType: '동호인' | '선수';
   certification: {
     ntrp: 'none' | 'pending' | 'verified';
     career: 'none' | 'pending' | 'verified';

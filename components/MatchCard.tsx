@@ -6,12 +6,12 @@ import {
   MapPin, 
   UserRound, 
   Eye, 
-  Zap, 
-  Shield,
-  Users
+  Users,
+  Star
 } from 'lucide-react-native';
 import { Match } from '../types/tennis';
 import { PriceDisplay } from './PriceDisplay';
+import { CertificationBadge } from './CertificationBadge';
 
 interface MatchCardProps {
   match: Match;
@@ -24,10 +24,6 @@ export function MatchCard({ match }: MatchCardProps) {
   
   // 안전한 기본값 설정
   const applications = match.applications || [];
-  
-  // 핫 매치 조건: 조회수가 예상의 150% 이상이거나 참여신청자가 많은 경우
-  const isHotMatch = match.seller.viewCount > match.expectedViews * 1.5 || 
-                     applications.length > match.expectedParticipants.total * 2;
   
   const handlePress = () => {
     router.push(`/match/${match.id}`);
@@ -60,33 +56,36 @@ export function MatchCard({ match }: MatchCardProps) {
             </View>
           )}
           <View style={styles.sellerDetails}>
-            <Text style={styles.sellerName}>{match.seller.name}</Text>
+            <View style={styles.sellerNameRow}>
+              <CertificationBadge 
+                ntrpCert={match.seller.certification.ntrp}
+                careerCert={match.seller.certification.career}
+                youtubeCert={match.seller.certification.youtube}
+                instagramCert={match.seller.certification.instagram}
+                size="tiny"
+              />
+              <Text style={styles.sellerName}>{match.seller.name}</Text>
+              <Text style={styles.ntrpBadge}>NTRP {match.seller.ntrp.toFixed(1)}</Text>
+            </View>
             <View style={styles.sellerMeta}>
               <Text style={styles.sellerMetaText}>
-                {match.seller.gender} · NTRP {match.seller.ntrp.toFixed(1)}
+                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType}
               </Text>
-              {match.seller.certification.ntrp === 'verified' && (
-                <Shield size={12} color="#10b981" />
-              )}
+            </View>
+            <View style={styles.ratingRow}>
+              <Star size={12} color="#f59e0b" fill="#f59e0b" />
+              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
+              <TouchableOpacity 
+                onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
+                style={styles.reviewLink}
+              >
+                <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
 
-        <View style={styles.headerRight}>
-          {match.adEnabled && (
-            <View style={styles.adBadge}>
-              <Text style={styles.adText}>AD</Text>
-            </View>
-          )}
-        </View>
-
-        {/* 핫 매치 배지 */}
-        {isHotMatch && (
-          <View style={styles.hotBadge}>
-            <Zap size={12} color="#ffffff" fill="#ffffff" />
-            <Text style={styles.hotText}>HOT</Text>
-          </View>
-        )}
+        {/* HOT 배지와 AD 배지 제거됨 */}
       </View>
 
       {/* 매치 제목 및 타입 */}
@@ -186,37 +185,52 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 12,
     position: 'relative',
   },
   sellerInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     flex: 1,
     gap: 10,
   },
   sellerAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
   sellerAvatarPlaceholder: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: '#f3f4f6',
     justifyContent: 'center',
     alignItems: 'center',
   },
   sellerDetails: {
     flex: 1,
+    gap: 4,
+  },
+  sellerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   sellerName: {
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 2,
+    flex: 1,
+  },
+  ntrpBadge: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#ec4899',
+    backgroundColor: '#fdf2f8',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
   },
   sellerMeta: {
     flexDirection: 'row',
@@ -226,37 +240,26 @@ const styles = StyleSheet.create({
   sellerMetaText: {
     fontSize: 12,
     color: '#6b7280',
+    fontWeight: '600',
   },
-  headerRight: {
-    alignItems: 'flex-end',
-  },
-  adBadge: {
-    backgroundColor: '#fbbf24',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  adText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#ffffff',
-  },
-  hotBadge: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: '#dc2626',
+  ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
     gap: 4,
   },
-  hotText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#ffffff',
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#f59e0b',
+  },
+  reviewLink: {
+    marginLeft: 4,
+  },
+  reviewLinkText: {
+    fontSize: 11,
+    color: '#ec4899',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   titleSection: {
     flexDirection: 'row',
@@ -273,17 +276,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   matchTypeBadge: {
-    backgroundColor: '#fef3c7',
+    backgroundColor: '#fdf2f8',
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
+    paddingVertical: 4,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#fbbf24',
+    borderColor: '#d1d5db',
   },
   matchTypeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#92400e',
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ec4899',
   },
   matchInfo: {
     marginBottom: 12,

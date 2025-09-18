@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { TrendingUp, Clock } from 'lucide-react-native';
+import { ArrowUp, ArrowDown } from 'lucide-react-native';
 import { PricingFactors, PricingCalculator } from '../types/tennis';
 
 interface PriceDisplayProps {
@@ -82,7 +82,11 @@ export function PriceDisplay({
             styles.changeIndicator, 
             isIncreasing ? styles.upTrend : styles.downTrend
           ]}>
-            <TrendingUp size={12} color={isIncreasing ? '#dc2626' : '#16a34a'} />
+            {isIncreasing ? (
+              <ArrowUp size={12} color="#dc2626" />
+            ) : (
+              <ArrowDown size={12} color="#16a34a" />
+            )}
             <Text style={[
               styles.changeText,
               isIncreasing ? styles.upText : styles.downText
@@ -92,23 +96,6 @@ export function PriceDisplay({
           </View>
         )}
       </View>
-      
-      {/* 가격 변동 요인 표시 */}
-      {!isClosed && (
-        <View style={styles.factorsContainer}>
-          {applicationsCount >= expectedParticipants * 10 && (
-            <View style={styles.factorBadge}>
-              <Text style={styles.factorText}>신청↑</Text>
-            </View>
-          )}
-          {hoursUntilMatch <= 10 && hoursUntilMatch >= 0 && (
-            <View style={[styles.factorBadge, styles.discountBadge]}>
-              <Clock size={10} color="#dc2626" />
-              <Text style={[styles.factorText, styles.discountText]}>시간할인</Text>
-            </View>
-          )}
-        </View>
-      )}
     </View>
   );
 }
@@ -158,31 +145,5 @@ const styles = StyleSheet.create({
   closedPrice: {
     textDecorationLine: 'line-through',
     color: '#9ca3af',
-  },
-  factorsContainer: {
-    flexDirection: 'row',
-    gap: 4,
-    flexWrap: 'wrap',
-    justifyContent: 'flex-end',
-  },
-  factorBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fef3c7',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    gap: 2,
-  },
-  discountBadge: {
-    backgroundColor: '#fee2e2',
-  },
-  factorText: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#92400e',
-  },
-  discountText: {
-    color: '#dc2626',
   },
 });

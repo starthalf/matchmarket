@@ -272,7 +272,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.user) {
         // 사용자 프로필 정보를 users 테이블에 저장
-        const { error: profileError } = await supabase
+        const { error: insertError } = await supabase
           .from('users')
           .insert({
             id: data.user.id,
@@ -283,37 +283,59 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             experience: userData.experience,
             play_style: userData.playStyle,
             career_type: userData.careerType,
+            certification_ntrp: 'none',
+            certification_career: 'none',
+            certification_youtube: 'none',
+            certification_instagram: 'none',
+            view_count: 0,
+            like_count: 0,
+            avg_rating: 0,
           });
 
-        if (profileError) {
-          console.error('프로필 저장 오류:', profileError);
+        if (insertError) {
+          console.error('프로필 저장 오류:', insertError);
           return { success: false, error: '프로필 저장에 실패했습니다.' };
         }
 
-        // 생성된 프로필 정보 가져오기
-// 수정된 코드
-let userProfile;
-let fetchError;
+        // 프로필이 생성될 때까지 잠시 대기
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-// 프로필이 생성될 때까지 잠시 대기
-await new Promise(resolve => setTimeout(resolve, 500));
+        // 생성된 프로필 정보 가져오기 (재시도 로직 포함)
+        let userProfile;
+        let attempts = 0;
+        const maxAttempts = 3;
 
-const { data: profileData, error: profileError } = await supabase
-  .from('users')
-  .select('*')
-  .eq('id', data.user.id);
+        while (attempts < maxAttempts) {
+          const { data: profileData, error: fetchError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', data.user.id);
 
-if (profileError) {
-  console.error('프로필 조회 오류:', profileError);
-  return { success: false, error: '프로필 조회에 실패했습니다.' };
-}
+          if (fetchError) {
+            console.error(`프로필 조회 시도 ${attempts + 1} 실패:`, fetchError);
+            attempts++;
+            if (attempts < maxAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 500));
+              continue;
+            }
+            return { success: false, error: '프로필 조회에 실패했습니다.' };
+          }
 
-if (!profileData || profileData.length === 0) {
-  console.error('프로필이 생성되지 않았습니다.');
-  return { success: false, error: '프로필 생성에 실패했습니다.' };
-}
+          if (profileData && profileData.length > 0) {
+            userProfile = profileData[0];
+            break;
+          }
 
-userProfile = profileData[0];
+          attempts++;
+          if (attempts < maxAttempts) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+
+        if (!userProfile) {
+          console.error('프로필이 생성되지 않았습니다.');
+          return { success: false, error: '프로필 생성에 실패했습니다.' };
+        }
 
         if (mounted.current) {
           const user = convertSupabaseUserToUser(userProfile);
@@ -321,7 +343,6 @@ userProfile = profileData[0];
         }
 
         return { success: true };
-      }
 
       return { success: false, error: '회원가입에 실패했습니다.' };
     } catch (error) {

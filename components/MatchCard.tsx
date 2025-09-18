@@ -30,9 +30,7 @@ export function MatchCard({ match }: MatchCardProps) {
   // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
   const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
   
-  const handlePress = () => {
-  const { user } = useAuth();
-  
+const handlePress = () => {
   if (!user) {
     router.push('/auth/login');
     return;

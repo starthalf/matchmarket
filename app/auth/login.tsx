@@ -1,284 +1,378 @@
-// app/auth/login.tsx 자동로그인 기능 추가
-
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
-import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { useSafeStyles } from '../../constants/Styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  Clock, 
+  MapPin, 
+  UserRound, 
+  Eye, 
+  Users,
+  Star
+} from 'lucide-react-native';
+import { Match } from '../types/tennis';
+import { PriceDisplay } from './PriceDisplay';
+import { CertificationBadge } from './CertificationBadge';
 
-export default function LoginScreen() {
-  const { login } = useAuth();
-  const safeStyles = useSafeStyles();
+interface MatchCardProps {
+  match: Match;
+}
 
-  // ✅ 안전한 뒤로 가기 함수 추가
-  const handleSafeBack = () => {
-    if (router.canGoBack()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)');
-    }
+export function MatchCard({ match }: MatchCardProps) {
+  const currentTime = new Date();
+  const matchDateTime = new Date(`${match.date}T${match.time}`);
+  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
+  
+  // 안전한 기본값 설정
+  const applications = match.applications || [];
+  
+  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
+  const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
+  
+  const handlePress = () => {
+    router.push(`/match/${match.id}`);
   };
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-
-  // 마지막 로그인 이메일 불러오기
-  useEffect(() => {
-    const loadLastEmail = async () => {
-      try {
-        let lastEmail = '';
-        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-          lastEmail = localStorage.getItem('lastLoginEmail') || '';
-        } else {
-          lastEmail = await AsyncStorage.getItem('lastLoginEmail') || '';
-        }
-        if (lastEmail) {
-          setFormData(prev => ({ ...prev, email: lastEmail }));
-        }
-      } catch (error) {
-        console.warn('마지막 로그인 이메일 로드 실패:', error);
-      }
-    };
-
-    loadLastEmail();
-  }, []);
-
-  const saveLastEmail = async (email: string) => {
-    try {
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        localStorage.setItem('lastLoginEmail', email);
-      } else {
-        await AsyncStorage.setItem('lastLoginEmail', email);
-      }
-    } catch (error) {
-      console.warn('마지막 로그인 이메일 저장 실패:', error);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (!formData.email || !formData.password) {
-      Alert.alert('입력 오류', '이메일과 비밀번호를 모두 입력해주세요.');
-      return;
-    }
-
-    setIsLoading(true);
-    const result = await login(formData.email, formData.password);
-    setIsLoading(false);
-
-    if (result.success) {
-      // 로그인 성공 시 이메일 저장
-      await saveLastEmail(formData.email);
-      router.replace('/(tabs)');
+  const getRecruitmentStatus = () => {
+    const { male, female, total } = match.expectedParticipants;
+    
+    if (male > 0 && female > 0) {
+      return `남성 ${male}명, 여성 ${female}명 모집`;
+    } else if (male > 0) {
+      return `남성 ${male}명 모집`;
+    } else if (female > 0) {
+      return `여성 ${female}명 모집`;
     } else {
-      Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
+      return `${total}명 모집`;
     }
   };
 
   return (
-    <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={safeStyles.safeHeader}>
-        <View style={safeStyles.safeHeaderContent}>
-          <TouchableOpacity 
-            style={safeStyles.backButton} 
-            onPress={handleSafeBack}
-          >
-            <ArrowLeft size={24} color="#374151" />
-          </TouchableOpacity>
-          <Text style={safeStyles.headerTitle}>로그인</Text>
-          <View style={safeStyles.placeholder} />
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
+      {/* 상단 - 판매자 정보 */}
+      <View style={styles.header}>
+        <View style={styles.sellerInfo}>
+          {match.seller.profileImage ? (
+            <Image source={{ uri: match.seller.profileImage }} style={styles.sellerAvatar} />
+          ) : (
+            <View style={styles.sellerAvatarPlaceholder}>
+              <UserRound size={20} color="#6b7280" />
+            </View>
+          )}
+          <View style={styles.sellerDetails}>
+            <View style={styles.sellerNameRow}>
+              <Text style={styles.sellerName}>{match.seller.name}</Text>
+              <CertificationBadge 
+                ntrpCert={match.seller.certification.ntrp}
+                careerCert={match.seller.certification.career}
+                youtubeCert={match.seller.certification.youtube}
+                instagramCert={match.seller.certification.instagram}
+                size="tiny"
+              />
+            </View>
+            <View style={styles.sellerMeta}>
+              <Text style={styles.sellerMetaText}>
+                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
+              </Text>
+            </View>
+            <View style={styles.ratingRow}>
+              <Star size={12} color="#f59e0b" fill="#f59e0b" />
+              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
+              {!isDummyMatch && (
+                <TouchableOpacity 
+                  onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
+                  style={styles.reviewLink}
+                >
+                  <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
         </View>
       </View>
 
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <View style={styles.content}>
-          <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeTitle}>환영합니다!</Text>
-            <Text style={styles.welcomeSubtitle}>MatchMarket에 로그인하세요</Text>
-          </View>
+      {/* 매치 제목 및 타입 */}
+      <View style={styles.titleSection}>
+        <Text style={styles.title} numberOfLines={2}>{match.title}</Text>
+        <View style={styles.matchTypeBadge}>
+          <Text style={styles.matchTypeText}>{match.matchType}</Text>
+        </View>
+      </View>
+      
+      {/* 매치 기본 정보 */}
+      <View style={styles.matchInfo}>
+        <View style={styles.infoRow}>
+          <Clock size={14} color="#6b7280" />
+          <Text style={styles.infoText}>
+            {match.date.slice(5)} {match.time}~{match.endTime}
+          </Text>
+          <Text style={styles.separator}>·</Text>
+          <MapPin size={14} color="#6b7280" />
+          <Text style={styles.infoText}>{match.court}</Text>
+        </View>
+      </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>이메일</Text>
-              <View style={styles.inputContainer}>
-                <Mail size={20} color="#6b7280" />
-                <TextInput
-                  style={styles.textInput}
-                  value={formData.email}
-                  onChangeText={(text) => setFormData({...formData, email: text})}
-                  placeholder="이메일을 입력하세요"
-                  placeholderTextColor="#9ca3af"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
-              </View>
-            </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>비밀번호</Text>
-              <View style={styles.inputContainer}>
-                <Lock size={20} color="#6b7280" />
-                <TextInput
-                  style={styles.textInput}
-                  value={formData.password}
-                  onChangeText={(text) => setFormData({...formData, password: text})}
-                  placeholder="비밀번호를 입력하세요"
-                  placeholderTextColor="#9ca3af"
-                  secureTextEntry={!showPassword}
-                />
-                <TouchableOpacity 
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeButton}
-                >
-                  {showPassword ? (
-                    <EyeOff size={20} color="#6b7280" />
-                  ) : (
-                    <Eye size={20} color="#6b7280" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <TouchableOpacity 
-              style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
-              onPress={handleLogin}
-              disabled={isLoading}
-            >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? '로그인 중...' : '로그인'}
+      {/* 모집 현황 - 새로운 형태 */}
+      <View style={styles.recruitmentStatus}>
+        <View style={styles.ntrpRequirement}>
+          <Text style={styles.ntrpText}>
+            NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
+          </Text>
+        </View>
+        <View style={styles.recruitmentInfo}>
+          <Users size={14} color="#6b7280" />
+          <Text style={styles.recruitmentText}>
+            {getRecruitmentStatus()}
+          </Text>
+          {applications.length > 0 && (
+            <>
+              <Text style={styles.separator}>·</Text>
+              <Text style={styles.applicationText}>
+                신청 {applications.length}건
               </Text>
-            </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>또는</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
-            <TouchableOpacity 
-              style={styles.signupButton}
-              onPress={() => router.push('/auth/signup')}
-            >
-              <Text style={styles.signupButtonText}>회원가입</Text>
-            </TouchableOpacity>
+      {/* 하단 - 가격 및 액션 */}
+      <View style={styles.footer}>
+        {/* 조회수 */}
+        <View style={styles.viewCount}>
+          <Eye size={12} color="#9ca3af" />
+          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
+        </View>
+        
+        <View style={styles.priceSection}>
+          <PriceDisplay
+            currentPrice={match.currentPrice}
+            basePrice={match.basePrice}
+            initialPrice={match.initialPrice}
+            expectedViews={match.expectedViews}
+            maxPrice={match.maxPrice}
+            hoursUntilMatch={hoursUntilMatch}
+            viewCount={match.seller.viewCount}
+            waitingApplicants={match.waitingApplicants}
+            expectedWaitingApplicants={match.expectedWaitingApplicants}
+            sellerGender={match.seller.gender}
+            sellerNtrp={match.seller.ntrp}
+            isClosed={match.isClosed}
+          />
+        </View>
+      </View>
+      
+      {/* 마감 오버레이 */}
+      {match.isClosed && (
+        <View style={styles.closedOverlay}>
+          <View style={styles.closedBadge}>
+            <Text style={styles.closedBadgeText}>마감</Text>
           </View>
         </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      )}
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  keyboardView: {
-    flex: 1,
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
-  content: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    position: 'relative',
+  },
+  sellerInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     flex: 1,
+    gap: 10,
+  },
+  sellerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+  },
+  sellerAvatarPlaceholder: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
     justifyContent: 'center',
-    paddingHorizontal: 24,
-  },
-  welcomeSection: {
     alignItems: 'center',
-    marginBottom: 48,
   },
-  welcomeTitle: {
-    fontSize: 32,
+  sellerDetails: {
+    flex: 1,
+    gap: 4,
+  },
+  sellerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sellerName: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 8,
   },
-  welcomeSubtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  form: {
-    width: '100%',
-  },
-  inputGroup: {
-    marginBottom: 20,
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  inputContainer: {
+  sellerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#ffffff',
-    gap: 12,
+    gap: 4,
   },
-  textInput: {
-    flex: 1,
-    fontSize: 16,
-    color: '#374151',
+  sellerMetaText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
   },
-  eyeButton: {
-    padding: 4,
-  },
-  loginButton: {
-    backgroundColor: '#ec4899',
-    paddingVertical: 16,
-    borderRadius: 12,
+  ratingRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    gap: 4,
   },
-  loginButtonDisabled: {
-    backgroundColor: '#9ca3af',
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#f59e0b',
   },
-  loginButtonText: {
+  reviewLink: {
+    marginLeft: 4,
+  },
+  reviewLinkText: {
+    fontSize: 11,
+    color: '#f472b6',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  titleSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
+  },
+  title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#111827',
+    flex: 1,
+    lineHeight: 22,
   },
-  divider: {
+  matchTypeBadge: {
+    backgroundColor: '#fdf2f8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  matchTypeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ec4899',
+  },
+  matchInfo: {
+    marginBottom: 12,
+  },
+  infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    gap: 6,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#e5e7eb',
-  },
-  dividerText: {
-    marginHorizontal: 16,
-    fontSize: 14,
+  infoText: {
+    fontSize: 13,
     color: '#6b7280',
+    fontWeight: '500',
   },
-  signupButton: {
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 16,
-    borderRadius: 12,
+  separator: {
+    fontSize: 12,
+    color: '#d1d5db',
+    marginHorizontal: 2,
+  },
+  recruitmentStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  ntrpRequirement: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  ntrpText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  recruitmentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  recruitmentText: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: '600',
+  },
+  applicationText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  viewCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewText: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  priceSection: {
+    alignItems: 'flex-end',
+  },
+  closedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 16,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  signupButtonText: {
+  closedBadge: {
+    backgroundColor: '#374151',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  closedBadgeText: {
+    color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
+    fontWeight: '700',
   },
 });

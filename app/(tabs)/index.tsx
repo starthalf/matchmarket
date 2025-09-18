@@ -1,461 +1,378 @@
-// app/(tabs)/index.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  Alert,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
-import { Database } from 'lucide-react-native';
-import { MatchCard } from '../../components/MatchCard';
-import { useAuth } from '../../contexts/AuthContext';
-import { useAdmin } from '../../contexts/AdminContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useMatches } from '../../contexts/MatchContext';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
-import { useSafeStyles } from '../../constants/Styles';
+import { 
+  Clock, 
+  MapPin, 
+  UserRound, 
+  Eye, 
+  Users,
+  Star
+} from 'lucide-react-native';
+import { Match } from '../types/tennis';
+import { PriceDisplay } from './PriceDisplay';
+import { CertificationBadge } from './CertificationBadge';
 
-export default function HomeScreen() {
-  const { user, login, logout } = useAuth();
-  const { isAdmin, adminLogin } = useAdmin();
-  const { matches: displayMatches, isLoadingMatches } = useMatches();
-  const safeStyles = useSafeStyles();
-  const mounted = useRef(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'popular' | 'female' | 'time' | 'ntrp'>('popular');
-  const [showFemaleOnly, setShowFemaleOnly] = useState(false);
+interface MatchCardProps {
+  match: Match;
+}
 
-  // Track component mount status
-  useEffect(() => {
-    mounted.current = true;
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-
-  const handleQuickLogin = async (userIdentifier: string) => {
-    try {
-      const result = await login(userIdentifier, 'demo123');
-      if (result.success) {
-        Alert.alert('로그인 성공', `${userIdentifier}로 로그인되었습니다.`);
-      } else {
-        Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('퀵 로그인 오류:', error);
-      Alert.alert('오류', '로그인 중 오류가 발생했습니다.');
-    }
+export function MatchCard({ match }: MatchCardProps) {
+  const currentTime = new Date();
+  const matchDateTime = new Date(`${match.date}T${match.time}`);
+  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
+  
+  // 안전한 기본값 설정
+  const applications = match.applications || [];
+  
+  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
+  const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
+  
+  const handlePress = () => {
+    router.push(`/match/${match.id}`);
   };
 
-  const handleAdminPress = () => {
-    if (isAdmin) {
-      router.push('/(admin)/dashboard');
+  const getRecruitmentStatus = () => {
+    const { male, female, total } = match.expectedParticipants;
+    
+    if (male > 0 && female > 0) {
+      return `남성 ${male}명, 여성 ${female}명 모집`;
+    } else if (male > 0) {
+      return `남성 ${male}명 모집`;
+    } else if (female > 0) {
+      return `여성 ${female}명 모집`;
     } else {
-      // 관리자가 아닌 경우 로그인 유도
-      Alert.alert(
-        '관리자 로그인',
-        '관리자 기능에 접근하려면 로그인이 필요합니다.',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '로그인', onPress: () => router.push('/admin-login') }
-        ]
-      );
-    }
-  };
-
-  const handleAdminLogin = async () => {
-    // 간단한 데모 관리자 로그인
-    const result = await adminLogin('admin@demo.com', 'admin123');
-    if (result.success) {
-      Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
-    } else {
-      Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
+      return `${total}명 모집`;
     }
   };
 
   return (
-    <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={safeStyles.safeHeader}>
-        <View style={safeStyles.safeHeaderContent}>
-          <View>
-            <Text style={styles.title}>MatchMarket</Text>
-            <Text style={styles.subtitle}>인기가 높은 매치에 참여하세요</Text>
-          </View>
-          <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.dynamicPriceIcon}>
-              <TrendingUp size={20} color="#16a34a" />
-            </TouchableOpacity>
-            
-            {/* 관리자 로그인했을 때만 Supabase 테스트 버튼 표시 */}
-            {isAdmin && (
-              <TouchableOpacity 
-                style={styles.supabaseTestIcon}
-                onPress={() => router.push('/supabase-test')}
-              >
-                <Database size={20} color="#3b82f6" />
-              </TouchableOpacity>
-            )}
-            
-            {/* 관리자 로그인했을 때만 관리자(실드) 버튼 표시 */}
-            {isAdmin && (
-              <TouchableOpacity 
-                style={styles.adminButton}
-                onPress={handleAdminPress}
-              >
-                <Shield size={24} color="#dc2626" />
-              </TouchableOpacity>
-            )}
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
+      {/* 상단 - 판매자 정보 */}
+      <View style={styles.header}>
+        <View style={styles.sellerInfo}>
+          {match.seller.profileImage ? (
+            <Image source={{ uri: match.seller.profileImage }} style={styles.sellerAvatar} />
+          ) : (
+            <View style={styles.sellerAvatarPlaceholder}>
+              <UserRound size={20} color="#6b7280" />
+            </View>
+          )}
+          <View style={styles.sellerDetails}>
+            <View style={styles.sellerNameRow}>
+              <Text style={styles.sellerName}>{match.seller.name}</Text>
+              <CertificationBadge 
+                ntrpCert={match.seller.certification.ntrp}
+                careerCert={match.seller.certification.career}
+                youtubeCert={match.seller.certification.youtube}
+                instagramCert={match.seller.certification.instagram}
+                size="tiny"
+              />
+            </View>
+            <View style={styles.sellerMeta}>
+              <Text style={styles.sellerMetaText}>
+                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
+              </Text>
+            </View>
+            <View style={styles.ratingRow}>
+              <Star size={12} color="#f59e0b" fill="#f59e0b" />
+              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
+              {!isDummyMatch && (
+                <TouchableOpacity 
+                  onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
+                  style={styles.reviewLink}
+                >
+                  <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         </View>
       </View>
 
-      {/* 개발 모드에서만 표시되는 데모 컨트롤 */}
-      {__DEV__ && (
-        <View style={styles.demoControls}>
-          <Text style={styles.demoTitle}>
-            🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
+      {/* 매치 제목 및 타입 */}
+      <View style={styles.titleSection}>
+        <Text style={styles.title} numberOfLines={2}>{match.title}</Text>
+        <View style={styles.matchTypeBadge}>
+          <Text style={styles.matchTypeText}>{match.matchType}</Text>
+        </View>
+      </View>
+      
+      {/* 매치 기본 정보 */}
+      <View style={styles.matchInfo}>
+        <View style={styles.infoRow}>
+          <Clock size={14} color="#6b7280" />
+          <Text style={styles.infoText}>
+            {match.date.slice(5)} {match.time}~{match.endTime}
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
-            {!user ? (
-              <>
-                <TouchableOpacity 
-                  style={styles.demoButton}
-                  onPress={() => handleQuickLogin('aesthetic.vibes')}
-                >
-                  <Text style={styles.demoButtonText}>aesthetic.vibes</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.demoButton}
-                  onPress={() => handleQuickLogin('urban.explorer')}
-                >
-                  <Text style={styles.demoButtonText}>urban.explorer</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={styles.demoButton}
-                  onPress={() => handleQuickLogin('midnight.rider')}
-                >
-                  <Text style={styles.demoButtonText}>midnight.rider</Text>
-                </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.demoButton, styles.adminDemoButton]}
-                  onPress={handleAdminLogin}
-                >
-                  <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
-                </TouchableOpacity>
-               // 기존 디버그 버튼을 이것으로 교체
-<TouchableOpacity 
-  style={{ backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: '#f59e0b' }}
-  onPress={async () => {
-    try {
-      const { SupabaseDebug } = await import('../../utils/supabaseDebug');
-      
-      // 간단한 체크부터 시작
-      const simpleResult = await SupabaseDebug.simpleCheck('hcgkhlee@gmail.com');
-      console.log('🔍 간단한 체크:', simpleResult);
-      
-      if (simpleResult.canLogin) {
-        Alert.alert('디버그 결과', `✅ 로그인 가능!\n프로필: ${simpleResult.hasProfile ? '있음' : '없음'}`);
-        return;
-      }
-      
-      // 로그인이 안 되면 상세 디버깅
-      const detailResult = await SupabaseDebug.debugUserStatus('hcgkhlee@gmail.com');
-      console.log('🔍 상세 디버그:', detailResult);
-      
-      if (detailResult.error) {
-        Alert.alert('디버그 실패', detailResult.error);
-        return;
-      }
-      
-      let message = `=== 계정 상태 ===\n`;
-      message += `이메일: ${detailResult.authUser?.email || '없음'}\n`;
-      message += `이메일 확인: ${detailResult.authUser?.emailConfirmed ? '✅' : '❌'}\n`;
-      message += `프로필: ${detailResult.profile?.exists ? '✅' : '❌'}\n`;
-      message += `로그인 테스트: ${detailResult.loginTest?.success ? '✅' : '❌'}\n`;
-      if (detailResult.loginTest?.error) {
-        message += `로그인 오류: ${detailResult.loginTest.error}`;
-      }
-      
-      Alert.alert('디버그 결과', message);
-      
-    } catch (error) {
-      console.error('디버그 버튼 오류:', error);
-      Alert.alert('오류', `디버깅 실패: ${error}`);
-    }
-  }}
->
-  <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>🔍 디버그</Text>
-</TouchableOpacity>
-              </>
-            ) : (
-              <TouchableOpacity 
-                style={[styles.demoButton, styles.logoutButton]}
-                onPress={logout}
-              >
-                <Text style={styles.logoutButtonText}>로그아웃</Text>
-              </TouchableOpacity>
-            )}
-          </ScrollView>
+          <Text style={styles.separator}>·</Text>
+          <MapPin size={14} color="#6b7280" />
+          <Text style={styles.infoText}>{match.court}</Text>
         </View>
-      )}
+      </View>
 
-      {/* Preview 빌드에서만 표시되는 관리자 로그인 버튼 */}
-      {!__DEV__ && !isAdmin && (
-        <View style={styles.previewAdminSection}>
-          <TouchableOpacity 
-            style={styles.previewAdminButton}
-            onPress={handleAdminLogin}
-          >
-            <Shield size={16} color="#dc2626" />
-            <Text style={styles.previewAdminText}>관리자 로그인</Text>
-          </TouchableOpacity>
+      {/* 모집 현황 - 새로운 형태 */}
+      <View style={styles.recruitmentStatus}>
+        <View style={styles.ntrpRequirement}>
+          <Text style={styles.ntrpText}>
+            NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
+          </Text>
         </View>
-      )}
+        <View style={styles.recruitmentInfo}>
+          <Users size={14} color="#6b7280" />
+          <Text style={styles.recruitmentText}>
+            {getRecruitmentStatus()}
+          </Text>
+          {applications.length > 0 && (
+            <>
+              <Text style={styles.separator}>·</Text>
+              <Text style={styles.applicationText}>
+                신청 {applications.length}건
+              </Text>
+            </>
+          )}
+        </View>
+      </View>
 
-      {/* 검색 및 필터 */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search size={20} color="#9ca3af" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="매치 검색"
-            placeholderTextColor="#9ca3af"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
+      {/* 하단 - 가격 및 액션 */}
+      <View style={styles.footer}>
+        {/* 조회수 */}
+        <View style={styles.viewCount}>
+          <Eye size={12} color="#9ca3af" />
+          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
+        </View>
+        
+        <View style={styles.priceSection}>
+          <PriceDisplay
+            currentPrice={match.currentPrice}
+            basePrice={match.basePrice}
+            initialPrice={match.initialPrice}
+            expectedViews={match.expectedViews}
+            maxPrice={match.maxPrice}
+            hoursUntilMatch={hoursUntilMatch}
+            viewCount={match.seller.viewCount}
+            waitingApplicants={match.waitingApplicants}
+            expectedWaitingApplicants={match.expectedWaitingApplicants}
+            sellerGender={match.seller.gender}
+            sellerNtrp={match.seller.ntrp}
+            isClosed={match.isClosed}
           />
         </View>
-        <TouchableOpacity style={styles.filterButton}>
-          <Filter size={20} color="#6b7280" />
-        </TouchableOpacity>
       </View>
-
-      {/* 정렬 및 필터 옵션 */}
-      <View style={styles.sortContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {[
-            { key: 'popular', label: '인기순' },
-            { key: 'female', label: '여성 매치' },
-            { key: 'time', label: '시간순' },
-            { key: 'ntrp', label: 'NTRP순' },
-          ].map((option) => (
-            <TouchableOpacity
-              key={option.key}
-              style={[
-                styles.sortButton,
-                sortBy === option.key && styles.sortButtonActive
-              ]}
-              onPress={() => setSortBy(option.key as any)}
-            >
-              <Text style={[
-                styles.sortButtonText,
-                sortBy === option.key && styles.sortButtonTextActive
-              ]}>
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
-
-      {/* 매치 목록 */}
-      <ScrollView style={styles.matchList} showsVerticalScrollIndicator={false}>
-        {isLoadingMatches ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>매치를 불러오는 중...</Text>
+      
+      {/* 마감 오버레이 */}
+      {match.isClosed && (
+        <View style={styles.closedOverlay}>
+          <View style={styles.closedBadge}>
+            <Text style={styles.closedBadgeText}>마감</Text>
           </View>
-        ) : (
-          displayMatches
-            .filter(match => 
-              searchQuery === '' || 
-              match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              match.venue.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-            .filter(match => !showFemaleOnly || match.targetGender === '여성')
-            .map((match) => (
-              <MatchCard 
-                key={match.id} 
-                match={match}
-                onPress={() => router.push(`/match/${match.id}`)}
-              />
-            ))
-        )}
-        <View style={styles.bottomPadding} />
-      </ScrollView>
-    </SafeAreaView>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  headerIcons: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  dynamicPriceIcon: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f0fdf4',
-  },
-  supabaseTestIcon: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-  },
-  adminButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#fef2f2',
-  },
-  previewAdminSection: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  previewAdminButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fef2f2',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  previewAdminText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#dc2626',
-  },
-  demoControls: {
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  demoTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
-  },
-  demoButtons: {
-    flexDirection: 'row',
-  },
-  demoButton: {
+  card: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
     borderRadius: 16,
-    marginRight: 8,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  demoButtonText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#374151',
-  },
-  adminDemoButton: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#dc2626',
-  },
-  adminDemoButtonText: {
-    color: '#dc2626',
-    fontWeight: '600',
-  },
-  logoutButton: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
-  },
-  logoutButtonText: {
-    color: '#ef4444',
-    fontWeight: '600',
-  },
-  searchContainer: {
+  header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-    gap: 12,
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    position: 'relative',
   },
-  searchInputContainer: {
-    flex: 1,
+  sellerInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
-  },
-  searchInput: {
+    alignItems: 'flex-start',
     flex: 1,
-    fontSize: 16,
-    color: '#374151',
+    gap: 10,
   },
-  filterButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f9fafb',
+  sellerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
-  sortContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  sortButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  sellerAvatarPlaceholder: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
     backgroundColor: '#f3f4f6',
-    marginRight: 8,
-  },
-  sortButtonActive: {
-    backgroundColor: '#ec4899',
-  },
-  sortButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  sortButtonTextActive: {
-    color: '#fff',
-  },
-  matchList: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  loadingContainer: {
-    padding: 32,
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#6b7280',
+  sellerDetails: {
+    flex: 1,
+    gap: 4,
   },
-  bottomPadding: {
-    height: 20,
+  sellerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  sellerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  sellerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sellerMetaText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#f59e0b',
+  },
+  reviewLink: {
+    marginLeft: 4,
+  },
+  reviewLinkText: {
+    fontSize: 11,
+    color: '#f472b6',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  titleSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+    lineHeight: 22,
+  },
+  matchTypeBadge: {
+    backgroundColor: '#fdf2f8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  matchTypeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#ec4899',
+  },
+  matchInfo: {
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  infoText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  separator: {
+    fontSize: 12,
+    color: '#d1d5db',
+    marginHorizontal: 2,
+  },
+  recruitmentStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  ntrpRequirement: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  ntrpText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  recruitmentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  recruitmentText: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: '600',
+  },
+  applicationText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  viewCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewText: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  priceSection: {
+    alignItems: 'flex-end',
+  },
+  closedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closedBadge: {
+    backgroundColor: '#374151',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  closedBadgeText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

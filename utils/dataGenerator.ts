@@ -413,7 +413,7 @@ export class DataGenerator {
         ntrp_max: match.ntrpRequirement.max,
         weather: match.weather,
         location: match.location,
-        is_dummy: true,
+        is_dummy: (match as any).isDummy ?? false, // 🔥 수정: match의 isDummy 속성 사용, 없으면 false
         created_at: match.createdAt,
         is_closed: match.isClosed || false, // 🔥 isClosed 상태를 Supabase에 저장
       };

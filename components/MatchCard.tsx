@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Clock, 
   MapPin, 
@@ -29,8 +30,15 @@ export function MatchCard({ match }: MatchCardProps) {
   const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
   
   const handlePress = () => {
-    router.push(`/match/${match.id}`);
-  };
+  const { user } = useAuth();
+  
+  if (!user) {
+    router.push('/auth/login');
+    return;
+  }
+  
+  router.push(`/match/${match.id}`);
+};
 
   const getRecruitmentStatus = () => {
     const { male, female, total } = match.expectedParticipants;

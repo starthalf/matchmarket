@@ -108,10 +108,10 @@ export default function RegisterScreen() {
     const newMatchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     console.log('새 매치 ID 생성:', newMatchId); // 디버깅용
     
-    const newMatch: Match = {
-      id: newMatchId,
-      sellerId: currentUser.id,
-      seller: currentUser,
+   const newMatch: Match = {
+  id: newMatchId,
+  sellerId: currentUser.id,
+  seller: currentUser,
       title: formData.title,
       date: formData.date.toISOString().split('T')[0],
       time: formatTime(formData.time),
@@ -146,8 +146,9 @@ export default function RegisterScreen() {
       weather: '맑음',
       location: '서울',
       createdAt: new Date().toISOString(),
-      isClosed: false,
-    };
+  isClosed: false,
+  isDummy: false, // 🔥 추가: 실제 사용자가 등록한 매치는 더미가 아님
+};
 
     console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
 

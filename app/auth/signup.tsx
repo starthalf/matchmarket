@@ -74,17 +74,10 @@ export default function SignupScreen() {
       
       console.log('📋 회원가입 결과:', result);
       
-      if (result.success) {
-        console.log('✅ 회원가입 성공 - 화면 전환');
-        
-        // Alert 없이 바로 이동 테스트
-        console.log('🔄 화면 이동 시도');
+if (result.success) {
+        console.log('✅ 회원가입 성공 - 바로 화면 전환');
         router.replace('/(tabs)');
-        
-        // 추가: Alert도 같이 표시 (확인용)
-        setTimeout(() => {
-          Alert.alert('회원가입 완료', '환영합니다!');
-        }, 500);
+        return; // 함수 종료
       } else {
         console.error('❌ 회원가입 실패:', result.error);
         Alert.alert('회원가입 실패', result.error || '회원가입에 실패했습니다.');

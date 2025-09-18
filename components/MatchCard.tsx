@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
   },
   reviewLinkText: {
     fontSize: 11,
-    color: '#f472b6',
+    color: '#ec4899',
     fontWeight: '600',
     textDecorationLine: 'underline',
   },

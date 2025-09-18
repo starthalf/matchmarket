@@ -218,6 +218,8 @@ if (mounted.current) {
 
   const signup = async (userData: SignupData): Promise<{ success: boolean; error?: string }> => {
     try {
+      console.log('🚀 회원가입 시작:', userData.email);
+      
       if (!supabase) {
         console.warn('Supabase가 설정되지 않음. 모의 데이터로 회원가입 시도.');
         // Fallback to mock data
@@ -263,113 +265,85 @@ if (mounted.current) {
         return { success: true };
       }
 
-      console.log('🚀 Supabase 회원가입 시작:', userData.email);
-
       // Supabase 인증 회원가입
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
       });
 
-      console.log('📝 회원가입 결과:', { data: !!data.user, error: error?.message });
+      console.log('📝 회원가입 결과:', { hasUser: !!data?.user, error: error?.message });
 
       if (error) {
-        console.error('인증 회원가입 오류:', error);
         return { success: false, error: error.message };
       }
 
-      if (data.user) {
-        console.log('👤 사용자 생성 성공:', data.user.id);
-        
-        // 사용자 프로필 정보를 users 테이블에 저장
-        const profileData = {
-          id: data.user.id,
-          name: userData.name,
-          gender: userData.gender,
-          age_group: userData.ageGroup,
-          ntrp: userData.ntrp,
-          experience: userData.experience,
-          play_style: userData.playStyle,
-          career_type: userData.careerType,
-          certification_ntrp: 'none',
-          certification_career: 'none',
-          certification_youtube: 'none',
-          certification_instagram: 'none',
-          view_count: 0,
-          like_count: 0,
-          avg_rating: 0,
-        };
-
-        console.log('💾 프로필 저장 시도:', profileData);
-
-        const { error: insertError } = await supabase
-          .from('users')
-          .insert(profileData);
-
-        if (insertError) {
-          console.error('프로필 저장 오류:', insertError);
-          return { success: false, error: `프로필 저장 실패: ${insertError.message}` };
-        }
-
-        console.log('✅ 프로필 저장 성공');
-
-        // 프로필이 생성될 때까지 잠시 대기
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // 생성된 프로필 정보 가져오기 (재시도 로직 포함)
-        let userProfile = null;
-        let attempts = 0;
-        const maxAttempts = 3;
-
-        while (attempts < maxAttempts && !userProfile) {
-          console.log(`🔍 프로필 조회 시도 ${attempts + 1}`);
-          
-          const { data: profileData, error: fetchError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', data.user.id);
-
-          if (fetchError) {
-            console.error(`프로필 조회 시도 ${attempts + 1} 실패:`, fetchError);
-            attempts++;
-            if (attempts < maxAttempts) {
-              await new Promise(resolve => setTimeout(resolve, 500));
-              continue;
-            }
-            return { success: false, error: '프로필 조회에 실패했습니다.' };
-          }
-
-          if (profileData && profileData.length > 0) {
-            userProfile = profileData[0];
-            console.log('📋 프로필 조회 성공:', userProfile.name);
-            break;
-          }
-
-          attempts++;
-          if (attempts < maxAttempts) {
-            console.log(`재시도 대기 중... (${attempts}/${maxAttempts})`);
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        }
-
-        if (!userProfile) {
-          console.error('프로필이 생성되지 않았습니다.');
-          return { success: false, error: '프로필 생성에 실패했습니다.' };
-        }
-
-        if (mounted.current) {
-          const user = convertSupabaseUserToUser(userProfile);
-          setUser(user);
-          console.log('🎉 사용자 설정 완료:', user.name);
-        }
-
-        return { success: true };
-      } else {
-        console.error('data.user가 존재하지 않음');
-        return { success: false, error: '회원가입 처리 중 오류가 발생했습니다.' };
+      if (!data?.user) {
+        return { success: false, error: '사용자 생성에 실패했습니다.' };
       }
+
+      console.log('👤 사용자 생성 성공:', data.user.id);
+
+      // 사용자 프로필 정보를 users 테이블에 저장
+      const profileData = {
+        id: data.user.id,
+        name: userData.name,
+        gender: userData.gender,
+        age_group: userData.ageGroup,
+        ntrp: userData.ntrp,
+        experience: userData.experience,
+        play_style: userData.playStyle,
+        career_type: userData.careerType,
+        certification_ntrp: 'none',
+        certification_career: 'none',
+        certification_youtube: 'none',
+        certification_instagram: 'none',
+        view_count: 0,
+        like_count: 0,
+        avg_rating: 0,
+      };
+
+      console.log('💾 프로필 저장 시도');
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert(profileData);
+
+      if (insertError) {
+        console.error('프로필 저장 오류:', insertError);
+        return { success: false, error: `프로필 저장 실패: ${insertError.message}` };
+      }
+
+      console.log('✅ 프로필 저장 성공');
+
+      // 간단한 User 객체 생성 (DB 조회 없이)
+      const newUser: User = {
+        id: data.user.id,
+        name: userData.name,
+        gender: userData.gender,
+        ageGroup: userData.ageGroup,
+        ntrp: userData.ntrp,
+        experience: userData.experience,
+        playStyle: userData.playStyle,
+        careerType: userData.careerType,
+        certification: { 
+          ntrp: 'none', 
+          career: 'none', 
+          youtube: 'none', 
+          instagram: 'none' 
+        },
+        viewCount: 0,
+        likeCount: 0,
+        avgRating: 0,
+      };
+
+      if (mounted.current) {
+        setUser(newUser);
+        console.log('🎉 사용자 설정 완료:', newUser.name);
+      }
+
+      return { success: true };
+
     } catch (error) {
-      console.error('회원가입 실패:', error);
+      console.error('❌ 회원가입 실패:', error);
       return { success: false, error: '회원가입 중 오류가 발생했습니다.' };
     }
   };

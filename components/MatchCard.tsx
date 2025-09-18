@@ -25,6 +25,9 @@ export function MatchCard({ match }: MatchCardProps) {
   // 안전한 기본값 설정
   const applications = match.applications || [];
   
+  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
+  const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
+  
   const handlePress = () => {
     router.push(`/match/${match.id}`);
   };
@@ -74,12 +77,14 @@ export function MatchCard({ match }: MatchCardProps) {
             <View style={styles.ratingRow}>
               <Star size={12} color="#f59e0b" fill="#f59e0b" />
               <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
-              <TouchableOpacity 
-                onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
-                style={styles.reviewLink}
-              >
-                <Text style={styles.reviewLinkText}>리뷰 보기</Text>
-              </TouchableOpacity>
+              {!isDummyMatch && (
+                <TouchableOpacity 
+                  onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
+                  style={styles.reviewLink}
+                >
+                  <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
         </View>

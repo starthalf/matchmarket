@@ -276,9 +276,9 @@ export default function MatchDetailScreen() {
                 <Text style={styles.sellerMeta}>
                   {match.seller?.gender || ''} · {match.seller?.ageGroup || ''} · NTRP {match.seller?.ntrp?.toFixed(1) || '0.0'}
                 </Text>
-                <Text style={styles.sellerDetailText}>
-                  경력 {match.seller?.experience || 0}개월 · {match.seller?.careerType || ''} · {match.seller?.playStyle || ''}
-                </Text>
+               <Text style={styles.sellerDetailText}>
+  경력 {Math.floor((match.seller?.experience || 0) / 12)}년 · {match.seller?.careerType || ''} · {match.seller?.playStyle || ''}
+</Text>
               </View>
             </View>
             <View style={styles.sellerStats}>

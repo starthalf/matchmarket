@@ -851,7 +851,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   submitButton: {
-    backgroundColor: '#16a34a',
+    backgroundColor: '#ec4899',
     marginHorizontal: 16,
     borderRadius: 12,
     paddingVertical: 16,

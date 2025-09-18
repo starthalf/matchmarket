@@ -1,4 +1,4 @@
-// utils/dataGenerator.ts - 깔끔한 버전 (디버그 코드 제거, null 에러 해결)
+// utils/dataGenerator.ts - 완전한 코드 (모든 함수 포함)
 
 import { Match, User } from '../types/tennis';
 import { supabase, supabaseAdmin } from '../lib/supabase';
@@ -394,15 +394,6 @@ export class DataGenerator {
     }
   }
 
-  // 헬퍼 메소드들
-  private static generateMatchTitle(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)];
-  }
-
-  private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
-  }
-
   /**
    * 일회성으로 지정된 개수만큼 더미 매치 생성
    */
@@ -620,6 +611,15 @@ export class DataGenerator {
         error: error?.message || '알 수 없는 오류'
       };
     }
+  }
+
+  // 헬퍼 메소드들
+  private static generateMatchTitle(matchType: '단식' | '남복' | '여복' | '혼복'): string {
+    return this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)];
+  }
+
+  private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
+    return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
   }
 
   /**

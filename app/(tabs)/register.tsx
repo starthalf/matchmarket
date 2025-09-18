@@ -173,16 +173,19 @@ setFormData({
   ntrpMax: '4.5',
 });
 
-// 🔥 Alert 없이 바로 이동
-console.log('매치 상세페이지로 바로 이동:', newMatchId);
-router.replace(`/match/${newMatchId}`);
+// 웹에서도 작동하는 방식으로 지연 후 이동
+console.log('매치 상세페이지로 이동 준비:', newMatchId);
+setTimeout(() => {
+  console.log('매치 상세페이지로 이동 실행:', newMatchId);
+  router.replace(`/match/${newMatchId}`);
+}, 1000); // 1초 지연 (충분한 시간 확보)
 
-  } catch (error) {
-    console.error('매치 등록 중 오류:', error);
-    Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-  } finally {
-    setIsSubmitting(false);
-  }
+} catch (error) {
+  console.error('매치 등록 중 오류:', error);
+  // 웹에서는 console.error만 사용하거나 간단한 처리
+} finally {
+  setIsSubmitting(false);
+}
 };
 
   const formatDate = (date: Date) => {

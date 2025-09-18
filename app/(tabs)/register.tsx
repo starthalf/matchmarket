@@ -176,16 +176,13 @@ setFormData({
 // 🔥 Alert 없이 바로 이동
 console.log('매치 상세페이지로 바로 이동:', newMatchId);
 router.replace(`/match/${newMatchId}`);
-    }
-  }]
-);
 
-} catch (error) {  // 🔥 이 부분이 빠져있었습니다!
-  console.error('매치 등록 중 오류:', error);
-  Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-} finally {
-  setIsSubmitting(false);
-}
+  } catch (error) {
+    console.error('매치 등록 중 오류:', error);
+    Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+  } finally {
+    setIsSubmitting(false);
+  }
 };
 
   const formatDate = (date: Date) => {

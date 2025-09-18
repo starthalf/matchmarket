@@ -39,45 +39,19 @@ export interface MatchApplication {
   paymentExpiresAt?: string; // 결제요청 5분 타이머
 }
 
-export interface Match {
+// 기존 대기자 인터페이스 (하위 호환성을 위해 유지)
+export interface WaitingApplicant {
   id: string;
-  sellerId: string;
-  seller: User;
-  title: string;
-  date: string;
-  time: string;
-  endTime: string;
-  court: string;
-  description: string;
-  basePrice: number;
-  // 🗑️ initialPrice 삭제
-  currentPrice: number;
-  maxPrice: number;
-  expectedViews: number;
-  // 🗑️ expectedWaitingApplicants 삭제
-  expectedParticipants: {
-    male: number;
-    female: number;
-    total: number;
-  };
-  currentApplicants: {
-    male: number;
-    female: number;
-    total: number;
-  };
-  matchType: '단식' | '남복' | '여복' | '혼복';
-  // 🗑️ waitingApplicants, waitingList 삭제
-  applications: MatchApplication[]; // 🆕 참여신청 목록
-  participants: MatchParticipant[];
-  adEnabled: boolean;
-  ntrpRequirement: {
-    min: number;
-    max: number;
-  };
-  weather: '맑음' | '흐림' | '비';
-  location: string;
-  createdAt: string;
-  isClosed?: boolean;
+  userId: string;
+  userName: string;
+  gender: '남성' | '여성';
+  ntrp: number;
+  joinedAt: string;
+  status: 'waiting' | 'payment_requested' | 'payment_submitted' | 'payment_confirmed' | 'payment_failed' | 'cancelled';
+  paymentRequestedAt?: string;
+  paymentExpiresAt?: string;
+  paymentSubmittedAt?: string;
+  depositorName?: string;
 }
 
 export interface MatchParticipant {
@@ -100,11 +74,58 @@ export interface MatchParticipant {
   };
 }
 
+export interface Match {
+  id: string;
+  sellerId: string;
+  seller: User;
+  title: string;
+  date: string;
+  time: string;
+  endTime: string;
+  court: string;
+  description: string;
+  basePrice: number;
+  initialPrice?: number; // 🗑️ 삭제 예정 (호환성 유지)
+  currentPrice: number;
+  maxPrice: number;
+  expectedViews: number;
+  expectedWaitingApplicants?: number; // 🗑️ 삭제 예정 (호환성 유지)
+  expectedParticipants: {
+    male: number;
+    female: number;
+    total: number;
+  };
+  currentApplicants: {
+    male: number;
+    female: number;
+    total: number;
+  };
+  matchType: '단식' | '남복' | '여복' | '혼복';
+  
+  // 🔄 기존 대기자 시스템 (호환성 유지)
+  waitingApplicants?: number;
+  waitingList?: WaitingApplicant[];
+  
+  // 🆕 새로운 참여신청 시스템
+  applications?: MatchApplication[];
+  
+  participants: MatchParticipant[];
+  adEnabled: boolean;
+  ntrpRequirement: {
+    min: number;
+    max: number;
+  };
+  weather: '맑음' | '흐림' | '비';
+  location: string;
+  createdAt: string;
+  isClosed?: boolean;
+}
+
 // 🆕 채팅 관련 인터페이스
 export interface ChatRoom {
   id: string;
   matchId: string;
-  participantIds: string[]; // 참가자 ID들 (판매자 + 참가자)
+  participantIds: string[];
   lastMessage?: ChatMessage;
   updatedAt: string;
   createdAt: string;
@@ -121,7 +142,6 @@ export interface ChatMessage {
   isRead: boolean;
 }
 
-// 기존 인터페이스들 유지
 export interface PaymentRequest {
   id: string;
   matchId: string;
@@ -139,7 +159,7 @@ export interface Review {
   sellerId: string;
   reviewerId: string;
   reviewerName: string;
-  rating: number; // 1-5
+  rating: number;
   comment: string;
   matchTitle?: string;
   createdAt: string;
@@ -151,7 +171,7 @@ export interface CertificationRequest {
   type: 'ntrp' | 'career';
   requestedNtrp?: number;
   careerDetails?: string;
-  evidence: string[]; // 이미지/영상 URL
+  evidence: string[];
   description: string;
   status: 'pending' | 'approved' | 'rejected';
   submittedAt: string;
@@ -165,6 +185,43 @@ export interface PricingFactors {
   hoursUntilMatch: number;
   basePrice: number;
   maxPrice: number;
+}
+
+// 🆕 새로운 가격 계산 유틸리티
+export class PricingCalculator {
+  /**
+   * 간소화된 동적 가격 계산
+   * - 조회수 할증: 500회 이상부터 (최대 10%)
+   * - 참여신청자 할증: 모집인원수의 10배 이상부터 (최대 100%)
+   * - 시간 할인: 10시간 전부터 (최대 20%)
+   */
+  static calculateDynamicPrice(factors: PricingFactors): number {
+    let price = factors.basePrice;
+    
+    // 1. 조회수 할증 (500회 이상부터, 최대 10%)
+    if (factors.viewCount >= 500) {
+      const viewMultiplier = Math.min(0.1, (factors.viewCount - 500) / 2000 * 0.1);
+      price *= (1 + viewMultiplier);
+    }
+    
+    // 2. 참여신청자 할증 (모집인원 × 10배 이상부터, 최대 100%)
+    if (factors.applicationsCount >= factors.expectedApplicants) {
+      const applicationMultiplier = Math.min(1.0, (factors.applicationsCount - factors.expectedApplicants) / factors.expectedApplicants);
+      price *= (1 + applicationMultiplier);
+    }
+    
+    // 3. 시간 할인 (10시간 전부터, 최대 20%)
+    if (factors.hoursUntilMatch <= 10 && factors.hoursUntilMatch >= 0) {
+      const timeDiscount = Math.min(0.2, (10 - factors.hoursUntilMatch) / 10 * 0.2);
+      price *= (1 - timeDiscount);
+    }
+    
+    // 4. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
+    price = Math.max(factors.basePrice, price);
+    price = Math.min(factors.maxPrice, price);
+    
+    return Math.round(price / 1000) * 1000; // 1000원 단위 반올림
+  }
 }
 
 // 매치 타입별 도우미 함수들
@@ -263,43 +320,6 @@ export const MatchTypeHelper = {
     return { isValid: true };
   }
 };
-
-// 🆕 새로운 가격 계산 유틸리티
-export class PricingCalculator {
-  /**
-   * 간소화된 동적 가격 계산
-   * - 조회수 할증: 500회 이상부터 (최대 10%)
-   * - 참여신청자 할증: 모집인원수의 10배 이상부터 (최대 100%)
-   * - 시간 할인: 10시간 전부터 (최대 20%)
-   */
-  static calculateDynamicPrice(factors: PricingFactors): number {
-    let price = factors.basePrice;
-    
-    // 1. 조회수 할증 (500회 이상부터, 최대 10%)
-    if (factors.viewCount >= 500) {
-      const viewMultiplier = Math.min(0.1, (factors.viewCount - 500) / 2000 * 0.1);
-      price *= (1 + viewMultiplier);
-    }
-    
-    // 2. 참여신청자 할증 (모집인원 × 10배 이상부터, 최대 100%)
-    if (factors.applicationsCount >= factors.expectedApplicants) {
-      const applicationMultiplier = Math.min(1.0, (factors.applicationsCount - factors.expectedApplicants) / factors.expectedApplicants);
-      price *= (1 + applicationMultiplier);
-    }
-    
-    // 3. 시간 할인 (10시간 전부터, 최대 20%)
-    if (factors.hoursUntilMatch <= 10 && factors.hoursUntilMatch >= 0) {
-      const timeDiscount = Math.min(0.2, (10 - factors.hoursUntilMatch) / 10 * 0.2);
-      price *= (1 - timeDiscount);
-    }
-    
-    // 4. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
-    price = Math.max(factors.basePrice, price);
-    price = Math.min(factors.maxPrice, price);
-    
-    return Math.round(price / 1000) * 1000; // 1000원 단위 반올림
-  }
-}
 
 // 추가 유틸리티 타입들
 export type MatchStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';

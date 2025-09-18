@@ -221,7 +221,7 @@ if (mounted.current) {
       console.log('🚀 회원가입 시작:', userData.email);
       
       if (!supabase) {
-        console.warn('Supabase가 설정되지 않음. 모의 데이터로 회원가입 시도.');
+        console.log('⚠️ Supabase 없음 - 모의 데이터 사용');
         // Fallback to mock data
         const existingUser = mockUsers.find(u => u.name === userData.email);
         if (existingUser) {
@@ -262,30 +262,39 @@ if (mounted.current) {
           await AsyncStorage.setItem('userId', newUser.id);
         }
         
+        console.log('✅ 모의 데이터 회원가입 완료');
         return { success: true };
       }
 
+      console.log('🔑 Supabase 인증 시작');
       // Supabase 인증 회원가입
-      const { data, error } = await supabase.auth.signUp({
+      const signUpResult = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
       });
 
-      console.log('📝 회원가입 결과:', { hasUser: !!data?.user, error: error?.message });
+      console.log('📝 인증 결과:', { 
+        hasUser: !!signUpResult.data?.user, 
+        error: signUpResult.error?.message,
+        userId: signUpResult.data?.user?.id 
+      });
 
-      if (error) {
-        return { success: false, error: error.message };
+      if (signUpResult.error) {
+        console.error('❌ 인증 실패:', signUpResult.error);
+        return { success: false, error: signUpResult.error.message };
       }
 
-      if (!data?.user) {
+      if (!signUpResult.data?.user) {
+        console.error('❌ 사용자 객체 없음');
         return { success: false, error: '사용자 생성에 실패했습니다.' };
       }
 
-      console.log('👤 사용자 생성 성공:', data.user.id);
+      const userId = signUpResult.data.user.id;
+      console.log('👤 사용자 생성 성공:', userId);
 
-      // 사용자 프로필 정보를 users 테이블에 저장
+      // 프로필 데이터 준비
       const profileData = {
-        id: data.user.id,
+        id: userId,
         name: userData.name,
         gender: userData.gender,
         age_group: userData.ageGroup,
@@ -302,21 +311,23 @@ if (mounted.current) {
         avg_rating: 0,
       };
 
-      console.log('💾 프로필 저장 시도');
-      const { error: insertError } = await supabase
+      console.log('💾 프로필 저장 시작');
+      const insertResult = await supabase
         .from('users')
         .insert(profileData);
 
-      if (insertError) {
-        console.error('프로필 저장 오류:', insertError);
-        return { success: false, error: `프로필 저장 실패: ${insertError.message}` };
+      console.log('💾 프로필 저장 결과:', { error: insertResult.error?.message });
+
+      if (insertResult.error) {
+        console.error('❌ 프로필 저장 실패:', insertResult.error);
+        return { success: false, error: `프로필 저장 실패: ${insertResult.error.message}` };
       }
 
       console.log('✅ 프로필 저장 성공');
 
-      // 간단한 User 객체 생성 (DB 조회 없이)
+      // User 객체 생성
       const newUser: User = {
-        id: data.user.id,
+        id: userId,
         name: userData.name,
         gender: userData.gender,
         ageGroup: userData.ageGroup,
@@ -337,13 +348,14 @@ if (mounted.current) {
 
       if (mounted.current) {
         setUser(newUser);
-        console.log('🎉 사용자 설정 완료:', newUser.name);
+        console.log('👑 사용자 설정 완료:', newUser.name);
       }
 
+      console.log('🎉 회원가입 전체 완료');
       return { success: true };
 
     } catch (error) {
-      console.error('❌ 회원가입 실패:', error);
+      console.error('💥 회원가입 예외:', error);
       return { success: false, error: '회원가입 중 오류가 발생했습니다.' };
     }
   };

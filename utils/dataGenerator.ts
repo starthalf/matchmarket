@@ -363,6 +363,7 @@ export class DataGenerator {
       if (!supabaseAdmin) {
         console.log('ℹ️ Supabase Admin이 설정되지 않아 매치 저장을 건너뜁니다.');
         return false;
+        console.log('저장할 매치의 isDummy 값:', (match as any).isDummy); // 디버깅 추가
       }
 
       const safeBasePrice = Number(match.basePrice) || 0;
@@ -417,6 +418,7 @@ export class DataGenerator {
         created_at: match.createdAt,
         is_closed: match.isClosed || false, // 🔥 isClosed 상태를 Supabase에 저장
       };
+      console.log('Supabase에 저장될 is_dummy 값:', supabaseData.is_dummy); // 디버깅 추가
 
       const { error } = await supabaseAdmin
         .from('matches')

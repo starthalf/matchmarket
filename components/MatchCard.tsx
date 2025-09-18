@@ -57,22 +57,20 @@ export function MatchCard({ match }: MatchCardProps) {
           )}
           <View style={styles.sellerDetails}>
             <View style={styles.sellerNameRow}>
-  <Text style={styles.sellerName}>{match.seller.name}</Text>
-  <CertificationBadge 
-    ntrpCert={match.seller.certification.ntrp}
-    careerCert={match.seller.certification.career}
-    youtubeCert={match.seller.certification.youtube}
-    instagramCert={match.seller.certification.instagram}
-    size="tiny"
-              />
               <Text style={styles.sellerName}>{match.seller.name}</Text>
-              <Text style={styles.ntrpBadge}>NTRP {match.seller.ntrp.toFixed(1)}</Text>
+              <CertificationBadge 
+                ntrpCert={match.seller.certification.ntrp}
+                careerCert={match.seller.certification.career}
+                youtubeCert={match.seller.certification.youtube}
+                instagramCert={match.seller.certification.instagram}
+                size="tiny"
+              />
             </View>
             <View style={styles.sellerMeta}>
-  <Text style={styles.sellerMetaText}>
-    {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
-  </Text>
-</View>
+              <Text style={styles.sellerMetaText}>
+                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
+              </Text>
+            </View>
             <View style={styles.ratingRow}>
               <Star size={12} color="#f59e0b" fill="#f59e0b" />
               <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
@@ -85,8 +83,6 @@ export function MatchCard({ match }: MatchCardProps) {
             </View>
           </View>
         </View>
-
-        {/* HOT 배지와 AD 배지 제거됨 */}
       </View>
 
       {/* 매치 제목 및 타입 */}
@@ -226,9 +222,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
-    flex: 1,
   },
-    sellerMeta: {
+  sellerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,

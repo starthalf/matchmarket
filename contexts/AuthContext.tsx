@@ -188,21 +188,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.user) {
         // 사용자 프로필 정보 가져오기
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+        // 수정된 코드
+const { data: profileData, error: profileError } = await supabase
+  .from('users')
+  .select('*')
+  .eq('id', session.user.id);
 
-        if (profileError) {
-          console.error('사용자 프로필 조회 오류:', profileError);
-          return { success: false, error: '사용자 프로필을 찾을 수 없습니다.' };
-        }
+if (profileError) {
+  console.error('사용자 프로필 조회 오류:', profileError);
+  return;
+}
 
-        if (mounted.current) {
-          const user = convertSupabaseUserToUser(userProfile);
-          setUser(user);
-        }
+if (profileData && profileData.length > 0 && mounted.current) {
+  const user = convertSupabaseUserToUser(profileData[0]);
+  setUser(user);
+}
         return { success: true };
       }
 

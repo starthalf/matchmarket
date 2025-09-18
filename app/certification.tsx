@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-impoimport { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Youtube, Instagram, Award } from 'lucide-react-native'useSafeStyles } from '../constants/Styles';
+import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Youtube, Instagram, Award } from 'lucide-react-native';
+import { useSafeStyles } from '../constants/Styles';
 
 export default function CertificationScreen() {
   const { user } = useAuth();

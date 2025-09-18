@@ -96,11 +96,6 @@ export function PriceDisplay({
       {/* 가격 변동 요인 표시 */}
       {!isClosed && (
         <View style={styles.factorsContainer}>
-          {viewCount >= 500 && (
-            <View style={styles.factorBadge}>
-              <Text style={styles.factorText}>조회↑</Text>
-            </View>
-          )}
           {applicationsCount >= expectedParticipants * 10 && (
             <View style={styles.factorBadge}>
               <Text style={styles.factorText}>신청↑</Text>

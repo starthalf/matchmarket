@@ -19,6 +19,7 @@ interface MatchCardProps {
 }
 
 export function MatchCard({ match }: MatchCardProps) {
+  const { user } = useAuth();
   const currentTime = new Date();
   const matchDateTime = new Date(`${match.date}T${match.time}`);
   const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));

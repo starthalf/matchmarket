@@ -144,11 +144,15 @@ export function MatchCard({ match }: MatchCardProps) {
           <PriceDisplay
             currentPrice={match.currentPrice}
             basePrice={match.basePrice}
+            initialPrice={match.initialPrice}
+            expectedViews={match.expectedViews}
             maxPrice={match.maxPrice}
             hoursUntilMatch={hoursUntilMatch}
             viewCount={match.seller.viewCount}
-            applicationsCount={applications.length}
-            expectedParticipants={match.expectedParticipants.total}
+            waitingApplicants={match.waitingApplicants}
+            expectedWaitingApplicants={match.expectedWaitingApplicants}
+            sellerGender={match.seller.gender}
+            sellerNtrp={match.seller.ntrp}
             isClosed={match.isClosed}
           />
         </View>

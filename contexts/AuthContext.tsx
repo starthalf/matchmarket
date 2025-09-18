@@ -188,8 +188,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.user) {
         // 사용자 프로필 정보 가져오기
-        // 수정된 코드
-// 수정된 코드
 const { data: profileData, error: profileError } = await supabase
   .from('users')
   .select('*')

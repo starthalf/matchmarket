@@ -402,16 +402,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
           // 로그인 시 프로필 정보 가져오기
-          const { data: userProfile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          // 수정된 코드
+const { data: profileData } = await supabase
+  .from('users')
+  .select('*')
+  .eq('id', session.user.id);
 
-          if (userProfile && mounted.current) {
-            const user = convertSupabaseUserToUser(userProfile);
-            setUser(user);
-          }
+if (profileData && profileData.length > 0 && mounted.current) {
+  const user = convertSupabaseUserToUser(profileData[0]);
+  setUser(user);
+}
         } else if (event === 'SIGNED_OUT') {
           if (mounted.current) {
             setUser(null);

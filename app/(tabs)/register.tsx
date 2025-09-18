@@ -151,7 +151,7 @@ export default function RegisterScreen() {
 
     console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
 
-    // MatchContext에 매치 추가
+// MatchContext에 매치 추가
 console.log('새 매치 추가 중:', newMatchId); // 디버깅용
 addMatch(newMatch); // await와 success 체크 제거
 console.log('매치 추가 완료'); // 디버깅용
@@ -185,17 +185,6 @@ Alert.alert(
     }
   }]
 );
-    } else {
-      console.log('매치 추가 실패'); // 디버깅용
-      Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-    }
-  } catch (error) {
-    console.error('매치 등록 중 오류:', error);
-    Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ko-KR', {

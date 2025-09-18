@@ -291,16 +291,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 생성된 프로필 정보 가져오기
-        const { data: userProfile, error: fetchError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+        // 수정된 코드
+let userProfile;
+let fetchError;
 
-        if (fetchError || !userProfile) {
-          console.error('프로필 조회 오류:', fetchError);
-          return { success: false, error: '프로필 조회에 실패했습니다.' };
-        }
+// 프로필이 생성될 때까지 잠시 대기
+await new Promise(resolve => setTimeout(resolve, 500));
+
+const { data: profileData, error: profileError } = await supabase
+  .from('users')
+  .select('*')
+  .eq('id', data.user.id);
+
+if (profileError) {
+  console.error('프로필 조회 오류:', profileError);
+  return { success: false, error: '프로필 조회에 실패했습니다.' };
+}
+
+if (!profileData || profileData.length === 0) {
+  console.error('프로필이 생성되지 않았습니다.');
+  return { success: false, error: '프로필 생성에 실패했습니다.' };
+}
+
+userProfile = profileData[0];
 
         if (mounted.current) {
           const user = convertSupabaseUserToUser(userProfile);

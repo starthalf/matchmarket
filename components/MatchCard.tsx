@@ -22,9 +22,12 @@ export function MatchCard({ match }: MatchCardProps) {
   const matchDateTime = new Date(`${match.date}T${match.time}`);
   const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
   
+  // 안전한 기본값 설정
+  const applications = match.applications || [];
+  
   // 핫 매치 조건: 조회수가 예상의 150% 이상이거나 참여신청자가 많은 경우
   const isHotMatch = match.seller.viewCount > match.expectedViews * 1.5 || 
-                     (match.applications?.length || 0) > match.expectedParticipants.total * 2;
+                     applications.length > match.expectedParticipants.total * 2;
   
   const handlePress = () => {
     router.push(`/match/${match.id}`);
@@ -119,11 +122,11 @@ export function MatchCard({ match }: MatchCardProps) {
           <Text style={styles.recruitmentText}>
             {getRecruitmentStatus()}
           </Text>
-          {(match.applications?.length || 0) > 0 && (
+          {applications.length > 0 && (
             <>
               <Text style={styles.separator}>·</Text>
               <Text style={styles.applicationText}>
-                신청 {match.applications?.length || 0}건
+                신청 {applications.length}건
               </Text>
             </>
           )}
@@ -145,7 +148,7 @@ export function MatchCard({ match }: MatchCardProps) {
             maxPrice={match.maxPrice}
             hoursUntilMatch={hoursUntilMatch}
             viewCount={match.seller.viewCount}
-            applicationsCount={match.applications?.length || 0}
+            applicationsCount={applications.length}
             expectedParticipants={match.expectedParticipants.total}
             isClosed={match.isClosed}
           />

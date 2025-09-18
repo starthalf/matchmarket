@@ -1,228 +1,183 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Alert,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { 
-  User, 
-  Settings, 
-  Star, 
-  Award, 
+  Clock, 
+  MapPin, 
+  UserRound, 
   Eye, 
-  Heart, 
-  Calendar, 
-  CreditCard, 
-  FileText, 
-  LogOut,
-  Database
+  Users,
+  Star
 } from 'lucide-react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { CertificationBadge } from '../../components/CertificationBadge';
-import { useSafeStyles } from '../../constants/Styles';
+import { Match } from '../types/tennis';
+import { PriceDisplay } from './PriceDisplay';
+import { CertificationBadge } from './CertificationBadge';
 
-export default function ProfileScreen() {
-  const { user, logout } = useAuth();
-  const safeStyles = useSafeStyles();
+interface MatchCardProps {
+  match: Match;
+}
 
-  if (!user) {
-    return (
-      <SafeAreaView style={safeStyles.safeContainer}>
-        <View style={styles.loginPrompt}>
-          <Text style={styles.loginPromptText}>로그인이 필요합니다</Text>
-          <TouchableOpacity 
-            style={styles.loginButton}
-            onPress={() => router.push('/auth/login')}
-          >
-            <Text style={styles.loginButtonText}>로그인</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  const handleLogout = () => {
-    Alert.alert(
-      '로그아웃',
-      '정말로 로그아웃하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '로그아웃', onPress: logout }
-      ]
-    );
+export function MatchCard({ match }: MatchCardProps) {
+  const currentTime = new Date();
+  const matchDateTime = new Date(`${match.date}T${match.time}`);
+  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
+  
+  // 안전한 기본값 설정
+  const applications = match.applications || [];
+  
+  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
+  const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
+  
+  const handlePress = () => {
+    router.push(`/match/${match.id}`);
   };
 
-  const menuItems = [
-    {
-      icon: <FileText size={20} color="#6b7280" />,
-      title: '내 참가신청',
-      subtitle: '신청한 매치 현황 확인',
-      onPress: () => router.push('/my-applications'),
-    },
-    {
-      icon: <Calendar size={20} color="#6b7280" />,
-      title: '내 매치 관리',
-      subtitle: '등록한 매치 관리',
-      onPress: () => router.push('/my-matches'),
-    },
-    {
-      icon: <CreditCard size={20} color="#6b7280" />,
-      title: '수익 정산',
-      subtitle: '매치 수익 확인 및 출금',
-      onPress: () => router.push('/earnings'),
-    },
-    {
-      icon: <Award size={20} color="#6b7280" />,
-      title: '인증 신청',
-      subtitle: 'NTRP, 선수 경력 인증',
-      onPress: () => router.push('/certification'),
-    },
-    {
-      icon: <Settings size={20} color="#6b7280" />,
-      title: '프로필 설정',
-      subtitle: '개인정보 및 설정 변경',
-      onPress: () => router.push('/profile-settings'),
-    },
-    {
-      icon: <Database size={20} color="#6b7280" />,
-      title: 'Supabase 테스트',
-      subtitle: '데이터베이스 연결 상태 확인',
-      onPress: () => router.push('/supabase-test'),
-    },
-  ];
+  const getRecruitmentStatus = () => {
+    const { male, female, total } = match.expectedParticipants;
+    
+    if (male > 0 && female > 0) {
+      return `남성 ${male}명, 여성 ${female}명 모집`;
+    } else if (male > 0) {
+      return `남성 ${male}명 모집`;
+    } else if (female > 0) {
+      return `여성 ${female}명 모집`;
+    } else {
+      return `${total}명 모집`;
+    }
+  };
 
   return (
-    <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={styles.container}>
-        {/* 헤더 */}
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>프로필</Text>
+    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
+      {/* 상단 - 판매자 정보 */}
+      <View style={styles.header}>
+        <View style={styles.sellerInfo}>
+          {match.seller.profileImage ? (
+            <Image source={{ uri: match.seller.profileImage }} style={styles.sellerAvatar} />
+          ) : (
+            <View style={styles.sellerAvatarPlaceholder}>
+              <UserRound size={20} color="#6b7280" />
+            </View>
+          )}
+          <View style={styles.sellerDetails}>
+            <View style={styles.sellerNameRow}>
+              <Text style={styles.sellerName}>{match.seller.name}</Text>
+              <CertificationBadge 
+                ntrpCert={match.seller.certification.ntrp}
+                careerCert={match.seller.certification.career}
+                youtubeCert={match.seller.certification.youtube}
+                instagramCert={match.seller.certification.instagram}
+                size="tiny"
+              />
+            </View>
+            <View style={styles.sellerMeta}>
+              <Text style={styles.sellerMetaText}>
+                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
+              </Text>
+            </View>
+            <View style={styles.ratingRow}>
+              <Star size={12} color="#f59e0b" fill="#f59e0b" />
+              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
+              {!isDummyMatch && (
+                <TouchableOpacity 
+                  onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
+                  style={styles.reviewLink}
+                >
+                  <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
         </View>
-
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-          {/* 프로필 카드 */}
-          <View style={styles.profileCard}>
-            <View style={styles.profileHeader}>
-              <View style={styles.profileImageContainer}>
-                {user.profileImage ? (
-                  <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
-                ) : (
-                  <View style={styles.defaultProfileImage}>
-                    <User size={40} color="#9ca3af" />
-                  </View>
-                )}
-              </View>
-              
-              <View style={styles.profileInfo}>
-                <View style={styles.nameRow}>
-                  <Text style={styles.userName}>{user.name}</Text>
-                  <CertificationBadge 
-                    ntrpCert={user.certification.ntrp}
-                    careerCert={user.certification.career}
-                    youtubeCert={user.certification.youtube}
-                    instagramCert={user.certification.instagram}
-                    size="medium"
-                  />
-                </View>
-                <Text style={styles.userDetails}>
-                  {user.gender} · {user.ageGroup} · NTRP {user.ntrp} · {user.careerType}
-                </Text>
-                <Text style={styles.userExperience}>
-                  테니스 경력 {Math.floor(user.experience / 12)}년 {user.experience % 12}개월
-                </Text>
-              </View>
-            </View>
-
-            {/* 통계 */}
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <Star size={16} color="#f59e0b" />
-                <Text style={styles.statValue}>{user.avgRating}</Text>
-                <Text style={styles.statLabel}>평점</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Eye size={16} color="#6b7280" />
-                <Text style={styles.statValue}>{user.viewCount}</Text>
-                <Text style={styles.statLabel}>조회</Text>
-              </View>
-              
-              <View style={styles.statItem}>
-                <Heart size={16} color="#ec4899" />
-                <Text style={styles.statValue}>{user.likeCount}</Text>
-                <Text style={styles.statLabel}>좋아요</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* 메뉴 목록 */}
-          <View style={styles.menuSection}>
-            {menuItems.map((item, index) => (
-              <TouchableOpacity 
-                key={index}
-                style={styles.menuItem}
-                onPress={item.onPress}
-              >
-                <View style={styles.menuIcon}>
-                  {item.icon}
-                </View>
-                <View style={styles.menuContent}>
-                  <Text style={styles.menuTitle}>{item.title}</Text>
-                  <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          {/* 로그아웃 */}
-          <View style={styles.logoutSection}>
-            <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-              <LogOut size={20} color="#dc2626" />
-              <Text style={styles.logoutButtonText}>로그아웃</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.bottomPadding} />
-        </ScrollView>
       </View>
-    </SafeAreaView>
+
+      {/* 매치 제목 및 타입 */}
+      <View style={styles.titleSection}>
+        <Text style={styles.title} numberOfLines={2}>{match.title}</Text>
+        <View style={styles.matchTypeBadge}>
+          <Text style={styles.matchTypeText}>{match.matchType}</Text>
+        </View>
+      </View>
+      
+      {/* 매치 기본 정보 */}
+      <View style={styles.matchInfo}>
+        <View style={styles.infoRow}>
+          <Clock size={14} color="#6b7280" />
+          <Text style={styles.infoText}>
+            {match.date.slice(5)} {match.time}~{match.endTime}
+          </Text>
+          <Text style={styles.separator}>·</Text>
+          <MapPin size={14} color="#6b7280" />
+          <Text style={styles.infoText}>{match.court}</Text>
+        </View>
+      </View>
+
+      {/* 모집 현황 - 새로운 형태 */}
+      <View style={styles.recruitmentStatus}>
+        <View style={styles.ntrpRequirement}>
+          <Text style={styles.ntrpText}>
+            NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
+          </Text>
+        </View>
+        <View style={styles.recruitmentInfo}>
+          <Users size={14} color="#6b7280" />
+          <Text style={styles.recruitmentText}>
+            {getRecruitmentStatus()}
+          </Text>
+          {applications.length > 0 && (
+            <>
+              <Text style={styles.separator}>·</Text>
+              <Text style={styles.applicationText}>
+                신청 {applications.length}건
+              </Text>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* 하단 - 가격 및 액션 */}
+      <View style={styles.footer}>
+        {/* 조회수 */}
+        <View style={styles.viewCount}>
+          <Eye size={12} color="#9ca3af" />
+          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
+        </View>
+        
+        <View style={styles.priceSection}>
+          <PriceDisplay
+            currentPrice={match.currentPrice}
+            basePrice={match.basePrice}
+            initialPrice={match.initialPrice}
+            expectedViews={match.expectedViews}
+            maxPrice={match.maxPrice}
+            hoursUntilMatch={hoursUntilMatch}
+            viewCount={match.seller.viewCount}
+            waitingApplicants={match.waitingApplicants}
+            expectedWaitingApplicants={match.expectedWaitingApplicants}
+            sellerGender={match.seller.gender}
+            sellerNtrp={match.seller.ntrp}
+            isClosed={match.isClosed}
+          />
+        </View>
+      </View>
+      
+      {/* 마감 오버레이 */}
+      {match.isClosed && (
+        <View style={styles.closedOverlay}>
+          <View style={styles.closedBadge}>
+            <Text style={styles.closedBadgeText}>마감</Text>
+          </View>
+        </View>
+      )}
+    </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
+  card: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  content: {
-    flex: 1,
-    paddingTop: 16,
-  },
-  profileCard: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
     borderRadius: 16,
-    padding: 20,
+    padding: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -231,173 +186,194 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 6,
     elevation: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
-  profileHeader: {
+  header: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    gap: 16,
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    position: 'relative',
   },
-  profileImageContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    overflow: 'hidden',
-    borderWidth: 3,
-    borderColor: '#ec4899',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  defaultProfileImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileInfo: {
+  sellerInfo: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     flex: 1,
+    gap: 10,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 6,
+  sellerAvatar: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
   },
-  userName: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  userDetails: {
-    fontSize: 16,
-    color: '#6b7280',
-    fontWeight: '500',
-    marginBottom: 4,
-  },
-  userExperience: {
-    fontSize: 14,
-    color: '#9ca3af',
-    fontWeight: '500',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingTop: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-  },
-  statItem: {
-    alignItems: 'center',
-    gap: 6,
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  statLabel: {
-    fontSize: 12,
-    color: '#9ca3af',
-    fontWeight: '500',
-  },
-  menuSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-    gap: 16,
-  },
-  menuIcon: {
+  sellerAvatarPlaceholder: {
     width: 40,
     height: 40,
     borderRadius: 20,
     backgroundColor: '#f3f4f6',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
   },
-  menuContent: {
+  sellerDetails: {
     flex: 1,
+    gap: 4,
   },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 2,
-  },
-  menuSubtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  logoutSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  logoutButton: {
+  sellerNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#ffffff',
-    paddingVertical: 16,
+  },
+  sellerName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  sellerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  sellerMetaText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  ratingText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#f59e0b',
+  },
+  reviewLink: {
+    marginLeft: 4,
+  },
+  reviewLinkText: {
+    fontSize: 11,
+    color: '#f472b6',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  titleSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    gap: 8,
+  },
+  title: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    flex: 1,
+    lineHeight: 22,
+  },
+  matchTypeBadge: {
+    backgroundColor: '#fdf2f8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#fecaca',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: '#d1d5db',
   },
-  logoutButtonText: {
-    fontSize: 16,
+  matchTypeText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '700',
+    color: '#ec4899',
+  },
+  matchInfo: {
+    marginBottom: 12,
+  },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  infoText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  separator: {
+    fontSize: 12,
+    color: '#d1d5db',
+    marginHorizontal: 2,
+  },
+  recruitmentStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  ntrpRequirement: {
+    backgroundColor: '#eff6ff',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  ntrpText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#dc2626',
+    color: '#1e40af',
   },
-  bottomPadding: {
-    height: 40,
-  },
-  loginPrompt: {
+  recruitmentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     flex: 1,
+    justifyContent: 'flex-end',
+  },
+  recruitmentText: {
+    fontSize: 12,
+    color: '#374151',
+    fontWeight: '600',
+  },
+  applicationText: {
+    fontSize: 12,
+    color: '#ec4899',
+    fontWeight: '600',
+  },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  viewCount: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  viewText: {
+    fontSize: 12,
+    color: '#9ca3af',
+  },
+  priceSection: {
+    alignItems: 'flex-end',
+  },
+  closedOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
   },
-  loginPromptText: {
-    fontSize: 18,
-    color: '#374151',
-    marginBottom: 20,
+  closedBadge: {
+    backgroundColor: '#374151',
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    borderRadius: 20,
   },
-  loginButton: {
-    backgroundColor: '#ec4899',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  loginButtonText: {
+  closedBadgeText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

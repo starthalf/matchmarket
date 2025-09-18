@@ -48,6 +48,7 @@ interface SupabaseMatch {
   location: string;
   is_dummy: boolean;
   created_at: string;
+  is_closed?: boolean; // 🔥 is_closed 필드 추가
 }
 
 export class DataGenerator {
@@ -151,6 +152,12 @@ export class DataGenerator {
     // 🎭 닉네임으로 변경!
     const sellerName = this.generateNickname();
 
+    // 🔥 인증 상태 랜덤 생성 (30% 확률로 인증)
+    const hasNtrpCert = Math.random() < 0.3;
+    const hasCareerCert = Math.random() < 0.2;
+    const hasYoutubeCert = Math.random() < 0.1;
+    const hasInstagramCert = Math.random() < 0.15;
+
     const seller: User = {
       id: sellerId,
       name: sellerName, // 🔥 이제 닉네임으로 표시됨
@@ -161,10 +168,10 @@ export class DataGenerator {
       playStyle: this.PLAY_STYLES[Math.floor(Math.random() * this.PLAY_STYLES.length)] as any,
       careerType: this.CAREER_TYPES[Math.floor(Math.random() * this.CAREER_TYPES.length)] as any,
       certification: {
-        ntrp: 'none',
-        career: 'none',
-        youtube: 'none',
-        instagram: 'none',
+        ntrp: hasNtrpCert ? 'verified' : 'none',
+        career: hasCareerCert ? 'verified' : 'none',
+        youtube: hasYoutubeCert ? 'verified' : 'none',
+        instagram: hasInstagramCert ? 'verified' : 'none',
       },
       profileImage: Math.random() > 0.5 ? `https://picsum.photos/seed/${sellerId}/200/200` : undefined,
       viewCount: Math.floor(Math.random() * 1000),
@@ -344,7 +351,7 @@ export class DataGenerator {
       weather: supabaseMatch.weather as '맑음' | '흐림' | '비',
       location: supabaseMatch.location,
       createdAt: supabaseMatch.created_at,
-      isClosed: false, // 기본값으로 false 설정, 필요시 로직 추가
+      isClosed: (supabaseMatch as any).is_closed || false, // 🔥 Supabase에서 가져온 is_closed 값 사용
     };
   }
 
@@ -408,6 +415,7 @@ export class DataGenerator {
         location: match.location,
         is_dummy: true,
         created_at: match.createdAt,
+        is_closed: match.isClosed || false, // 🔥 isClosed 상태를 Supabase에 저장
       };
 
       const { error } = await supabaseAdmin

@@ -417,7 +417,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   typeTitleSelected: {
-    color: '#ec4899',
+    color: '#f472b6',
   },
   typeDescription: {
     fontSize: 14,
@@ -433,7 +433,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   checkboxSelected: {
-    borderColor: '#ec4899',
+    borderColor: '#f472b6',
   },
   inputGroup: {
     marginBottom: 16,
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#ec4899',
+    backgroundColor: '#f472b6',
     marginHorizontal: 16,
     paddingVertical: 16,
     borderRadius: 12,

@@ -811,7 +811,7 @@ const styles = StyleSheet.create({
   currentPrice: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#ec4899',
+    color: '#f472b6',
     marginBottom: 2,
   },
   statusText: {
@@ -819,7 +819,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   applyButton: {
-    backgroundColor: '#ec4899',
+    backgroundColor: '#f472b6',
     paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 12,

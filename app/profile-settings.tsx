@@ -356,8 +356,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   radioButtonActive: {
-    backgroundColor: '#ec4899',
-    borderColor: '#ec4899',
+    backgroundColor: '#f472b6',
+    borderColor: '#f472b6',
   },
   radioText: {
     fontSize: 14,
@@ -368,7 +368,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   saveButton: {
-    backgroundColor: '#ec4899',
+    backgroundColor: '#f472b6',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',

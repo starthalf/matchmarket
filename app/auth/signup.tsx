@@ -408,8 +408,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   radioButtonActive: {
-    backgroundColor: '#ec4899',
-    borderColor: '#ec4899',
+    backgroundColor: '#f472b6',
+    borderColor: '#f472b6',
   },
   radioText: {
     fontSize: 14,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   signupButton: {
-    backgroundColor: '#ec4899',
+    backgroundColor: '#f472b6',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

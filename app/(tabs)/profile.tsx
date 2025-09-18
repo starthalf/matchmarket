@@ -554,7 +554,7 @@ const styles = StyleSheet.create({
   changePhotoText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#ec4899',
+    color: '#f472b6',
   },
   profileInfo: {
     flex: 1,

@@ -212,7 +212,7 @@ export default function HomeScreen() {
             style={styles.previewAdminButton}
             onPress={handleAdminLogin}
           >
-            <Shield size={16} color="#dc2626" />
+            <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
             <Text style={styles.previewAdminText}>관리자 로그인</Text>
           </TouchableOpacity>
         </View>
@@ -375,11 +375,11 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   adminDemoButton: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#dc2626',
+    backgroundColor: '#fdf2f8',
+    borderColor: '#f472b6',
   },
   adminDemoButtonText: {
-    color: '#dc2626',
+    color: '#f472b6',
     fontWeight: '600',
   },
   logoutButton: {

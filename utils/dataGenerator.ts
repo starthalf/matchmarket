@@ -277,80 +277,135 @@ export class DataGenerator {
     };
   }
 
-  /**
-   * 🔥 매치를 Supabase에 저장 (NULL 방지)
-   */
-  static async saveMatchToSupabase(match: Match): Promise<boolean> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin이 설정되지 않아 매치 저장을 건너뜁니다.');
-        return false;
-      }
+  // utils/dataGenerator.ts - saveMatchToSupabase 함수 완전 수정
 
-      // Supabase 삽입 데이터 (모든 가격 필드 보장)
-      const supabaseData = {
-        id: match.id,
-        seller_id: match.sellerId,
-        seller_name: match.seller.name,
-        seller_gender: match.seller.gender,
-        seller_age_group: match.seller.ageGroup,
-        seller_ntrp: match.seller.ntrp,
-        seller_experience: match.seller.experience,
-        seller_play_style: match.seller.playStyle,
-        seller_career_type: match.seller.careerType,
-        seller_certification_ntrp: match.seller.certification.ntrp,
-        seller_certification_career: match.seller.certification.career,
-        seller_certification_youtube: match.seller.certification.youtube,
-        seller_certification_instagram: match.seller.certification.instagram,
-        seller_profile_image: match.seller.profileImage || null,
-        seller_view_count: match.seller.viewCount,
-        seller_like_count: match.seller.likeCount,
-        seller_avg_rating: match.seller.avgRating,
-        title: match.title,
-        date: match.date,
-        time: match.time,
-        end_time: match.endTime,
-        court: match.court,
-        description: match.description,
-        base_price: match.basePrice,
-        initial_price: match.initialPrice,    // ✅ 보장된 값
-        current_price: match.currentPrice,    // ✅ 보장된 값
-        max_price: match.maxPrice,            // ✅ 보장된 값
-        expected_views: match.expectedViews,
-        expected_waiting_applicants: match.expectedWaitingApplicants,
-        expected_participants_male: match.expectedParticipants.male,
-        expected_participants_female: match.expectedParticipants.female,
-        expected_participants_total: match.expectedParticipants.total,
-        current_applicants_male: match.currentApplicants.male,
-        current_applicants_female: match.currentApplicants.female,
-        current_applicants_total: match.currentApplicants.total,
-        match_type: match.matchType,
-        waiting_applicants: match.waitingApplicants,
-        ad_enabled: match.adEnabled,
-        ntrp_min: match.ntrpRequirement.min,
-        ntrp_max: match.ntrpRequirement.max,
-        weather: match.weather,
-        location: match.location,
-        is_dummy: true,
-        created_at: match.createdAt,
-      };
-
-      const { error } = await supabaseAdmin
-        .from('matches')
-        .insert([supabaseData]);
-
-      if (error) {
-        console.error('Supabase 매치 저장 오류:', error);
-        return false;
-      }
-
-      console.log(`✅ 매치 ${match.id} Supabase 저장 완료`);
-      return true;
-    } catch (error) {
-      console.error('saveMatchToSupabase 오류:', error);
+static async saveMatchToSupabase(match: Match): Promise<boolean> {
+  try {
+    if (!supabaseAdmin) {
+      console.log('ℹ️ Supabase Admin이 설정되지 않아 매치 저장을 건너뜁니다.');
       return false;
     }
+
+    // 🔍 디버깅: 입력된 매치 객체 확인
+    console.log('🔍 saveMatchToSupabase 입력 매치:', {
+      id: match.id,
+      basePrice: match.basePrice,
+      initialPrice: match.initialPrice,
+      currentPrice: match.currentPrice,
+      maxPrice: match.maxPrice,
+      types: {
+        basePrice: typeof match.basePrice,
+        initialPrice: typeof match.initialPrice,
+        currentPrice: typeof match.currentPrice,
+        maxPrice: typeof match.maxPrice,
+      }
+    });
+
+    // 🔥 NULL 값 강제 방지 및 명시적 타입 보장
+    const safeBasePrice = Number(match.basePrice) || 0;
+    const safeInitialPrice = Number(match.initialPrice) || safeBasePrice;
+    const safeCurrentPrice = Number(match.currentPrice) || safeBasePrice;
+    const safeMaxPrice = Number(match.maxPrice) || (safeBasePrice * 3);
+
+    // 🔍 디버깅: 안전 처리된 값들 확인
+    console.log('🔍 안전 처리된 가격들:', {
+      safeBasePrice,
+      safeInitialPrice,
+      safeCurrentPrice,
+      safeMaxPrice,
+      originalInitialPrice: match.initialPrice,
+      isInitialPriceNull: match.initialPrice === null,
+      isInitialPriceUndefined: match.initialPrice === undefined
+    });
+
+    // Supabase 삽입 데이터 (완전 안전 처리)
+    const supabaseData = {
+      id: match.id,
+      seller_id: match.sellerId,
+      seller_name: match.seller.name,
+      seller_gender: match.seller.gender,
+      seller_age_group: match.seller.ageGroup,
+      seller_ntrp: match.seller.ntrp,
+      seller_experience: match.seller.experience,
+      seller_play_style: match.seller.playStyle,
+      seller_career_type: match.seller.careerType,
+      seller_certification_ntrp: match.seller.certification.ntrp,
+      seller_certification_career: match.seller.certification.career,
+      seller_certification_youtube: match.seller.certification.youtube,
+      seller_certification_instagram: match.seller.certification.instagram,
+      seller_profile_image: match.seller.profileImage || null,
+      seller_view_count: match.seller.viewCount,
+      seller_like_count: match.seller.likeCount,
+      seller_avg_rating: match.seller.avgRating,
+      title: match.title,
+      date: match.date,
+      time: match.time,
+      end_time: match.endTime,
+      court: match.court,
+      description: match.description,
+      base_price: safeBasePrice,               // ✅ 안전한 값
+      initial_price: safeInitialPrice,         // ✅ 절대 null 아님
+      current_price: safeCurrentPrice,         // ✅ 절대 null 아님
+      max_price: safeMaxPrice,                 // ✅ 절대 null 아님
+      expected_views: match.expectedViews,
+      expected_waiting_applicants: match.expectedWaitingApplicants,
+      expected_participants_male: match.expectedParticipants.male,
+      expected_participants_female: match.expectedParticipants.female,
+      expected_participants_total: match.expectedParticipants.total,
+      current_applicants_male: match.currentApplicants.male,
+      current_applicants_female: match.currentApplicants.female,
+      current_applicants_total: match.currentApplicants.total,
+      match_type: match.matchType,
+      waiting_applicants: match.waitingApplicants,
+      ad_enabled: match.adEnabled,
+      ntrp_min: match.ntrpRequirement.min,
+      ntrp_max: match.ntrpRequirement.max,
+      weather: match.weather,
+      location: match.location,
+      is_dummy: true,
+      created_at: match.createdAt,
+    };
+
+    // 🔍 디버깅: 최종 전송 데이터 확인
+    console.log('🔍 최종 Supabase 전송 데이터:', {
+      id: supabaseData.id,
+      base_price: supabaseData.base_price,
+      initial_price: supabaseData.initial_price,
+      current_price: supabaseData.current_price,
+      max_price: supabaseData.max_price,
+      types: {
+        base_price: typeof supabaseData.base_price,
+        initial_price: typeof supabaseData.initial_price,
+        current_price: typeof supabaseData.current_price,
+        max_price: typeof supabaseData.max_price,
+      }
+    });
+
+    const { error } = await supabaseAdmin
+      .from('matches')
+      .insert([supabaseData]);
+
+    if (error) {
+      console.error('❌ Supabase 매치 저장 오류:', error);
+      
+      // 🔍 상세 에러 분석
+      console.error('📋 에러 상세 정보:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      return false;
+    }
+
+    console.log(`✅ 매치 ${match.id} Supabase 저장 완료`);
+    return true;
+  } catch (error) {
+    console.error('💥 saveMatchToSupabase 예외 오류:', error);
+    return false;
   }
+}
 
   /**
    * Supabase에서 모든 매치 가져오기

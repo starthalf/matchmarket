@@ -1,4 +1,4 @@
-// utils/dataGenerator.ts - 완전한 코드 (Career Type 단순화)
+// utils/dataGenerator.ts - NULL 안전 버전
 
 import { Match, User } from '../types/tennis';
 import { supabase, supabaseAdmin } from '../lib/supabase';
@@ -17,7 +17,7 @@ interface SupabaseMatch {
   seller_certification_career: string;
   seller_certification_youtube: string;
   seller_certification_instagram: string;
-  seller_profile_image: string;
+  seller_profile_image: string | null;
   seller_view_count: number;
   seller_like_count: number;
   seller_avg_rating: number;
@@ -28,9 +28,9 @@ interface SupabaseMatch {
   court: string;
   description: string;
   base_price: number;
-  initial_price: number;
-  current_price: number;
-  max_price: number;
+  initial_price: number;  // 이제 항상 NOT NULL
+  current_price: number;  // 이제 항상 NOT NULL
+  max_price: number;      // 이제 항상 NOT NULL
   expected_views: number;
   expected_waiting_applicants: number;
   expected_participants_male: number;
@@ -59,16 +59,8 @@ export class DataGenerator {
   ];
 
   private static readonly COURTS = ['A코트', 'B코트', 'C코트', 'D코트', 'E코트'];
-
-  // 🔥 단순화된 플레이 스타일 (3개만)
-  private static readonly PLAY_STYLES = [
-    '공격형', '수비형', '올라운드'
-  ];
-
-  // 🔥 단순화된 커리어 타입 (2개만)
-  private static readonly CAREER_TYPES = [
-    '동호인', '선수'
-  ];
+  private static readonly PLAY_STYLES = ['공격형', '수비형', '올라운드'];
+  private static readonly CAREER_TYPES = ['동호인', '선수'];
 
   private static readonly MATCH_TITLES = [
     '강남 프리미엄 매치', '서초 주말 특별전', '송파 실력자 모임',
@@ -93,7 +85,7 @@ export class DataGenerator {
   ];
 
   /**
-   * 새로운 매치 하나 생성
+   * 🔥 새로운 매치 생성 (NULL 안전 보장)
    */
   static generateNewMatch(): Match {
     const sellerId = `seller_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -102,117 +94,109 @@ export class DataGenerator {
     // 판매자 정보 생성
     const sellerGender = Math.random() > 0.3 ? '남성' : '여성';
     const sellerName = sellerGender === '남성' ? 
-      ['김민수', '박준호', '이도현', '정우진', '최재현'][Math.floor(Math.random() * 5)] :
-      ['김수연', '박지영', '이소라', '정미나', '최하린'][Math.floor(Math.random() * 5)];
+      ['김성훈', '이동현', '박준영', '최민석', '정우진'][Math.floor(Math.random() * 5)] :
+      ['김지영', '이수진', '박혜린', '최민정', '정유나'][Math.floor(Math.random() * 5)];
 
     const seller: User = {
       id: sellerId,
       name: sellerName,
       gender: sellerGender,
-      ageGroup: ['20대', '30대', '40대', '50대+'][Math.floor(Math.random() * 4)] as any,
-      ntrp: 3.0 + Math.floor(Math.random() * 3) * 0.5, // 3.0, 3.5, 4.0, 4.5, 5.0
-      experience: 12 + Math.floor(Math.random() * 48), // 12-60개월
+      ageGroup: ['20대', '30대', '40대'][Math.floor(Math.random() * 3)] as any,
+      ntrp: Math.round((3.0 + Math.random() * 2.5) * 10) / 10,
+      experience: 12 + Math.floor(Math.random() * 120),
       playStyle: this.PLAY_STYLES[Math.floor(Math.random() * this.PLAY_STYLES.length)] as any,
-      careerType: this.CAREER_TYPES[Math.floor(Math.random() * this.CAREER_TYPES.length)] as any, // 🔥 단순화된 커리어 타입
+      careerType: this.CAREER_TYPES[Math.floor(Math.random() * this.CAREER_TYPES.length)] as any,
       certification: {
-        ntrp: Math.random() > 0.7 ? 'verified' : 'none',
-        career: Math.random() > 0.8 ? 'verified' : 'none',
-        youtube: Math.random() > 0.9 ? 'verified' : 'none',
-        instagram: Math.random() > 0.85 ? 'verified' : 'none',
-      } as any,
-      profileImage: `https://picsum.photos/150/150?random=${Math.floor(Math.random() * 1000)}`,
-      viewCount: Math.floor(Math.random() * 1000) + 50,
-      likeCount: Math.floor(Math.random() * 100) + 10,
-      avgRating: 3.5 + Math.random() * 1.5, // 3.5-5.0
+        ntrp: 'none',
+        career: 'none',
+        youtube: 'none',
+        instagram: 'none',
+      },
+      profileImage: Math.random() > 0.5 ? `https://picsum.photos/seed/${sellerId}/200/200` : undefined,
+      viewCount: Math.floor(Math.random() * 1000),
+      likeCount: Math.floor(Math.random() * 200),
+      avgRating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
     };
 
-    // 매치 타입 선택 (가중치 적용)
-    const matchTypeWeights = {
-      '혼복': 0.4,  // 40% - 가장 인기
-      '남복': 0.25, // 25%
-      '여복': 0.25, // 25%  
-      '단식': 0.1   // 10% - 가장 적음
-    };
+    const matchType = this.MATCH_TYPES[Math.floor(Math.random() * this.MATCH_TYPES.length)];
     
-    const randomValue = Math.random();
-    let cumulativeWeight = 0;
-    let selectedMatchType: '단식' | '남복' | '여복' | '혼복' = '혼복';
+    // 참가자 수 설정
+    let expectedMale = 0;
+    let expectedFemale = 0;
     
-    for (const [type, weight] of Object.entries(matchTypeWeights)) {
-      cumulativeWeight += weight;
-      if (randomValue <= cumulativeWeight) {
-        selectedMatchType = type as '단식' | '남복' | '여복' | '혼복';
+    switch (matchType) {
+      case '단식':
+        if (sellerGender === '남성') {
+          expectedMale = 2;
+          expectedFemale = 0;
+        } else {
+          expectedMale = 0;
+          expectedFemale = 2;
+        }
         break;
-      }
+      case '남복':
+        expectedMale = 4;
+        expectedFemale = 0;
+        break;
+      case '여복':
+        expectedMale = 0;
+        expectedFemale = 4;
+        break;
+      case '혼복':
+        expectedMale = 2;
+        expectedFemale = 2;
+        break;
     }
 
-    // 매치 타입과 독립적으로 참가자 수 설정 (단순화)
-    const totalParticipants = [2, 4, 6, 8][Math.floor(Math.random() * 4)];
-    const maleCount = Math.floor(Math.random() * (totalParticipants + 1));
-    const femaleCount = totalParticipants - maleCount;
+    // 🔥 가격 필드 완전 안전 처리
+    const basePrice = [15000, 20000, 25000, 30000, 35000][Math.floor(Math.random() * 5)];
+    const initialPrice = basePrice;     // 항상 basePrice와 동일
+    const currentPrice = basePrice;     // 항상 basePrice와 동일  
+    const maxPrice = basePrice * 3;     // 항상 basePrice의 3배
+
+    // 미래 날짜 생성
+    const futureDate = new Date();
+    futureDate.setDate(futureDate.getDate() + Math.floor(Math.random() * 14) + 1);
     
-    const expectedParticipants = {
-      male: maleCount,
-      female: femaleCount,
-      total: totalParticipants
-    };
-
-    // 시간 설정
-    const now = new Date();
-    const matchDate = new Date(now);
-    matchDate.setDate(matchDate.getDate() + Math.floor(Math.random() * 7)); // 0-7일 후
-
-    const startHour = 9 + Math.floor(Math.random() * 13); // 9-21시
+    // 시간 생성
+    const startHour = 9 + Math.floor(Math.random() * 12);
     const startTime = `${startHour.toString().padStart(2, '0')}:00`;
     const endTime = `${(startHour + 2).toString().padStart(2, '0')}:00`;
 
-    // 가격 설정 (참가자 수에 따라)
-    let basePrice: number;
-    if (expectedParticipants.total <= 2) {
-      basePrice = 20000 + Math.floor(Math.random() * 15000); // 20,000-35,000원
-    } else if (expectedParticipants.total <= 4) {
-      basePrice = 25000 + Math.floor(Math.random() * 15000); // 25,000-40,000원
-    } else {
-      basePrice = 30000 + Math.floor(Math.random() * 20000); // 30,000-50,000원
-    }
-
-    const initialPrice = basePrice;
-    const maxPrice = basePrice * 2; // 최대 2배까지
-
-    // 더미에서는 항상 꽉 찬 상태로 설정
-const currentMale = expectedParticipants.male;
-const currentFemale = expectedParticipants.female;
-
     return {
       id: matchId,
-      sellerId: seller.id,
+      sellerId: sellerId,
       seller: seller,
-      title: this.generateMatchTitle(selectedMatchType),
-      date: matchDate.toISOString().split('T')[0],
+      title: this.generateMatchTitle(matchType),
+      date: futureDate.toISOString().split('T')[0],
       time: startTime,
       endTime: endTime,
       court: this.COURTS[Math.floor(Math.random() * this.COURTS.length)],
-      description: this.generateMatchDescription(selectedMatchType),
+      description: this.generateMatchDescription(matchType),
       basePrice: basePrice,
-      initialPrice: initialPrice,
-      currentPrice: initialPrice + Math.floor(Math.random() * (maxPrice - initialPrice)),
-      maxPrice: maxPrice,
-      expectedViews: 100 + Math.floor(Math.random() * 500),
-      expectedWaitingApplicants: Math.floor(Math.random() * 10),
-      expectedParticipants: expectedParticipants,
-      currentApplicants: {
-        male: currentMale,
-        female: currentFemale,
-        total: currentMale + currentFemale
+      initialPrice: initialPrice,    // ✅ 절대 null 아님
+      currentPrice: currentPrice,    // ✅ 절대 null 아님
+      maxPrice: maxPrice,            // ✅ 절대 null 아님
+      expectedViews: Math.floor(Math.random() * 500) + 200,
+      expectedWaitingApplicants: Math.floor(Math.random() * 10) + 1,
+      expectedParticipants: {
+        male: expectedMale,
+        female: expectedFemale,
+        total: expectedMale + expectedFemale,
       },
-      matchType: selectedMatchType,
-      waitingApplicants: Math.floor(Math.random() * 8),
+      currentApplicants: {
+        male: 0,
+        female: 0,
+        total: 0,
+      },
+      matchType: matchType,
+      waitingApplicants: 0,
       waitingList: [],
       participants: [],
       adEnabled: Math.random() > 0.7,
       ntrpRequirement: {
         min: 3.0 + Math.floor(Math.random() * 2),
-        max: 4.5 + Math.floor(Math.random() * 2)
+        max: 4.0 + Math.floor(Math.random() * 2),
       },
       weather: Math.random() > 0.8 ? 
         (Math.random() > 0.5 ? '흐림' : '비') : '맑음',
@@ -223,56 +207,15 @@ const currentFemale = expectedParticipants.female;
   }
 
   /**
-   * 매치 타입별 제목 생성 (단순화)
-   */
-  private static generateMatchTitle(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)];
-  }
-
-  /**
-   * 매치 타입별 설명 생성 (단순화)
-   */
-  private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
-  }
-
-  /**
-   * Supabase에서 모든 매치 가져오기
-   */
-  static async getAllMatches(fallbackMatches: Match[]): Promise<Match[]> {
-    try {
-      console.log('🔄 Supabase에서 매치 데이터 가져오는 중...');
-      
-      const { data: supabaseMatches, error } = await supabase
-        .from('matches')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.warn('⚠️ Supabase 조회 오류:', error.message);
-        return fallbackMatches;
-      }
-
-      if (!supabaseMatches || supabaseMatches.length === 0) {
-        console.log('📝 Supabase에 저장된 매치가 없습니다. 로컬 데이터만 사용합니다.');
-        return fallbackMatches;
-      }
-
-      // Supabase 데이터를 Match 형태로 변환
-      const convertedMatches = supabaseMatches.map(this.convertSupabaseToMatch);
-      console.log(`✅ Supabase에서 ${convertedMatches.length}개 매치 로드 완료`);
-      
-      return convertedMatches;
-    } catch (error) {
-      console.error('💥 getAllMatches 오류:', error);
-      return fallbackMatches;
-    }
-  }
-
-  /**
-   * Supabase 데이터를 Match 객체로 변환
+   * 🔥 Supabase 데이터를 Match 객체로 변환 (NULL 안전)
    */
   private static convertSupabaseToMatch(supabaseMatch: SupabaseMatch): Match {
+    // 이제 Supabase에서 가져온 데이터는 항상 NOT NULL이므로 안전함
+    const basePrice = supabaseMatch.base_price;
+    const initialPrice = supabaseMatch.initial_price;  // 항상 유효한 값
+    const currentPrice = supabaseMatch.current_price;  // 항상 유효한 값
+    const maxPrice = supabaseMatch.max_price;          // 항상 유효한 값
+
     return {
       id: supabaseMatch.id,
       sellerId: supabaseMatch.seller_id,
@@ -291,7 +234,7 @@ const currentFemale = expectedParticipants.female;
           youtube: supabaseMatch.seller_certification_youtube as any,
           instagram: supabaseMatch.seller_certification_instagram as any,
         },
-        profileImage: supabaseMatch.seller_profile_image,
+        profileImage: supabaseMatch.seller_profile_image || undefined,
         viewCount: supabaseMatch.seller_view_count,
         likeCount: supabaseMatch.seller_like_count,
         avgRating: supabaseMatch.seller_avg_rating,
@@ -302,10 +245,10 @@ const currentFemale = expectedParticipants.female;
       endTime: supabaseMatch.end_time,
       court: supabaseMatch.court,
       description: supabaseMatch.description,
-      basePrice: supabaseMatch.base_price,
-      initialPrice: supabaseMatch.initial_price,
-      currentPrice: supabaseMatch.current_price,
-      maxPrice: supabaseMatch.max_price,
+      basePrice: basePrice,
+      initialPrice: initialPrice,    // ✅ 안전한 값
+      currentPrice: currentPrice,    // ✅ 안전한 값
+      maxPrice: maxPrice,            // ✅ 안전한 값
       expectedViews: supabaseMatch.expected_views,
       expectedWaitingApplicants: supabaseMatch.expected_waiting_applicants,
       expectedParticipants: {
@@ -335,10 +278,16 @@ const currentFemale = expectedParticipants.female;
   }
 
   /**
-   * 매치를 Supabase에 저장
+   * 🔥 매치를 Supabase에 저장 (NULL 방지)
    */
   static async saveMatchToSupabase(match: Match): Promise<boolean> {
     try {
+      if (!supabaseAdmin) {
+        console.log('ℹ️ Supabase Admin이 설정되지 않아 매치 저장을 건너뜁니다.');
+        return false;
+      }
+
+      // Supabase 삽입 데이터 (모든 가격 필드 보장)
       const supabaseData = {
         id: match.id,
         seller_id: match.sellerId,
@@ -353,7 +302,7 @@ const currentFemale = expectedParticipants.female;
         seller_certification_career: match.seller.certification.career,
         seller_certification_youtube: match.seller.certification.youtube,
         seller_certification_instagram: match.seller.certification.instagram,
-        seller_profile_image: match.seller.profileImage,
+        seller_profile_image: match.seller.profileImage || null,
         seller_view_count: match.seller.viewCount,
         seller_like_count: match.seller.likeCount,
         seller_avg_rating: match.seller.avgRating,
@@ -364,9 +313,9 @@ const currentFemale = expectedParticipants.female;
         court: match.court,
         description: match.description,
         base_price: match.basePrice,
-        initial_price: match.initialPrice,
-        current_price: match.currentPrice,
-        max_price: match.maxPrice,
+        initial_price: match.initialPrice,    // ✅ 보장된 값
+        current_price: match.currentPrice,    // ✅ 보장된 값
+        max_price: match.maxPrice,            // ✅ 보장된 값
         expected_views: match.expectedViews,
         expected_waiting_applicants: match.expectedWaitingApplicants,
         expected_participants_male: match.expectedParticipants.male,
@@ -404,288 +353,49 @@ const currentFemale = expectedParticipants.female;
   }
 
   /**
-   * 특정 매치 타입의 더미 매치 생성 (테스트용)
+   * Supabase에서 모든 매치 가져오기
    */
-  static generateMatchByType(matchType: Match['matchType']): Match {
-    const match = this.generateNewMatch();
-    return { ...match, matchType };
-  }
-
-  /**
-   * 매치 통계 생성
-   */
-  static generateMatchStats(matches: Match[]) {
-    const stats = {
-      total: matches.length,
-      byType: {
-        '단식': 0,
-        '남복': 0,
-        '여복': 0,
-        '혼복': 0,
-      },
-      avgPrice: 0,
-      avgParticipants: 0,
-    };
-
-    matches.forEach(match => {
-      stats.byType[match.matchType]++;
-      stats.avgPrice += match.currentPrice;
-      stats.avgParticipants += match.expectedParticipants.total;
-    });
-
-    stats.avgPrice = Math.round(stats.avgPrice / matches.length);
-    stats.avgParticipants = Math.round((stats.avgParticipants / matches.length) * 10) / 10;
-
-    return stats;
-  }
-
-  /**
-   * 현재 더미 매치 개수 조회
-   */
-  static async getDummyMatchCount(): Promise<number> {
+  static async getAllMatches(fallbackMatches: Match[]): Promise<Match[]> {
     try {
+      console.log('🔄 Supabase에서 매치 데이터 가져오는 중...');
+      
       if (!supabase) {
-        console.log('ℹ️ Supabase가 설정되지 않아 더미 매치 개수를 조회할 수 없습니다.');
-        return 0;
+        console.log('ℹ️ Supabase가 설정되지 않아 로컬 데이터만 사용합니다.');
+        return fallbackMatches;
       }
 
-      const { count, error } = await supabase
+      const { data: supabaseMatches, error } = await supabase
         .from('matches')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_dummy', true);
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (error) {
-        console.log('ℹ️ 더미 매치 개수 조회 실패:', error.message);
-        return 0;
+        console.warn('⚠️ Supabase 조회 오류:', error.message);
+        return fallbackMatches;
       }
 
-      return count || 0;
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 개수 조회 중 오류:', error?.message);
-      return 0;
+      if (!supabaseMatches || supabaseMatches.length === 0) {
+        console.log('📝 Supabase에 저장된 매치가 없습니다. 로컬 데이터만 사용합니다.');
+        return fallbackMatches;
+      }
+
+      // Supabase 데이터를 Match 형태로 변환
+      const convertedMatches = supabaseMatches.map(this.convertSupabaseToMatch);
+      console.log(`✅ Supabase에서 ${convertedMatches.length}개 매치 로드 완료`);
+      
+      return convertedMatches;
+    } catch (error) {
+      console.error('💥 getAllMatches 오류:', error);
+      return fallbackMatches;
     }
   }
 
-  /**
-   * 모든 더미 매치 삭제
-   */
-  static async deleteAllDummyMatches(): Promise<{
-    success: boolean;
-    deletedCount: number;
-    error?: string;
-  }> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 삭제를 건너뜁니다.');
-        return {
-          success: false,
-          deletedCount: 0,
-          error: 'Supabase Admin 연결이 설정되지 않았습니다.'
-        };
-      }
-
-      // 현재 더미 매치 개수 먼저 확인
-      const currentCount = await this.getDummyMatchCount();
-      console.log(`📊 삭제할 더미 매치: ${currentCount}개`);
-
-      // 더미 매치 삭제 (is_dummy = true인 모든 데이터)
-      const { error } = await supabaseAdmin
-        .from('matches')
-        .delete()
-        .eq('is_dummy', true);
-
-      if (error) {
-        console.log('ℹ️ 더미 매치 삭제 실패:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        });
-        return {
-          success: false,
-          deletedCount: 0,
-          error: error.message
-        };
-      }
-
-      console.log(`✅ ${currentCount}개의 더미 매치가 성공적으로 삭제되었습니다.`);
-      
-      return {
-        success: true,
-        deletedCount: currentCount,
-      };
-
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 삭제 중 오류:', {
-        message: error?.message || '알 수 없는 오류',
-        name: error?.name
-      });
-      return {
-        success: false,
-        deletedCount: 0,
-        error: error?.message || '알 수 없는 오류'
-      };
-    }
+  // 헬퍼 메소드들
+  private static generateMatchTitle(matchType: '단식' | '남복' | '여복' | '혼복'): string {
+    return this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)];
   }
 
-  /**
-   * 일회성으로 지정된 개수만큼 더미 매치 생성 (날짜 제한 없음)
-   */
-  static async generateOneTimeDummyMatches(count: number = 10): Promise<Match[]> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 로컬 더미 데이터만 사용합니다.');
-        return [];
-      }
-
-      const newMatches: Match[] = [];
-      
-      console.log(`🎾 일회성 더미 매치 ${count}개 생성 시작...`);
-      
-      for (let i = 0; i < count; i++) {
-        newMatches.push(this.generateNewMatch());
-      }
-      
-      try {
-        // Supabase에 저장 (supabaseAdmin 사용)
-        const savePromises = newMatches.map(match => this.saveMatchToSupabase(match));
-        const results = await Promise.all(savePromises);
-        
-        const successCount = results.filter(result => result).length;
-        
-        if (successCount === 0) {
-          console.log('❌ 모든 매치 저장 실패');
-          return [];
-        }
-        
-        console.log(`✅ ${successCount}개의 일회성 더미 매치가 Supabase에 저장되었습니다.`);
-        
-        // 총 더미 매치 개수 확인
-        try {
-          const totalDummyCount = await this.getDummyMatchCount();
-          console.log(`📊 현재 총 더미 매치 개수: ${totalDummyCount}개`);
-        } catch (countError: any) {
-          console.log('ℹ️ 더미 매치 개수 조회 실패:', countError?.message);
-        }
-        
-        return newMatches.slice(0, successCount); // 성공한 만큼만 반환
-        
-      } catch (supabaseError: any) {
-        console.log('ℹ️ Supabase 저장 중 네트워크 오류:', {
-          message: supabaseError?.message || '알 수 없는 오류',
-          code: supabaseError?.code,
-          name: supabaseError?.name
-        });
-        return [];
-      }
-      
-    } catch (error: any) {
-      console.log('ℹ️ 일회성 더미 매치 생성 중 오류:', {
-        message: error?.message || '알 수 없는 오류',
-        name: error?.name
-      });
-      return [];
-    }
-  }
-
-  /**
-   * 매일 새로운 더미 매치들 생성 및 Supabase에 저장
-   */
-  static async generateAndSaveDailyMatches(count: number = 10): Promise<Match[]> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 클라이언트가 설정되지 않음. 로컬 더미 데이터만 사용합니다.');
-        return [];
-      }
-
-      const newMatches: Match[] = [];
-      
-      for (let i = 0; i < count; i++) {
-        newMatches.push(this.generateNewMatch());
-      }
-      
-      try {
-        const savePromises = newMatches.map(match => this.saveMatchToSupabase(match));
-        const results = await Promise.all(savePromises);
-        
-        const successCount = results.filter(result => result).length;
-        console.log(`✅ ${successCount}개의 새로운 더미 매치가 Supabase에 저장되었습니다.`);
-        return newMatches.slice(0, successCount);
-        
-      } catch (supabaseError: any) {
-        console.log('ℹ️ Supabase 저장 중 네트워크 오류:', {
-          message: supabaseError?.message || '알 수 없는 오류',
-          code: supabaseError?.code,
-          name: supabaseError?.name
-        });
-        return [];
-      }
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 생성 중 오류:', {
-        message: error?.message || '알 수 없는 오류',
-        name: error?.name
-      });
-      return [];
-    }
-  }
-
-  /**
-   * 새로운 더미 매치 생성이 필요한지 확인
-   */
-  static async shouldGenerateNewMatches(): Promise<boolean> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin 설정되지 않음. 더미 매치 생성을 건너뜁니다.');
-        return false;
-      }
-
-      const { data, error } = await supabaseAdmin
-        .from('app_settings')
-        .select('value')
-        .eq('key', 'last_dummy_generation_date')
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // PGRST116은 "not found" 에러
-        console.log('ℹ️ 설정 조회 실패:', error.message);
-        return false;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      const lastGenDate = data?.value || '2024-01-01';
-
-      return lastGenDate !== today;
-    } catch (error: any) {
-      console.log('ℹ️ 더미 매치 생성 필요 여부 확인 중 오류:', error?.message);
-      return false;
-    }
-  }
-
-  /**
-   * 마지막 더미 매치 생성 날짜 업데이트
-   */
-  static async updateLastGenerationDate(): Promise<void> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('ℹ️ Supabase Admin이 설정되지 않아 날짜 업데이트를 건너뜁니다.');
-        return;
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      
-      const { error } = await supabaseAdmin
-        .from('app_settings')
-        .upsert({ 
-          key: 'last_dummy_generation_date', 
-          value: today 
-        });
-
-      if (error) {
-        console.log('ℹ️ 마지막 생성 날짜 업데이트 실패:', error.message);
-      } else {
-        console.log(`✅ 마지막 더미 매치 생성 날짜가 ${today}로 업데이트되었습니다.`);
-      }
-    } catch (error: any) {
-      console.log('ℹ️ 날짜 업데이트 중 오류:', error?.message);
-    }
+  private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
+    return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
   }
 }

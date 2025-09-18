@@ -291,7 +291,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // 생성된 프로필 정보 가져오기
-        // 수정된 코드
+// 수정된 코드
 let userProfile;
 let fetchError;
 

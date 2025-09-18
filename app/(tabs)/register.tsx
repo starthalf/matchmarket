@@ -185,6 +185,13 @@ Alert.alert(
     }
   }]
 );
+  } catch (error) {
+    console.error('매치 등록 중 오류:', error);
+    Alert.alert('등록 실패', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('ko-KR', {

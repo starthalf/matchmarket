@@ -6,72 +6,43 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Image,
   Modal,
-  TextInput,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  Users, 
-  Star, 
-  User, 
-  Eye, 
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Shield,
+  Eye,
   Heart,
-  CreditCard,
-  Building,
-  CircleCheck as CheckCircle,
-  TriangleAlert as AlertTriangle,
-  X
+  Star,
+  Users,
+  Send,
+  X,
+  Timer
 } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
-import { CertificationBadge } from '../../components/CertificationBadge';
-import { CancelParticipationModal } from '../../components/CancelParticipationModal';
-import { WaitlistManager } from '../../utils/waitlistManager';
-import { BankTransferManager } from '../../utils/bankTransferManager';
+import { PriceDisplay } from '../../components/PriceDisplay';
 import { useSafeStyles } from '../../constants/Styles';
+import { Match, MatchApplication } from '../../types/tennis';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const { matches, updateMatch } = useMatches();
   const safeStyles = useSafeStyles();
-  const [isJoining, setIsJoining] = useState(false);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [paymentRequest, setPaymentRequest] = useState<any>(null);
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [depositorName, setDepositorName] = useState('');
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showApplicationModal, setShowApplicationModal] = useState(false);
+  const [showPaymentTimer, setShowPaymentTimer] = useState(false);
+  const [paymentTimeLeft, setPaymentTimeLeft] = useState(300); // 5분 = 300초
 
   const match = matches.find(m => m.id === id);
-
-  useEffect(() => {
-    if (match) {
-      // 조회수 증가 (실제로는 서버에서 처리)
-      match.seller.viewCount += 1;
-    }
-  }, [match]);
-
-  // 결제 타이머
-  useEffect(() => {
-    if (paymentRequest && timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0 && paymentRequest) {
-      // 시간 만료
-      setShowPaymentModal(false);
-      setPaymentRequest(null);
-      Alert.alert('결제 시간 만료', '결제 시간이 만료되어 대기가 취소되었습니다.');
-    }
-  }, [timeLeft, paymentRequest]);
 
   if (!match) {
     return (
@@ -79,291 +50,178 @@ export default function MatchDetailScreen() {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>매치를 찾을 수 없습니다.</Text>
           <TouchableOpacity 
-            style={styles.backToHomeButton}
-            onPress={() => router.push('/(tabs)')}
+            style={styles.backButton}
+            onPress={() => router.back()}
           >
-            <Text style={styles.backToHomeText}>홈으로 돌아가기</Text>
+            <Text style={styles.backButtonText}>돌아가기</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
-  if (!user) {
-    return (
-      <SafeAreaView style={safeStyles.safeContainer}>
-        <View style={styles.loginPrompt}>
-          <Text style={styles.loginPromptText}>로그인이 필요합니다</Text>
-          <TouchableOpacity 
-            style={styles.loginButton}
-            onPress={() => router.push('/auth/login')}
-          >
-            <Text style={styles.loginButtonText}>로그인</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
+  // 안전한 기본값 설정
+  const safeApplications = match.applications || [];
+  const safeParticipants = match.participants || [];
 
-  // 사용자 상태 확인
-  const isParticipant = match.participants.some(p => p.userId === user.id);
-  const isWaiting = match.waitingList.some(w => w.userId === user.id);
-  const isSeller = match.sellerId === user.id;
-  const myParticipation = match.participants.find(p => p.userId === user.id);
-  const myWaiting = match.waitingList.find(w => w.userId === user.id);
+  // 현재 사용자의 참여 상태 확인
+  const myApplication = safeApplications.find(app => app.userId === user?.id);
+  const myParticipation = safeParticipants.find(p => p.userId === user?.id);
+  const isOwnMatch = match.sellerId === user?.id;
 
-  // 참가 가능 여부 확인
-  const canParticipate = () => {
-    if (isSeller) return { canJoin: false, reason: '본인이 등록한 매치입니다.' };
-    if (isParticipant) return { canJoin: false, reason: '이미 참가 중입니다.' };
-    if (isWaiting) return { canJoin: false, reason: '이미 대기 중입니다.' };
-    if (match.isClosed) return { canJoin: false, reason: '마감된 매치입니다.' };
-    
-    // NTRP 요구사항 확인
-    if (user.ntrp < match.ntrpRequirement.min || user.ntrp > match.ntrpRequirement.max) {
-      return { 
-        canJoin: false, 
-        reason: `NTRP ${match.ntrpRequirement.min}-${match.ntrpRequirement.max} 범위에 해당하지 않습니다.` 
-      };
-    }
+  const currentTime = new Date();
+  const matchDateTime = new Date(`${match.date}T${match.time}`);
+  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
 
-    // 성별별 자리 확인
-    const availableSlots = {
-      male: match.expectedParticipants.male - match.currentApplicants.male,
-      female: match.expectedParticipants.female - match.currentApplicipants.female,
-    };
+  // 결제 타이머 효과
+  useEffect(() => {
+    if (!showPaymentTimer) return;
 
-    if (user.gender === '남성' && availableSlots.male <= 0) {
-      return { canJoin: false, reason: '남성 참가자 모집이 마감되었습니다.' };
-    }
-    if (user.gender === '여성' && availableSlots.female <= 0) {
-      return { canJoin: false, reason: '여성 참가자 모집이 마감되었습니다.' };
-    }
-
-    return { canJoin: true };
-  };
-
-  const handleJoinMatch = async () => {
-    const { canJoin, reason } = canParticipate();
-    
-    if (!canJoin) {
-      Alert.alert('참가 불가', reason);
-      return;
-    }
-
-    setIsJoining(true);
-
-    try {
-      // 즉시 참가 (자리가 있는 경우)
-      const availableSlots = {
-        male: match.expectedParticipants.male - match.currentApplicants.male,
-        female: match.expectedParticipants.female - match.currentApplicants.female,
-      };
-
-      const hasSlot = user.gender === '남성' ? availableSlots.male > 0 : availableSlots.female > 0;
-
-      if (hasSlot) {
-        // 즉시 참가 - 결제 요청 생성
-        const newPaymentRequest = BankTransferManager.createPaymentRequest(match, user.id);
-        setPaymentRequest(newPaymentRequest);
-        setTimeLeft(5 * 60); // 5분
-        setShowPaymentModal(true);
-        
-        Alert.alert(
-          '참가 신청 완료',
-          `${match.title} 매치에 참가 신청되었습니다.\n5분 내에 입금을 완료해주세요.`
-        );
-      } else {
-        // 대기자 등록
-        const result = await WaitlistManager.handleUserJoinWaitlist(match, user);
-        
-        if (result.success) {
-          updateMatch(match);
-          Alert.alert(
-            '대기자 등록 완료',
-            `대기자로 등록되었습니다.\n현재 대기 순서: ${result.position}번째`
-          );
-        } else {
-          Alert.alert('등록 실패', result.error || '대기자 등록에 실패했습니다.');
+    const timer = setInterval(() => {
+      setPaymentTimeLeft(prev => {
+        if (prev <= 1) {
+          setShowPaymentTimer(false);
+          Alert.alert('결제 시간 만료', '결제 시간이 만료되었습니다.');
+          return 0;
         }
-      }
-    } catch (error) {
-      console.error('매치 참가 오류:', error);
-      Alert.alert('오류', '매치 참가 중 오류가 발생했습니다.');
-    } finally {
-      setIsJoining(false);
-    }
-  };
+        return prev - 1;
+      });
+    }, 1000);
 
-  const handlePaymentSubmit = async () => {
-    if (!depositorName.trim()) {
-      Alert.alert('입력 오류', '입금자명을 입력해주세요.');
+    return () => clearInterval(timer);
+  }, [showPaymentTimer]);
+
+  const handleApply = () => {
+    if (!user) {
+      Alert.alert('로그인 필요', '로그인이 필요합니다.', [
+        { text: '확인', onPress: () => router.push('/auth/login') }
+      ]);
       return;
     }
 
-    try {
-      const result = await WaitlistManager.handleUserPaymentSubmission(
-        paymentRequest.id,
-        match,
-        depositorName
-      );
-
-      if (result.success) {
-        updateMatch(result.updatedMatch);
-        setShowPaymentModal(false);
-        setPaymentRequest(null);
-        setDepositorName('');
-        
-        Alert.alert(
-          '입금 신고 완료',
-          '입금 신고가 완료되었습니다.\n관리자 확인 후 참가가 확정됩니다.'
-        );
-      } else {
-        Alert.alert('신고 실패', result.error || '입금 신고에 실패했습니다.');
-      }
-    } catch (error) {
-      console.error('입금 신고 오류:', error);
-      Alert.alert('오류', '입금 신고 중 오류가 발생했습니다.');
+    if (isOwnMatch) {
+      Alert.alert('알림', '본인이 등록한 매치입니다.');
+      return;
     }
+
+    if (myApplication) {
+      Alert.alert('이미 신청함', '이미 참여신청을 하셨습니다.');
+      return;
+    }
+
+    setShowApplicationModal(true);
   };
 
-  const handleCancelParticipation = (refundAccount: any) => {
-    // 참가 취소 처리
-    if (myParticipation) {
-      myParticipation.status = 'cancelled_by_user';
-      myParticipation.cancelledAt = new Date().toISOString();
-      myParticipation.refundAccount = refundAccount;
-      myParticipation.refundRequestedAt = new Date().toISOString();
+  const submitApplication = async () => {
+    if (!user || !match) return;
 
-      // 참가자 수 감소
-      if (user.gender === '남성') {
-        match.currentApplicants.male = Math.max(0, match.currentApplicants.male - 1);
-      } else {
-        match.currentApplicants.female = Math.max(0, match.currentApplicants.female - 1);
-      }
-      match.currentApplicants.total = match.currentApplicants.male + match.currentApplicants.female;
+    setIsSubmitting(true);
 
-      updateMatch(match);
-      setShowCancelModal(false);
+    try {
+      // 새로운 참여신청 생성
+      const newApplication: MatchApplication = {
+        id: `app_${match.id}_${user.id}_${Date.now()}`,
+        matchId: match.id,
+        userId: user.id,
+        userName: user.name,
+        userGender: user.gender,
+        userNtrp: user.ntrp,
+        userProfileImage: user.profileImage,
+        appliedPrice: match.currentPrice,
+        appliedAt: new Date().toISOString(),
+        status: 'pending'
+      };
+
+      // 매치에 참여신청 추가
+      const updatedMatch: Match = {
+        ...match,
+        applications: [...safeApplications, newApplication]
+      };
+
+      updateMatch(updatedMatch);
+      setShowApplicationModal(false);
 
       Alert.alert(
-        '참가 취소 완료',
-        '참가가 취소되었습니다.\n환불은 영업일 기준 3-5일 내에 처리됩니다.'
+        '참여신청 완료! 🎾',
+        '참여신청이 완료되었습니다.\n판매자가 승인하면 결제요청이 전송됩니다.',
+        [{ text: '확인' }]
       );
-
-      // 대기자에게 알림 발송
-      WaitlistManager.handleParticipantCancellation(match, user.gender);
+    } catch (error) {
+      console.error('참여신청 중 오류:', error);
+      Alert.alert('신청 실패', '참여신청 중 오류가 발생했습니다.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5);
+  const handlePaymentComplete = () => {
+    setShowPaymentTimer(false);
+    Alert.alert(
+      '입금완료 신고',
+      '입금완료 신고가 접수되었습니다.\n관리자 확인 후 채팅이 활성화됩니다.',
+      [{ text: '확인' }]
+    );
   };
 
-  const formatTimer = (seconds: number) => {
+  const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
-  const getParticipationStatus = () => {
+  const getApplicationStatus = () => {
+    if (!user) return null;
+    
     if (myParticipation) {
       switch (myParticipation.status) {
-        case 'confirmed':
-          return { text: '참가확정', color: '#16a34a', icon: <CheckCircle size={16} color="#16a34a" /> };
         case 'payment_pending':
-          return { text: '입금확인중', color: '#f59e0b', icon: <Clock size={16} color="#f59e0b" /> };
+          return '입금 확인중';
+        case 'confirmed':
+          return '참가 확정';
         case 'cancelled_by_user':
-          return { text: '취소됨', color: '#dc2626', icon: <X size={16} color="#dc2626" /> };
+          return '참가 취소';
+        case 'refunded':
+          return '환불 완료';
         default:
-          return { text: '알 수 없음', color: '#6b7280', icon: <AlertTriangle size={16} color="#6b7280" /> };
+          return null;
       }
     }
     
-    if (myWaiting) {
-      const position = match.waitingList
-        .filter(w => w.status === 'waiting')
-        .sort((a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime())
-        .findIndex(w => w.userId === user.id) + 1;
-      
-      return { 
-        text: `대기중 (${position}번째)`, 
-        color: '#f59e0b', 
-        icon: <Clock size={16} color="#f59e0b" /> 
-      };
+    if (myApplication) {
+      switch (myApplication.status) {
+        case 'pending':
+          return '승인 대기중';
+        case 'approved':
+          return '승인됨 - 결제대기';
+        case 'rejected':
+          return '신청 거절됨';
+        case 'expired':
+          return '결제 시간 만료';
+        default:
+          return null;
+      }
     }
     
     return null;
   };
 
-  const participationStatus = getParticipationStatus();
+  const statusText = getApplicationStatus();
+  const canApply = !isOwnMatch && !myApplication && !myParticipation;
 
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={safeStyles.safeHeader}>
-        <View style={safeStyles.safeHeaderContent}>
-          <TouchableOpacity 
-            style={safeStyles.backButton} 
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={24} color="#374151" />
-          </TouchableOpacity>
-          <Text style={safeStyles.headerTitle}>매치 상세</Text>
-          <View style={safeStyles.placeholder} />
-        </View>
+      {/* 헤더 */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()}>
+          <ArrowLeft size={24} color="#111827" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>매치 상세</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* 판매자 정보 */}
-        <View style={styles.sellerCard}>
-          <View style={styles.sellerInfo}>
-            <View style={styles.profileImageContainer}>
-              {match.seller.profileImage ? (
-                <Image 
-                  source={{ uri: match.seller.profileImage }} 
-                  style={styles.profileImage}
-                />
-              ) : (
-                <View style={styles.defaultProfileImage}>
-                  <User size={32} color="#9ca3af" />
-                </View>
-              )}
-            </View>
-            
-            <View style={styles.sellerDetails}>
-              <View style={styles.sellerNameRow}>
-                <Text style={styles.sellerName}>{match.seller.name}</Text>
-                <CertificationBadge 
-                  ntrpCert={match.seller.certification.ntrp}
-                  careerCert={match.seller.certification.career}
-                  youtubeCert={match.seller.certification.youtube}
-                  instagramCert={match.seller.certification.instagram}
-                  size="medium"
-                />
-              </View>
-              <Text style={styles.sellerMeta}>
-                {match.seller.gender} · {match.seller.ageGroup} · NTRP {match.seller.ntrp} · {match.seller.careerType}
-              </Text>
-              <View style={styles.sellerStats}>
-                <View style={styles.statItem}>
-                  <Star size={14} color="#f59e0b" />
-                  <Text style={styles.statText}>{match.seller.avgRating}</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Eye size={14} color="#6b7280" />
-                  <Text style={styles.statText}>{match.seller.viewCount}</Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Heart size={14} color="#ec4899" />
-                  <Text style={styles.statText}>{match.seller.likeCount}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* 매치 정보 */}
-        <View style={styles.matchCard}>
+      <ScrollView style={styles.content}>
+        {/* 매치 기본 정보 */}
+        <View style={styles.matchInfoCard}>
           <View style={styles.matchHeader}>
             <Text style={styles.matchTitle}>{match.title}</Text>
             <View style={styles.matchTypeBadge}>
@@ -371,340 +229,335 @@ export default function MatchDetailScreen() {
             </View>
           </View>
 
-          <Text style={styles.matchDescription}>{match.description}</Text>
-
           <View style={styles.matchDetails}>
             <View style={styles.detailRow}>
               <Calendar size={16} color="#6b7280" />
-              <Text style={styles.detailText}>
-                {match.date} {formatTime(match.time)}~{formatTime(match.endTime)}
-              </Text>
+              <Text style={styles.detailText}>{match.date}</Text>
             </View>
-            
+            <View style={styles.detailRow}>
+              <Clock size={16} color="#6b7280" />
+              <Text style={styles.detailText}>{match.time} - {match.endTime}</Text>
+            </View>
             <View style={styles.detailRow}>
               <MapPin size={16} color="#6b7280" />
               <Text style={styles.detailText}>{match.court}</Text>
             </View>
-            
             <View style={styles.detailRow}>
               <Users size={16} color="#6b7280" />
               <Text style={styles.detailText}>
-                {match.currentApplicants.total}/{match.expectedParticipants.total}명 참가
-                {match.waitingApplicants > 0 && ` · 대기 ${match.waitingApplicants}명`}
+                남성 {match.expectedParticipants?.male || 0}명, 여성 {match.expectedParticipants?.female || 0}명 모집
               </Text>
             </View>
           </View>
 
-          <View style={styles.priceSection}>
-            <View style={styles.priceRow}>
-              <Text style={styles.currentPrice}>
-                현재가: {match.currentPrice.toLocaleString()}원
-              </Text>
-              <Text style={styles.basePrice}>
-                기본가: {match.basePrice.toLocaleString()}원
-              </Text>
+          {match.description && (
+            <View style={styles.descriptionSection}>
+              <Text style={styles.descriptionTitle}>매치 설명</Text>
+              <Text style={styles.descriptionText}>{match.description}</Text>
+            </View>
+          )}
+        </View>
+
+        {/* 판매자 정보 */}
+        <View style={styles.sellerCard}>
+          <Text style={styles.sectionTitle}>판매자 정보</Text>
+          <View style={styles.sellerInfo}>
+            <View style={styles.sellerProfile}>
+              <View style={styles.sellerAvatarPlaceholder}>
+                <User size={20} color="#6b7280" />
+              </View>
+              <View style={styles.sellerDetails}>
+                <View style={styles.sellerNameRow}>
+                  <Text style={styles.sellerName}>{match.seller?.name || '알 수 없음'}</Text>
+                  {match.seller?.certification?.ntrp === 'verified' && (
+                    <Shield size={16} color="#10b981" />
+                  )}
+                </View>
+                <Text style={styles.sellerMeta}>
+                  {match.seller?.gender || ''} · {match.seller?.ageGroup || ''} · NTRP {match.seller?.ntrp?.toFixed(1) || '0.0'}
+                </Text>
+                <Text style={styles.sellerDetailText}>
+                  경력 {match.seller?.experience || 0}개월 · {match.seller?.careerType || ''} · {match.seller?.playStyle || ''}
+                </Text>
+              </View>
+            </View>
+            <View style={styles.sellerStats}>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{match.seller?.viewCount || 0}</Text>
+                <Text style={styles.statLabel}>조회</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{match.seller?.likeCount || 0}</Text>
+                <Text style={styles.statLabel}>좋아요</Text>
+              </View>
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>{match.seller?.avgRating?.toFixed(1) || '0.0'}</Text>
+                <Text style={styles.statLabel}>평점</Text>
+              </View>
             </View>
           </View>
         </View>
 
-        {/* 참가 상태 */}
-        {participationStatus && (
-          <View style={styles.statusCard}>
-            <View style={styles.statusHeader}>
-              {participationStatus.icon}
-              <Text style={[styles.statusText, { color: participationStatus.color }]}>
-                {participationStatus.text}
-              </Text>
+        {/* 가격 정보 */}
+        <View style={styles.priceCard}>
+          <Text style={styles.priceCardTitle}>실시간 가격</Text>
+          <View style={styles.priceInfo}>
+            <PriceDisplay
+              currentPrice={match.currentPrice}
+              basePrice={match.basePrice}
+              maxPrice={match.maxPrice || 200000}
+              hoursUntilMatch={hoursUntilMatch}
+              viewCount={match.seller?.viewCount || 0}
+              applicationsCount={safeApplications.length}
+              expectedParticipants={match.expectedParticipants?.total || 0}
+              isClosed={match.isClosed}
+            />
+          </View>
+          <Text style={styles.priceNote}>
+            * 가격은 실시간으로 변동됩니다 (5초마다 업데이트)
+          </Text>
+        </View>
+
+        {/* 참여신청 현황 */}
+        {safeApplications.length > 0 && (
+          <View style={styles.applicationsCard}>
+            <Text style={styles.sectionTitle}>
+              참여신청 현황 ({safeApplications.length}건)
+            </Text>
+            <View style={styles.applicationsList}>
+              {safeApplications.slice(0, 3).map((application) => (
+                <View key={application.id} style={styles.applicationItem}>
+                  <View style={styles.applicantInfo}>
+                    <Text style={styles.applicantName}>{application.userName}</Text>
+                    <Text style={styles.applicantMeta}>
+                      {application.userGender} · NTRP {application.userNtrp.toFixed(1)}
+                    </Text>
+                  </View>
+                  <View style={styles.applicationStatus}>
+                    <Text style={styles.applicationPrice}>
+                      {application.appliedPrice.toLocaleString()}원
+                    </Text>
+                    <Text style={styles.statusBadge}>
+                      {application.status === 'pending' ? '대기중' : 
+                       application.status === 'approved' ? '승인됨' : 
+                       application.status === 'rejected' ? '거절됨' : '만료'}
+                    </Text>
+                  </View>
+                </View>
+              ))}
+              {safeApplications.length > 3 && (
+                <Text style={styles.moreApplications}>
+                  +{safeApplications.length - 3}건 더
+                </Text>
+              )}
             </View>
-            
-            {myParticipation?.status === 'payment_pending' && (
-              <Text style={styles.statusDescription}>
-                입금 확인 중입니다. 관리자 확인 후 참가가 확정됩니다.
-              </Text>
-            )}
-            
-            {myParticipation?.status === 'confirmed' && (
-              <Text style={styles.statusDescription}>
-                매치 참가가 확정되었습니다. 매치 당일에 참여해주세요.
-              </Text>
-            )}
           </View>
         )}
 
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* 하단 액션 버튼 */}
-      {!isSeller && (
-        <View style={styles.actionBar}>
-          {!isParticipant && !isWaiting ? (
-            <TouchableOpacity 
-              style={[
-                styles.joinButton,
-                (!canParticipate().canJoin || isJoining) && styles.joinButtonDisabled
-              ]}
-              onPress={handleJoinMatch}
-              disabled={!canParticipate().canJoin || isJoining}
-            >
-              {isJoining ? (
-                <ActivityIndicator size="small" color="#ffffff" />
-              ) : (
-                <Text style={styles.joinButtonText}>
-                  {canParticipate().canJoin ? '참가신청' : canParticipate().reason}
-                </Text>
-              )}
-            </TouchableOpacity>
-          ) : myParticipation?.status === 'confirmed' ? (
-            <TouchableOpacity 
-              style={styles.cancelButton}
-              onPress={() => setShowCancelModal(true)}
-            >
-              <Text style={styles.cancelButtonText}>참가 취소</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={styles.statusInfo}>
-              <Text style={styles.statusInfoText}>
-                {participationStatus?.text}
-              </Text>
-            </View>
+      {/* 하단 고정 영역 */}
+      <View style={styles.bottomBar}>
+        <View style={styles.priceDisplay}>
+          <Text style={styles.currentPrice}>
+            {match.currentPrice.toLocaleString()}원
+          </Text>
+          {statusText && (
+            <Text style={styles.statusText}>{statusText}</Text>
           )}
         </View>
-      )}
+        
+        <TouchableOpacity 
+          style={[
+            styles.applyButton,
+            (!canApply || match.isClosed) && styles.applyButtonDisabled
+          ]} 
+          onPress={handleApply}
+          disabled={!canApply || match.isClosed}
+        >
+          <Text style={styles.applyButtonText}>
+            {match.isClosed ? '마감됨' :
+             isOwnMatch ? '본인 매치' :
+             myApplication ? '신청완료' :
+             myParticipation ? '참가중' :
+             '참여신청'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-      {/* 결제 모달 */}
+      {/* 참여신청 모달 */}
       <Modal
-        visible={showPaymentModal}
+        visible={showApplicationModal}
         animationType="slide"
         presentationStyle="pageSheet"
+        onRequestClose={() => setShowApplicationModal(false)}
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
-              <Text style={styles.modalCancelText}>취소</Text>
+            <TouchableOpacity onPress={() => setShowApplicationModal(false)}>
+              <X size={24} color="#6b7280" />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>입금 안내</Text>
-            <View style={styles.placeholder} />
+            <Text style={styles.modalTitle}>참여신청</Text>
+            <View style={{ width: 24 }} />
           </View>
 
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.paymentSection}>
-              <View style={styles.timerSection}>
-                <Clock size={24} color="#dc2626" />
-                <Text style={styles.timerText}>
-                  남은 시간: {formatTimer(timeLeft)}
+          <View style={styles.modalContent}>
+            <View style={styles.applicationSummary}>
+              <Text style={styles.summaryTitle}>신청 내용</Text>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>매치</Text>
+                <Text style={styles.summaryValue}>{match.title}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>일시</Text>
+                <Text style={styles.summaryValue}>{match.date} {match.time}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>장소</Text>
+                <Text style={styles.summaryValue}>{match.court}</Text>
+              </View>
+              <View style={styles.summaryItem}>
+                <Text style={styles.summaryLabel}>신청가격</Text>
+                <Text style={[styles.summaryValue, styles.priceValue]}>
+                  {match.currentPrice.toLocaleString()}원
                 </Text>
               </View>
+            </View>
 
-              <View style={styles.accountInfo}>
-                <Text style={styles.accountTitle}>입금 계좌</Text>
-                <View style={styles.accountDetails}>
-                  <Building size={16} color="#6b7280" />
-                  <Text style={styles.accountText}>
-                    국민은행 123-456-789012
-                  </Text>
-                </View>
-                <Text style={styles.accountHolder}>예금주: MatchMarket</Text>
-              </View>
+            <View style={styles.applicationNote}>
+              <Text style={styles.noteTitle}>📝 참여신청 안내</Text>
+              <Text style={styles.noteText}>
+                • 판매자가 신청을 승인하면 결제요청이 전송됩니다{'\n'}
+                • 결제요청 후 5분 내에 입금해주세요{'\n'}
+                • 입금완료 후 채팅을 통해 소통할 수 있습니다
+              </Text>
+            </View>
 
-              <View style={styles.amountInfo}>
-                <Text style={styles.amountTitle}>입금 금액</Text>
-                <Text style={styles.amountValue}>
-                  {paymentRequest?.amount.toLocaleString()}원
-                </Text>
-              </View>
-
-              <View style={styles.depositorSection}>
-                <Text style={styles.inputLabel}>입금자명 *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={depositorName}
-                  onChangeText={setDepositorName}
-                  placeholder="입금하신 분의 성함을 입력하세요"
-                  placeholderTextColor="#9ca3af"
-                />
-              </View>
-
+            <View style={styles.modalActions}>
               <TouchableOpacity 
-                style={styles.submitPaymentButton}
-                onPress={handlePaymentSubmit}
+                style={styles.cancelButton}
+                onPress={() => setShowApplicationModal(false)}
               >
-                <Text style={styles.submitPaymentButtonText}>입금 완료 신고</Text>
+                <Text style={styles.cancelButtonText}>취소</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.confirmButton, isSubmitting && styles.confirmButtonDisabled]}
+                onPress={submitApplication}
+                disabled={isSubmitting}
+              >
+                <Text style={styles.confirmButtonText}>
+                  {isSubmitting ? '신청 중...' : '참여신청'}
+                </Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+          </View>
         </SafeAreaView>
       </Modal>
 
-      {/* 참가 취소 모달 */}
-      <CancelParticipationModal
-        visible={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        onConfirm={handleCancelParticipation}
-        matchTitle={match.title}
-        refundAmount={myParticipation?.paymentAmount || 0}
-      />
+      {/* 결제 타이머 모달 */}
+      <Modal
+        visible={showPaymentTimer}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPaymentTimer(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <View style={{ width: 24 }} />
+            <Text style={styles.modalTitle}>입금 안내</Text>
+            <TouchableOpacity onPress={() => setShowPaymentTimer(false)}>
+              <X size={24} color="#6b7280" />
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.modalContent}>
+            <View style={styles.timerSection}>
+              <Timer size={48} color="#dc2626" />
+              <Text style={styles.timerText}>{formatTime(paymentTimeLeft)}</Text>
+              <Text style={styles.timerLabel}>남은 시간</Text>
+            </View>
+
+            <View style={styles.paymentInfo}>
+              <Text style={styles.paymentTitle}>입금 정보</Text>
+              <View style={styles.paymentDetail}>
+                <Text style={styles.paymentLabel}>입금 금액</Text>
+                <Text style={styles.paymentAmount}>
+                  {match.currentPrice.toLocaleString()}원
+                </Text>
+              </View>
+              <View style={styles.paymentDetail}>
+                <Text style={styles.paymentLabel}>입금 계좌</Text>
+                <Text style={styles.paymentAccount}>
+                  국민은행 123-456-789012 (주)테니스매치
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity 
+              style={styles.paymentCompleteButton}
+              onPress={handlePaymentComplete}
+            >
+              <Text style={styles.paymentCompleteButtonText}>입금완료</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
-  },
-  backButton: {
-    padding: 4,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
   },
-  placeholder: {
-    width: 32,
-  },
   content: {
     flex: 1,
-    paddingTop: 16,
+    backgroundColor: '#f9fafb',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 40,
+    padding: 32,
   },
   errorText: {
     fontSize: 18,
-    color: '#374151',
-    marginBottom: 20,
+    color: '#6b7280',
+    marginBottom: 24,
   },
-  backToHomeButton: {
+  backButton: {
     backgroundColor: '#ec4899',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
-  backToHomeText: {
+  backButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
   },
-  loginPrompt: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-  },
-  loginPromptText: {
-    fontSize: 18,
-    color: '#374151',
-    marginBottom: 20,
-  },
-  loginButton: {
-    backgroundColor: '#ec4899',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  loginButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  sellerCard: {
+  matchInfoCard: {
     backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
+    margin: 16,
     padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  sellerInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  profileImageContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-  },
-  profileImage: {
-    width: '100%',
-    height: '100%',
-  },
-  defaultProfileImage: {
-    width: '100%',
-    height: '100%',
-    backgroundColor: '#f3f4f6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sellerDetails: {
-    flex: 1,
-  },
-  sellerNameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 4,
-  },
-  sellerName: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  sellerMeta: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  sellerStats: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  statText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  matchCard: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 3,
@@ -713,145 +566,273 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    marginBottom: 16,
     gap: 12,
   },
   matchTitle: {
-    flex: 1,
     fontSize: 20,
     fontWeight: '700',
     color: '#111827',
-    lineHeight: 26,
+    flex: 1,
+    lineHeight: 28,
   },
   matchTypeBadge: {
-    backgroundColor: '#fdf2f8',
+    backgroundColor: '#fef3c7',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ec4899',
+    borderColor: '#fbbf24',
   },
   matchTypeText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#ec4899',
-  },
-  matchDescription: {
-    fontSize: 16,
-    color: '#374151',
-    lineHeight: 22,
-    marginBottom: 20,
+    fontWeight: '600',
+    color: '#92400e',
   },
   matchDetails: {
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 16,
   },
   detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
   },
   detailText: {
-    fontSize: 14,
-    color: '#6b7280',
+    fontSize: 16,
+    color: '#374151',
     fontWeight: '500',
   },
-  priceSection: {
-    paddingTop: 16,
+  descriptionSection: {
     borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
+    borderTopColor: '#e5e7eb',
+    paddingTop: 16,
   },
-  priceRow: {
+  descriptionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 8,
+  },
+  descriptionText: {
+    fontSize: 15,
+    color: '#6b7280',
+    lineHeight: 24,
+  },
+  sellerCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  sellerInfo: {
+    gap: 16,
+  },
+  sellerProfile: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  sellerAvatarPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sellerDetails: {
+    flex: 1,
+  },
+  sellerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  sellerName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  sellerMeta: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginBottom: 4,
+  },
+  sellerDetailText: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  sellerStats: {
+    flexDirection: 'row',
+    gap: 24,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  priceCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  priceCardTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  priceInfo: {
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  priceNote: {
+    fontSize: 12,
+    color: '#9ca3af',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  applicationsCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 20,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  applicationsList: {
+    gap: 12,
+  },
+  applicationItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  applicantInfo: {
+    flex: 1,
+  },
+  applicantName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  applicantMeta: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  applicationStatus: {
+    alignItems: 'flex-end',
+  },
+  applicationPrice: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ec4899',
+    marginBottom: 2,
+  },
+  statusBadge: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#92400e',
+    backgroundColor: '#fef3c7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  moreApplications: {
+    fontSize: 12,
+    color: '#6b7280',
+    textAlign: 'center',
+    paddingTop: 8,
+  },
+  bottomPadding: {
+    height: 20,
+  },
+  bottomBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 8,
+    gap: 16,
+  },
+  priceDisplay: {
+    flex: 1,
   },
   currentPrice: {
     fontSize: 20,
     fontWeight: '700',
     color: '#ec4899',
-  },
-  basePrice: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
-  statusCard: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  statusHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    marginBottom: 2,
   },
   statusText: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  statusDescription: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#6b7280',
-    lineHeight: 20,
   },
-  actionBar: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
-  },
-  joinButton: {
+  applyButton: {
     backgroundColor: '#ec4899',
+    paddingHorizontal: 24,
     paddingVertical: 16,
     borderRadius: 12,
+    minWidth: 120,
     alignItems: 'center',
   },
-  joinButtonDisabled: {
-    backgroundColor: '#9ca3af',
+  applyButtonDisabled: {
+    backgroundColor: '#d1d5db',
   },
-  joinButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
+  applyButtonText: {
     color: '#ffffff',
-  },
-  cancelButton: {
-    backgroundColor: '#fee2e2',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#dc2626',
-  },
-  cancelButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  statusInfo: {
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  statusInfoText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  bottomPadding: {
-    height: 40,
+    fontWeight: '700',
   },
   modalContainer: {
     flex: 1,
@@ -859,17 +840,13 @@ const styles = StyleSheet.create({
   },
   modalHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    paddingHorizontal: 16,
     paddingVertical: 16,
     backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
-  },
-  modalCancelText: {
-    fontSize: 16,
-    color: '#6b7280',
   },
   modalTitle: {
     fontSize: 18,
@@ -878,108 +855,159 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     flex: 1,
-    paddingTop: 16,
-  },
-  paymentSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  timerSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: '#fef2f2',
     padding: 16,
-    borderRadius: 8,
-    marginBottom: 20,
   },
-  timerText: {
+  applicationSummary: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  summaryTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#dc2626',
-  },
-  accountInfo: {
-    marginBottom: 20,
-  },
-  accountTitle: {
-    fontSize: 16,
-    fontWeight: '700',
     color: '#111827',
-    marginBottom: 8,
+    marginBottom: 16,
   },
-  accountDetails: {
+  summaryItem: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
   },
-  accountText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  accountHolder: {
+  summaryLabel: {
     fontSize: 14,
     color: '#6b7280',
-    marginLeft: 24,
   },
-  amountInfo: {
-    backgroundColor: '#fef3c7',
+  summaryValue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  priceValue: {
+    color: '#ec4899',
+    fontSize: 16,
+  },
+  applicationNote: {
+    backgroundColor: '#f0f9ff',
     padding: 16,
-    borderRadius: 8,
-    marginBottom: 20,
-    alignItems: 'center',
+    borderRadius: 12,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#bfdbfe',
   },
-  amountTitle: {
+  noteTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#92400e',
-    marginBottom: 4,
-  },
-  amountValue: {
-    fontSize: 24,
     fontWeight: '700',
-    color: '#92400e',
+    color: '#1e40af',
+    marginBottom: 8,
   },
-  depositorSection: {
-    marginBottom: 20,
+  noteText: {
+    fontSize: 13,
+    color: '#1e40af',
+    lineHeight: 20,
   },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
   },
-  textInput: {
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#d1d5db',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#374151',
-    backgroundColor: '#ffffff',
   },
-  submitPaymentButton: {
+  cancelButtonText: {
+    color: '#6b7280',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  confirmButton: {
+    flex: 1,
     backgroundColor: '#ec4899',
     paddingVertical: 16,
-    borderRadius: 8,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  submitPaymentButtonText: {
+  confirmButtonDisabled: {
+    backgroundColor: '#d1d5db',
+  },
+  confirmButtonText: {
+    color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
+  },
+  timerSection: {
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    padding: 32,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  timerText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#dc2626',
+    marginVertical: 8,
+  },
+  timerLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  paymentInfo: {
+    backgroundColor: '#ffffff',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  paymentTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 16,
+  },
+  paymentDetail: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  paymentLabel: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  paymentAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ec4899',
+  },
+  paymentAccount: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+  },
+  paymentCompleteButton: {
+    backgroundColor: '#10b981',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  paymentCompleteButtonText: {
     color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

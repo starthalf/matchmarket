@@ -3,16 +3,16 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
+  TouchableOpacity,
   Alert,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowRight, User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSafeStyles } from '../../constants/Styles';
 
@@ -47,41 +47,33 @@ export default function SignupScreen() {
       return;
     }
 
-    if (formData.password.length < 6) {
-      Alert.alert('입력 오류', '비밀번호는 6자 이상이어야 합니다.');
+    if (formData.password.length < 4) {
+      Alert.alert('입력 오류', '비밀번호는 4자 이상이어야 합니다.');
       return;
     }
 
-    const ntrp = parseFloat(formData.ntrp);
-    if (isNaN(ntrp) || ntrp < 1.0 || ntrp > 7.0) {
-      Alert.alert('입력 오류', 'NTRP는 1.0~7.0 사이의 값이어야 합니다.');
+    if (!formData.ntrp || isNaN(Number(formData.ntrp))) {
+      Alert.alert('입력 오류', 'NTRP 등급을 올바르게 입력해주세요.');
       return;
     }
 
-    const experience = parseInt(formData.experience);
-    if (isNaN(experience) || experience < 0) {
-      Alert.alert('입력 오류', '올바른 경력을 입력해주세요.');
+    if (!formData.experience || isNaN(Number(formData.experience))) {
+      Alert.alert('입력 오류', '테니스 경력을 올바르게 입력해주세요.');
       return;
     }
 
     setIsLoading(true);
     const result = await signup({
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      gender: formData.gender,
-      ageGroup: formData.ageGroup,
-      ntrp: ntrp,
-      experience: experience,
-      playStyle: formData.playStyle,
-      careerType: formData.careerType,
+      ...formData,
+      ntrp: Number(formData.ntrp),
+      experience: Number(formData.experience), // 이제 년 단위로 저장
     });
     setIsLoading(false);
 
     if (result.success) {
       Alert.alert(
         '회원가입 완료',
-        '회원가입이 완료되었습니다!',
+        '환영합니다! 로그인되었습니다.',
         [{ text: '확인', onPress: () => router.replace('/(tabs)') }]
       );
     } else {
@@ -91,31 +83,38 @@ export default function SignupScreen() {
 
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>회원가입</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
+      </View>
+
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
-        <View style={styles.container}>
-          {/* 헤더 */}
-          <View style={styles.header}>
-            <Text style={styles.title}>회원가입</Text>
-            <Text style={styles.subtitle}>MatchMarket에 오신 것을 환영합니다</Text>
-          </View>
-
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.form}>
             {/* 기본 정보 */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>기본 정보</Text>
               
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>이름 *</Text>
+                <Text style={styles.inputLabel}>닉네임 *</Text>
                 <View style={styles.inputContainer}>
                   <User size={20} color="#6b7280" />
                   <TextInput
                     style={styles.textInput}
                     value={formData.name}
                     onChangeText={(text) => setFormData({...formData, name: text})}
-                    placeholder="실명을 입력하세요"
+                    placeholder="닉네임을 입력하세요"
                     placeholderTextColor="#9ca3af"
                   />
                 </View>
@@ -188,30 +187,27 @@ export default function SignupScreen() {
               </View>
             </View>
 
-            {/* 개인 정보 */}
+            {/* 프로필 정보 */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>개인 정보</Text>
+              <Text style={styles.sectionTitle}>프로필 정보</Text>
               
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>성별 *</Text>
                 <View style={styles.radioGroup}>
-                  {[
-                    { key: '남성', label: '남성' },
-                    { key: '여성', label: '여성' },
-                  ].map((option) => (
+                  {['남성', '여성'].map((gender) => (
                     <TouchableOpacity
-                      key={option.key}
+                      key={gender}
                       style={[
                         styles.radioButton,
-                        formData.gender === option.key && styles.radioButtonActive
+                        formData.gender === gender && styles.radioButtonActive
                       ]}
-                      onPress={() => setFormData({...formData, gender: option.key as any})}
+                      onPress={() => setFormData({...formData, gender: gender as any})}
                     >
                       <Text style={[
                         styles.radioText,
-                        formData.gender === option.key && styles.radioTextActive
+                        formData.gender === gender && styles.radioTextActive
                       ]}>
-                        {option.label}
+                        {gender}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -219,85 +215,69 @@ export default function SignupScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>연령대 *</Text>
+                <Text style={styles.inputLabel}>나이대 *</Text>
                 <View style={styles.radioGroup}>
-                  {[
-                    { key: '20대', label: '20대' },
-                    { key: '30대', label: '30대' },
-                    { key: '40대', label: '40대' },
-                    { key: '50대+', label: '50대+' },
-                  ].map((option) => (
+                  {['20대', '30대', '40대', '50대+'].map((age) => (
                     <TouchableOpacity
-                      key={option.key}
+                      key={age}
                       style={[
                         styles.radioButton,
-                        formData.ageGroup === option.key && styles.radioButtonActive
+                        formData.ageGroup === age && styles.radioButtonActive
                       ]}
-                      onPress={() => setFormData({...formData, ageGroup: option.key as any})}
+                      onPress={() => setFormData({...formData, ageGroup: age as any})}
                     >
                       <Text style={[
                         styles.radioText,
-                        formData.ageGroup === option.key && styles.radioTextActive
+                        formData.ageGroup === age && styles.radioTextActive
                       ]}>
-                        {option.label}
+                        {age}
                       </Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               </View>
-            </View>
 
-            {/* 테니스 정보 */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>테니스 정보</Text>
-              
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>NTRP 레벨 *</Text>
+                <Text style={styles.inputLabel}>NTRP 등급 *</Text>
                 <TextInput
-                  style={styles.textInput}
+                  style={styles.simpleInput}
                   value={formData.ntrp}
                   onChangeText={(text) => setFormData({...formData, ntrp: text})}
-                  placeholder="예) 4.0"
+                  placeholder="예: 3.5"
                   placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
                 />
-                <Text style={styles.inputHint}>1.0 ~ 7.0 사이의 값을 입력하세요</Text>
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>테니스 경력 *</Text>
+                <Text style={styles.inputLabel}>테니스 경력 (년) *</Text>
                 <TextInput
-                  style={styles.textInput}
+                  style={styles.simpleInput}
                   value={formData.experience}
                   onChangeText={(text) => setFormData({...formData, experience: text})}
-                  placeholder="예) 24"
+                  placeholder="예: 2"
                   placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
                 />
-                <Text style={styles.inputHint}>개월 단위로 입력하세요</Text>
               </View>
 
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>플레이 스타일 *</Text>
                 <View style={styles.radioGroup}>
-                  {[
-                    { key: '공격형', label: '공격형' },
-                    { key: '수비형', label: '수비형' },
-                    { key: '올라운드', label: '올라운드' },
-                  ].map((option) => (
+                  {['공격형', '수비형', '올라운드'].map((style) => (
                     <TouchableOpacity
-                      key={option.key}
+                      key={style}
                       style={[
                         styles.radioButton,
-                        formData.playStyle === option.key && styles.radioButtonActive
+                        formData.playStyle === style && styles.radioButtonActive
                       ]}
-                      onPress={() => setFormData({...formData, playStyle: option.key as any})}
+                      onPress={() => setFormData({...formData, playStyle: style as any})}
                     >
                       <Text style={[
                         styles.radioText,
-                        formData.playStyle === option.key && styles.radioTextActive
+                        formData.playStyle === style && styles.radioTextActive
                       ]}>
-                        {option.label}
+                        {style}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -305,25 +285,22 @@ export default function SignupScreen() {
               </View>
 
               <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>경력 구분 *</Text>
+                <Text style={styles.inputLabel}>선수 출신 *</Text>
                 <View style={styles.radioGroup}>
-                  {[
-                    { key: '동호인', label: '동호인' },
-                    { key: '선수', label: '선수' },
-                  ].map((option) => (
+                  {['동호인', '선수'].map((career) => (
                     <TouchableOpacity
-                      key={option.key}
+                      key={career}
                       style={[
                         styles.radioButton,
-                        formData.careerType === option.key && styles.radioButtonActive
+                        formData.careerType === career && styles.radioButtonActive
                       ]}
-                      onPress={() => setFormData({...formData, careerType: option.key as any})}
+                      onPress={() => setFormData({...formData, careerType: career as any})}
                     >
                       <Text style={[
                         styles.radioText,
-                        formData.careerType === option.key && styles.radioTextActive
+                        formData.careerType === career && styles.radioTextActive
                       ]}>
-                        {option.label}
+                        {career}
                       </Text>
                     </TouchableOpacity>
                   ))}
@@ -331,11 +308,6 @@ export default function SignupScreen() {
               </View>
             </View>
 
-            <View style={styles.bottomPadding} />
-          </ScrollView>
-
-          {/* 가입 버튼 */}
-          <View style={styles.submitSection}>
             <TouchableOpacity 
               style={[styles.signupButton, isLoading && styles.signupButtonDisabled]}
               onPress={handleSignup}
@@ -344,10 +316,11 @@ export default function SignupScreen() {
               <Text style={styles.signupButtonText}>
                 {isLoading ? '가입 중...' : '회원가입'}
               </Text>
-              <ArrowRight size={20} color="#ffffff" />
             </TouchableOpacity>
           </View>
-        </View>
+
+          <View style={styles.bottomPadding} />
+        </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -357,45 +330,22 @@ const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
   },
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ec4899',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
   content: {
     flex: 1,
     paddingTop: 16,
   },
+  form: {
+    marginHorizontal: 16,
+  },
   section: {
     backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
     borderRadius: 12,
     padding: 20,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 3,
@@ -413,7 +363,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -421,7 +371,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: '#ffffff',
     gap: 12,
@@ -430,17 +380,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#374151',
+  },
+  simpleInput: {
     borderWidth: 1,
     borderColor: '#d1d5db',
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
+    fontSize: 16,
+    color: '#374151',
     backgroundColor: '#ffffff',
-  },
-  inputHint: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 4,
   },
   eyeButton: {
     padding: 4,
@@ -454,9 +403,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
     borderWidth: 1,
     borderColor: '#d1d5db',
+    backgroundColor: '#ffffff',
   },
   radioButtonActive: {
     backgroundColor: '#ec4899',
@@ -470,28 +419,24 @@ const styles = StyleSheet.create({
   radioTextActive: {
     color: '#ffffff',
   },
-  submitSection: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+  helperText: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   signupButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
     backgroundColor: '#ec4899',
     paddingVertical: 16,
-    paddingHorizontal: 32,
     borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 8,
   },
   signupButtonDisabled: {
     backgroundColor: '#9ca3af',
   },
   signupButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#ffffff',
   },

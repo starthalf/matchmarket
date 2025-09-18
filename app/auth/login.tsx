@@ -1,29 +1,75 @@
-import React, { useState } from 'react';
+// app/auth/login.tsx 자동로그인 기능 추가
+
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
   TextInput,
+  TouchableOpacity,
   Alert,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowRight, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSafeStyles } from '../../constants/Styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const { login } = useAuth();
   const safeStyles = useSafeStyles();
+
+  // ✅ 안전한 뒤로 가기 함수 추가
+  const handleSafeBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/(tabs)');
+    }
+  };
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 마지막 로그인 이메일 불러오기
+  useEffect(() => {
+    const loadLastEmail = async () => {
+      try {
+        let lastEmail = '';
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          lastEmail = localStorage.getItem('lastLoginEmail') || '';
+        } else {
+          lastEmail = await AsyncStorage.getItem('lastLoginEmail') || '';
+        }
+        if (lastEmail) {
+          setFormData(prev => ({ ...prev, email: lastEmail }));
+        }
+      } catch (error) {
+        console.warn('마지막 로그인 이메일 로드 실패:', error);
+      }
+    };
+
+    loadLastEmail();
+  }, []);
+
+  const saveLastEmail = async (email: string) => {
+    try {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        localStorage.setItem('lastLoginEmail', email);
+      } else {
+        await AsyncStorage.setItem('lastLoginEmail', email);
+      }
+    } catch (error) {
+      console.warn('마지막 로그인 이메일 저장 실패:', error);
+    }
+  };
 
   const handleLogin = async () => {
     if (!formData.email || !formData.password) {
@@ -36,48 +82,49 @@ export default function LoginScreen() {
     setIsLoading(false);
 
     if (result.success) {
+      // 로그인 성공 시 이메일 저장
+      await saveLastEmail(formData.email);
       router.replace('/(tabs)');
     } else {
       Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
     }
   };
 
-  const handleDemoLogin = () => {
-    Alert.alert(
-      '데모 로그인',
-      '데모 계정으로 로그인하시겠습니까?\n\n데모 계정: 지은이\n비밀번호: 1234',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '데모 로그인', onPress: () => {
-          setFormData({ email: '지은이', password: '1234' });
-          setTimeout(() => handleLogin(), 100);
-        }}
-      ]
-    );
-  };
-
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity 
+            style={safeStyles.backButton} 
+            onPress={handleSafeBack}
+          >
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <Text style={safeStyles.headerTitle}>로그인</Text>
+          <View style={safeStyles.placeholder} />
+        </View>
+      </View>
+
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
       >
         <View style={styles.content}>
-          <View style={styles.logoSection}>
-            <Text style={styles.title}>MatchMarket</Text>
-            <Text style={styles.subtitle}>테니스 매치 마켓플레이스</Text>
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>환영합니다!</Text>
+            <Text style={styles.welcomeSubtitle}>MatchMarket에 로그인하세요</Text>
           </View>
 
-          <View style={styles.loginSection}>
+          <View style={styles.form}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>이메일 또는 닉네임</Text>
+              <Text style={styles.inputLabel}>이메일</Text>
               <View style={styles.inputContainer}>
                 <Mail size={20} color="#6b7280" />
                 <TextInput
                   style={styles.textInput}
                   value={formData.email}
                   onChangeText={(text) => setFormData({...formData, email: text})}
-                  placeholder="이메일 또는 닉네임을 입력하세요"
+                  placeholder="이메일을 입력하세요"
                   placeholderTextColor="#9ca3af"
                   keyboardType="email-address"
                   autoCapitalize="none"
@@ -118,7 +165,6 @@ export default function LoginScreen() {
               <Text style={styles.loginButtonText}>
                 {isLoading ? '로그인 중...' : '로그인'}
               </Text>
-              <ArrowRight size={20} color="#ffffff" />
             </TouchableOpacity>
 
             <View style={styles.divider}>
@@ -128,17 +174,10 @@ export default function LoginScreen() {
             </View>
 
             <TouchableOpacity 
-              style={styles.demoButton}
-              onPress={handleDemoLogin}
+              style={styles.signupButton}
+              onPress={() => router.push('/auth/signup')}
             >
-              <Text style={styles.demoButtonText}>데모 계정으로 로그인</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.signupSection}>
-            <Text style={styles.signupText}>계정이 없으신가요?</Text>
-            <TouchableOpacity onPress={() => router.push('/auth/signup')}>
-              <Text style={styles.signupLink}>회원가입</Text>
+              <Text style={styles.signupButtonText}>회원가입</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -154,27 +193,24 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 40,
+    paddingHorizontal: 24,
   },
-  logoSection: {
+  welcomeSection: {
     alignItems: 'center',
-    marginBottom: 60,
+    marginBottom: 48,
   },
-  title: {
+  welcomeTitle: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#ec4899',
+    fontWeight: '700',
+    color: '#111827',
     marginBottom: 8,
   },
-  subtitle: {
+  welcomeSubtitle: {
     fontSize: 16,
     color: '#6b7280',
-    textAlign: 'center',
   },
-  loginSection: {
+  form: {
     width: '100%',
-    marginBottom: 40,
   },
   inputGroup: {
     marginBottom: 20,
@@ -205,28 +241,24 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   loginButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
     backgroundColor: '#ec4899',
     paddingVertical: 16,
-    paddingHorizontal: 32,
     borderRadius: 12,
+    alignItems: 'center',
     marginBottom: 20,
   },
   loginButtonDisabled: {
     backgroundColor: '#9ca3af',
   },
   loginButtonText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#ffffff',
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginBottom: 20,
   },
   dividerLine: {
     flex: 1,
@@ -234,37 +266,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#e5e7eb',
   },
   dividerText: {
-    fontSize: 14,
-    color: '#9ca3af',
     marginHorizontal: 16,
+    fontSize: 14,
+    color: '#6b7280',
   },
-  demoButton: {
+  signupButton: {
     backgroundColor: '#f3f4f6',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
+    paddingVertical: 16,
+    borderRadius: 12,
     alignItems: 'center',
   },
-  demoButtonText: {
+  signupButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6b7280',
-  },
-  signupSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  signupText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  signupLink: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#ec4899',
-    textDecorationLine: 'underline',
+    color: '#374151',
   },
 });

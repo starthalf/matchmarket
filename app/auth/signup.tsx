@@ -71,11 +71,8 @@ export default function SignupScreen() {
     setIsLoading(false);
 
     if (result.success) {
-      Alert.alert(
-        '회원가입 완료',
-        '환영합니다! 로그인되었습니다.',
-        [{ text: '확인', onPress: () => router.replace('/(tabs)') }]
-      );
+      // Alert 없이 바로 매치찾기 화면으로 이동
+      router.replace('/(tabs)');
     } else {
       Alert.alert('회원가입 실패', result.error || '회원가입에 실패했습니다.');
     }

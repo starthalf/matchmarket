@@ -57,21 +57,22 @@ export function MatchCard({ match }: MatchCardProps) {
           )}
           <View style={styles.sellerDetails}>
             <View style={styles.sellerNameRow}>
-              <CertificationBadge 
-                ntrpCert={match.seller.certification.ntrp}
-                careerCert={match.seller.certification.career}
-                youtubeCert={match.seller.certification.youtube}
-                instagramCert={match.seller.certification.instagram}
-                size="tiny"
+  <Text style={styles.sellerName}>{match.seller.name}</Text>
+  <CertificationBadge 
+    ntrpCert={match.seller.certification.ntrp}
+    careerCert={match.seller.certification.career}
+    youtubeCert={match.seller.certification.youtube}
+    instagramCert={match.seller.certification.instagram}
+    size="tiny"
               />
               <Text style={styles.sellerName}>{match.seller.name}</Text>
               <Text style={styles.ntrpBadge}>NTRP {match.seller.ntrp.toFixed(1)}</Text>
             </View>
             <View style={styles.sellerMeta}>
-              <Text style={styles.sellerMetaText}>
-                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType}
-              </Text>
-            </View>
+  <Text style={styles.sellerMetaText}>
+    {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
+  </Text>
+</View>
             <View style={styles.ratingRow}>
               <Star size={12} color="#f59e0b" fill="#f59e0b" />
               <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
@@ -227,16 +228,7 @@ const styles = StyleSheet.create({
     color: '#111827',
     flex: 1,
   },
-  ntrpBadge: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#ec4899',
-    backgroundColor: '#fdf2f8',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-  },
-  sellerMeta: {
+    sellerMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,

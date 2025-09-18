@@ -152,11 +152,10 @@ export default function RegisterScreen() {
     console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
 
 // MatchContext에 매치 추가
-console.log('새 매치 추가 중:', newMatchId); // 디버깅용
-addMatch(newMatch); // await와 success 체크 제거
-console.log('매치 추가 완료'); // 디버깅용
+console.log('새 매치 추가 중:', newMatchId);
+addMatch(newMatch);
+console.log('매치 추가 완료');
 
-// 항상 성공으로 처리 (Supabase 로그로 보아 이미 성공함)
 // 폼 초기화
 setFormData({
   title: '',
@@ -174,14 +173,9 @@ setFormData({
   ntrpMax: '4.5',
 });
 
-Alert.alert(
-  '매치 등록 완료! 🎾',
-  '매치가 성공적으로 등록되었습니다!\n실시간 가격 시스템이 활성화됩니다.',
-  [{ 
-    text: '매치 보기', 
-    onPress: () => {
-      console.log('매치 상세페이지로 이동 시도:', newMatchId); // 디버깅용
-      router.replace(`/match/${newMatchId}`);
+// 🔥 Alert 없이 바로 이동
+console.log('매치 상세페이지로 바로 이동:', newMatchId);
+router.replace(`/match/${newMatchId}`);
     }
   }]
 );

@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import { Search, Filter, TrendingUp, Shield, User, LogIn, Bell } from 'lucide-react-native';
+import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell } from 'lucide-react-native';
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, TrendingUp, Shield } from 'lucide-react-native';
-import { Database } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';

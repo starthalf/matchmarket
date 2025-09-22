@@ -20,7 +20,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
-import { User, LogIn } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();

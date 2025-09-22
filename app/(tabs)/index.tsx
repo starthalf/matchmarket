@@ -1,5 +1,5 @@
 // app/(tabs)/index.tsx
-import React, { useState, useRef, useEffect } from 'react';
+import { Search, Filter, TrendingUp, Shield, User, LogIn, Bell } from 'lucide-react-native';
 import {
   View,
   Text,
@@ -20,6 +20,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
+import { User, LogIn } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
@@ -115,6 +116,50 @@ export default function HomeScreen() {
         </View>
       </View>
 
+{/* 로그인 상태 헤더 */}
+      <View style={styles.loginStatusHeader}>
+        <View style={styles.loginStatusLeft}>
+          <TouchableOpacity
+            style={styles.loginIcon}
+            onPress={() => {
+              if (user) {
+                router.push('/profile-settings');
+              } else {
+                router.push('/auth/login');
+              }
+            }}
+          >
+            {user ? (
+              <View style={styles.loggedInIcon}>
+                <User size={20} color="#16a34a" />
+              </View>
+            ) : (
+              <View style={styles.loggedOutIcon}>
+                <LogIn size={20} color="#6b7280" />
+              </View>
+            )}
+          </TouchableOpacity>
+          
+          <View style={styles.loginStatusText}>
+            <Text style={styles.loginStatusLabel}>
+              {user ? `${user.name || user.email}님` : '로그인이 필요합니다'}
+            </Text>
+            <Text style={styles.loginStatusSubtext}>
+              {user ? '프로필 설정 바로가기' : '매치 참여를 위해 로그인하세요'}
+            </Text>
+          </View>
+        </View>
+        
+        {/* 알림 아이콘 (추후 구현용) */}
+        <TouchableOpacity style={styles.notificationIcon}>
+          <Bell size={20} color="#6b7280" />
+          {/* 알림 뱃지 예시 */}
+          <View style={styles.notificationBadge}>
+            <Text style={styles.notificationBadgeText}>2</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+      
       {/* 개발 모드에서만 표시되는 데모 컨트롤 */}
       {__DEV__ && (
         <View style={styles.demoControls}>
@@ -381,6 +426,78 @@ const styles = StyleSheet.create({
   adminDemoButtonText: {
     color: '#dc2626',
     fontWeight: '600',
+  },
+  loginStatusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    marginBottom: 8,
+  },
+  loginStatusLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  loginIcon: {
+    marginRight: 12,
+  },
+  loggedInIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#dcfce7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#16a34a',
+  },
+  loggedOutIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#e5e7eb',
+  },
+  loginStatusText: {
+    flex: 1,
+  },
+  loginStatusLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginBottom: 2,
+  },
+  loginStatusSubtext: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  notificationIcon: {
+    position: 'relative',
+    padding: 8,
+  },
+  notificationBadge: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#dc2626',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notificationBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#ffffff',
   },
   logoutButton: {
     backgroundColor: '#fee2e2',

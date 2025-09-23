@@ -314,34 +314,7 @@ setTimeout(() => {
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>테니스 코트 *</Text>
-            <View style={styles.inputWithIcon}>
-              <MapPin size={20} color="#6b7280" />
-              <TextInput
-                style={styles.textInputWithIcon}
-                value={formData.court}
-                onChangeText={(text) => setFormData({...formData, court: text})}
-                placeholder="예) 양재 테니스 코트"
-                placeholderTextColor="#9ca3af"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>매치 설명</Text>
-            <TextInput
-              style={styles.textArea}
-              value={formData.description}
-              onChangeText={(text) => setFormData({...formData, description: text})}
-              placeholder="판매하는 매치에 대한 자세한 설명을 입력하세요..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          {/* 매치 유형 */}
+{/* 매치 유형 */}
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>매치 유형 *</Text>
             <View style={styles.matchTypeGrid}>
@@ -441,6 +414,35 @@ setTimeout(() => {
               </View>
             </View>
           </View>
+          
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>테니스 코트 *</Text>
+            <View style={styles.inputWithIcon}>
+              <MapPin size={20} color="#6b7280" />
+              <TextInput
+                style={styles.textInputWithIcon}
+                value={formData.court}
+                onChangeText={(text) => setFormData({...formData, court: text})}
+                placeholder="예) 양재 테니스 코트"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>매치 설명</Text>
+            <TextInput
+              style={styles.textArea}
+              value={formData.description}
+              onChangeText={(text) => setFormData({...formData, description: text})}
+              placeholder="판매하는 매치에 대한 자세한 설명을 입력하세요..."
+              placeholderTextColor="#9ca3af"
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+
+          
 
           {/* NTRP 범위 */}
           <View style={styles.inputGroup}>

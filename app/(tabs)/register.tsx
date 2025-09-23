@@ -437,20 +437,7 @@ setTimeout(() => {
             </View>
           </View>
 
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>매치 설명</Text>
-            <TextInput
-              style={styles.textArea}
-              value={formData.description}
-              onChangeText={(text) => setFormData({...formData, description: text})}
-              placeholder="판매하는 매치에 대한 자세한 설명을 입력하세요..."
-              placeholderTextColor="#9ca3af"
-              multiline
-              numberOfLines={4}
-            />
-          </View>
-
-          
+                    
 
           {/* NTRP 범위 */}
           <View style={styles.inputGroup}>
@@ -483,6 +470,19 @@ setTimeout(() => {
               </View>
             </View>
 
+            <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>매치 설명</Text>
+            <TextInput
+              style={styles.textArea}
+              value={formData.description}
+              onChangeText={(text) => setFormData({...formData, description: text})}
+              placeholder="판매하는 매치에 대한 자세한 설명을 입력하세요..."
+              placeholderTextColor="#9ca3af"
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+            
 <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>판매 기본 가격 *</Text>
             <View style={styles.inputWithIcon}>

@@ -14,11 +14,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Settings, Award, TrendingUp, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, DollarSign, Users, Eye, Camera, User, CreditCard } from 'lucide-react-native';
 import { Calendar } from 'lucide-react-native';
-import { useAuth } from '../../contexts/AuthContext';
-import { CertificationBadge } from '../../components/CertificationBadge';
+import { useAuth } from '../contexts/AuthContext';
+import { CertificationBadge } from '../components/CertificationBadge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as ImagePicker from 'expo-image-picker';
-import { useSafeStyles } from '../../constants/Styles';
+import { useSafeStyles } from '../constants/Styles';
 
 export default function ProfileScreen() {
   const { user: currentUser, logout } = useAuth();

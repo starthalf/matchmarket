@@ -357,7 +357,7 @@ setTimeout(() => {
                   styles.matchTypeText,
                   formData.matchType === '단식' && styles.matchTypeTextActive
                 ]}>
-                  단식 (1:1)
+                  단식
                 </Text>
               </TouchableOpacity>
               
@@ -373,7 +373,7 @@ setTimeout(() => {
                   styles.matchTypeText,
                   formData.matchType === '남복' && styles.matchTypeTextActive
                 ]}>
-                  남복 (2:2)
+                  남복
                 </Text>
               </TouchableOpacity>
 
@@ -389,7 +389,7 @@ setTimeout(() => {
                   styles.matchTypeText,
                   formData.matchType === '여복' && styles.matchTypeTextActive
                 ]}>
-                  여복 (2:2)
+                  여복
                 </Text>
               </TouchableOpacity>
 
@@ -405,7 +405,7 @@ setTimeout(() => {
                   styles.matchTypeText,
                   formData.matchType === '혼복' && styles.matchTypeTextActive
                 ]}>
-                  혼복 (2:2)
+                  혼복
                 </Text>
               </TouchableOpacity>
             </View>

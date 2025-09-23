@@ -96,23 +96,6 @@ export default function TabLayout() {
           },
         }}
       />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: "프로필",
-          tabBarIcon: ({ size, color }) => (
-            <User size={size} color={color} />
-          ),
-        }}
-        listeners={{
-          tabPress: (e: any) => {
-            if (!user) {
-              e.preventDefault();
-              router.push('/auth/login');
-            }
-          },
-        }}
-      />
     </Tabs>
   );
 }

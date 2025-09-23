@@ -29,21 +29,29 @@ export default function RegisterScreen() {
   const { addMatch } = useMatches();
   const safeStyles = useSafeStyles();
   
-  const [formData, setFormData] = useState({
-    title: '',
-    date: new Date(),
-    time: new Date(),
-    endTime: new Date(),
-    court: '',
-    description: '',
-    basePrice: '',
-    matchType: '혼복' as '단식' | '남복' | '여복' | '혼복',
-    maleCount: '2',
-    femaleCount: '2',
-    adEnabled: false,
-    ntrpMin: '3.0',
-    ntrpMax: '4.5',
-  });
+ const [formData, setFormData] = useState({
+  title: '',
+  date: new Date(),
+  time: (() => {
+    const defaultTime = new Date();
+    defaultTime.setHours(19, 0, 0, 0); // 19:00
+    return defaultTime;
+  })(),
+  endTime: (() => {
+    const defaultEndTime = new Date();
+    defaultEndTime.setHours(22, 0, 0, 0); // 22:00
+    return defaultEndTime;
+  })(),
+  court: '',
+  description: '',
+  basePrice: '',
+  matchType: '혼복' as '단식' | '남복' | '여복' | '혼복',
+  maleCount: '2',
+  femaleCount: '2',
+  adEnabled: false,
+  ntrpMin: '3.0',
+  ntrpMax: '4.5',
+});
   
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);

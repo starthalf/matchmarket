@@ -279,6 +279,20 @@ setTimeout(() => {
             />
           </View>
 
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>테니스 코트 *</Text>
+            <View style={styles.inputWithIcon}>
+              <MapPin size={20} color="#6b7280" />
+              <TextInput
+                style={styles.textInputWithIcon}
+                value={formData.court}
+                onChangeText={(text) => setFormData({...formData, court: text})}
+                placeholder="예) 양재 테니스 코트"
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
+          </View>
+
           <View style={styles.dateTimeContainer}>
             <View style={styles.dateTimeItem}>
               <Text style={styles.inputLabel}>날짜 *</Text>
@@ -412,20 +426,6 @@ setTimeout(() => {
                 />
                 <Text style={styles.participantUnit}>명</Text>
               </View>
-            </View>
-          </View>
-          
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>테니스 코트 *</Text>
-            <View style={styles.inputWithIcon}>
-              <MapPin size={20} color="#6b7280" />
-              <TextInput
-                style={styles.textInputWithIcon}
-                value={formData.court}
-                onChangeText={(text) => setFormData({...formData, court: text})}
-                placeholder="예) 양재 테니스 코트"
-                placeholderTextColor="#9ca3af"
-              />
             </View>
           </View>
 

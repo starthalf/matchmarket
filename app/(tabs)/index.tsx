@@ -91,7 +91,7 @@ export default function HomeScreen() {
   style={styles.headerLoginIcon}
   onPress={() => {
     if (user) {
-      router.push('/profile-settings');
+      router.push('/profile');
     } else {
       router.push('/auth/login');
     }

@@ -411,20 +411,6 @@ setTimeout(() => {
             </View>
           </View>
           
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>판매 기본 가격 *</Text>
-            <View style={styles.inputWithIcon}>
-              <Text style={styles.wonSymbol}>₩</Text>
-              <TextInput
-                style={styles.textInputWithIcon}
-                value={formData.basePrice}
-                onChangeText={(text) => setFormData({...formData, basePrice: text})}
-                placeholder="코트비+공값의 1/N을 입력하세요 (예: 35000)"
-                placeholderTextColor="#9ca3af"
-                keyboardType="numeric"
-              />
-            </View>
-          </View>
 
           {/* 모집 인원 */}
           <View style={styles.inputGroup}>
@@ -486,6 +472,21 @@ setTimeout(() => {
                 />
               </View>
             </View>
+
+<View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>판매 기본 가격 *</Text>
+            <View style={styles.inputWithIcon}>
+              <Text style={styles.wonSymbol}>₩</Text>
+              <TextInput
+                style={styles.textInputWithIcon}
+                value={formData.basePrice}
+                onChangeText={(text) => setFormData({...formData, basePrice: text})}
+                placeholder="코트비+공값의 1/N을 입력하세요 (예: 35000)"
+                placeholderTextColor="#9ca3af"
+                keyboardType="numeric"
+              />
+            </View>
+          </View>
             
             <Text style={styles.ntrpHint}>
               참가자의 NTRP 실력 범위를 설정하세요 (1.0-7.0)

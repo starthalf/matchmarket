@@ -148,7 +148,7 @@ export default function MatchManagementScreen() {
               styles.tabButtonText,
               selectedTab === 'applications' && styles.tabButtonTextActive
             ]}>
-              신청현황 ({myApplications.length})
+              참여매치 ({myApplications.length})
             </Text>
           </TouchableOpacity>
         </View>

@@ -65,6 +65,95 @@ export default function MyMatchesScreen() {
       })
       .sort((a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime());
   };
+  // 참여신청자 목록 가져오기 함수 (getMatchParticipants 함수 아래에 추가)
+const getMatchApplications = (match: any) => {
+  if (!match.applications || !Array.isArray(match.applications)) {
+    return [];
+  }
+
+  return match.applications
+    .filter(app => app.status === 'pending')
+    .map(app => {
+      const user = mockUsers.find(u => u.id === app.userId);
+      return {
+        ...app,
+        name: user?.name || app.userName,
+        gender: user?.gender || app.userGender,
+        ntrp: user?.ntrp || app.userNtrp,
+        profileImage: user?.profileImage || app.userProfileImage
+      };
+    })
+    .sort((a, b) => new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime());
+};
+  // 참여신청 승인 처리 함수
+const handleApproveApplication = (match: any, application: any) => {
+  Alert.alert(
+    '참여신청 승인',
+    `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice.toLocaleString()}원`,
+    [
+      { text: '취소', style: 'cancel' },
+      { 
+        text: '승인', 
+        onPress: () => {
+          // 신청 상태를 approved로 변경
+          const updatedApplications = match.applications.map(app => 
+            app.id === application.id 
+              ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
+              : app
+          );
+
+          // 참가자 목록에 추가
+          const newParticipant = {
+            id: `participant_${application.id}`,
+            userId: application.userId,
+            userName: application.name,
+            gender: application.gender,
+            ntrp: application.ntrp,
+            joinedAt: new Date().toISOString(),
+            status: 'payment_pending',
+            paymentAmount: application.appliedPrice,
+          };
+
+          match.applications = updatedApplications;
+          match.participants = [...(match.participants || []), newParticipant];
+          
+          // 참가자 수 업데이트
+          const genderKey = application.gender === '남성' ? 'male' : 'female';
+          match.currentApplicants[genderKey] += 1;
+          match.currentApplicants.total += 1;
+
+          Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
+        }
+      }
+    ]
+  );
+};
+
+// 참여신청 거절 처리 함수
+const handleRejectApplication = (match: any, application: any) => {
+  Alert.alert(
+    '참여신청 거절',
+    `${application.name}님의 참여신청을 거절하시겠습니까?`,
+    [
+      { text: '취소', style: 'cancel' },
+      { 
+        text: '거절', 
+        style: 'destructive',
+        onPress: () => {
+          // 신청 상태를 rejected로 변경
+          const updatedApplications = match.applications.map(app => 
+            app.id === application.id 
+              ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
+              : app
+          );
+
+          match.applications = updatedApplications;
+          Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
+        }
+      }
+    ]
+  );
+};
 
   const handleDeleteMatch = (match: any) => {
     const hoursUntilMatch = (new Date(`${match.date}T${match.time}`).getTime() - new Date().getTime()) / (1000 * 60 * 60);

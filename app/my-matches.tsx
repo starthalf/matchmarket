@@ -42,6 +42,30 @@ export default function MyMatchesScreen() {
   // 내가 등록한 매치들
   const myMatches = mockMatches.filter(match => match.sellerId === user.id);
 
+  // 실제 매치의 참여자 정보 가져오기
+  const getMatchParticipants = (match: any) => {
+    if (!match.participants || !Array.isArray(match.participants)) {
+      return [];
+    }
+
+    return match.participants
+      .filter(p => p.status === 'confirmed' || p.status === 'payment_pending')
+      .map(p => {
+        // mockUsers에서 사용자 정보 찾기
+        const user = mockUsers.find(u => u.id === p.userId);
+        return {
+          id: p.userId,
+          name: user?.name || p.userName || '알 수 없음',
+          gender: user?.gender || p.userGender || '미확인',
+          ntrp: user?.ntrp || p.userNtrp || 0,
+          joinedAt: p.joinedAt || p.paymentConfirmedAt || new Date().toISOString(),
+          status: p.status,
+          appliedPrice: p.appliedPrice || match.currentPrice
+        };
+      })
+      .sort((a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime());
+  };
+
   const handleDeleteMatch = (match: any) => {
     const hoursUntilMatch = (new Date(`${match.date}T${match.time}`).getTime() - new Date().getTime()) / (1000 * 60 * 60);
     
@@ -243,11 +267,6 @@ export default function MyMatchesScreen() {
     }
   };
 
-  const mockParticipants = [
-    { id: '1', name: '김테니스', gender: '여성', ntrp: 4.5, joinedAt: '2024-12-27T10:30:00Z' },
-    { id: '2', name: '박라켓', gender: '남성', ntrp: 4.0, joinedAt: '2024-12-27T11:15:00Z' },
-  ];
-
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
@@ -404,10 +423,10 @@ export default function MyMatchesScreen() {
 
                 <View style={styles.participantsSection}>
                   <Text style={styles.sectionTitle}>
-                    확정 참가자 ({mockParticipants.length}명)
+                    확정 참가자 ({getMatchParticipants(selectedMatch).length}명)
                   </Text>
                   
-                  {mockParticipants.map((participant) => (
+                  {getMatchParticipants(selectedMatch).map((participant) => (
                     <View key={participant.id} style={styles.participantCard}>
                       <View style={styles.participantInfo}>
                         <User size={20} color="#6b7280" />

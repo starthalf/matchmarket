@@ -320,47 +320,11 @@ export default function MatchDetailScreen() {
             />
           </View>
           <Text style={styles.priceNote}>
-            * 가격은 실시간으로 변동됩니다 (5초마다 업데이트)
+            * 가격은 실시간으로 변동됩니다
           </Text>
         </View>
 
-        {/* 참여신청 현황 */}
-        {safeApplications.length > 0 && (
-          <View style={styles.applicationsCard}>
-            <Text style={styles.sectionTitle}>
-              참여신청 현황 ({safeApplications.length}건)
-            </Text>
-            <View style={styles.applicationsList}>
-              {safeApplications.slice(0, 3).map((application) => (
-                <View key={application.id} style={styles.applicationItem}>
-                  <View style={styles.applicantInfo}>
-                    <Text style={styles.applicantName}>{application.userName}</Text>
-                    <Text style={styles.applicantMeta}>
-                      {application.userGender} · NTRP {application.userNtrp.toFixed(1)}
-                    </Text>
-                  </View>
-                  <View style={styles.applicationStatus}>
-                    <Text style={styles.applicationPrice}>
-                      {application.appliedPrice.toLocaleString()}원
-                    </Text>
-                    <Text style={styles.statusBadge}>
-                      {application.status === 'pending' ? '대기중' : 
-                       application.status === 'approved' ? '승인됨' : 
-                       application.status === 'rejected' ? '거절됨' : '만료'}
-                    </Text>
-                  </View>
-                </View>
-              ))}
-              {safeApplications.length > 3 && (
-                <Text style={styles.moreApplications}>
-                  +{safeApplications.length - 3}건 더
-                </Text>
-              )}
-            </View>
-          </View>
-        )}
-
-        <View style={styles.bottomPadding} />
+               <View style={styles.bottomPadding} />
       </ScrollView>
 
       {/* 하단 고정 영역 */}

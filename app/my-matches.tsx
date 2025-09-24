@@ -517,19 +517,27 @@ const handleRejectApplication = (match: any, application: any) => {
                   
                   {getMatchParticipants(selectedMatch).map((participant) => (
                     <View key={participant.id} style={styles.participantCard}>
-                      <View style={styles.participantInfo}>
-                        <User size={20} color="#6b7280" />
-                        <View style={styles.participantDetails}>
-                          <Text style={styles.participantName}>{participant.name}</Text>
-                          <Text style={styles.participantMeta}>
-                            {participant.gender} · NTRP {participant.ntrp}
-                          </Text>
-                        </View>
-                      </View>
-                      <Text style={styles.joinedDate}>
-                        {new Date(participant.joinedAt).toLocaleDateString('ko-KR')}
-                      </Text>
-                    </View>
+  <View style={styles.participantInfo}>
+    <User size={20} color="#6b7280" />
+    <View style={styles.participantDetails}>
+      <Text style={styles.participantName}>{participant.name}</Text>
+      <Text style={styles.participantMeta}>
+        {participant.gender} · NTRP {participant.ntrp}
+      </Text>
+      <Text style={styles.participantPrice}>
+        참가비: {(participant.appliedPrice || match.currentPrice || 0).toLocaleString()}원
+      </Text>
+    </View>
+  </View>
+  <View style={styles.participantStatus}>
+    <Text style={styles.joinedDate}>
+      {new Date(participant.joinedAt).toLocaleDateString('ko-KR')}
+    </Text>
+    <Text style={[styles.statusText, { color: participant.status === 'confirmed' ? '#16a34a' : '#f59e0b' }]}>
+      {participant.status === 'confirmed' ? '참가확정' : '입금확인중'}
+    </Text>
+  </View>
+</View>
                   ))}
                 </View>
 

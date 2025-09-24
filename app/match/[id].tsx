@@ -248,6 +248,12 @@ export default function MatchDetailScreen() {
                 남성 {match.expectedParticipants?.male || 0}명, 여성 {match.expectedParticipants?.female || 0}명 모집
               </Text>
             </View>
+            <View style={styles.detailRow}>
+  <Shield size={16} color="#6b7280" />
+  <Text style={styles.detailText}>
+    NTRP {match.ntrpRequirement.min.toFixed(1)} - {match.ntrpRequirement.max.toFixed(1)}
+  </Text>
+</View>
           </View>
 
           {match.description && (

@@ -950,4 +950,84 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#f59e0b',
   },
+  participantPrice: {
+  fontSize: 12,
+  fontWeight: '600',
+  color: '#dc2626',
+  marginTop: 2,
+},
+participantStatus: {
+  alignItems: 'flex-end',
+  gap: 2,
+},
+statusText: {
+  fontSize: 11,
+  fontWeight: '600',
+},
+applicationsSection: {
+  marginHorizontal: 16,
+  marginBottom: 16,
+},
+applicationCard: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  backgroundColor: '#fffbeb',
+  padding: 12,
+  borderRadius: 8,
+  marginBottom: 8,
+  borderWidth: 1,
+  borderColor: '#fbbf24',
+},
+applicationInfo: {
+  flex: 1,
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12,
+},
+applicationDetails: {
+  flex: 1,
+  gap: 2,
+},
+applicationName: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#92400e',
+},
+applicationMeta: {
+  fontSize: 12,
+  color: '#92400e',
+},
+applicationPrice: {
+  fontSize: 12,
+  fontWeight: '600',
+  color: '#dc2626',
+  marginTop: 2,
+},
+applicationActions: {
+  flexDirection: 'row',
+  gap: 8,
+},
+approveButton: {
+  backgroundColor: '#16a34a',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 6,
+},
+approveButtonText: {
+  fontSize: 12,
+  fontWeight: '600',
+  color: '#ffffff',
+},
+rejectButton: {
+  backgroundColor: '#dc2626',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 6,
+},
+rejectButtonText: {
+  fontSize: 12,
+  fontWeight: '600',
+  color: '#ffffff',
+},
 });

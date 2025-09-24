@@ -134,7 +134,7 @@ export default function MatchManagementScreen() {
               styles.tabButtonText,
               selectedTab === 'my-matches' && styles.tabButtonTextActive
             ]}>
-              내 매치 ({myMatches.length})
+              판매중 ({myMatches.length})
             </Text>
           </TouchableOpacity>
           <TouchableOpacity

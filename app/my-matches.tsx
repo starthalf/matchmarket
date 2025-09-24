@@ -540,7 +540,44 @@ const handleRejectApplication = (match: any, application: any) => {
 </View>
                   ))}
                 </View>
-
+{getMatchApplications(selectedMatch).length > 0 && (
+  <View style={styles.applicationsSection}>
+    <Text style={styles.sectionTitle}>
+      참여신청자 ({getMatchApplications(selectedMatch).length}명)
+    </Text>
+    
+    {getMatchApplications(selectedMatch).map((application) => (
+      <View key={application.id} style={styles.applicationCard}>
+        <View style={styles.applicationInfo}>
+          <User size={20} color="#f59e0b" />
+          <View style={styles.applicationDetails}>
+            <Text style={styles.applicationName}>{application.name}</Text>
+            <Text style={styles.applicationMeta}>
+              {application.gender} · NTRP {application.ntrp}
+            </Text>
+            <Text style={styles.applicationPrice}>
+              신청가격: {application.appliedPrice.toLocaleString()}원
+            </Text>
+          </View>
+        </View>
+        <View style={styles.applicationActions}>
+          <TouchableOpacity 
+            style={styles.approveButton}
+            onPress={() => handleApproveApplication(selectedMatch, application)}
+          >
+            <Text style={styles.approveButtonText}>승인</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.rejectButton}
+            onPress={() => handleRejectApplication(selectedMatch, application)}
+          >
+            <Text style={styles.rejectButtonText}>거절</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    ))}
+  </View>
+)}
                 {selectedMatch.waitingList && selectedMatch.waitingList.length > 0 && (
                   <View style={styles.waitingSection}>
                     <Text style={styles.sectionTitle}>

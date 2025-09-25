@@ -130,14 +130,6 @@ const handlePress = () => {
           <Text style={styles.recruitmentText}>
             {getRecruitmentStatus()}
           </Text>
-          {applications.length > 0 && (
-            <>
-              <Text style={styles.separator}>·</Text>
-              <Text style={styles.applicationText}>
-                신청 {applications.length}건
-              </Text>
-            </>
-          )}
         </View>
       </View>
 

@@ -623,7 +623,7 @@ const handleRejectApplication = (match: any, application: any) => {
                       참여신청자 ({getMatchApplications(selectedMatch).length}명)
                     </Text>
                     
-                    {getMatchApplications(selectedMatch).map((application) => (
+{getMatchApplications(selectedMatch).map((application) => (
   <View key={application.id} style={styles.applicationCard}>
     <View style={styles.applicationInfo}>
       <User size={20} color="#f59e0b" />
@@ -662,6 +662,7 @@ const handleRejectApplication = (match: any, application: any) => {
     </View>
   </View>
 ))}
+                  </View>
                 )}
 
                 {selectedMatch.waitingList && selectedMatch.waitingList.length > 0 && (

@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Modal,
   Switch,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -100,68 +99,61 @@ const { matches, updateMatch } = useMatches();
   });
 };
 
-  // 참여신청 승인 처리 함수
+ // 참여신청 승인 처리 함수
 const handleApproveApplication = (match: any, application: any) => {
   console.log('🔥 승인 버튼이 클릭되었습니다!');
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
   console.log('application.appliedPrice:', application.appliedPrice);
   
-  Alert.alert(
-    '참여신청 승인',
-    `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`,
-    [
-      { text: '취소', style: 'cancel' },
-      { 
-        text: '승인', 
-        onPress: () => {
-          try {
-            console.log('🟢 승인 처리 시작');
-            
-            const updatedApplications = (match.applications || []).map(app => 
-              app.id === application.id 
-                ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
-                : app
-            );
+  // 웹 환경에서는 window.confirm 사용
+  const confirmMessage = `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`;
+  
+  if (window.confirm(confirmMessage)) {
+    try {
+      console.log('🟢 승인 처리 시작');
+      
+      const updatedApplications = (match.applications || []).map(app => 
+        app.id === application.id 
+          ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
+          : app
+      );
 
-            const newParticipant = {
-              id: `participant_${application.id}`,
-              userId: application.userId,
-              userName: application.name,
-              gender: application.gender,
-              ntrp: application.ntrp,
-              joinedAt: new Date().toISOString(),
-              status: 'payment_pending',
-              paymentAmount: application.appliedPrice,
-              appliedPrice: application.appliedPrice,
-            };
+      const newParticipant = {
+        id: `participant_${application.id}`,
+        userId: application.userId,
+        userName: application.name,
+        gender: application.gender,
+        ntrp: application.ntrp,
+        joinedAt: new Date().toISOString(),
+        status: 'payment_pending',
+        paymentAmount: application.appliedPrice,
+        appliedPrice: application.appliedPrice,
+      };
 
-            const updatedMatch = {
-              ...match,
-              applications: updatedApplications,
-              participants: [...(match.participants || []), newParticipant],
-              currentApplicants: {
-                ...match.currentApplicants,
-                [application.gender === '남성' ? 'male' : 'female']: 
-                  match.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
-                total: match.currentApplicants.total + 1
-              }
-            };
-
-            console.log('업데이트된 매치:', updatedMatch);
-            updateMatch(updatedMatch);
-            setSelectedMatch(updatedMatch);
-
-            console.log('승인 완료');
-            Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
-          } catch (error) {
-            console.error('승인 처리 중 오류:', error);
-            Alert.alert('오류', '승인 처리 중 오류가 발생했습니다.');
-          }
+      const updatedMatch = {
+        ...match,
+        applications: updatedApplications,
+        participants: [...(match.participants || []), newParticipant],
+        currentApplicants: {
+          ...match.currentApplicants,
+          [application.gender === '남성' ? 'male' : 'female']: 
+            match.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
+          total: match.currentApplicants.total + 1
         }
-      }
-    ]
-  );
+      };
+
+      console.log('업데이트된 매치:', updatedMatch);
+      updateMatch(updatedMatch);
+      setSelectedMatch(updatedMatch);
+
+      console.log('승인 완료');
+      alert(`${application.name}님의 참여신청이 승인되었습니다.`);
+    } catch (error) {
+      console.error('승인 처리 중 오류:', error);
+      alert('승인 처리 중 오류가 발생했습니다.');
+    }
+  }
 };
 
  // 참여신청 거절 처리 함수
@@ -170,42 +162,31 @@ const handleRejectApplication = (match: any, application: any) => {
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
   
-  Alert.alert(
-    '참여신청 거절',
-    `${application.name}님의 참여신청을 거절하시겠습니까?`,
-    [
-      { text: '취소', style: 'cancel' },
-      { 
-        text: '거절', 
-        style: 'destructive',
-        onPress: () => {
-          try {
-            console.log('🔴 거절 처리 시작');
-            
-            const updatedApplications = (match.applications || []).map(app => 
-              app.id === application.id 
-                ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
-                : app
-            );
+  if (window.confirm(`${application.name}님의 참여신청을 거절하시겠습니까?`)) {
+    try {
+      console.log('🔴 거절 처리 시작');
+      
+      const updatedApplications = (match.applications || []).map(app => 
+        app.id === application.id 
+          ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
+          : app
+      );
 
-            const updatedMatch = {
-              ...match,
-              applications: updatedApplications
-            };
+      const updatedMatch = {
+        ...match,
+        applications: updatedApplications
+      };
 
-            console.log('업데이트된 매치:', updatedMatch);
-            updateMatch(updatedMatch);
-            setSelectedMatch(updatedMatch);
+      console.log('업데이트된 매치:', updatedMatch);
+      updateMatch(updatedMatch);
+      setSelectedMatch(updatedMatch);
 
-            Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
-          } catch (error) {
-            console.error('거절 처리 중 오류:', error);
-            Alert.alert('오류', '거절 처리 중 오류가 발생했습니다.');
-          }
-        }
-      }
-    ]
-  );
+      alert(`${application.name}님의 참여신청이 거절되었습니다.`);
+    } catch (error) {
+      console.error('거절 처리 중 오류:', error);
+      alert('거절 처리 중 오류가 발생했습니다.');
+    }
+  }
 };
 
   const handleDeleteMatch = (match: any) => {

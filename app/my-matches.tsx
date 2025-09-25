@@ -16,6 +16,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { mockMatches, mockUsers, addMockEarning, EarningsData } from '../data/mockData';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { useSafeStyles } from '../constants/Styles';
+import { useMatches } from '../contexts/MatchContext'; // 추가
 
 export default function MyMatchesScreen() {
   const { user } = useAuth();

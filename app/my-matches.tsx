@@ -20,7 +20,7 @@ import { useMatches } from '../contexts/MatchContext'; // 추가
 
 export default function MyMatchesScreen() {
   const { user } = useAuth();
-  const { matches } = useMatches(); // 추가: MatchContext 사용
+const { matches, updateMatch } = useMatches();
   const safeStyles = useSafeStyles();
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
@@ -101,60 +101,7 @@ export default function MyMatchesScreen() {
           text: '승인', 
           onPress: () => {
             try {
-              // mockMatches에서 해당 매치 찾기
-              const matchIndex = mockMatches.findIndex(m => m.id === match.id);
-              if (matchIndex === -1) {
-                Alert.alert('오류', '매치를 찾을 수 없습니다.');
-                return;
-              }
-
-              const targetMatch = mockMatches[matchIndex];
-
-              // applications 배열이 없으면 생성
-              if (!targetMatch.applications) {
-                targetMatch.applications = [];
-              }
-              if (!targetMatch.participants) {
-                targetMatch.participants = [];
-              }
-
-              // 신청 상태를 approved로 변경
-              const updatedApplications = targetMatch.applications.map(app => 
-                app.id === application.id 
-                  ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
-                  : app
-              );
-
-              // 참가자 목록에 추가
-              const newParticipant = {
-                id: `participant_${application.id}`,
-                userId: application.userId,
-                userName: application.name,
-                gender: application.gender,
-                ntrp: application.ntrp,
-                joinedAt: new Date().toISOString(),
-                status: 'payment_pending',
-                paymentAmount: application.appliedPrice,
-                appliedPrice: application.appliedPrice,
-              };
-
-              // mockMatches의 해당 매치 업데이트
-              mockMatches[matchIndex] = {
-                ...targetMatch,
-                applications: updatedApplications,
-                participants: [...targetMatch.participants, newParticipant],
-                currentApplicants: {
-                  ...targetMatch.currentApplicants,
-                  [application.gender === '남성' ? 'male' : 'female']: 
-                    targetMatch.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
-                  total: targetMatch.currentApplicants.total + 1
-                }
-              };
-
-              // 로컬 selectedMatch 상태도 업데이트
-              setSelectedMatch({...mockMatches[matchIndex]});
-
-              Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
+                          Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
             } catch (error) {
               console.error('승인 처리 중 오류:', error);
               Alert.alert('오류', '승인 처리 중 오류가 발생했습니다.');

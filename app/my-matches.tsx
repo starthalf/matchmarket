@@ -143,41 +143,35 @@ const { matches, updateMatch } = useMatches();
 };
 
   // 참여신청 거절 처리 함수
-  const handleRejectApplication = (match: any, application: any) => {
-    Alert.alert(
-      '참여신청 거절',
-      `${application.name}님의 참여신청을 거절하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        { 
-          text: '거절', 
-          style: 'destructive',
-          onPress: () => {
-            try {
-           const updatedApplications = (match.applications || []).map(app => 
-  app.id === application.id 
-    ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
-    : app
-);
+ const handleRejectApplication = (match: any, application: any) => {
+  console.log('=== 거절 버튼 클릭됨 ===');
+  console.log('match:', match);
+  console.log('application:', application);
+  
+  if (window.confirm(`${application.name}님의 참여신청을 거절하시겠습니까?`)) {
+    try {
+      const updatedApplications = (match.applications || []).map(app => 
+        app.id === application.id 
+          ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
+          : app
+      );
 
-const updatedMatch = {
-  ...match,
-  applications: updatedApplications
+      const updatedMatch = {
+        ...match,
+        applications: updatedApplications
+      };
+
+      console.log('업데이트된 매치:', updatedMatch);
+      updateMatch(updatedMatch);
+      setSelectedMatch(updatedMatch);
+
+      alert(`${application.name}님의 참여신청이 거절되었습니다.`);
+    } catch (error) {
+      console.error('거절 처리 중 오류:', error);
+      alert('거절 처리 중 오류가 발생했습니다.');
+    }
+  }
 };
-
-updateMatch(updatedMatch);
-setSelectedMatch(updatedMatch);
-
-              Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
-            } catch (error) {
-              console.error('거절 처리 중 오류:', error);
-              Alert.alert('오류', '거절 처리 중 오류가 발생했습니다.');
-            }
-          }
-        }
-      ]
-    );
-  };
 
   const handleDeleteMatch = (match: any) => {
     const hoursUntilMatch = (new Date(`${match.date}T${match.time}`).getTime() - new Date().getTime()) / (1000 * 60 * 60);

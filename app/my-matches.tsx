@@ -157,35 +157,19 @@ setSelectedMatch(updatedMatch);
           style: 'destructive',
           onPress: () => {
             try {
-              // mockMatches에서 해당 매치 찾기
-              const matchIndex = mockMatches.findIndex(m => m.id === match.id);
-              if (matchIndex === -1) {
-                Alert.alert('오류', '매치를 찾을 수 없습니다.');
-                return;
-              }
+           const updatedApplications = (match.applications || []).map(app => 
+  app.id === application.id 
+    ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
+    : app
+);
 
-              const targetMatch = mockMatches[matchIndex];
+const updatedMatch = {
+  ...match,
+  applications: updatedApplications
+};
 
-              // applications 배열이 없으면 생성
-              if (!targetMatch.applications) {
-                targetMatch.applications = [];
-              }
-
-              // 신청 상태를 rejected로 변경
-              const updatedApplications = targetMatch.applications.map(app => 
-                app.id === application.id 
-                  ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
-                  : app
-              );
-
-              // mockMatches의 해당 매치 업데이트
-              mockMatches[matchIndex] = {
-                ...targetMatch,
-                applications: updatedApplications
-              };
-
-              // 로컬 selectedMatch 상태도 업데이트
-              setSelectedMatch({...mockMatches[matchIndex]});
+updateMatch(updatedMatch);
+setSelectedMatch(updatedMatch);
 
               Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
             } catch (error) {

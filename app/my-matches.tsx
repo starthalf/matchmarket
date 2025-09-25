@@ -91,10 +91,11 @@ const { matches, updateMatch } = useMatches();
   };
 
   // 참여신청 승인 처리 함수
- const handleApproveApplication = (match: any, application: any) => {
-  console.log('=== 승인 버튼 클릭됨 ===');
-  console.log('match:', match);
-  console.log('application:', application);
+const handleApproveApplication = (match: any, application: any) => {
+  console.log('🔥 승인 버튼이 클릭되었습니다!');
+  console.log('전달받은 match:', match);
+  console.log('전달받은 application:', application);
+  console.log('application.appliedPrice:', application.appliedPrice);
   
   // Alert 대신 직접 실행
   if (window.confirm(`${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`)) {
@@ -144,9 +145,9 @@ const { matches, updateMatch } = useMatches();
 
   // 참여신청 거절 처리 함수
  const handleRejectApplication = (match: any, application: any) => {
-  console.log('=== 거절 버튼 클릭됨 ===');
-  console.log('match:', match);
-  console.log('application:', application);
+ console.log('🔥 거절 버튼이 클릭되었습니다!');
+  console.log('전달받은 match:', match);
+  console.log('전달받은 application:', application);
   
   if (window.confirm(`${application.name}님의 참여신청을 거절하시겠습니까?`)) {
     try {
@@ -580,18 +581,26 @@ const { matches, updateMatch } = useMatches();
                           </View>
                         </View>
                         <View style={styles.applicationActions}>
+                         <TouchableOpacity 
+  style={styles.approveButton}
+  onPress={() => {
+    console.log('🟢 승인 버튼 onPress 실행됨');
+    console.log('selectedMatch:', selectedMatch);
+    console.log('application:', application);
+    handleApproveApplication(selectedMatch, application);
+  }}
+>
+  <Text style={styles.approveButtonText}>승인</Text>
+</TouchableOpacity>
                           <TouchableOpacity 
-                            style={styles.approveButton}
-                            onPress={() => handleApproveApplication(selectedMatch, application)}
-                          >
-                            <Text style={styles.approveButtonText}>승인</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity 
-                            style={styles.rejectButton}
-                            onPress={() => handleRejectApplication(selectedMatch, application)}
-                          >
-                            <Text style={styles.rejectButtonText}>거절</Text>
-                          </TouchableOpacity>
+  style={styles.rejectButton}
+  onPress={() => {
+    console.log('🔴 거절 버튼 onPress 실행됨');
+    handleRejectApplication(selectedMatch, application);
+  }}
+>
+  <Text style={styles.rejectButtonText}>거절</Text>
+</TouchableOpacity>
                         </View>
                       </View>
                     ))}

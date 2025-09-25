@@ -99,21 +99,28 @@ const { matches, updateMatch } = useMatches();
   });
 };
 
- // 참여신청 승인 처리 함수
+// 참여신청 승인 처리 함수
 const handleApproveApplication = (match: any, application: any) => {
   console.log('🔥 승인 버튼이 클릭되었습니다!');
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
   console.log('application.appliedPrice:', application.appliedPrice);
   
-  // 웹 환경에서는 window.confirm 사용
   const confirmMessage = `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`;
   
   if (window.confirm(confirmMessage)) {
     try {
       console.log('🟢 승인 처리 시작');
       
-      const updatedApplications = (match.applications || []).map(app => 
+      // MatchContext의 matches에서 찾기 (mockMatches 대신)
+      const targetMatch = matches.find(m => m.id === match.id);
+      if (!targetMatch) {
+        console.error('매치를 찾을 수 없습니다.');
+        alert('매치를 찾을 수 없습니다.');
+        return;
+      }
+      
+      const updatedApplications = (targetMatch.applications || []).map(app => 
         app.id === application.id 
           ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
           : app
@@ -132,18 +139,20 @@ const handleApproveApplication = (match: any, application: any) => {
       };
 
       const updatedMatch = {
-        ...match,
+        ...targetMatch,
         applications: updatedApplications,
-        participants: [...(match.participants || []), newParticipant],
+        participants: [...(targetMatch.participants || []), newParticipant],
         currentApplicants: {
-          ...match.currentApplicants,
+          ...targetMatch.currentApplicants,
           [application.gender === '남성' ? 'male' : 'female']: 
-            match.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
-          total: match.currentApplicants.total + 1
+            targetMatch.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
+          total: targetMatch.currentApplicants.total + 1
         }
       };
 
       console.log('업데이트된 매치:', updatedMatch);
+      
+      // MatchContext의 updateMatch 사용
       updateMatch(updatedMatch);
       setSelectedMatch(updatedMatch);
 
@@ -156,7 +165,7 @@ const handleApproveApplication = (match: any, application: any) => {
   }
 };
 
- // 참여신청 거절 처리 함수
+// 참여신청 거절 처리 함수
 const handleRejectApplication = (match: any, application: any) => {
   console.log('🔥 거절 버튼이 클릭되었습니다!');
   console.log('전달받은 match:', match);
@@ -166,18 +175,28 @@ const handleRejectApplication = (match: any, application: any) => {
     try {
       console.log('🔴 거절 처리 시작');
       
-      const updatedApplications = (match.applications || []).map(app => 
+      // MatchContext의 matches에서 찾기 (mockMatches 대신)
+      const targetMatch = matches.find(m => m.id === match.id);
+      if (!targetMatch) {
+        console.error('매치를 찾을 수 없습니다.');
+        alert('매치를 찾을 수 없습니다.');
+        return;
+      }
+      
+      const updatedApplications = (targetMatch.applications || []).map(app => 
         app.id === application.id 
           ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
           : app
       );
 
       const updatedMatch = {
-        ...match,
+        ...targetMatch,
         applications: updatedApplications
       };
 
       console.log('업데이트된 매치:', updatedMatch);
+      
+      // MatchContext의 updateMatch 사용
       updateMatch(updatedMatch);
       setSelectedMatch(updatedMatch);
 

@@ -101,7 +101,40 @@ const { matches, updateMatch } = useMatches();
           text: '승인', 
           onPress: () => {
             try {
-                          Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
+            const updatedApplications = (match.applications || []).map(app => 
+  app.id === application.id 
+    ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
+    : app
+);
+
+const newParticipant = {
+  id: `participant_${application.id}`,
+  userId: application.userId,
+  userName: application.name,
+  gender: application.gender,
+  ntrp: application.ntrp,
+  joinedAt: new Date().toISOString(),
+  status: 'payment_pending',
+  paymentAmount: application.appliedPrice,
+  appliedPrice: application.appliedPrice,
+};
+
+const updatedMatch = {
+  ...match,
+  applications: updatedApplications,
+  participants: [...(match.participants || []), newParticipant],
+  currentApplicants: {
+    ...match.currentApplicants,
+    [application.gender === '남성' ? 'male' : 'female']: 
+      match.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
+    total: match.currentApplicants.total + 1
+  }
+};
+
+updateMatch(updatedMatch);
+setSelectedMatch(updatedMatch);
+
+              Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
             } catch (error) {
               console.error('승인 처리 중 오류:', error);
               Alert.alert('오류', '승인 처리 중 오류가 발생했습니다.');

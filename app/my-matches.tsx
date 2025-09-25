@@ -127,7 +127,6 @@ const handleApproveApplication = (match: any, application: any) => {
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
   console.log('application.appliedPrice:', application.appliedPrice);
-  saveToSessionStorage('matches', matches);
   
   const confirmMessage = `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`;
   
@@ -178,7 +177,7 @@ const handleApproveApplication = (match: any, application: any) => {
       // MatchContext의 updateMatch 사용
       updateMatch(updatedMatch);
       setSelectedMatch(updatedMatch);
-
+saveToSessionStorage('matches', matches);
       console.log('승인 완료');
       alert(`${application.name}님의 참여신청이 승인되었습니다.`);
     } catch (error) {
@@ -222,6 +221,7 @@ const handleRejectApplication = (match: any, application: any) => {
       // MatchContext의 updateMatch 사용
       updateMatch(updatedMatch);
       setSelectedMatch(updatedMatch);
+      saveToSessionStorage('matches', matches);
 
       alert(`${application.name}님의 참여신청이 거절되었습니다.`);
     } catch (error) {

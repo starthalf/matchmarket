@@ -70,25 +70,31 @@ const { matches, updateMatch } = useMatches();
   };
 
   // 참여신청자 목록 가져오기 함수
-  const getMatchApplications = (match: any) => {
-    if (!match.applications || !Array.isArray(match.applications)) {
-      return [];
-    }
+ const getMatchApplications = (match: any) => {
+  console.log('📋 getMatchApplications 호출됨');
+  console.log('받은 match:', match);
+  console.log('match.applications:', match.applications);
+  
+  if (!match.applications || !Array.isArray(match.applications)) {
+    console.log('❌ applications 배열이 없음');
+    return [];
+  }
 
-    return match.applications
-      .filter(app => app.status === 'pending')
-      .map(app => {
-        const user = mockUsers.find(u => u.id === app.userId);
-        return {
-          ...app,
-          name: user?.name || app.userName,
-          gender: user?.gender || app.userGender,
-          ntrp: user?.ntrp || app.userNtrp,
-          profileImage: user?.profileImage || app.userProfileImage
-        };
-      })
-      .sort((a, b) => new Date(a.appliedAt).getTime() - new Date(b.appliedAt).getTime());
-  };
+  const pendingApps = match.applications.filter(app => app.status === 'pending');
+  console.log('✅ pending 신청자들:', pendingApps);
+  
+  return pendingApps.map(app => {
+    console.log('신청자 상세:', app);
+    const user = mockUsers.find(u => u.id === app.userId);
+    return {
+      ...app,
+      name: user?.name || app.userName,
+      gender: user?.gender || app.userGender,
+      ntrp: user?.ntrp || app.userNtrp,
+      profileImage: user?.profileImage || app.userProfileImage
+    };
+  });
+};
 
   // 참여신청 승인 처리 함수
 const handleApproveApplication = (match: any, application: any) => {

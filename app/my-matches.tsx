@@ -119,6 +119,7 @@ const handleApproveApplication = (match: any, application: any) => {
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
   console.log('application.appliedPrice:', application.appliedPrice);
+  saveToSessionStorage('matches', matches);
   
   const confirmMessage = `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`;
   

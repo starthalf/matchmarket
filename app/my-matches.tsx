@@ -621,6 +621,11 @@ const handleRejectApplication = (match: any, application: any) => {
     console.log('🟢 승인 버튼 onPress 실행됨');
     console.log('selectedMatch:', selectedMatch);
     console.log('application:', application);
+    console.log('typeof handleApproveApplication:', typeof handleApproveApplication);
+    
+    // 추가 테스트용 alert
+    alert('승인 버튼이 클릭되었습니다!');
+    
     handleApproveApplication(selectedMatch, application);
   }}
 >

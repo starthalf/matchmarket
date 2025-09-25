@@ -16,6 +16,20 @@ import { mockMatches, mockUsers, addMockEarning, EarningsData } from '../data/mo
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { useSafeStyles } from '../constants/Styles';
 import { useMatches } from '../contexts/MatchContext'; // 추가
+// 브라우저 세션 스토리지에 데이터 저장/로드
+const saveToSessionStorage = (key: string, data: any) => {
+  if (typeof window !== 'undefined') {
+    sessionStorage.setItem(key, JSON.stringify(data));
+  }
+};
+
+const loadFromSessionStorage = (key: string) => {
+  if (typeof window !== 'undefined') {
+    const data = sessionStorage.getItem(key);
+    return data ? JSON.parse(data) : null;
+  }
+  return null;
+};
 
 export default function MyMatchesScreen() {
   const { user } = useAuth();

@@ -678,7 +678,6 @@ const handleRejectApplication = (match: any, application: any) => {
                             거절
                           </button>
                         </div>
-                      </div>
                         </View>
                       </View>
                     ))}

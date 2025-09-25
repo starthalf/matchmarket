@@ -624,74 +624,44 @@ const handleRejectApplication = (match: any, application: any) => {
                     </Text>
                     
                     {getMatchApplications(selectedMatch).map((application) => (
-                     <div key={application.id} style={{
-  display: 'flex',
-  flexDirection: 'row',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  backgroundColor: '#fffbeb',
-  padding: '12px',
-  borderRadius: '8px',
-  marginBottom: '8px',
-  border: '1px solid #fbbf24'
-}}>
-  <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', gap: '12px', flex: 1 }}>
-    <User size={20} color="#f59e0b" />
-    <div style={{ flex: 1, gap: '2px' }}>
-      <div style={{ fontSize: '14px', fontWeight: '600', color: '#92400e' }}>{application.name}</div>
-      <div style={{ fontSize: '12px', color: '#92400e' }}>
-        {application.gender} · NTRP {application.ntrp}
-      </div>
-      <div style={{ fontSize: '12px', fontWeight: '600', color: '#dc2626', marginTop: '2px' }}>
-        신청가격: {application.appliedPrice.toLocaleString()}원
-      </div>
-    </div>
-  </div>
-  <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
-    <button 
-      style={{
-        backgroundColor: '#16a34a',
-        color: '#ffffff',
-        padding: '6px 12px',
-        borderRadius: '6px',
-        border: 'none',
-        fontSize: '12px',
-        fontWeight: '600',
-        cursor: 'pointer'
-      }}
-      onClick={() => {
-        console.log('🟢 승인 버튼 클릭됨');
-        alert('승인 버튼이 클릭되었습니다!');
-        handleApproveApplication(selectedMatch, application);
-      }}
-    >
-      승인
-    </button>
-    
-    <button 
-      style={{
-        backgroundColor: '#dc2626',
-        color: '#ffffff',
-        padding: '6px 12px',
-        borderRadius: '6px',
-        border: 'none',
-        fontSize: '12px',
-        fontWeight: '600',
-        cursor: 'pointer'
-      }}
-      onClick={() => {
-        console.log('🔴 거절 버튼 클릭됨');
-        alert('거절 버튼이 클릭되었습니다!');
-        handleRejectApplication(selectedMatch, application);
-      }}
-    >
-      거절
-    </button>
-  </div>
-</div>
-                      </View>
-                    ))}
-                  </View>
+  <View key={application.id} style={styles.applicationCard}>
+    <View style={styles.applicationInfo}>
+      <User size={20} color="#f59e0b" />
+      <View style={styles.applicationDetails}>
+        <Text style={styles.applicationName}>{application.name}</Text>
+        <Text style={styles.applicationMeta}>
+          {application.gender} · NTRP {application.ntrp}
+        </Text>
+        <Text style={styles.applicationPrice}>
+          신청가격: {application.appliedPrice.toLocaleString()}원
+        </Text>
+      </View>
+    </View>
+    <View style={styles.applicationActions}>
+      <TouchableOpacity 
+        style={[styles.approveButton, { zIndex: 999 }]}
+        onPress={() => {
+          console.log('🟢 승인 버튼 클릭됨');
+          alert('승인 버튼이 클릭되었습니다!');
+          handleApproveApplication(selectedMatch, application);
+        }}
+      >
+        <Text style={styles.approveButtonText}>승인</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity 
+        style={[styles.rejectButton, { zIndex: 999 }]}
+        onPress={() => {
+          console.log('🔴 거절 버튼 클릭됨');
+          alert('거절 버튼이 클릭되었습니다!');
+          handleRejectApplication(selectedMatch, application);
+        }}
+      >
+        <Text style={styles.rejectButtonText}>거절</Text>
+      </TouchableOpacity>
+    </View>
+  </View>
+))}
                 )}
 
                 {selectedMatch.waitingList && selectedMatch.waitingList.length > 0 && (

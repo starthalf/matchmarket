@@ -33,6 +33,10 @@ const { matches, updateMatch } = useMatches();
     onConfirm: () => void;
     confirmStyle?: 'default' | 'destructive';
   } | null>(null);
+  console.log('updateMatch 함수 타입:', typeof updateMatch);
+  console.log('matches 배열 길이:', matches.length);
+  console.log('내 매치들:', matches.filter(match => match.sellerId === user?.id));
+
 
   if (!user) {
     return (

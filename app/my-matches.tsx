@@ -637,54 +637,48 @@ const handleRejectApplication = (match: any, application: any) => {
                             </Text>
                           </View>
                         </View>
-                        <View style={styles.applicationActions}>
-                         <div style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
-  <button 
-    style={{
-      backgroundColor: '#16a34a',
-      color: '#ffffff',
-      paddingLeft: 12,
-      paddingRight: 12,
-      paddingTop: 6,
-      paddingBottom: 6,
-      borderRadius: 6,
-      border: 'none',
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer'
-    }}
-    onClick={() => {
-      console.log('🟢 승인 버튼 클릭됨');
-      alert('승인 버튼이 클릭되었습니다!');
-      handleApproveApplication(selectedMatch, application);
-    }}
-  >
-    승인
-  </button>
-  
-  <button 
-    style={{
-      backgroundColor: '#dc2626',
-      color: '#ffffff',
-      paddingLeft: 12,
-      paddingRight: 12,
-      paddingTop: 6,
-      paddingBottom: 6,
-      borderRadius: 6,
-      border: 'none',
-      fontSize: 12,
-      fontWeight: 600,
-      cursor: 'pointer'
-    }}
-    onClick={() => {
-      console.log('🔴 거절 버튼 클릭됨');
-      alert('거절 버튼이 클릭되었습니다!');
-      handleRejectApplication(selectedMatch, application);
-    }}
-  >
-    거절
-  </button>
-</div>
+                        <div style={{ display: 'flex', flexDirection: 'row', gap: '8px' }}>
+                          <button 
+                            style={{
+                              backgroundColor: '#16a34a',
+                              color: '#ffffff',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => {
+                              console.log('🟢 승인 버튼 클릭됨');
+                              alert('승인 버튼이 클릭되었습니다!');
+                              handleApproveApplication(selectedMatch, application);
+                            }}
+                          >
+                            승인
+                          </button>
+                          
+                          <button 
+                            style={{
+                              backgroundColor: '#dc2626',
+                              color: '#ffffff',
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              border: 'none',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              cursor: 'pointer'
+                            }}
+                            onClick={() => {
+                              console.log('🔴 거절 버튼 클릭됨');
+                              alert('거절 버튼이 클릭되었습니다!');
+                              handleRejectApplication(selectedMatch, application);
+                            }}
+                          >
+                            거절
+                          </button>
+                        </div>
+                      </div>
                         </View>
                       </View>
                     ))}

@@ -20,6 +20,7 @@ import { useMatches } from '../contexts/MatchContext'; // 추가
 
 export default function MyMatchesScreen() {
   const { user } = useAuth();
+  const { matches } = useMatches(); // 추가: MatchContext 사용
   const safeStyles = useSafeStyles();
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
@@ -42,7 +43,7 @@ export default function MyMatchesScreen() {
   }
 
   // 내가 등록한 매치들
-  const myMatches = mockMatches.filter(match => match.sellerId === user.id);
+  const myMatches = matches.filter(match => match.sellerId === user.id); // 변경
 
   // 실제 매치의 참여자 정보 가져오기
   const getMatchParticipants = (match: any) => {

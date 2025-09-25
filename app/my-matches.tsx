@@ -50,6 +50,14 @@ const { matches, updateMatch } = useMatches();
   console.log('matches 배열 길이:', matches.length);
   console.log('내 매치들:', matches.filter(match => match.sellerId === user?.id));
 
+    // 여기에 useEffect 추가
+  useEffect(() => {
+    // 페이지 로드 시 세션 스토리지에서 데이터 복원
+    const savedMatches = loadFromSessionStorage('matches');
+    if (savedMatches) {
+      console.log('저장된 매치 데이터 복원:', savedMatches.length);
+    }
+  }, []);
 
   if (!user) {
     return (

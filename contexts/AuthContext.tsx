@@ -157,8 +157,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (password !== '1234') {
-        if (password !== 'demo123') {
-          return { success: false, error: '비밀번호가 올바르지 않습니다. (데모: demo123)' };
+          if (password !== 'demo123') {
+            return { success: false, error: '비밀번호가 올바르지 않습니다. (데모: demo123)' };
+          }
         }
 
         if (mounted.current) {
@@ -189,24 +190,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (data.user) {
         // 사용자 프로필 정보 가져오기
-const { data: profileData, error: profileError } = await supabase
-  .from('users')
-  .select('*')
-  .eq('id', data.user.id);
+        const { data: profileData, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id);
 
-if (profileError) {
-  console.error('사용자 프로필 조회 오류:', profileError);
-  return { success: false, error: '사용자 프로필을 찾을 수 없습니다.' };
-}
+        if (profileError) {
+          console.error('사용자 프로필 조회 오류:', profileError);
+          return { success: false, error: '사용자 프로필을 찾을 수 없습니다.' };
+        }
 
-if (!profileData || profileData.length === 0) {
-  return { success: false, error: '사용자 프로필을 찾을 수 없습니다.' };
-}
+        if (!profileData || profileData.length === 0) {
+          return { success: false, error: '사용자 프로필을 찾을 수 없습니다.' };
+        }
 
-if (mounted.current) {
-  const user = convertSupabaseUserToUser(profileData[0]);
-  setUser(user);
-}
+        if (mounted.current) {
+          const user = convertSupabaseUserToUser(profileData[0]);
+          setUser(user);
+        }
         return { success: true };
       }
 
@@ -368,15 +369,15 @@ if (mounted.current) {
         if (event === 'SIGNED_IN' && session?.user) {
           // 로그인 시 프로필 정보 가져오기
           // 수정된 코드
-const { data: profileData } = await supabase
-  .from('users')
-  .select('*')
-  .eq('id', session.user.id);
+          const { data: profileData } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id);
 
-if (profileData && profileData.length > 0 && mounted.current) {
-  const user = convertSupabaseUserToUser(profileData[0]);
-  setUser(user);
-}
+          if (profileData && profileData.length > 0 && mounted.current) {
+            const user = convertSupabaseUserToUser(profileData[0]);
+            setUser(user);
+          }
         } else if (event === 'SIGNED_OUT') {
           if (mounted.current) {
             setUser(null);

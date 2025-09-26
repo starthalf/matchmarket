@@ -128,9 +128,12 @@ const handleApproveApplication = (match: any, application: any) => {
   console.log('전달받은 application:', application);
   console.log('application.appliedPrice:', application.appliedPrice);
   
-  const confirmMessage = `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`;
-  
-  if (window.confirm(confirmMessage)) {
+  Alert.alert(
+    '참여신청 승인',
+    `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`,
+    [
+      { text: '취소', style: 'cancel' },
+      { text: '승인', onPress: () => {
     try {
       console.log('🟢 승인 처리 시작');
       
@@ -138,7 +141,7 @@ const handleApproveApplication = (match: any, application: any) => {
       const targetMatch = matches.find(m => m.id === match.id);
       if (!targetMatch) {
         console.error('매치를 찾을 수 없습니다.');
-        alert('매치를 찾을 수 없습니다.');
+        Alert.alert('오류', '매치를 찾을 수 없습니다.');
         return;
       }
       
@@ -177,14 +180,16 @@ const handleApproveApplication = (match: any, application: any) => {
       // MatchContext의 updateMatch 사용
       updateMatch(updatedMatch);
       setSelectedMatch(updatedMatch);
-saveToSessionStorage('matches', matches);
+      saveToSessionStorage('matches', matches);
       console.log('승인 완료');
-      alert(`${application.name}님의 참여신청이 승인되었습니다.`);
+      Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
     } catch (error) {
       console.error('승인 처리 중 오류:', error);
-      alert('승인 처리 중 오류가 발생했습니다.');
+      Alert.alert('오류', '승인 처리 중 오류가 발생했습니다.');
     }
-  }
+      }}
+    ]
+  );
 };
 
 // 참여신청 거절 처리 함수
@@ -193,7 +198,12 @@ const handleRejectApplication = (match: any, application: any) => {
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
   
-  if (window.confirm(`${application.name}님의 참여신청을 거절하시겠습니까?`)) {
+  Alert.alert(
+    '참여신청 거절',
+    `${application.name}님의 참여신청을 거절하시겠습니까?`,
+    [
+      { text: '취소', style: 'cancel' },
+      { text: '거절', style: 'destructive', onPress: () => {
     try {
       console.log('🔴 거절 처리 시작');
       
@@ -201,7 +211,7 @@ const handleRejectApplication = (match: any, application: any) => {
       const targetMatch = matches.find(m => m.id === match.id);
       if (!targetMatch) {
         console.error('매치를 찾을 수 없습니다.');
-        alert('매치를 찾을 수 없습니다.');
+        Alert.alert('오류', '매치를 찾을 수 없습니다.');
         return;
       }
       
@@ -223,12 +233,14 @@ const handleRejectApplication = (match: any, application: any) => {
       setSelectedMatch(updatedMatch);
       saveToSessionStorage('matches', matches);
 
-      alert(`${application.name}님의 참여신청이 거절되었습니다.`);
+      Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
     } catch (error) {
       console.error('거절 처리 중 오류:', error);
-      alert('거절 처리 중 오류가 발생했습니다.');
+      Alert.alert('오류', '거절 처리 중 오류가 발생했습니다.');
     }
-  }
+      }}
+    ]
+  );
 };
 
   const handleDeleteMatch = (match: any) => {
@@ -596,7 +608,6 @@ const handleRejectApplication = (match: any, application: any) => {
                       <View style={styles.participantInfo}>
                         <User size={20} color="#6b7280" />
                         <View style={styles.participantDetails}>
-                          <Text style={styles.participantName}>{participant.name}</Text>
                           <Text style={styles.participantMeta}>
                             {participant.gender} · NTRP {participant.ntrp}
                           </Text>
@@ -607,7 +618,6 @@ const handleRejectApplication = (match: any, application: any) => {
                       </View>
                       <View style={styles.participantStatus}>
                         <Text style={styles.joinedDate}>
-                          {new Date(participant.joinedAt).toLocaleDateString('ko-KR')}
                         </Text>
                         <Text style={[styles.statusText, { color: participant.status === 'confirmed' ? '#16a34a' : '#f59e0b' }]}>
                           {participant.status === 'confirmed' ? '참가확정' : '입금확인중'}

@@ -741,8 +741,7 @@ const handleRejectApplication = (match: any, application: any) => {
       <TouchableOpacity 
         style={styles.rejectButton}
         onPress={() => {
-          console.log('🔴 거절 버튼 클릭됨');
-          console.log('🔴 거절 버튼 onPress 핸들러 실행됨');
+          console.log('🔴 거절 버튼 클릭됨 - onPress 핸들러 실행됨');
           console.log('🔴 selectedMatch:', selectedMatch);
           console.log('🔴 application:', application);
           handleRejectApplication(selectedMatch, application);

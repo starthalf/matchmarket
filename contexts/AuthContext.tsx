@@ -157,7 +157,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (password !== '1234') {
-          return { success: false, error: '비밀번호가 올바르지 않습니다.' };
+        if (password !== 'demo123') {
+          return { success: false, error: '비밀번호가 올바르지 않습니다. (데모: demo123)' };
         }
 
         if (mounted.current) {

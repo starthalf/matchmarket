@@ -103,6 +103,9 @@ const { matches, updateMatch } = useMatches();
 
   // 참여신청자 목록 가져오기 함수
  const getMatchApplications = (match: any) => {
+  console.log('📋 getMatchApplications 호출됨 - 시작');
+  console.log('📋 받은 match:', match);
+  console.log('📋 match.applications:', match.applications);
   console.log('📋 getMatchApplications 호출됨');
   console.log('📋 === getMatchApplications 디버깅 시작 ===');
   console.log('받은 match:', match);
@@ -113,6 +116,7 @@ const { matches, updateMatch } = useMatches();
   console.log('match.applications 배열 여부:', Array.isArray(match.applications));
   
   if (!match.applications || !Array.isArray(match.applications)) {
+    console.log('❌ applications 배열이 없음 - 빈 배열 반환');
     console.log('❌ applications 배열이 없음');
     console.log('❌ applications가 없거나 배열이 아님. 빈 배열 반환.');
     return [];
@@ -121,14 +125,18 @@ const { matches, updateMatch } = useMatches();
   const pendingApps = match.applications.filter(app => app.status === 'pending');
   console.log('✅ pending 신청자들:', pendingApps);
   console.log('✅ pending 신청자 수:', pendingApps.length);
+  console.log('✅ pending 신청자들:', pendingApps);
+  console.log('✅ pending 신청자 수:', pendingApps.length);
   console.log('✅ 전체 신청자 수:', match.applications.length);
   
   return pendingApps.map(app => {
+    console.log('🔍 신청자 처리 중:', app);
     console.log('신청자 상세:', app);
     console.log('신청자 ID:', app.id);
     console.log('신청자 이름:', app.userName);
     console.log('신청자 상태:', app.status);
     const user = mockUsers.find(u => u.id === app.userId);
+    console.log('🔍 mockUsers에서 찾은 사용자:', user);
     console.log('mockUsers에서 찾은 사용자:', user);
     return {
       ...app,
@@ -142,6 +150,9 @@ const { matches, updateMatch } = useMatches();
 
 // 참여신청 승인 처리 함수
 const handleApproveApplication = (match: any, application: any) => {
+  console.log('🔥 handleApproveApplication 함수 호출됨!');
+  console.log('전달받은 match:', match);
+  console.log('전달받은 application:', application);
   console.log('🔥 승인 버튼이 클릭되었습니다!');
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
@@ -232,6 +243,9 @@ const handleApproveApplication = (match: any, application: any) => {
 
 // 참여신청 거절 처리 함수
 const handleRejectApplication = (match: any, application: any) => {
+  console.log('🔥 handleRejectApplication 함수 호출됨!');
+  console.log('전달받은 match:', match);
+  console.log('전달받은 application:', application);
   console.log('🔥 거절 버튼이 클릭되었습니다!');
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
@@ -432,6 +446,10 @@ const handleRejectApplication = (match: any, application: any) => {
   };
 
   const handleViewParticipants = (match: any) => {
+    console.log('🔍 handleViewParticipants 호출됨');
+    console.log('🔍 선택된 매치:', match.id, match.title);
+    console.log('🔍 매치의 applications:', match.applications);
+    console.log('🔍 매치의 participants:', match.participants);
     console.log('=== handleViewParticipants 호출됨 ===');
     console.log('선택된 매치:', match.id, match.title);
     console.log('매치의 applications:', match.applications);
@@ -587,6 +605,12 @@ const handleRejectApplication = (match: any, application: any) => {
                     <TouchableOpacity 
                       style={styles.confirmButton}
                       onPress={() => handleConfirmMatch(match)}
+                        console.log('🔴 거절 버튼 onPress 핸들러 실행됨');
+                        console.log('🔴 selectedMatch:', selectedMatch);
+                        console.log('🔴 application:', application);
+                        console.log('🟢 승인 버튼 onPress 핸들러 실행됨');
+                        console.log('🟢 selectedMatch:', selectedMatch);
+                        console.log('🟢 application:', application);
                     >
                       <CheckCircle size={16} color="#16a34a" />
                       <Text style={styles.confirmButtonText}>경기 완료</Text>

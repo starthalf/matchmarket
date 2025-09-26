@@ -40,9 +40,18 @@ export default function HomeScreen() {
 
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
-      const result = await login(userIdentifier, 'demo123');
+      // mockUsers에서 해당 사용자 찾기
+      const { mockUsers } = await import('../../data/mockData');
+      const targetUser = mockUsers.find(u => u.name === userIdentifier);
+      
+      if (!targetUser) {
+        Alert.alert('로그인 실패', '사용자를 찾을 수 없습니다.');
+        return;
+      }
+      
+      const result = await login(targetUser.email, 'demo123');
       if (result.success) {
-        Alert.alert('로그인 성공', `${userIdentifier}로 로그인되었습니다.`);
+        Alert.alert('로그인 성공', `${targetUser.name}(${targetUser.email})로 로그인되었습니다.`);
       } else {
         Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
       }

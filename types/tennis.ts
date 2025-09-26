@@ -3,6 +3,7 @@
 export interface User {
   id: string;
   name: string;
+  email: string;
   gender: '남성' | '여성';
   ageGroup: '20대' | '30대' | '40대' | '50대+';
   ntrp: number;

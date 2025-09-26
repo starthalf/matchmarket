@@ -126,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return {
       id: supabaseUser.id,
       name: supabaseUser.name,
+      email: '', // Supabase에서는 auth.users.email을 별도로 가져와야 함
       gender: supabaseUser.gender,
       ageGroup: supabaseUser.age_group,
       ntrp: supabaseUser.ntrp,
@@ -150,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!supabase) {
         console.warn('Supabase가 설정되지 않음. 모의 데이터로 로그인 시도.');
         // Fallback to mock data
-        const foundUser = mockUsers.find(u => u.name === email);
+        const foundUser = mockUsers.find(u => u.email === email);
         
         if (!foundUser) {
           return { success: false, error: '존재하지 않는 계정입니다.' };
@@ -222,7 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!supabase) {
         // Fallback to mock data
-        const existingUser = mockUsers.find(u => u.name === userData.email);
+        const existingUser = mockUsers.find(u => u.email === userData.email);
         if (existingUser) {
           return { success: false, error: '이미 존재하는 이메일입니다.' };
         }
@@ -230,6 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const newUser: User = {
           id: `user_${Date.now()}`,
           name: userData.name,
+          email: userData.email,
           gender: userData.gender,
           ageGroup: userData.ageGroup,
           ntrp: userData.ntrp,
@@ -308,6 +310,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const newUser: User = {
         id: data.user.id,
         name: userData.name,
+        email: userData.email,
         gender: userData.gender,
         ageGroup: userData.ageGroup,
         ntrp: userData.ntrp,

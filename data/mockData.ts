@@ -101,6 +101,7 @@ const dummyUsers = [
   {
     id: 'dummy_f1',
     name: 'aesthetic.vibes',
+    email: 'aesthetic.vibes@demo.com',
     gender: '여성' as const,
     ageGroup: '20대' as const,
     ntrp: 4.2,
@@ -116,6 +117,7 @@ const dummyUsers = [
   {
     id: 'dummy_m1',
     name: 'urban.explorer',
+    email: 'urban.explorer@demo.com',
     gender: '남성' as const,
     ageGroup: '30대' as const,
     ntrp: 4.5,
@@ -131,6 +133,7 @@ const dummyUsers = [
   {
     id: 'dummy_m2',
     name: 'midnight.rider',
+    email: 'midnight.rider@demo.com',
     gender: '남성' as const,
     ageGroup: '20대' as const,
     ntrp: 3.8,
@@ -146,6 +149,7 @@ const dummyUsers = [
   {
     id: 'dummy_f2',
     name: 'moonlight.cafe',
+    email: 'moonlight.cafe@demo.com',
     gender: '여성' as const,
     ageGroup: '30대' as const,
     ntrp: 3.8,
@@ -161,6 +165,7 @@ const dummyUsers = [
   {
     id: 'dummy_f3',
     name: 'cherry.blossom',
+    email: 'cherry.blossom@demo.com',
     gender: '여성' as const,
     ageGroup: '20대' as const,
     ntrp: 3.5,

@@ -90,7 +90,13 @@ export default function SignupScreen() {
         <View style={safeStyles.safeHeaderContent}>
           <TouchableOpacity 
             style={safeStyles.backButton} 
-            onPress={() => router.back()}
+            onPress={() => {
+  if (router.canGoBack()) {
+    router.back();
+  } else {
+    router.replace('/(tabs)');
+  }
+}}
           >
             <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>

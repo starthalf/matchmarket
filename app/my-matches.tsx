@@ -604,13 +604,11 @@ const handleRejectApplication = (match: any, application: any) => {
                   {canConfirm && (
                     <TouchableOpacity 
                       style={styles.confirmButton}
-                      onPress={() => handleConfirmMatch(match)}
-                        console.log('🔴 거절 버튼 onPress 핸들러 실행됨');
-                        console.log('🔴 selectedMatch:', selectedMatch);
-                        console.log('🔴 application:', application);
-                        console.log('🟢 승인 버튼 onPress 핸들러 실행됨');
-                        console.log('🟢 selectedMatch:', selectedMatch);
-                        console.log('🟢 application:', application);
+                      onPress={() => {
+                        console.log('🟢 경기 완료 버튼 클릭됨 - onPress 핸들러 실행됨');
+                        console.log('🟢 match:', match);
+                        handleConfirmMatch(match);
+                      }}
                     >
                       <CheckCircle size={16} color="#16a34a" />
                       <Text style={styles.confirmButtonText}>경기 완료</Text>

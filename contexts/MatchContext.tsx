@@ -105,11 +105,18 @@ export function MatchProvider({ children }: { children: ReactNode }) {
   };
 
   const updateMatch = (updatedMatch: Match) => {
+    console.log('=== MatchContext: updateMatch 호출됨 ===');
+    console.log('MatchContext: updateMatch called for match ID:', updatedMatch.id);
+    console.log('MatchContext: 업데이트할 매치 제목:', updatedMatch.title);
+    console.log('MatchContext: 현재 matches 배열 길이:', matches.length);
+    
     setMatches(prev => 
       prev.map(match => 
         match.id === updatedMatch.id ? updatedMatch : match
       )
     );
+    
+    console.log('=== MatchContext: updateMatch 완료 ===');
   };
 
   const addMatch = async (newMatch: Match): Promise<boolean> => {

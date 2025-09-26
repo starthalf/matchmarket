@@ -35,6 +35,13 @@ export default function MyMatchesScreen() {
   const { user } = useAuth();
 const { matches, updateMatch } = useMatches();
   const safeStyles = useSafeStyles();
+  
+  // 디버깅을 위한 로그 추가
+  console.log('=== MyMatchesScreen 렌더링 ===');
+  console.log('현재 사용자:', user?.name);
+  console.log('전체 matches 수:', matches.length);
+  console.log('updateMatch 함수 존재 여부:', typeof updateMatch);
+  
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
   const [completedMatches, setCompletedMatches] = useState<Set<string>>(new Set());
@@ -97,20 +104,32 @@ const { matches, updateMatch } = useMatches();
   // 참여신청자 목록 가져오기 함수
  const getMatchApplications = (match: any) => {
   console.log('📋 getMatchApplications 호출됨');
+  console.log('📋 === getMatchApplications 디버깅 시작 ===');
   console.log('받은 match:', match);
+  console.log('받은 match.id:', match?.id);
+  console.log('받은 match.title:', match?.title);
   console.log('match.applications:', match.applications);
+  console.log('match.applications 타입:', typeof match.applications);
+  console.log('match.applications 배열 여부:', Array.isArray(match.applications));
   
   if (!match.applications || !Array.isArray(match.applications)) {
     console.log('❌ applications 배열이 없음');
+    console.log('❌ applications가 없거나 배열이 아님. 빈 배열 반환.');
     return [];
   }
 
   const pendingApps = match.applications.filter(app => app.status === 'pending');
   console.log('✅ pending 신청자들:', pendingApps);
+  console.log('✅ pending 신청자 수:', pendingApps.length);
+  console.log('✅ 전체 신청자 수:', match.applications.length);
   
   return pendingApps.map(app => {
     console.log('신청자 상세:', app);
+    console.log('신청자 ID:', app.id);
+    console.log('신청자 이름:', app.userName);
+    console.log('신청자 상태:', app.status);
     const user = mockUsers.find(u => u.id === app.userId);
+    console.log('mockUsers에서 찾은 사용자:', user);
     return {
       ...app,
       name: user?.name || app.userName,
@@ -127,6 +146,11 @@ const handleApproveApplication = (match: any, application: any) => {
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
   console.log('application.appliedPrice:', application.appliedPrice);
+  console.log('=== handleApproveApplication 함수 시작 ===');
+  console.log('handleApproveApplication called for:', application.name);
+  console.log('Match ID:', match.id);
+  console.log('Application ID:', application.id);
+  console.log('Current matches array length:', matches.length);
   
   Alert.alert(
     '참여신청 승인',
@@ -136,20 +160,28 @@ const handleApproveApplication = (match: any, application: any) => {
       { text: '승인', onPress: () => {
     try {
       console.log('🟢 승인 처리 시작');
+      console.log('=== 승인 Alert 확인 버튼 클릭됨 ===');
       
       // MatchContext의 matches에서 찾기 (mockMatches 대신)
       const targetMatch = matches.find(m => m.id === match.id);
+      console.log('targetMatch 검색 결과:', targetMatch ? '찾음' : '못찾음');
+      console.log('검색한 match.id:', match.id);
+      console.log('사용 가능한 match IDs:', matches.map(m => m.id));
+      
       if (!targetMatch) {
         console.error('매치를 찾을 수 없습니다.');
+        console.error('=== 매치 찾기 실패 ===');
         Alert.alert('오류', '매치를 찾을 수 없습니다.');
         return;
       }
       
+      console.log('=== 매치 찾기 성공, 업데이트 시작 ===');
       const updatedApplications = (targetMatch.applications || []).map(app => 
         app.id === application.id 
           ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
           : app
       );
+      console.log('업데이트된 applications:', updatedApplications);
 
       const newParticipant = {
         id: `participant_${application.id}`,
@@ -162,6 +194,7 @@ const handleApproveApplication = (match: any, application: any) => {
         paymentAmount: application.appliedPrice,
         appliedPrice: application.appliedPrice,
       };
+      console.log('새 참가자 객체:', newParticipant);
 
       const updatedMatch = {
         ...targetMatch,
@@ -176,15 +209,20 @@ const handleApproveApplication = (match: any, application: any) => {
       };
 
       console.log('업데이트된 매치:', updatedMatch);
+      console.log('=== updateMatch 호출 직전 ===');
+      console.log('updateMatch 함수 존재 여부:', typeof updateMatch);
       
       // MatchContext의 updateMatch 사용
       updateMatch(updatedMatch);
+      console.log('=== updateMatch 호출 완료 ===');
       setSelectedMatch(updatedMatch);
       saveToSessionStorage('matches', matches);
       console.log('승인 완료');
+      console.log('=== 승인 프로세스 완전 완료 ===');
       Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
     } catch (error) {
       console.error('승인 처리 중 오류:', error);
+      console.error('=== 승인 처리 중 예외 발생 ===', error);
       Alert.alert('오류', '승인 처리 중 오류가 발생했습니다.');
     }
       }}
@@ -197,6 +235,10 @@ const handleRejectApplication = (match: any, application: any) => {
   console.log('🔥 거절 버튼이 클릭되었습니다!');
   console.log('전달받은 match:', match);
   console.log('전달받은 application:', application);
+  console.log('=== handleRejectApplication 함수 시작 ===');
+  console.log('handleRejectApplication called for:', application.name);
+  console.log('Match ID:', match.id);
+  console.log('Application ID:', application.id);
   
   Alert.alert(
     '참여신청 거절',
@@ -206,15 +248,20 @@ const handleRejectApplication = (match: any, application: any) => {
       { text: '거절', style: 'destructive', onPress: () => {
     try {
       console.log('🔴 거절 처리 시작');
+      console.log('=== 거절 Alert 확인 버튼 클릭됨 ===');
       
       // MatchContext의 matches에서 찾기 (mockMatches 대신)
       const targetMatch = matches.find(m => m.id === match.id);
+      console.log('targetMatch 검색 결과:', targetMatch ? '찾음' : '못찾음');
+      
       if (!targetMatch) {
         console.error('매치를 찾을 수 없습니다.');
+        console.error('=== 거절: 매치 찾기 실패 ===');
         Alert.alert('오류', '매치를 찾을 수 없습니다.');
         return;
       }
       
+      console.log('=== 거절: 매치 찾기 성공, 업데이트 시작 ===');
       const updatedApplications = (targetMatch.applications || []).map(app => 
         app.id === application.id 
           ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
@@ -227,15 +274,19 @@ const handleRejectApplication = (match: any, application: any) => {
       };
 
       console.log('업데이트된 매치:', updatedMatch);
+      console.log('=== 거절: updateMatch 호출 직전 ===');
       
       // MatchContext의 updateMatch 사용
       updateMatch(updatedMatch);
+      console.log('=== 거절: updateMatch 호출 완료 ===');
       setSelectedMatch(updatedMatch);
       saveToSessionStorage('matches', matches);
 
       Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
+      console.log('=== 거절 프로세스 완전 완료 ===');
     } catch (error) {
       console.error('거절 처리 중 오류:', error);
+      console.error('=== 거절 처리 중 예외 발생 ===', error);
       Alert.alert('오류', '거절 처리 중 오류가 발생했습니다.');
     }
       }}
@@ -381,6 +432,10 @@ const handleRejectApplication = (match: any, application: any) => {
   };
 
   const handleViewParticipants = (match: any) => {
+    console.log('=== handleViewParticipants 호출됨 ===');
+    console.log('선택된 매치:', match.id, match.title);
+    console.log('매치의 applications:', match.applications);
+    console.log('매치의 participants:', match.participants);
     setSelectedMatch(match);
     setShowParticipantsModal(true);
   };
@@ -649,10 +704,12 @@ const handleRejectApplication = (match: any, application: any) => {
     </View>
     <View style={styles.applicationActions}>
       <TouchableOpacity 
-        style={[styles.approveButton, { zIndex: 999 }]}
+        style={styles.approveButton}
         onPress={() => {
           console.log('🟢 승인 버튼 클릭됨');
-          alert('승인 버튼이 클릭되었습니다!');
+          console.log('🟢 승인 버튼 onPress 핸들러 실행됨');
+          console.log('🟢 selectedMatch:', selectedMatch);
+          console.log('🟢 application:', application);
           handleApproveApplication(selectedMatch, application);
         }}
       >
@@ -660,10 +717,12 @@ const handleRejectApplication = (match: any, application: any) => {
       </TouchableOpacity>
       
       <TouchableOpacity 
-        style={[styles.rejectButton, { zIndex: 999 }]}
+        style={styles.rejectButton}
         onPress={() => {
           console.log('🔴 거절 버튼 클릭됨');
-          alert('거절 버튼이 클릭되었습니다!');
+          console.log('🔴 거절 버튼 onPress 핸들러 실행됨');
+          console.log('🔴 selectedMatch:', selectedMatch);
+          console.log('🔴 application:', application);
           handleRejectApplication(selectedMatch, application);
         }}
       >

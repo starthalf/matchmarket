@@ -724,18 +724,15 @@ const handleRejectApplication = (match: any, application: any) => {
       </View>
     </View>
     <View style={styles.applicationActions}>
-      <TouchableOpacity 
-        style={styles.approveButton}
-        onPress={() => {
-          console.log('🟢 승인 버튼 클릭됨');
-          console.log('🟢 승인 버튼 onPress 핸들러 실행됨');
-          console.log('🟢 selectedMatch:', selectedMatch);
-          console.log('🟢 application:', application);
-          handleApproveApplication(selectedMatch, application);
-        }}
-      >
-        <Text style={styles.approveButtonText}>승인</Text>
-      </TouchableOpacity>
+    <TouchableOpacity 
+  style={styles.approveButton}
+  onPress={() => {
+    console.log('🟢🟢🟢 버튼 클릭됨!!!');
+    alert('버튼이 작동합니다!');
+  }}
+>
+  <Text style={styles.approveButtonText}>승인</Text>
+</TouchableOpacity>
       
       <TouchableOpacity 
         style={styles.rejectButton}

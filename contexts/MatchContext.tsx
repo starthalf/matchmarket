@@ -117,16 +117,26 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     )
   );
   
-  // 2. Supabase에도 저장 시도
+  // 2. Supabase에도 UPDATE 시도
   try {
-    const success = await DataGenerator.saveMatchToSupabase(updatedMatch);
-    if (success) {
-      console.log('✅ 매치 업데이트가 Supabase에 저장됨');
+    const { error } = await supabaseAdmin
+      .from('matches')
+      .update({
+        applications: updatedMatch.applications,
+        participants: updatedMatch.participants,
+        current_applicants_male: updatedMatch.currentApplicants.male,
+        current_applicants_female: updatedMatch.currentApplicants.female,
+        current_applicants_total: updatedMatch.currentApplicants.total,
+      })
+      .eq('id', updatedMatch.id);
+    
+    if (error) {
+      console.error('Supabase 업데이트 오류:', error);
     } else {
-      console.log('⚠️ Supabase 저장 실패했지만 로컬에는 반영됨');
+      console.log('✅ 매치 업데이트가 Supabase에 저장됨');
     }
   } catch (error) {
-    console.error('Supabase 저장 중 오류:', error);
+    console.error('Supabase 저장 중 예외:', error);
   }
   
   console.log('=== MatchContext: updateMatch 완료 ===');

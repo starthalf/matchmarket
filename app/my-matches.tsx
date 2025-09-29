@@ -225,10 +225,9 @@ const handleApproveApplication = (match: any, application: any) => {
       console.log('updateMatch 함수 존재 여부:', typeof updateMatch);
       
       // MatchContext의 updateMatch 사용
- await updateMatch(updatedMatch);
+      await updateMatch(updatedMatch);
       console.log('=== updateMatch 호출 완료 ===');
       setSelectedMatch(updatedMatch);
-      saveToSessionStorage('matches', matches);
       console.log('승인 완료');
       console.log('=== 승인 프로세스 완전 완료 ===');
       Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
@@ -292,10 +291,9 @@ const handleRejectApplication = (match: any, application: any) => {
       console.log('=== 거절: updateMatch 호출 직전 ===');
       
       // MatchContext의 updateMatch 사용
-await updateMatch(updatedMatch);
+      await updateMatch(updatedMatch);
       console.log('=== 거절: updateMatch 호출 완료 ===');
       setSelectedMatch(updatedMatch);
-      saveToSessionStorage('matches', matches);
 
       Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
       console.log('=== 거절 프로세스 완전 완료 ===');

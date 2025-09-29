@@ -723,29 +723,29 @@ const handleRejectApplication = (match: any, application: any) => {
         </Text>
       </View>
     </View>
-    <View style={styles.applicationActions}>
-    <TouchableOpacity 
-  style={styles.approveButton}
-  onPress={() => {
-    console.log('🟢🟢🟢 버튼 클릭됨!!!');
-    alert('버튼이 작동합니다!');
-  }}
->
-  <Text style={styles.approveButtonText}>승인</Text>
-</TouchableOpacity>
-      
-      <TouchableOpacity 
-        style={styles.rejectButton}
-        onPress={() => {
-          console.log('🔴 거절 버튼 클릭됨 - onPress 핸들러 실행됨');
-          console.log('🔴 selectedMatch:', selectedMatch);
-          console.log('🔴 application:', application);
-          handleRejectApplication(selectedMatch, application);
-        }}
-      >
-        <Text style={styles.rejectButtonText}>거절</Text>
-      </TouchableOpacity>
-    </View>
+    <View style={[styles.applicationActions, { zIndex: 999, elevation: 999 }]}>
+  <TouchableOpacity 
+    style={styles.approveButton}
+    activeOpacity={0.7}
+    onPress={() => {
+      console.log('🟢🟢🟢 버튼 클릭됨!!!');
+      alert('버튼이 작동합니다!');
+    }}
+  >
+    <Text style={styles.approveButtonText}>승인</Text>
+  </TouchableOpacity>
+  
+  <TouchableOpacity 
+    style={styles.rejectButton}
+    activeOpacity={0.7}
+    onPress={() => {
+      console.log('🔴🔴🔴 거절 버튼 클릭됨!!!');
+      alert('거절 버튼 작동!');
+    }}
+  >
+    <Text style={styles.rejectButtonText}>거절</Text>
+  </TouchableOpacity>
+</View>
   </View>
 ))}
                   </View>

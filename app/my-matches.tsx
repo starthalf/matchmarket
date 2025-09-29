@@ -225,7 +225,7 @@ const handleApproveApplication = (match: any, application: any) => {
       console.log('updateMatch 함수 존재 여부:', typeof updateMatch);
       
       // MatchContext의 updateMatch 사용
-      updateMatch(updatedMatch);
+ await updateMatch(updatedMatch);
       console.log('=== updateMatch 호출 완료 ===');
       setSelectedMatch(updatedMatch);
       saveToSessionStorage('matches', matches);
@@ -292,7 +292,7 @@ const handleRejectApplication = (match: any, application: any) => {
       console.log('=== 거절: updateMatch 호출 직전 ===');
       
       // MatchContext의 updateMatch 사용
-      updateMatch(updatedMatch);
+await updateMatch(updatedMatch);
       console.log('=== 거절: updateMatch 호출 완료 ===');
       setSelectedMatch(updatedMatch);
       saveToSessionStorage('matches', matches);

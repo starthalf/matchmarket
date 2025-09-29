@@ -761,7 +761,10 @@ const styles = StyleSheet.create({
   },
   closedToggleContainer: {
     flexDirection: 'row',
-    alignItemsclosedToggleLabel: {
+alignItems: 'center',
+    gap: 8,
+  },
+  closedToggleLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#374151',

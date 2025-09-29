@@ -710,7 +710,7 @@ const handleRejectApplication = (match: any, application: any) => {
                     </Text>
                     
 {getMatchApplications(selectedMatch).map((application) => (
-  <View key={application.id} style={styles.applicationCard}>
+<View key={application.id} style={styles.applicationCard} pointerEvents="box-none">
     <View style={styles.applicationInfo}>
       <User size={20} color="#f59e0b" />
       <View style={styles.applicationDetails}>

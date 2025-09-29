@@ -723,7 +723,7 @@ const handleRejectApplication = (match: any, application: any) => {
         </Text>
       </View>
     </View>
-    <View style={[styles.applicationActions, { zIndex: 999, elevation: 999 }]}>
+<View style={[styles.applicationActions, { zIndex: 9999, elevation: 9999, pointerEvents: 'auto' }]}>
   <TouchableOpacity 
     style={styles.approveButton}
     activeOpacity={0.7}

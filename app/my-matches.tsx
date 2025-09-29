@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,41 +7,21 @@ import {
   TouchableOpacity,
   Modal,
   Switch,
-  Alert,  // 👈 추가
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Calendar, Clock, MapPin, Users, Trash2, CircleCheck as CheckCircle, TriangleAlert as AlertTriangle, User, Lock } from 'lucide-react-native';
+import { ArrowLeft, Calendar, MapPin, Users, Trash2, CircleCheck as CheckCircle, User, Lock } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { mockMatches, mockUsers, addMockEarning, EarningsData } from '../data/mockData';
+import { mockUsers, addMockEarning, EarningsData } from '../data/mockData';
 import { ConfirmationModal } from '../components/ConfirmationModal';
 import { useSafeStyles } from '../constants/Styles';
-import { useMatches } from '../contexts/MatchContext'; // 추가
-// 브라우저 세션 스토리지에 데이터 저장/로드
-const saveToSessionStorage = (key: string, data: any) => {
-  if (typeof window !== 'undefined') {
-    sessionStorage.setItem(key, JSON.stringify(data));
-  }
-};
-
-const loadFromSessionStorage = (key: string) => {
-  if (typeof window !== 'undefined') {
-    const data = sessionStorage.getItem(key);
-    return data ? JSON.parse(data) : null;
-  }
-  return null;
-};
+import { useMatches } from '../contexts/MatchContext';
 
 export default function MyMatchesScreen() {
   const { user } = useAuth();
-const { matches, updateMatch } = useMatches();
+  const { matches, updateMatch } = useMatches();
   const safeStyles = useSafeStyles();
-  
-  // 디버깅을 위한 로그 추가
-  console.log('=== MyMatchesScreen 렌더링 ===');
-  console.log('현재 사용자:', user?.name);
-  console.log('전체 matches 수:', matches.length);
-  console.log('updateMatch 함수 존재 여부:', typeof updateMatch);
   
   const [selectedMatch, setSelectedMatch] = useState<any>(null);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
@@ -54,18 +34,6 @@ const { matches, updateMatch } = useMatches();
     onConfirm: () => void;
     confirmStyle?: 'default' | 'destructive';
   } | null>(null);
-  console.log('updateMatch 함수 타입:', typeof updateMatch);
-  console.log('matches 배열 길이:', matches.length);
-  console.log('내 매치들:', matches.filter(match => match.sellerId === user?.id));
-
-    // 여기에 useEffect 추가
-  useEffect(() => {
-    // 페이지 로드 시 세션 스토리지에서 데이터 복원
-    const savedMatches = loadFromSessionStorage('matches');
-    if (savedMatches) {
-      console.log('저장된 매치 데이터 복원:', savedMatches.length);
-    }
-  }, []);
 
   if (!user) {
     return (
@@ -75,10 +43,8 @@ const { matches, updateMatch } = useMatches();
     );
   }
 
-  // 내가 등록한 매치들
-  const myMatches = matches.filter(match => match.sellerId === user.id); // 변경
+  const myMatches = matches.filter(match => match.sellerId === user.id);
 
-  // 실제 매치의 참여자 정보 가져오기
   const getMatchParticipants = (match: any) => {
     if (!match.participants || !Array.isArray(match.participants)) {
       return [];
@@ -87,7 +53,6 @@ const { matches, updateMatch } = useMatches();
     return match.participants
       .filter(p => p.status === 'confirmed' || p.status === 'payment_pending')
       .map(p => {
-        // mockUsers에서 사용자 정보 찾기
         const user = mockUsers.find(u => u.id === p.userId);
         return {
           id: p.userId,
@@ -102,210 +67,119 @@ const { matches, updateMatch } = useMatches();
       .sort((a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime());
   };
 
-  // 참여신청자 목록 가져오기 함수
- const getMatchApplications = (match: any) => {
-  console.log('📋 getMatchApplications 호출됨 - 시작');
-  console.log('📋 받은 match:', match);
-  console.log('📋 match.applications:', match.applications);
-  console.log('📋 getMatchApplications 호출됨');
-  console.log('📋 === getMatchApplications 디버깅 시작 ===');
-  console.log('받은 match:', match);
-  console.log('받은 match.id:', match?.id);
-  console.log('받은 match.title:', match?.title);
-  console.log('match.applications:', match.applications);
-  console.log('match.applications 타입:', typeof match.applications);
-  console.log('match.applications 배열 여부:', Array.isArray(match.applications));
-  
-  if (!match.applications || !Array.isArray(match.applications)) {
-    console.log('❌ applications 배열이 없음 - 빈 배열 반환');
-    console.log('❌ applications 배열이 없음');
-    console.log('❌ applications가 없거나 배열이 아님. 빈 배열 반환.');
-    return [];
-  }
-
-  const pendingApps = match.applications.filter(app => app.status === 'pending');
-  console.log('✅ pending 신청자들:', pendingApps);
-  console.log('✅ pending 신청자 수:', pendingApps.length);
-  console.log('✅ pending 신청자들:', pendingApps);
-  console.log('✅ pending 신청자 수:', pendingApps.length);
-  console.log('✅ 전체 신청자 수:', match.applications.length);
-  
-  return pendingApps.map(app => {
-    console.log('🔍 신청자 처리 중:', app);
-    console.log('신청자 상세:', app);
-    console.log('신청자 ID:', app.id);
-    console.log('신청자 이름:', app.userName);
-    console.log('신청자 상태:', app.status);
-    const user = mockUsers.find(u => u.id === app.userId);
-    console.log('🔍 mockUsers에서 찾은 사용자:', user);
-    console.log('mockUsers에서 찾은 사용자:', user);
-    return {
-      ...app,
-      name: user?.name || app.userName,
-      gender: user?.gender || app.userGender,
-      ntrp: user?.ntrp || app.userNtrp,
-      profileImage: user?.profileImage || app.userProfileImage
-    };
-  });
-};
-
-// 참여신청 승인 처리 함수
-const handleApproveApplication = (match: any, application: any) => {
-  console.log('🔥 handleApproveApplication 함수 호출됨!');
-  console.log('전달받은 match:', match);
-  console.log('전달받은 application:', application);
-  console.log('🔥 승인 버튼이 클릭되었습니다!');
-  console.log('전달받은 match:', match);
-  console.log('전달받은 application:', application);
-  console.log('application.appliedPrice:', application.appliedPrice);
-  console.log('=== handleApproveApplication 함수 시작 ===');
-  console.log('handleApproveApplication called for:', application.name);
-  console.log('Match ID:', match.id);
-  console.log('Application ID:', application.id);
-  console.log('Current matches array length:', matches.length);
-  
-  Alert.alert(
-    '참여신청 승인',
-    `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`,
-    [
-      { text: '취소', style: 'cancel' },
-      { text: '승인', onPress: async () => {  // 👈 async 추가
-    try {
-      console.log('🟢 승인 처리 시작');
-      console.log('=== 승인 Alert 확인 버튼 클릭됨 ===');
-      
-      // MatchContext의 matches에서 찾기 (mockMatches 대신)
-      const targetMatch = matches.find(m => m.id === match.id);
-      console.log('targetMatch 검색 결과:', targetMatch ? '찾음' : '못찾음');
-      console.log('검색한 match.id:', match.id);
-      console.log('사용 가능한 match IDs:', matches.map(m => m.id));
-      
-      if (!targetMatch) {
-        console.error('매치를 찾을 수 없습니다.');
-        console.error('=== 매치 찾기 실패 ===');
-        Alert.alert('오류', '매치를 찾을 수 없습니다.');
-        return;
-      }
-      
-      console.log('=== 매치 찾기 성공, 업데이트 시작 ===');
-      const updatedApplications = (targetMatch.applications || []).map(app => 
-        app.id === application.id 
-          ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
-          : app
-      );
-      console.log('업데이트된 applications:', updatedApplications);
-
-      const newParticipant = {
-        id: `participant_${application.id}`,
-        userId: application.userId,
-        userName: application.name,
-        gender: application.gender,
-        ntrp: application.ntrp,
-        joinedAt: new Date().toISOString(),
-        status: 'payment_pending',
-        paymentAmount: application.appliedPrice,
-        appliedPrice: application.appliedPrice,
-      };
-      console.log('새 참가자 객체:', newParticipant);
-
-      const updatedMatch = {
-        ...targetMatch,
-        applications: updatedApplications,
-        participants: [...(targetMatch.participants || []), newParticipant],
-        currentApplicants: {
-          ...targetMatch.currentApplicants,
-          [application.gender === '남성' ? 'male' : 'female']: 
-            targetMatch.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
-          total: targetMatch.currentApplicants.total + 1
-        }
-      };
-
-      console.log('업데이트된 매치:', updatedMatch);
-      console.log('=== updateMatch 호출 직전 ===');
-      console.log('updateMatch 함수 존재 여부:', typeof updateMatch);
-      
-      // MatchContext의 updateMatch 사용
-      await updateMatch(updatedMatch);
-      console.log('=== updateMatch 호출 완료 ===');
-      setSelectedMatch(updatedMatch);
-      console.log('승인 완료');
-      console.log('=== 승인 프로세스 완전 완료 ===');
-      Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
-    } catch (error) {
-      console.error('승인 처리 중 오류:', error);
-      console.error('=== 승인 처리 중 예외 발생 ===', error);
-      Alert.alert('오류', '승인 처리 중 오류가 발생했습니다.');
+  const getMatchApplications = (match: any) => {
+    if (!match.applications || !Array.isArray(match.applications)) {
+      return [];
     }
-      }}
-    ]
-  );
-};
 
-// 참여신청 거절 처리 함수
-const handleRejectApplication = (match: any, application: any) => {
-  console.log('🔥 handleRejectApplication 함수 호출됨!');
-  console.log('전달받은 match:', match);
-  console.log('전달받은 application:', application);
-  console.log('🔥 거절 버튼이 클릭되었습니다!');
-  console.log('전달받은 match:', match);
-  console.log('전달받은 application:', application);
-  console.log('=== handleRejectApplication 함수 시작 ===');
-  console.log('handleRejectApplication called for:', application.name);
-  console.log('Match ID:', match.id);
-  console.log('Application ID:', application.id);
-  
-  Alert.alert(
-    '참여신청 거절',
-    `${application.name}님의 참여신청을 거절하시겠습니까?`,
-    [
-      { text: '취소', style: 'cancel' },
-      { text: '거절', style: 'destructive', onPress: async () => {  // 👈 async 추가
-    try {
-      console.log('🔴 거절 처리 시작');
-      console.log('=== 거절 Alert 확인 버튼 클릭됨 ===');
-      
-      // MatchContext의 matches에서 찾기 (mockMatches 대신)
-      const targetMatch = matches.find(m => m.id === match.id);
-      console.log('targetMatch 검색 결과:', targetMatch ? '찾음' : '못찾음');
-      
-      if (!targetMatch) {
-        console.error('매치를 찾을 수 없습니다.');
-        console.error('=== 거절: 매치 찾기 실패 ===');
-        Alert.alert('오류', '매치를 찾을 수 없습니다.');
-        return;
-      }
-      
-      console.log('=== 거절: 매치 찾기 성공, 업데이트 시작 ===');
-      const updatedApplications = (targetMatch.applications || []).map(app => 
-        app.id === application.id 
-          ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
-          : app
-      );
-
-      const updatedMatch = {
-        ...targetMatch,
-        applications: updatedApplications
+    const pendingApps = match.applications.filter(app => app.status === 'pending');
+    
+    return pendingApps.map(app => {
+      const user = mockUsers.find(u => u.id === app.userId);
+      return {
+        ...app,
+        name: user?.name || app.userName,
+        gender: user?.gender || app.userGender,
+        ntrp: user?.ntrp || app.userNtrp,
+        profileImage: user?.profileImage || app.userProfileImage
       };
+    });
+  };
 
-      console.log('업데이트된 매치:', updatedMatch);
-      console.log('=== 거절: updateMatch 호출 직전 ===');
-      
-      // MatchContext의 updateMatch 사용
-      await updateMatch(updatedMatch);
-      console.log('=== 거절: updateMatch 호출 완료 ===');
-      setSelectedMatch(updatedMatch);
+  const handleApproveApplication = (match: any, application: any) => {
+    Alert.alert(
+      '참여신청 승인',
+      `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`,
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '승인', onPress: async () => {
+          try {
+            const targetMatch = matches.find(m => m.id === match.id);
+            
+            if (!targetMatch) {
+              Alert.alert('오류', '매치를 찾을 수 없습니다.');
+              return;
+            }
+            
+            const updatedApplications = (targetMatch.applications || []).map(app => 
+              app.id === application.id 
+                ? { ...app, status: 'approved', approvedAt: new Date().toISOString() }
+                : app
+            );
 
-      Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
-      console.log('=== 거절 프로세스 완전 완료 ===');
-    } catch (error) {
-      console.error('거절 처리 중 오류:', error);
-      console.error('=== 거절 처리 중 예외 발생 ===', error);
-      Alert.alert('오류', '거절 처리 중 오류가 발생했습니다.');
-    }
-      }}
-    ]
-  );
-};
+            const newParticipant = {
+              id: `participant_${application.id}`,
+              userId: application.userId,
+              userName: application.name,
+              gender: application.gender,
+              ntrp: application.ntrp,
+              joinedAt: new Date().toISOString(),
+              status: 'payment_pending',
+              paymentAmount: application.appliedPrice,
+              appliedPrice: application.appliedPrice,
+            };
+
+            const updatedMatch = {
+              ...targetMatch,
+              applications: updatedApplications,
+              participants: [...(targetMatch.participants || []), newParticipant],
+              currentApplicants: {
+                ...targetMatch.currentApplicants,
+                [application.gender === '남성' ? 'male' : 'female']: 
+                  targetMatch.currentApplicants[application.gender === '남성' ? 'male' : 'female'] + 1,
+                total: targetMatch.currentApplicants.total + 1
+              }
+            };
+
+            await updateMatch(updatedMatch);
+            setSelectedMatch(updatedMatch);
+            Alert.alert('승인 완료', `${application.name}님의 참여신청이 승인되었습니다.`);
+          } catch (error) {
+            console.error('승인 처리 중 오류:', error);
+            Alert.alert('오류', '승인 처리 중 오류가 발생했습니다.');
+          }
+        }}
+      ]
+    );
+  };
+
+  const handleRejectApplication = (match: any, application: any) => {
+    Alert.alert(
+      '참여신청 거절',
+      `${application.name}님의 참여신청을 거절하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '거절', style: 'destructive', onPress: async () => {
+          try {
+            const targetMatch = matches.find(m => m.id === match.id);
+            
+            if (!targetMatch) {
+              Alert.alert('오류', '매치를 찾을 수 없습니다.');
+              return;
+            }
+            
+            const updatedApplications = (targetMatch.applications || []).map(app => 
+              app.id === application.id 
+                ? { ...app, status: 'rejected', rejectedAt: new Date().toISOString() }
+                : app
+            );
+
+            const updatedMatch = {
+              ...targetMatch,
+              applications: updatedApplications
+            };
+
+            await updateMatch(updatedMatch);
+            setSelectedMatch(updatedMatch);
+            Alert.alert('거절 완료', `${application.name}님의 참여신청이 거절되었습니다.`);
+          } catch (error) {
+            console.error('거절 처리 중 오류:', error);
+            Alert.alert('오류', '거절 처리 중 오류가 발생했습니다.');
+          }
+        }}
+      ]
+    );
+  };
 
   const handleDeleteMatch = (match: any) => {
     const hoursUntilMatch = (new Date(`${match.date}T${match.time}`).getTime() - new Date().getTime()) / (1000 * 60 * 60);
@@ -343,17 +217,10 @@ const handleRejectApplication = (match: any, application: any) => {
   };
 
   const handleConfirmMatch = (match: any) => {
-    console.log('=== handleConfirmMatch 함수 시작 ===');
-    console.log('match:', match);
-    
     const now = new Date();
     const matchTime = new Date(`${match.date}T${match.time}`);
-    console.log('현재 시간:', now);
-    console.log('매치 시간:', matchTime);
-    console.log('매치 시간이 지났는지:', now > matchTime);
     
     if (now < matchTime) {
-      console.log('매치 시간이 아직 안됨 - 알림 표시');
       setConfirmModalData({
         title: '확정 불가',
         message: '매치 시작 시간이 지난 후에 확정할 수 있습니다.',
@@ -364,41 +231,21 @@ const handleRejectApplication = (match: any, application: any) => {
       return;
     }
 
-    console.log('매치 완료 확인 알림 표시');
     setConfirmModalData({
       title: '경기 완료',
       message: `"${match.title}" 매치가 성공적으로 진행되었습니까?`,
       confirmText: '경기 완료',
       onConfirm: () => {
-        console.log('=== 경기 완료 버튼 클릭됨 ===');
-        console.log('수익 계산 시작...');
-        
-        // 수익 계산 및 추가
         const matchBaseCost = match.basePrice * match.currentApplicants.total;
         const matchTotalPaid = match.currentPrice * match.currentApplicants.total;
         const matchAdditionalRevenue = Math.max(0, (matchTotalPaid - matchBaseCost) * 0.85);
         
-        console.log('수익 계산 결과:', {
-          matchBaseCost,
-          matchTotalPaid,
-          matchAdditionalRevenue
-        });
-        
-        // 광고 수익 (랜덤 생성)
         const adViews = Math.floor(Math.random() * 1500) + 500;
         const adClicks = Math.floor(adViews * 0.05) + Math.floor(Math.random() * 50);
         const adRevenue = adClicks * (Math.floor(Math.random() * 200) + 100);
         const adShare = match.adEnabled ? adRevenue * 0.5 : 0;
         
-        console.log('광고 수익 계산:', {
-          adViews,
-          adClicks,
-          adRevenue,
-          adShare
-        });
-        
         const totalRevenue = matchBaseCost + matchAdditionalRevenue + adShare;
-        console.log('총 수익:', totalRevenue);
         
         const newEarning: EarningsData = {
           id: match.id,
@@ -415,19 +262,10 @@ const handleRejectApplication = (match: any, application: any) => {
           totalRevenue: totalRevenue,
         };
         
-        console.log('새 수익 데이터:', newEarning);
-        console.log('addMockEarning 호출 전');
         addMockEarning(newEarning);
-        console.log('addMockEarning 호출 후');
-        
-        // 매치를 완료된 매치 목록에 추가
-        console.log('completedMatches 업데이트 전:', completedMatches);
         setCompletedMatches(prev => new Set([...prev, match.id]));
-        console.log('completedMatches 업데이트 후');
-        
         setShowConfirmModal(false);
         
-        // 완료 알림을 별도 모달로 표시
         setTimeout(() => {
           setConfirmModalData({
             title: '경기 완료 처리됨',
@@ -437,22 +275,12 @@ const handleRejectApplication = (match: any, application: any) => {
           });
           setShowConfirmModal(true);
         }, 100);
-        
-        console.log('=== handleConfirmMatch 완료 ===');
       },
     });
     setShowConfirmModal(true);
   };
 
   const handleViewParticipants = (match: any) => {
-    console.log('🔍 handleViewParticipants 호출됨');
-    console.log('🔍 선택된 매치:', match.id, match.title);
-    console.log('🔍 매치의 applications:', match.applications);
-    console.log('🔍 매치의 participants:', match.participants);
-    console.log('=== handleViewParticipants 호출됨 ===');
-    console.log('선택된 매치:', match.id, match.title);
-    console.log('매치의 applications:', match.applications);
-    console.log('매치의 participants:', match.participants);
     setSelectedMatch(match);
     setShowParticipantsModal(true);
   };
@@ -466,11 +294,9 @@ const handleRejectApplication = (match: any, application: any) => {
       message: `"${match.title}" 매치를 ${statusText}하시겠습니까?${newClosedStatus ? '\n\n마감 시 더 이상 대기자를 받지 않습니다.' : ''}`,
       confirmText: statusText,
       onConfirm: () => {
-        // 매치 상태 업데이트
         match.isClosed = newClosedStatus;
         
         if (newClosedStatus) {
-          // 마감 시 현재 참가자 수를 예상 참가자 수와 동일하게 설정하고 대기자 수를 0으로 설정
           match.currentApplicants = { ...match.expectedParticipants };
           match.waitingApplicants = 0;
           match.waitingList = [];
@@ -478,7 +304,6 @@ const handleRejectApplication = (match: any, application: any) => {
         
         setShowConfirmModal(false);
         
-        // 완료 알림
         setTimeout(() => {
           setConfirmModalData({
             title: '완료',
@@ -494,7 +319,6 @@ const handleRejectApplication = (match: any, application: any) => {
   };
 
   const getMatchStatus = (match: any) => {
-    // 경기 완료 처리된 매치인지 확인
     if (completedMatches.has(match.id)) {
       return { status: 'settled', text: '경기완료', color: '#16a34a' };
     }
@@ -603,11 +427,7 @@ const handleRejectApplication = (match: any, application: any) => {
                   {canConfirm && (
                     <TouchableOpacity 
                       style={styles.confirmButton}
-                      onPress={() => {
-                        console.log('🟢 경기 완료 버튼 클릭됨 - onPress 핸들러 실행됨');
-                        console.log('🟢 match:', match);
-                        handleConfirmMatch(match);
-                      }}
+                      onPress={() => handleConfirmMatch(match)}
                     >
                       <CheckCircle size={16} color="#16a34a" />
                       <Text style={styles.confirmButtonText}>경기 완료</Text>
@@ -623,7 +443,6 @@ const handleRejectApplication = (match: any, application: any) => {
                   </TouchableOpacity>
                 </View>
                 
-                {/* 마감 토글 - 별도 섹션 */}
                 <View style={styles.closedToggleSection}>
                   <View style={styles.closedToggleContainer}>
                     <Lock size={16} color="#6b7280" />
@@ -649,7 +468,6 @@ const handleRejectApplication = (match: any, application: any) => {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* 참가자 목록 모달 */}
       <Modal
         visible={showParticipantsModal}
         animationType="slide"
@@ -664,11 +482,7 @@ const handleRejectApplication = (match: any, application: any) => {
             <View style={styles.placeholder} />
           </View>
 
-   <ScrollView 
-  style={styles.modalContent}
-  nestedScrollEnabled={true}
-  scrollEnabled={true}
->
+          <ScrollView style={styles.modalContent}>
             {selectedMatch && (
               <>
                 <View style={styles.matchInfoCard}>
@@ -697,8 +511,6 @@ const handleRejectApplication = (match: any, application: any) => {
                         </View>
                       </View>
                       <View style={styles.participantStatus}>
-                        <Text style={styles.joinedDate}>
-                        </Text>
                         <Text style={[styles.statusText, { color: participant.status === 'confirmed' ? '#16a34a' : '#f59e0b' }]}>
                           {participant.status === 'confirmed' ? '참가확정' : '입금확인중'}
                         </Text>
@@ -713,45 +525,38 @@ const handleRejectApplication = (match: any, application: any) => {
                       참여신청자 ({getMatchApplications(selectedMatch).length}명)
                     </Text>
                     
-{getMatchApplications(selectedMatch).map((application) => (
-<View key={application.id} style={styles.applicationCard} pointerEvents="box-none">
-    <View style={styles.applicationInfo}>
-      <User size={20} color="#f59e0b" />
-      <View style={styles.applicationDetails}>
-        <Text style={styles.applicationName}>{application.name}</Text>
-        <Text style={styles.applicationMeta}>
-          {application.gender} · NTRP {application.ntrp}
-        </Text>
-        <Text style={styles.applicationPrice}>
-          신청가격: {application.appliedPrice.toLocaleString()}원
-        </Text>
-      </View>
-    </View>
-<View style={[styles.applicationActions, { zIndex: 9999, elevation: 9999, pointerEvents: 'auto' }]}>
-  <TouchableOpacity 
-    style={styles.approveButton}
-    activeOpacity={0.7}
-    onPress={() => {
-      console.log('🟢🟢🟢 버튼 클릭됨!!!');
-      alert('버튼이 작동합니다!');
-    }}
-  >
-    <Text style={styles.approveButtonText}>승인</Text>
-  </TouchableOpacity>
-  
-  <TouchableOpacity 
-    style={styles.rejectButton}
-    activeOpacity={0.7}
-    onPress={() => {
-      console.log('🔴🔴🔴 거절 버튼 클릭됨!!!');
-      alert('거절 버튼 작동!');
-    }}
-  >
-    <Text style={styles.rejectButtonText}>거절</Text>
-  </TouchableOpacity>
-</View>
-  </View>
-))}
+                    {getMatchApplications(selectedMatch).map((application) => (
+                      <View key={application.id} style={styles.applicationCardNew}>
+                        <View style={styles.applicationInfoSection}>
+                          <User size={20} color="#f59e0b" />
+                          <View style={styles.applicationDetailsSection}>
+                            <Text style={styles.applicationName}>{application.name}</Text>
+                            <Text style={styles.applicationMeta}>
+                              {application.gender} · NTRP {application.ntrp}
+                            </Text>
+                            <Text style={styles.applicationPrice}>
+                              신청가격: {application.appliedPrice.toLocaleString()}원
+                            </Text>
+                          </View>
+                        </View>
+                        
+                        <View style={styles.buttonSection}>
+                          <TouchableOpacity 
+                            style={styles.rejectButtonNew}
+                            onPress={() => handleRejectApplication(selectedMatch, application)}
+                          >
+                            <Text style={styles.rejectButtonText}>거절</Text>
+                          </TouchableOpacity>
+                          
+                          <TouchableOpacity 
+                            style={styles.approveButtonNew}
+                            onPress={() => handleApproveApplication(selectedMatch, application)}
+                          >
+                            <Text style={styles.approveButtonText}>승인</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
                   </View>
                 )}
 
@@ -784,7 +589,6 @@ const handleRejectApplication = (match: any, application: any) => {
         </SafeAreaView>
       </Modal>
 
-      {/* 확인 모달 */}
       {confirmModalData && (
         <ConfirmationModal
           visible={showConfirmModal}
@@ -801,31 +605,6 @@ const handleRejectApplication = (match: any, application: any) => {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  placeholder: {
-    width: 32,
-  },
   content: {
     flex: 1,
     paddingTop: 16,
@@ -977,18 +756,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingTop: 12,
     marginTop: 12,
-    borderWidth: 1,
+    borderTopWidth: 1,
     borderTopColor: '#f3f4f6',
-    borderBottomWidth: 0,
-    borderLeftWidth: 0,
-    borderRightWidth: 0,
   },
   closedToggleContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  closedToggleLabel: {
+    alignItemsclosedToggleLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: '#374151',
@@ -1019,6 +792,9 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
   },
+  placeholder: {
+    width: 32,
+  },
   modalContent: {
     flex: 1,
     paddingTop: 16,
@@ -1043,10 +819,6 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   participantsSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  waitingSection: {
     marginHorizontal: 16,
     marginBottom: 16,
   },
@@ -1077,11 +849,6 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: 2,
   },
-  participantName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
   participantMeta: {
     fontSize: 12,
     color: '#6b7280',
@@ -1096,9 +863,79 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     gap: 2,
   },
-  joinedDate: {
+  applicationsSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  applicationCardNew: {
+    backgroundColor: '#fffbeb',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+  },
+  applicationInfoSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    marginBottom: 16,
+  },
+  applicationDetailsSection: {
+    flex: 1,
+    gap: 4,
+  },
+  applicationName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#92400e',
+  },
+  applicationMeta: {
     fontSize: 12,
-    color: '#9ca3af',
+    color: '#92400e',
+  },
+  applicationPrice: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#dc2626',
+    marginTop: 2,
+  },
+  buttonSection: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#fde68a',
+  },
+  approveButtonNew: {
+    flex: 1,
+    backgroundColor: '#16a34a',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  approveButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  rejectButtonNew: {
+    flex: 1,
+    backgroundColor: '#dc2626',
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rejectButtonText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  waitingSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
   },
   waiterCard: {
     flexDirection: 'row',
@@ -1138,71 +975,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#f59e0b',
-  },
-  applicationsSection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
-  },
-  applicationCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#fffbeb',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#fbbf24',
-  },
-  applicationInfo: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  applicationDetails: {
-    flex: 1,
-    gap: 2,
-  },
-  applicationName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#92400e',
-  },
-  applicationMeta: {
-    fontSize: 12,
-    color: '#92400e',
-  },
-  applicationPrice: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#dc2626',
-    marginTop: 2,
-  },
-  applicationActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  approveButton: {
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  approveButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  rejectButton: {
-    backgroundColor: '#dc2626',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  rejectButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
   },
 });

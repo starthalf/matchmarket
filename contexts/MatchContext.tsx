@@ -11,7 +11,7 @@ interface MatchContextType {
   matches: Match[];
   isLoadingMatches: boolean;
   refreshMatches: () => Promise<void>;
-  updateMatch: (updatedMatch: Match) => void;
+  updateMatch: (updatedMatch: Match) => Promise<void>;  // 👈 void를 Promise<void>로 변경
   addMatch: (newMatch: Match) => Promise<boolean>;
 }
 

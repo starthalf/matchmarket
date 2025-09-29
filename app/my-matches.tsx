@@ -364,17 +364,17 @@ export default function MyMatchesScreen() {
     </View>
   ) : (
     <>
-      {/* 테스트 버튼 - 여기로 이동 */}
+      {/* 테스트 버튼 */}
       <View style={{ padding: 20, backgroundColor: '#ff0000', margin: 16 }}>
         <TouchableOpacity 
           onPress={() => {
-            console.log('🔥🔥🔥 테스트 버튼 클릭됨!');
-            Alert.alert('성공!', '버튼이 작동합니다!');
+            console.log('🔥 테스트 버튼 클릭됨!');
+            Alert.alert('성공', '버튼 작동함!');
           }}
           style={{ backgroundColor: '#ffffff', padding: 20, borderRadius: 8 }}
         >
           <Text style={{ color: '#000', fontSize: 20, textAlign: 'center', fontWeight: 'bold' }}>
-            테스트 버튼 클릭해보세요
+            테스트 버튼
           </Text>
         </TouchableOpacity>
       </View>

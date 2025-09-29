@@ -169,7 +169,7 @@ const handleApproveApplication = (match: any, application: any) => {
     `${application.name}님의 참여신청을 승인하시겠습니까?\n\n신청가격: ${application.appliedPrice?.toLocaleString()}원`,
     [
       { text: '취소', style: 'cancel' },
-      { text: '승인', onPress: () => {
+      { text: '승인', onPress: async () => {  // 👈 async 추가
     try {
       console.log('🟢 승인 처리 시작');
       console.log('=== 승인 Alert 확인 버튼 클릭됨 ===');
@@ -259,7 +259,7 @@ const handleRejectApplication = (match: any, application: any) => {
     `${application.name}님의 참여신청을 거절하시겠습니까?`,
     [
       { text: '취소', style: 'cancel' },
-      { text: '거절', style: 'destructive', onPress: () => {
+      { text: '거절', style: 'destructive', onPress: async () => {  // 👈 async 추가
     try {
       console.log('🔴 거절 처리 시작');
       console.log('=== 거절 Alert 확인 버튼 클릭됨 ===');

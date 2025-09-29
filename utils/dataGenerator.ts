@@ -403,6 +403,8 @@ export class DataGenerator {
         is_dummy: isDummyMatch, // 실제 사용자: false, 더미: true
         created_at: match.createdAt,
         is_closed: match.isClosed || false,
+        applications: match.applications || [],
+        participants: match.participants || [],
       };
 
       const { error } = await supabaseAdmin

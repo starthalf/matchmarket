@@ -326,7 +326,8 @@ export class DataGenerator {
       matchType: supabaseMatch.match_type as '단식' | '남복' | '여복' | '혼복',
       waitingApplicants: supabaseMatch.waiting_applicants,
       waitingList: [],
-      participants: [],
+      participants: supabaseMatch.participants || [],
+      applications: supabaseMatch.applications || [],
       adEnabled: supabaseMatch.ad_enabled,
       ntrpRequirement: {
         min: supabaseMatch.ntrp_min,

@@ -356,6 +356,22 @@ export default function MyMatchesScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* 테스트 버튼 - 모달 밖에서 테스트 */}
+  <View style={{ padding: 20, backgroundColor: '#ffdddd', margin: 16 }}>
+    <Text style={{ fontSize: 16, marginBottom: 10, fontWeight: 'bold' }}>테스트 영역</Text>
+    <TouchableOpacity 
+      onPress={() => {
+        console.log('테스트 버튼 클릭됨!');
+        Alert.alert('성공', '버튼이 작동합니다!');
+      }}
+      style={{ backgroundColor: '#dc2626', padding: 15, borderRadius: 8 }}
+    >
+      <Text style={{ color: '#fff', fontSize: 16, textAlign: 'center' }}>
+        테스트 버튼 (모달 밖)
+      </Text>
+    </TouchableOpacity>
+  </View>
+
         {myMatches.length === 0 ? (
           <View style={styles.emptyState}>
             <Calendar size={48} color="#d1d5db" />

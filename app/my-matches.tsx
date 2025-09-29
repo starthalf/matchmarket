@@ -356,6 +356,21 @@ export default function MyMatchesScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+  {/* 테스트 버튼 - 항상 표시 */}
+  <View style={{ padding: 20, backgroundColor: '#ff0000', margin: 16 }}>
+    <TouchableOpacity 
+      onPress={() => {
+        console.log('🔥 테스트 버튼 클릭됨!');
+        Alert.alert('성공', '버튼 작동함!');
+      }}
+      style={{ backgroundColor: '#ffffff', padding: 20, borderRadius: 8 }}
+    >
+      <Text style={{ color: '#000', fontSize: 20, textAlign: 'center', fontWeight: 'bold' }}>
+        테스트 버튼 클릭
+      </Text>
+    </TouchableOpacity>
+  </View>
+
   {myMatches.length === 0 ? (
     <View style={styles.emptyState}>
       <Calendar size={48} color="#d1d5db" />
@@ -364,21 +379,6 @@ export default function MyMatchesScreen() {
     </View>
   ) : (
     <>
-      {/* 테스트 버튼 */}
-      <View style={{ padding: 20, backgroundColor: '#ff0000', margin: 16 }}>
-        <TouchableOpacity 
-          onPress={() => {
-            console.log('🔥 테스트 버튼 클릭됨!');
-            Alert.alert('성공', '버튼 작동함!');
-          }}
-          style={{ backgroundColor: '#ffffff', padding: 20, borderRadius: 8 }}
-        >
-          <Text style={{ color: '#000', fontSize: 20, textAlign: 'center', fontWeight: 'bold' }}>
-            테스트 버튼
-          </Text>
-        </TouchableOpacity>
-      </View>
-
       {myMatches.map((match) => {
             const status = getMatchStatus(match);
             const now = new Date();

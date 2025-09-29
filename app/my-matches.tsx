@@ -478,13 +478,12 @@ export default function MyMatchesScreen() {
                 </View>
               </View>
             );
-})
-        )}
-      </>
-    )}
+          })}
+        </>
+      )}
 
-    <View style={styles.bottomPadding} />
-</ScrollView>
+      <View style={styles.bottomPadding} />
+    </ScrollView>
 
       <Modal
         visible={showParticipantsModal}

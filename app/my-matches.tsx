@@ -664,7 +664,11 @@ const handleRejectApplication = (match: any, application: any) => {
             <View style={styles.placeholder} />
           </View>
 
-          <ScrollView style={styles.modalContent}>
+   <ScrollView 
+  style={styles.modalContent}
+  nestedScrollEnabled={true}
+  scrollEnabled={true}
+>
             {selectedMatch && (
               <>
                 <View style={styles.matchInfoCard}>

@@ -122,21 +122,23 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     const { error } = await supabaseAdmin
       .from('matches')
       .update({
-        applications: updatedMatch.applications,
-        participants: updatedMatch.participants,
-        current_applicants_male: updatedMatch.currentApplicants.male,
-        current_applicants_female: updatedMatch.currentApplicants.female,
-        current_applicants_total: updatedMatch.currentApplicants.total,
+        applications: updatedMatch.applications || [],
+        participants: updatedMatch.participants || [],
+        current_applicants_male: updatedMatch.currentApplicants?.male || 0,
+        current_applicants_female: updatedMatch.currentApplicants?.female || 0,
+        current_applicants_total: updatedMatch.currentApplicants?.total || 0,
       })
       .eq('id', updatedMatch.id);
     
     if (error) {
       console.error('Supabase 업데이트 오류:', error);
+      // 에러가 나도 로컬에는 이미 반영되어 있음
     } else {
       console.log('✅ 매치 업데이트가 Supabase에 저장됨');
     }
   } catch (error) {
     console.error('Supabase 저장 중 예외:', error);
+    // 로컬에는 이미 반영되어 있으므로 계속 진행
   }
   
   console.log('=== MatchContext: updateMatch 완료 ===');

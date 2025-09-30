@@ -379,9 +379,8 @@ export default function MatchDetailScreen() {
         </View>
         
         {myApplication && myApplication.status === 'pending' ? (
-          // pending 상태일 때 - 신청 취소 버튼 표시
           <TouchableOpacity 
-            style={[styles.applyButton, styles.cancelButton]}
+            style={[styles.applyButton, styles.cancelApplicationButton]}
             onPress={handleCancelApplication}
           >
             <Text style={styles.applyButtonText}>신청 취소</Text>
@@ -873,6 +872,9 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     gap: 12,
+  },
+  cancelApplicationButton: {
+    backgroundColor: '#dc2626',
   },
   cancelButton: {
     flex: 1,

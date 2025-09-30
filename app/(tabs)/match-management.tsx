@@ -184,6 +184,7 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
 <View key={match.id} style={styles.matchCard}>
   <TouchableOpacity
     onPress={() => router.push(`/match/${match.id}`)}
+    activeOpacity={0.7}
   >
     <View style={styles.matchHeader}>
       <Text style={styles.matchTitle}>{match.title}</Text>
@@ -216,64 +217,61 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
     </View>
   </TouchableOpacity>
 
-  {/* 참여신청 목록 - TouchableOpacity 밖으로 분리 */}
-
-                    {/* 참여신청 목록 */}
-                    {match.applications && match.applications.length > 0 && (
-                      <View style={styles.applicationsSection}>
-                        <Text style={styles.applicationsSectionTitle}>
-                          참여신청 ({match.applications.length})
-                        </Text>
-                        {match.applications.map((application) => (
-                          <View key={application.id} style={styles.applicationItem}>
-                            <View style={styles.applicationUser}>
-                              <View style={styles.applicationUserInfo}>
-                                <Text style={styles.applicationUserName}>
-                                  {application.userName}
-                                </Text>
-                                <Text style={styles.applicationUserDetails}>
-                                  NTRP {application.userNtrp} · {application.userGender}
-                                </Text>
-                              </View>
-                              <View style={[
-                                styles.applicationStatus,
-                                { backgroundColor: getStatusColor(application.status) + '20' }
-                              ]}>
-                                <Text style={[
-                                  styles.applicationStatusText,
-                                  { color: getStatusColor(application.status) }
-                                ]}>
-                                  {getStatusText(application.status)}
-                                </Text>
-                              </View>
-                            </View>
-
-                            {application.status === 'pending' && (
-                              <View style={styles.applicationActions}>
-                                <TouchableOpacity
-                                  style={styles.rejectButton}
-                                  onPress={() => handleRejectApplication(match.id, application.id)}
-                                >
-                                  <X size={16} color="#ef4444" />
-                                  <Text style={styles.rejectButtonText}>거절</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                  style={styles.approveButton}
-                                  onPress={() => handleApproveApplication(match.id, application.id)}
-                                >
-                                  <Check size={16} color="#ffffff" />
-                                  <Text style={styles.approveButtonText}>승인</Text>
-                                </TouchableOpacity>
-                              </View>
-                            )}
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-                ))
-              )}
+  {/* 참여신청 목록 */}
+  {match.applications && match.applications.length > 0 && (
+    <View style={styles.applicationsSection}>
+      <Text style={styles.applicationsSectionTitle}>
+        참여신청 ({match.applications.length})
+      </Text>
+      {match.applications.map((application) => (
+        <View key={application.id} style={styles.applicationItem}>
+          <View style={styles.applicationUser}>
+            <View style={styles.applicationUserInfo}>
+              <Text style={styles.applicationUserName}>
+                {application.userName}
+              </Text>
+              <Text style={styles.applicationUserDetails}>
+                NTRP {application.userNtrp} · {application.userGender}
+              </Text>
             </View>
+            <View style={[
+              styles.applicationStatus,
+              { backgroundColor: getStatusColor(application.status) + '20' }
+            ]}>
+              <Text style={[
+                styles.applicationStatusText,
+                { color: getStatusColor(application.status) }
+              ]}>
+                {getStatusText(application.status)}
+              </Text>
+            </View>
+          </View>
+
+          {application.status === 'pending' && (
+            <View style={styles.applicationActions}>
+              <TouchableOpacity
+                style={styles.rejectButton}
+                onPress={() => handleRejectApplication(match.id, application.id)}
+                activeOpacity={0.7}
+              >
+                <X size={16} color="#ef4444" />
+                <Text style={styles.rejectButtonText}>거절</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.approveButton}
+                onPress={() => handleApproveApplication(match.id, application.id)}
+                activeOpacity={0.7}
+              >
+                <Check size={16} color="#ffffff" />
+                <Text style={styles.approveButtonText}>승인</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      ))}
+    </View>
+  )}
+</View>
           ) : (
             // 내가 신청한 매치들
             <View>

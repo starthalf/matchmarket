@@ -179,100 +179,100 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
                     <Text style={styles.emptyStateButtonText}>매치 등록하기</Text>
                   </TouchableOpacity>
                 </View>
-              ) : (
-                myMatches.map((match) => (
-<View key={match.id} style={styles.matchCard}>
-  <TouchableOpacity
-    onPress={() => router.push(`/match/${match.id}`)}
-    activeOpacity={0.7}
-  >
-    <View style={styles.matchHeader}>
-      <Text style={styles.matchTitle}>{match.title}</Text>
-      <View style={[
-        styles.statusBadge,
-        { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
-      ]}>
-        <Text style={[
-          styles.statusBadgeText,
-          { color: match.isClosed ? '#dc2626' : '#16a34a' }
-        ]}>
-          {match.isClosed ? '마감' : '모집중'}
-        </Text>
-      </View>
-    </View>
-
-    <View style={styles.matchInfo}>
-      <View style={styles.matchInfoRow}>
-        <Calendar size={16} color="#6b7280" />
-        <Text style={styles.matchInfoText}>
-          {match.date} {match.time}
-        </Text>
-      </View>
-      <View style={styles.matchInfoRow}>
-        <Users size={16} color="#6b7280" />
-        <Text style={styles.matchInfoText}>
-          {match.applications?.length || 0}명 신청 / {match.expectedParticipants.total}명 모집
-        </Text>
-      </View>
-    </View>
-  </TouchableOpacity>
-
-  {/* 참여신청 목록 */}
-  {match.applications && match.applications.length > 0 && (
-    <View style={styles.applicationsSection}>
-      <Text style={styles.applicationsSectionTitle}>
-        참여신청 ({match.applications.length})
-      </Text>
-      {match.applications.map((application) => (
-        <View key={application.id} style={styles.applicationItem}>
-          <View style={styles.applicationUser}>
-            <View style={styles.applicationUserInfo}>
-              <Text style={styles.applicationUserName}>
-                {application.userName}
-              </Text>
-              <Text style={styles.applicationUserDetails}>
-                NTRP {application.userNtrp} · {application.userGender}
-              </Text>
-            </View>
-            <View style={[
-              styles.applicationStatus,
-              { backgroundColor: getStatusColor(application.status) + '20' }
+) : (
+  myMatches.map((match) => (
+    <View key={match.id} style={styles.matchCard}>
+      <TouchableOpacity
+        onPress={() => router.push(`/match/${match.id}`)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.matchHeader}>
+          <Text style={styles.matchTitle}>{match.title}</Text>
+          <View style={[
+            styles.statusBadge,
+            { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
+          ]}>
+            <Text style={[
+              styles.statusBadgeText,
+              { color: match.isClosed ? '#dc2626' : '#16a34a' }
             ]}>
-              <Text style={[
-                styles.applicationStatusText,
-                { color: getStatusColor(application.status) }
-              ]}>
-                {getStatusText(application.status)}
-              </Text>
-            </View>
+              {match.isClosed ? '마감' : '모집중'}
+            </Text>
           </View>
-
-          {application.status === 'pending' && (
-            <View style={styles.applicationActions}>
-              <TouchableOpacity
-                style={styles.rejectButton}
-                onPress={() => handleRejectApplication(match.id, application.id)}
-                activeOpacity={0.7}
-              >
-                <X size={16} color="#ef4444" />
-                <Text style={styles.rejectButtonText}>거절</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.approveButton}
-                onPress={() => handleApproveApplication(match.id, application.id)}
-                activeOpacity={0.7}
-              >
-                <Check size={16} color="#ffffff" />
-                <Text style={styles.approveButtonText}>승인</Text>
-              </TouchableOpacity>
-            </View>
-          )}
         </View>
-      ))}
+        <View style={styles.matchInfo}>
+          <View style={styles.matchInfoRow}>
+            <Calendar size={16} color="#6b7280" />
+            <Text style={styles.matchInfoText}>
+              {match.date} {match.time}
+            </Text>
+          </View>
+          <View style={styles.matchInfoRow}>
+            <Users size={16} color="#6b7280" />
+            <Text style={styles.matchInfoText}>
+              {match.applications?.length || 0}명 신청 / {match.expectedParticipants.total}명 모집
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+      {/* 참여신청 목록 */}
+      {match.applications && match.applications.length > 0 && (
+        <View style={styles.applicationsSection}>
+          <Text style={styles.applicationsSectionTitle}>
+            참여신청 ({match.applications.length})
+          </Text>
+          {match.applications.map((application) => (
+            <View key={application.id} style={styles.applicationItem}>
+              <View style={styles.applicationUser}>
+                <View style={styles.applicationUserInfo}>
+                  <Text style={styles.applicationUserName}>
+                    {application.userName}
+                  </Text>
+                  <Text style={styles.applicationUserDetails}>
+                    NTRP {application.userNtrp} · {application.userGender}
+                  </Text>
+                </View>
+                <View style={[
+                  styles.applicationStatus,
+                  { backgroundColor: getStatusColor(application.status) + '20' }
+                ]}>
+                  <Text style={[
+                    styles.applicationStatusText,
+                    { color: getStatusColor(application.status) }
+                  ]}>
+                    {getStatusText(application.status)}
+                  </Text>
+                </View>
+              </View>
+              {application.status === 'pending' && (
+                <View style={styles.applicationActions}>
+                  <TouchableOpacity
+                    style={styles.rejectButton}
+                    onPress={() => handleRejectApplication(match.id, application.id)}
+                    activeOpacity={0.7}
+                  >
+                    <X size={16} color="#ef4444" />
+                    <Text style={styles.rejectButtonText}>거절</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.approveButton}
+                    onPress={() => handleApproveApplication(match.id, application.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Check size={16} color="#ffffff" />
+                    <Text style={styles.approveButtonText}>승인</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+      )}
     </View>
-  )}
+  ))
+)}
 </View>
-          ) : (
+) : (
             // 내가 신청한 매치들
             <View>
               {myApplications.length === 0 ? (

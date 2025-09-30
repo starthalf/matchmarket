@@ -181,7 +181,7 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
                 </View>
               ) : (
                 myMatches.map((match) => (
-                  <View key={match.id} style={styles.matchCard}>
+<View key={match.id} style={styles.matchCard}>
   <TouchableOpacity
     onPress={() => router.push(`/match/${match.id}`)}
   >

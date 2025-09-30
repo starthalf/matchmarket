@@ -257,7 +257,6 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
                   <TouchableOpacity
                     style={styles.approveButton}
                     onPress={() => handleApproveApplication(match.id, application.id)}
-                    activeOpacity={0.7}
                   >
                     <Check size={16} color="#ffffff" />
                     <Text style={styles.approveButtonText}>승인</Text>

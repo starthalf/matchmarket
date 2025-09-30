@@ -270,25 +270,9 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
               </View>
 {application.status === 'pending' && (
   <View style={styles.applicationActions}>
-    {/* 테스트 버튼 추가 */}
-    <TouchableOpacity
-      style={[styles.approveButton, { backgroundColor: '#3b82f6' }]}
-      onPress={() => {
-        console.log('테스트 버튼 클릭!');
-        Alert.alert('테스트', '버튼이 작동합니다!');
-      }}
-      activeOpacity={0.7}
-    >
-      <Text style={styles.approveButtonText}>테스트</Text>
-    </TouchableOpacity>
-
     <TouchableOpacity
       style={styles.rejectButton}
-      onPress={() => {
-        console.log('거절 버튼 클릭!', match.id, application.id);
-        Alert.alert('거절 버튼', `매치: ${match.id}, 신청: ${application.id}`);
-        handleRejectApplication(match.id, application.id);
-      }}
+      onPress={() => handleRejectApplication(match.id, application.id)}
       activeOpacity={0.7}
     >
       <X size={16} color="#ef4444" />
@@ -297,11 +281,7 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
     
     <TouchableOpacity
       style={styles.approveButton}
-      onPress={() => {
-        console.log('승인 버튼 클릭!', match.id, application.id);
-        Alert.alert('승인 버튼', `매치: ${match.id}, 신청: ${application.id}`);
-        handleApproveApplication(match.id, application.id);
-      }}
+      onPress={() => handleApproveApplication(match.id, application.id)}
       activeOpacity={0.7}
     >
       <Check size={16} color="#ffffff" />

@@ -181,24 +181,22 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
                 </View>
               ) : (
                 myMatches.map((match) => (
-                  <View key={match.id} style={styles.matchCard}>
-                    <TouchableOpacity
-                      onPress={() => router.push(`/match/${match.id}`)}
-                    >
-                      <View style={styles.matchHeader}>
-                        <Text style={styles.matchTitle}>{match.title}</Text>
-                        <View style={[
-                          styles.statusBadge,
-                          { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
-                        ]}>
-                          <Text style={[
-                            styles.statusBadgeText,
-                            { color: match.isClosed ? '#dc2626' : '#16a34a' }
-                          ]}>
-                            {match.isClosed ? '마감' : '모집중'}
-                          </Text>
-                        </View>
-                      </View>
+                  <TouchableOpacity onPress={() => router.push(`/match/${match.id}`)}>
+  <View style={styles.matchHeader}>
+    <Text style={styles.matchTitle}>{match.title}</Text>
+    <View style={[
+      styles.statusBadge,
+      { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
+    ]}>
+      <Text style={[
+        styles.statusBadgeText,
+        { color: match.isClosed ? '#dc2626' : '#16a34a' }
+      ]}>
+        {match.isClosed ? '마감' : '모집중'}
+      </Text>
+    </View>
+  </View>
+</TouchableOpacity>
 
                       <View style={styles.matchInfo}>
                         <View style={styles.matchInfoRow}>

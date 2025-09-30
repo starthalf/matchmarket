@@ -58,27 +58,31 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
 
   const handleRejectApplication = (matchId: string, applicationId: string) => {
     const match = matches.find(m => m.id === matchId);
-    if (!match) return;
+    if (!match || !match.applications) return;
+
+    const application = match.applications.find(app => app.id === applicationId);
+    if (!application) return;
 
     Alert.alert(
       '참여신청 거절',
-      '이 참여신청을 거절하시겠습니까?',
+      `${application.userName}님의 참여신청을 거절하시겠습니까?`,
       [
         { text: '취소', style: 'cancel' },
         {
           text: '거절',
           style: 'destructive',
           onPress: () => {
-            const updatedApplications = match.applications?.map(app =>
-              app.id === applicationId ? { ...app, status: 'rejected' as const } : app
-            ) || [];
+            const updatedApplications = match.applications!.map(app =>
+              app.id === applicationId 
+                ? { ...app, status: 'rejected' as const }
+                : app
+            );
 
-            const updatedMatch: Match = {
+            updateMatch({
               ...match,
               applications: updatedApplications
-            };
-
-            updateMatch(updatedMatch);
+            });
+            
             Alert.alert('거절 완료', '참여신청이 거절되었습니다.');
           }
         }

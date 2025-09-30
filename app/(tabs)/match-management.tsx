@@ -181,38 +181,42 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
                 </View>
               ) : (
                 myMatches.map((match) => (
-                  <TouchableOpacity onPress={() => router.push(`/match/${match.id}`)}>
-  <View style={styles.matchHeader}>
-    <Text style={styles.matchTitle}>{match.title}</Text>
-    <View style={[
-      styles.statusBadge,
-      { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
-    ]}>
-      <Text style={[
-        styles.statusBadgeText,
-        { color: match.isClosed ? '#dc2626' : '#16a34a' }
+                  <View key={match.id} style={styles.matchCard}>
+  <TouchableOpacity
+    onPress={() => router.push(`/match/${match.id}`)}
+  >
+    <View style={styles.matchHeader}>
+      <Text style={styles.matchTitle}>{match.title}</Text>
+      <View style={[
+        styles.statusBadge,
+        { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
       ]}>
-        {match.isClosed ? '마감' : '모집중'}
-      </Text>
+        <Text style={[
+          styles.statusBadgeText,
+          { color: match.isClosed ? '#dc2626' : '#16a34a' }
+        ]}>
+          {match.isClosed ? '마감' : '모집중'}
+        </Text>
+      </View>
     </View>
-  </View>
-</TouchableOpacity>
 
-                      <View style={styles.matchInfo}>
-                        <View style={styles.matchInfoRow}>
-                          <Calendar size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            {match.date} {match.time}
-                          </Text>
-                        </View>
-                        <View style={styles.matchInfoRow}>
-                          <Users size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            {match.applications?.length || 0}명 신청 / {match.expectedParticipants.total}명 모집
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
+    <View style={styles.matchInfo}>
+      <View style={styles.matchInfoRow}>
+        <Calendar size={16} color="#6b7280" />
+        <Text style={styles.matchInfoText}>
+          {match.date} {match.time}
+        </Text>
+      </View>
+      <View style={styles.matchInfoRow}>
+        <Users size={16} color="#6b7280" />
+        <Text style={styles.matchInfoText}>
+          {match.applications?.length || 0}명 신청 / {match.expectedParticipants.total}명 모집
+        </Text>
+      </View>
+    </View>
+  </TouchableOpacity>
+
+  {/* 참여신청 목록 - TouchableOpacity 밖으로 분리 */}
 
                     {/* 참여신청 목록 */}
                     {match.applications && match.applications.length > 0 && (

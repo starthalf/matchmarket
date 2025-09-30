@@ -249,7 +249,6 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
                   <TouchableOpacity
                     style={styles.rejectButton}
                     onPress={() => handleRejectApplication(match.id, application.id)}
-                    activeOpacity={0.7}
                   >
                     <X size={16} color="#ef4444" />
                     <Text style={styles.rejectButtonText}>거절</Text>

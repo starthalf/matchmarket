@@ -785,12 +785,6 @@ const styles = StyleSheet.create({
     minWidth: 120,
     alignItems: 'center',
   },
-  cancelButton: {
-    backgroundColor: '#dc2626',
-  },
-  applyButtonDisabled: {
-    backgroundColor: '#d1d5db',
-  },
   applyButtonDisabled: {
     backgroundColor: '#d1d5db',
   },

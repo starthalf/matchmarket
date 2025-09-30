@@ -154,6 +154,46 @@ export default function MatchDetailScreen() {
     }
   };
 
+  const handleCancelApplication = () => {
+    if (!myApplication || !match) return;
+
+    Alert.alert(
+      '참여신청 취소',
+      '참여신청을 취소하시겠습니까?\n판매자가 아직 승인하지 않은 경우에만 취소할 수 있습니다.',
+      [
+        { text: '돌아가기', style: 'cancel' },
+        { 
+          text: '신청 취소', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // applications 배열에서 내 신청 제거
+              const updatedApplications = safeApplications.filter(
+                app => app.id !== myApplication.id
+              );
+
+              const updatedMatch: Match = {
+                ...match,
+                applications: updatedApplications
+              };
+
+              updateMatch(updatedMatch);
+
+              Alert.alert(
+                '취소 완료',
+                '참여신청이 취소되었습니다.',
+                [{ text: '확인' }]
+              );
+            } catch (error) {
+              console.error('신청 취소 중 오류:', error);
+              Alert.alert('취소 실패', '신청 취소 중 오류가 발생했습니다.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const handlePaymentComplete = () => {
     setShowPaymentTimer(false);
     Alert.alert(

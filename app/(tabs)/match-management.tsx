@@ -23,28 +23,32 @@ export default function MatchManagementScreen() {
     match.applications?.some(app => app.userId === user?.id)
   );
 
-  const handleApproveApplication = (matchId: string, applicationId: string) => {
+const handleApproveApplication = (matchId: string, applicationId: string) => {
     const match = matches.find(m => m.id === matchId);
-    if (!match) return;
+    if (!match || !match.applications) return;
+
+    const application = match.applications.find(app => app.id === applicationId);
+    if (!application) return;
 
     Alert.alert(
       '참여신청 승인',
-      '이 참여신청을 승인하시겠습니까?',
+      `${application.userName}님의 참여신청을 승인하시겠습니까?`,
       [
         { text: '취소', style: 'cancel' },
         {
           text: '승인',
           onPress: () => {
-            const updatedApplications = match.applications?.map(app =>
-              app.id === applicationId ? { ...app, status: 'approved' as const } : app
-            ) || [];
+            const updatedApplications = match.applications!.map(app =>
+              app.id === applicationId 
+                ? { ...app, status: 'approved' as const }
+                : app
+            );
 
-            const updatedMatch: Match = {
+            updateMatch({
               ...match,
               applications: updatedApplications
-            };
-
-            updateMatch(updatedMatch);
+            });
+            
             Alert.alert('승인 완료', '참여신청이 승인되었습니다.\n결제요청이 전송됩니다.');
           }
         }

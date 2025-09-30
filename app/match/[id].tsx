@@ -155,43 +155,39 @@ export default function MatchDetailScreen() {
   };
 
   const handleCancelApplication = () => {
-  if (!myApplication || !match) return;
+  console.log('=== 신청 취소 버튼 클릭됨 ===');
+  console.log('myApplication:', myApplication);
+  console.log('match:', match);
+  
+  if (!myApplication || !match) {
+    console.log('myApplication 또는 match가 없어서 리턴');
+    return;
+  }
 
-  Alert.alert(
-    '참여신청 취소',
-    '참여신청을 취소하시겠습니까?',
-    [
-      { text: '돌아가기', style: 'cancel' },
-      { 
-        text: '신청 취소', 
-        style: 'destructive',
-        onPress: () => {
-          try {
-            // applications 배열에서 내 신청 제거
-            const updatedApplications = safeApplications.filter(
-              app => app.id !== myApplication.id
-            );
+  const confirmed = window.confirm('참여신청을 취소하시겠습니까?');
+  
+  if (confirmed) {
+    try {
+      console.log('취소 진행 중...');
+      // applications 배열에서 내 신청 제거
+      const updatedApplications = safeApplications.filter(
+        app => app.id !== myApplication.id
+      );
 
-            const updatedMatch: Match = {
-              ...match,
-              applications: updatedApplications
-            };
+      const updatedMatch: Match = {
+        ...match,
+        applications: updatedApplications
+      };
 
-            updateMatch(updatedMatch);
+      updateMatch(updatedMatch);
 
-            Alert.alert(
-              '취소 완료',
-              '참여신청이 취소되었습니다.',
-              [{ text: '확인' }]
-            );
-          } catch (error) {
-            console.error('신청 취소 중 오류:', error);
-            Alert.alert('취소 실패', '신청 취소 중 오류가 발생했습니다.');
-          }
-        }
-      }
-    ]
-  );
+      window.alert('참여신청이 취소되었습니다.');
+      console.log('취소 완료');
+    } catch (error) {
+      console.error('신청 취소 중 오류:', error);
+      window.alert('신청 취소 중 오류가 발생했습니다.');
+    }
+  }
 };
 
   const handlePaymentComplete = () => {

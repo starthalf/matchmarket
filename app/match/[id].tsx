@@ -378,22 +378,33 @@ export default function MatchDetailScreen() {
           )}
         </View>
         
-        <TouchableOpacity 
-          style={[
-            styles.applyButton,
-            (!canApply || match.isClosed) && styles.applyButtonDisabled
-          ]} 
-          onPress={handleApply}
-          disabled={!canApply || match.isClosed}
-        >
-          <Text style={styles.applyButtonText}>
-            {match.isClosed ? '마감됨' :
-             isOwnMatch ? '본인 매치' :
-             myApplication ? '신청완료' :
-             myParticipation ? '참가중' :
-             '참여신청'}
-          </Text>
-        </TouchableOpacity>
+        {myApplication && myApplication.status === 'pending' ? (
+          // pending 상태일 때 - 신청 취소 버튼 표시
+          <TouchableOpacity 
+            style={[styles.applyButton, styles.cancelButton]}
+            onPress={handleCancelApplication}
+          >
+            <Text style={styles.applyButtonText}>신청 취소</Text>
+          </TouchableOpacity>
+        ) : (
+          // 그 외의 경우 - 기존 버튼
+          <TouchableOpacity 
+            style={[
+              styles.applyButton,
+              (!canApply || match.isClosed) && styles.applyButtonDisabled
+            ]} 
+            onPress={handleApply}
+            disabled={!canApply || match.isClosed}
+          >
+            <Text style={styles.applyButtonText}>
+              {match.isClosed ? '마감됨' :
+               isOwnMatch ? '본인 매치' :
+               myApplication ? '신청완료' :
+               myParticipation ? '참가중' :
+               '참여신청'}
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* 참여신청 모달 */}

@@ -24,83 +24,70 @@ export default function MatchManagementScreen() {
   );
 
 const handleApproveApplication = (matchId: string, applicationId: string) => {
-    console.log('handleApproveApplication 시작', matchId, applicationId);
-    
     const match = matches.find(m => m.id === matchId);
-    console.log('찾은 매치:', match);
-    
-    if (!match || !match.applications) {
-      console.log('매치를 찾을 수 없거나 applications가 없음');
-      Alert.alert('오류', '매치를 찾을 수 없습니다.');
-      return;
-    }
+    if (!match || !match.applications) return;
 
     const application = match.applications.find(app => app.id === applicationId);
-    console.log('찾은 신청:', application);
-    
-    if (!application) {
-      console.log('신청을 찾을 수 없음');
-      Alert.alert('오류', '신청을 찾을 수 없습니다.');
-      return;
-    }
+    if (!application) return;
 
-    // Alert 확인 단계 제거하고 바로 실행
-    console.log('승인 처리 시작');
-    const updatedApplications = match.applications!.map(app =>
-      app.id === applicationId 
-        ? { ...app, status: 'approved' as const }
-        : app
+    Alert.alert(
+      '참여신청 승인',
+      `${application.userName}님의 참여신청을 승인하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '승인',
+          onPress: () => {
+            const updatedApplications = match.applications!.map(app =>
+              app.id === applicationId 
+                ? { ...app, status: 'approved' as const }
+                : app
+            );
+
+            updateMatch({
+              ...match,
+              applications: updatedApplications
+            });
+            
+            Alert.alert('승인 완료', '참여신청이 승인되었습니다.\n결제요청이 전송됩니다.');
+          }
+        }
+      ]
     );
-
-    console.log('업데이트된 applications:', updatedApplications);
-
-    updateMatch({
-      ...match,
-      applications: updatedApplications
-    });
-    
-    console.log('updateMatch 호출 완료');
-    Alert.alert('승인 완료', '참여신청이 승인되었습니다.');
   };
 
   const handleRejectApplication = (matchId: string, applicationId: string) => {
-    console.log('handleRejectApplication 시작', matchId, applicationId);
-    
     const match = matches.find(m => m.id === matchId);
-    console.log('찾은 매치:', match);
-    
-    if (!match || !match.applications) {
-      console.log('매치를 찾을 수 없거나 applications가 없음');
-      Alert.alert('오류', '매치를 찾을 수 없습니다.');
-      return;
-    }
+    if (!match || !match.applications) return;
 
     const application = match.applications.find(app => app.id === applicationId);
-    console.log('찾은 신청:', application);
-    
-    if (!application) {
-      console.log('신청을 찾을 수 없음');
-      Alert.alert('오류', '신청을 찾을 수 없습니다.');
-      return;
-    }
+    if (!application) return;
 
-    // Alert 확인 단계 제거하고 바로 실행
-    console.log('거절 처리 시작');
-    const updatedApplications = match.applications!.map(app =>
-      app.id === applicationId 
-        ? { ...app, status: 'rejected' as const }
-        : app
+    Alert.alert(
+      '참여신청 거절',
+      `${application.userName}님의 참여신청을 거절하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '거절',
+          style: 'destructive',
+          onPress: () => {
+            const updatedApplications = match.applications!.map(app =>
+              app.id === applicationId 
+                ? { ...app, status: 'rejected' as const }
+                : app
+            );
+
+            updateMatch({
+              ...match,
+              applications: updatedApplications
+            });
+            
+            Alert.alert('거절 완료', '참여신청이 거절되었습니다.');
+          }
+        }
+      ]
     );
-
-    console.log('업데이트된 applications:', updatedApplications);
-
-    updateMatch({
-      ...match,
-      applications: updatedApplications
-    });
-    
-    console.log('updateMatch 호출 완료');
-    Alert.alert('거절 완료', '참여신청이 거절되었습니다.');
   };
 
   const getStatusColor = (status: string) => {

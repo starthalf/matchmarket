@@ -160,6 +160,11 @@ export default function RegisterScreen() {
 
     console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
 
+    // MatchContext에 매치 추가
+console.log('새 매치 추가 중:', newMatchId);
+await addMatch(newMatch);
+console.log('매치 추가 완료');
+
 // 폼 초기화
 setFormData({
   title: '',

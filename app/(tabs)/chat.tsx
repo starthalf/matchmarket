@@ -58,26 +58,36 @@ export default function ChatScreen() {
     (room as any).matchTitle?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // 메시지 전송
-  const sendMessage = () => {
-    if (!messageInput.trim() || !selectedRoom || !user) return;
+// 메시지 전송
+const sendMessage = () => {
+  if (!messageInput.trim() || !selectedRoom || !user) return;
 
-    const newMessage: ChatMessage = {
-      id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      roomId: selectedRoom.id,
-      senderId: user.id,
-      senderName: user.name,
-      message: messageInput.trim(),
-      type: 'text',
-      timestamp: new Date().toISOString(),
-      isRead: false
-    };
-
-    setMessages(prev => [...prev, newMessage]);
-    setMessageInput('');
-
-    // 실제 구현시에는 여기서 서버에 메시지 전송
+  const newMessage: ChatMessage = {
+    id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    roomId: selectedRoom.id,
+    senderId: user.id,
+    senderName: user.name,
+    message: messageInput.trim(),
+    type: 'text',
+    timestamp: new Date().toISOString(),
+    isRead: false
   };
+
+  // 로컬 상태에 메시지 추가
+  setMessages(prev => [...prev, newMessage]);
+  
+  // 채팅방의 lastMessage도 업데이트
+  setSelectedRoom(prev => {
+    if (!prev) return prev;
+    return {
+      ...prev,
+      lastMessage: newMessage,
+      updatedAt: new Date().toISOString()
+    };
+  });
+
+  setMessageInput('');
+};
 
   // 채팅방 선택시 메시지 로드 (데모용 더미 데이터)
   useEffect(() => {

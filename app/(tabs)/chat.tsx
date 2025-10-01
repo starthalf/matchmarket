@@ -89,25 +89,34 @@ const sendMessage = () => {
   setMessageInput('');
 };
 
-  // 채팅방 선택시 메시지 로드 (데모용 더미 데이터)
+// 채팅방별 메시지를 저장하는 state 추가
+  const [roomMessages, setRoomMessages] = useState<{ [key: string]: ChatMessage[] }>({});
+
+  // 채팅방 선택시 메시지 로드
   useEffect(() => {
     if (selectedRoom) {
-      // 실제 구현시에는 서버에서 메시지를 가져옴
-      const demoMessages: ChatMessage[] = [
-        {
-          id: `msg_${selectedRoom.id}_1`,
-          roomId: selectedRoom.id,
-          senderId: 'system',
-          senderName: 'System',
-          message: '매치 채팅이 시작되었습니다. 서로 예의를 지켜주세요.',
-          type: 'system',
-          timestamp: selectedRoom.createdAt,
-          isRead: true
-        }
-      ];
-      setMessages(demoMessages);
+      // 해당 채팅방의 저장된 메시지가 있으면 불러오기
+      if (roomMessages[selectedRoom.id]) {
+        setMessages(roomMessages[selectedRoom.id]);
+      } else {
+        // 처음 들어가는 채팅방이면 초기 메시지 생성
+        const initialMessages: ChatMessage[] = [
+          {
+            id: `msg_${selectedRoom.id}_1`,
+            roomId: selectedRoom.id,
+            senderId: 'system',
+            senderName: 'System',
+            message: '매치 채팅이 시작되었습니다. 서로 예의를 지켜주세요.',
+            type: 'system',
+            timestamp: selectedRoom.createdAt,
+            isRead: true
+          }
+        ];
+        setMessages(initialMessages);
+        setRoomMessages(prev => ({ ...prev, [selectedRoom.id]: initialMessages }));
+      }
     }
-  }, [selectedRoom]);
+  }, [selectedRoom?.id]);
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);

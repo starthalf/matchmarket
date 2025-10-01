@@ -97,8 +97,6 @@ const sendMessage = () => {
   setMessageInput('');
 };
 
-// 채팅방별 메시지를 저장하는 state 추가
-  const [roomMessages, setRoomMessages] = useState<{ [key: string]: ChatMessage[] }>({});
 
   // 채팅방 선택시 메시지 로드
   useEffect(() => {

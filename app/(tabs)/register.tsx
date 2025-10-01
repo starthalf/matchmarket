@@ -160,11 +160,6 @@ export default function RegisterScreen() {
 
     console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
 
-// MatchContext에 매치 추가
-console.log('새 매치 추가 중:', newMatchId);
-await addMatch(newMatch);
-console.log('매치 추가 완료');
-
 // 폼 초기화
 setFormData({
   title: '',
@@ -190,22 +185,9 @@ setFormData({
   ntrpMax: '4.5',
 });
 
-// 매치 상세페이지로 즉시 이동 (setTimeout 없이)
+// 매치 상세페이지로 즉시 이동
 console.log('매치 상세페이지로 이동:', newMatchId);
 router.push(`/match/${newMatchId}`);
-  
-  if (Platform.OS === 'web') {
-    // 웹에서는 confirm 없이 바로 이동 (지연으로 충분)
-    router.push(`/match/${newMatchId}`);
-  } else {
-    // 모바일에서는 Alert 후 이동
-    Alert.alert(
-      '매치 등록 완료! 🎾',
-      '매치가 성공적으로 등록되었습니다.',
-      [{ text: '확인', onPress: () => router.push(`/match/${newMatchId}`) }]
-    );
-  }
-}, 500); // 0.5초 지연 (Context 업데이트 대기)
 
 } catch (error) {
   console.error('매치 등록 중 오류:', error);

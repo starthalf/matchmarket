@@ -73,8 +73,15 @@ const sendMessage = () => {
     isRead: false
   };
 
-  // 로컬 상태에 메시지 추가
-  setMessages(prev => [...prev, newMessage]);
+  // 현재 메시지 리스트에 추가
+  const updatedMessages = [...messages, newMessage];
+  setMessages(updatedMessages);
+  
+  // 채팅방별 메시지 저장소에도 저장
+  setRoomMessages(prev => ({
+    ...prev,
+    [selectedRoom.id]: updatedMessages
+  }));
   
   // 채팅방의 lastMessage도 업데이트
   setSelectedRoom(prev => {

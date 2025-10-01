@@ -192,6 +192,12 @@ setFormData({
 
 // 매치 상세페이지로 즉시 이동
 console.log('매치 상세페이지로 이동:', newMatchId);
+
+// 웹 환경에서 알림 표시
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.alert('매치가 성공적으로 등록되었습니다! 🎾');
+}
+
 router.push(`/match/${newMatchId}`);
 
 } catch (error) {

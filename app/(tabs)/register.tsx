@@ -182,22 +182,23 @@ setFormData({
   ntrpMax: '4.5',
 });
 
-// 웹 환경 체크 후 적절한 알림 방식 사용
-if (Platform.OS === 'web') {
-  // 웹에서는 confirm 사용 (동기 처리)
-  if (window.confirm('매치가 성공적으로 등록되었습니다! 🎾\n\n등록한 매치를 확인하시겠습니까?')) {
+// 매치가 Context에 추가될 시간을 주고 이동
+console.log('매치 상세페이지로 이동 준비:', newMatchId);
+setTimeout(() => {
+  console.log('매치 상세페이지로 이동 실행:', newMatchId);
+  
+  if (Platform.OS === 'web') {
+    // 웹에서는 confirm 없이 바로 이동 (지연으로 충분)
     router.push(`/match/${newMatchId}`);
+  } else {
+    // 모바일에서는 Alert 후 이동
+    Alert.alert(
+      '매치 등록 완료! 🎾',
+      '매치가 성공적으로 등록되었습니다.',
+      [{ text: '확인', onPress: () => router.push(`/match/${newMatchId}`) }]
+    );
   }
-} else {
-  // 모바일에서는 Alert 사용
-  Alert.alert(
-    '매치 등록 완료! 🎾',
-    '매치가 성공적으로 등록되었습니다.',
-    [
-      { text: '확인', onPress: () => router.push(`/match/${newMatchId}`) }
-    ]
-  );
-}
+}, 500); // 0.5초 지연 (Context 업데이트 대기)
 
 } catch (error) {
   console.error('매치 등록 중 오류:', error);

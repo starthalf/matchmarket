@@ -5,14 +5,17 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { MessageCircle, Send, Users, Calendar, Search } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
+import { useChat } from '../../contexts/ChatContext';
 import { ChatRoom, ChatMessage } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
 import { router } from 'expo-router';
 import { supabaseAdmin } from '../../lib/supabase';
+import { useFocusEffect } from '@react-navigation/native';
 
 export default function ChatScreen() {
   const { user } = useAuth();
   const { matches } = useMatches();
+  const { markAllAsRead } = useChat();
   const safeStyles = useSafeStyles();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);

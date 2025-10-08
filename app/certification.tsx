@@ -9,6 +9,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+import { useAuth } from '../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Youtube, Instagram, Award } from 'lucide-react-native';

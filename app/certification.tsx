@@ -12,11 +12,11 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Youtube, Instagram, Award } from 'lucide-react-native';
+import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Award, Video, Image } from 'lucide-react-native';
 import { useSafeStyles } from '../constants/Styles';
 
 export default function CertificationScreen() {
-  const { user } = useAuth();
+const { user, updateUser } = useAuth();
   const safeStyles = useSafeStyles();
   const [showNtrpModal, setShowNtrpModal] = useState(false);
   const [showCareerModal, setShowCareerModal] = useState(false);
@@ -67,7 +67,14 @@ export default function CertificationScreen() {
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
           // 실제로는 서버에 인증 신청 데이터 전송
-          user.certification.ntrp = 'pending';
+const updatedUser = {
+  ...user,
+  certification: {
+    ...user.certification,
+    ntrp: 'pending' as const
+  }
+};
+updateUser(updatedUser);
           setShowNtrpModal(false);
           setNtrpForm({ requestedNtrp: '', description: '' });
           Alert.alert('신청 완료', 'NTRP 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -88,7 +95,14 @@ export default function CertificationScreen() {
       [
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
-          user.certification.career = 'pending';
+const updatedUser = {
+  ...user,
+  certification: {
+    ...user.certification,
+    career: 'pending' as const
+  }
+};
+updateUser(updatedUser);
           setShowCareerModal(false);
           setCareerForm({ description: '' });
           Alert.alert('신청 완료', '선수 경력 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -109,7 +123,14 @@ export default function CertificationScreen() {
       [
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
-          user.certification.youtube = 'pending';
+const updatedUser = {
+  ...user,
+  certification: {
+    ...user.certification,
+    youtube: 'pending' as const
+  }
+};
+updateUser(updatedUser);
           setShowYoutubeModal(false);
           setYoutubeForm({ description: '' });
           Alert.alert('신청 완료', '유튜버 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -130,7 +151,14 @@ export default function CertificationScreen() {
       [
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
-          user.certification.instagram = 'pending';
+const updatedUser = {
+  ...user,
+  certification: {
+    ...user.certification,
+    instagram: 'pending' as const
+  }
+};
+updateUser(updatedUser);
           setShowInstagramModal(false);
           setInstagramForm({ description: '' });
           Alert.alert('신청 완료', '인플루언서 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -252,7 +280,7 @@ export default function CertificationScreen() {
         <View style={styles.certificationCard}>
           <View style={styles.certificationHeader}>
             <View style={styles.certificationInfo}>
-              <Youtube size={24} color="#dc2626" />
+<Video size={24} color="#dc2626" />
               <View style={styles.certificationDetails}>
                 <Text style={styles.certificationTitle}>유튜버 인증</Text>
                 <Text style={styles.certificationDescription}>
@@ -285,7 +313,7 @@ export default function CertificationScreen() {
         <View style={styles.certificationCard}>
           <View style={styles.certificationHeader}>
             <View style={styles.certificationInfo}>
-              <Instagram size={24} color="#e1306c" />
+<Image size={24} color="#e1306c" />
               <View style={styles.certificationDetails}>
                 <Text style={styles.certificationTitle}>인플루언서 인증</Text>
                 <Text style={styles.certificationDescription}>

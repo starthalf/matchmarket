@@ -1,11 +1,14 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
-import { Users, Plus, User, ClipboardList, MessageCircle } from 'lucide-react-native';
+import { Users, Plus, ClipboardList, MessageCircle } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
+import { useChat } from '../../contexts/ChatContext';
 import { router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function TabLayout() {
   const { user, isLoading } = useAuth();
+  const { unreadCount } = useChat();
 
   // 로딩 중인 경우만 로딩 화면 표시
   if (isLoading) {
@@ -85,7 +88,16 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => (
             <MessageCircle size={size} color={color} />
           ),
-          tabBarBadge: undefined, // 채팅 알림을 위한 배지 (동적으로 설정)
+          // 빨간 점 배지 표시 (읽지 않은 메시지가 있을 때만)
+          tabBarBadge: unreadCount > 0 ? '' : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: '#ef4444',
+            minWidth: 8,
+            height: 8,
+            borderRadius: 4,
+            top: 8,
+            right: -4,
+          },
         }}
         listeners={{
           tabPress: (e: any) => {

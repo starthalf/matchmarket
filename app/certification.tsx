@@ -12,11 +12,11 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Award, Video, Image } from 'lucide-react-native';
+import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Award, PlayCircle, Camera } from 'lucide-react-native';
 import { useSafeStyles } from '../constants/Styles';
 
 export default function CertificationScreen() {
-const { user, updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const safeStyles = useSafeStyles();
   const [showNtrpModal, setShowNtrpModal] = useState(false);
   const [showCareerModal, setShowCareerModal] = useState(false);
@@ -66,15 +66,14 @@ const { user, updateUser } = useAuth();
       [
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
-          // 실제로는 서버에 인증 신청 데이터 전송
-const updatedUser = {
-  ...user,
-  certification: {
-    ...user.certification,
-    ntrp: 'pending' as const
-  }
-};
-updateUser(updatedUser);
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              ntrp: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
           setShowNtrpModal(false);
           setNtrpForm({ requestedNtrp: '', description: '' });
           Alert.alert('신청 완료', 'NTRP 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -95,14 +94,14 @@ updateUser(updatedUser);
       [
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
-const updatedUser = {
-  ...user,
-  certification: {
-    ...user.certification,
-    career: 'pending' as const
-  }
-};
-updateUser(updatedUser);
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              career: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
           setShowCareerModal(false);
           setCareerForm({ description: '' });
           Alert.alert('신청 완료', '선수 경력 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -123,14 +122,14 @@ updateUser(updatedUser);
       [
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
-const updatedUser = {
-  ...user,
-  certification: {
-    ...user.certification,
-    youtube: 'pending' as const
-  }
-};
-updateUser(updatedUser);
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              youtube: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
           setShowYoutubeModal(false);
           setYoutubeForm({ description: '' });
           Alert.alert('신청 완료', '유튜버 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -151,14 +150,14 @@ updateUser(updatedUser);
       [
         { text: '취소', style: 'cancel' },
         { text: '신청', onPress: () => {
-const updatedUser = {
-  ...user,
-  certification: {
-    ...user.certification,
-    instagram: 'pending' as const
-  }
-};
-updateUser(updatedUser);
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              instagram: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
           setShowInstagramModal(false);
           setInstagramForm({ description: '' });
           Alert.alert('신청 완료', '인플루언서 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
@@ -280,7 +279,7 @@ updateUser(updatedUser);
         <View style={styles.certificationCard}>
           <View style={styles.certificationHeader}>
             <View style={styles.certificationInfo}>
-<Video size={24} color="#dc2626" />
+              <PlayCircle size={24} color="#dc2626" />
               <View style={styles.certificationDetails}>
                 <Text style={styles.certificationTitle}>유튜버 인증</Text>
                 <Text style={styles.certificationDescription}>
@@ -313,7 +312,7 @@ updateUser(updatedUser);
         <View style={styles.certificationCard}>
           <View style={styles.certificationHeader}>
             <View style={styles.certificationInfo}>
-<Image size={24} color="#e1306c" />
+              <Camera size={24} color="#e1306c" />
               <View style={styles.certificationDetails}>
                 <Text style={styles.certificationTitle}>인플루언서 인증</Text>
                 <Text style={styles.certificationDescription}>

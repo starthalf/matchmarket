@@ -160,17 +160,25 @@ export default function RegisterScreen() {
 
     console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
 
-// MatchContext에 매치 추가
+    // MatchContext에 매치 추가
 console.log('새 매치 추가 중:', newMatchId);
-addMatch(newMatch);
+await addMatch(newMatch);
 console.log('매치 추가 완료');
 
 // 폼 초기화
 setFormData({
   title: '',
   date: new Date(),
-  time: new Date(),
-  endTime: new Date(),
+  time: (() => {
+    const defaultTime = new Date();
+    defaultTime.setHours(19, 0, 0, 0);
+    return defaultTime;
+  })(),
+  endTime: (() => {
+    const defaultEndTime = new Date();
+    defaultEndTime.setHours(22, 0, 0, 0);
+    return defaultEndTime;
+  })(),
   court: '',
   description: '',
   basePrice: '',
@@ -182,12 +190,15 @@ setFormData({
   ntrpMax: '4.5',
 });
 
-// 웹에서도 작동하는 방식으로 지연 후 이동
-console.log('매치 상세페이지로 이동 준비:', newMatchId);
-setTimeout(() => {
-  console.log('매치 상세페이지로 이동 실행:', newMatchId);
-  router.replace(`/match/${newMatchId}`);
-}, 1000); // 1초 지연 (충분한 시간 확보)
+// 매치 상세페이지로 즉시 이동
+console.log('매치 상세페이지로 이동:', newMatchId);
+
+// 웹 환경에서 알림 표시
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.alert('매치가 성공적으로 등록되었습니다! 🎾');
+}
+
+router.push(`/match/${newMatchId}`);
 
 } catch (error) {
   console.error('매치 등록 중 오류:', error);

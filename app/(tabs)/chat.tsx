@@ -1,5 +1,5 @@
-// app/(tabs)/chat.tsx - 완전 구현 버전
-import React, { useState, useEffect } from 'react';
+// app/(tabs)/chat.tsx - Supabase 실시간 채팅 버전
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MessageCircle, Send, Users, Calendar, Search } from 'lucide-react-native';
@@ -8,6 +8,7 @@ import { useMatches } from '../../contexts/MatchContext';
 import { ChatRoom, ChatMessage } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
 import { router } from 'expo-router';
+import { supabaseAdmin } from '../../lib/supabase';
 
 export default function ChatScreen() {
   const { user } = useAuth();
@@ -17,11 +18,11 @@ export default function ChatScreen() {
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   // 내가 참여한 매치들에서 채팅방 생성
   const myChatRooms: ChatRoom[] = matches
     .filter(match => {
-      // 내가 판매자이거나, 승인된 참여신청이 있는 매치
       return match.sellerId === user?.id || 
              match.applications?.some(app => 
                app.userId === user?.id && app.status === 'approved'
@@ -58,8 +59,77 @@ export default function ChatScreen() {
     (room as any).matchTitle?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // 메시지 전송
-  const sendMessage = () => {
+  // Supabase에서 메시지 불러오기
+  const loadMessages = async (roomId: string) => {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('chat_messages')
+        .select('*')
+        .eq('room_id', roomId)
+        .order('timestamp', { ascending: true });
+
+      if (error) {
+        console.error('메시지 로드 오류:', error);
+        return;
+      }
+
+      if (data && data.length > 0) {
+        const loadedMessages: ChatMessage[] = data.map(msg => ({
+          id: msg.id,
+          roomId: msg.room_id,
+          senderId: msg.sender_id,
+          senderName: msg.sender_name,
+          message: msg.message,
+          type: msg.type as 'text' | 'system',
+          timestamp: msg.timestamp,
+          isRead: msg.is_read
+        }));
+        setMessages(loadedMessages);
+      } else {
+        // 첫 메시지가 없으면 시스템 메시지 생성
+        createInitialMessage(roomId);
+      }
+    } catch (error) {
+      console.error('메시지 로드 예외:', error);
+    }
+  };
+
+  // 초기 시스템 메시지 생성
+  const createInitialMessage = async (roomId: string) => {
+    const initialMessage: ChatMessage = {
+      id: `msg_${roomId}_system`,
+      roomId: roomId,
+      senderId: 'system',
+      senderName: 'System',
+      message: '매치 채팅이 시작되었습니다. 서로 예의를 지켜주세요.',
+      type: 'system',
+      timestamp: new Date().toISOString(),
+      isRead: true
+    };
+
+    try {
+      await supabaseAdmin
+        .from('chat_messages')
+        .insert({
+          id: initialMessage.id,
+          room_id: initialMessage.roomId,
+          sender_id: initialMessage.senderId,
+          sender_name: initialMessage.senderName,
+          message: initialMessage.message,
+          type: initialMessage.type,
+          timestamp: initialMessage.timestamp,
+          is_read: initialMessage.isRead
+        });
+
+      setMessages([initialMessage]);
+    } catch (error) {
+      console.error('초기 메시지 생성 오류:', error);
+      setMessages([initialMessage]);
+    }
+  };
+
+  // 메시지 전송 (Supabase에 저장)
+  const sendMessage = async () => {
     if (!messageInput.trim() || !selectedRoom || !user) return;
 
     const newMessage: ChatMessage = {
@@ -73,31 +143,93 @@ export default function ChatScreen() {
       isRead: false
     };
 
+    // 즉시 UI에 표시
     setMessages(prev => [...prev, newMessage]);
     setMessageInput('');
 
-    // 실제 구현시에는 여기서 서버에 메시지 전송
+    // Supabase에 저장
+    try {
+      const { error } = await supabaseAdmin
+        .from('chat_messages')
+        .insert({
+          id: newMessage.id,
+          room_id: newMessage.roomId,
+          sender_id: newMessage.senderId,
+          sender_name: newMessage.senderName,
+          message: newMessage.message,
+          type: newMessage.type,
+          timestamp: newMessage.timestamp,
+          is_read: newMessage.isRead
+        });
+
+      if (error) {
+        console.error('메시지 저장 오류:', error);
+        Alert.alert('오류', '메시지 전송에 실패했습니다.');
+      }
+    } catch (error) {
+      console.error('메시지 전송 예외:', error);
+      Alert.alert('오류', '메시지 전송 중 문제가 발생했습니다.');
+    }
+
+    // 스크롤을 최하단으로
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
-  // 채팅방 선택시 메시지 로드 (데모용 더미 데이터)
+  // 채팅방 선택시 메시지 로드
   useEffect(() => {
     if (selectedRoom) {
-      // 실제 구현시에는 서버에서 메시지를 가져옴
-      const demoMessages: ChatMessage[] = [
-        {
-          id: `msg_${selectedRoom.id}_1`,
-          roomId: selectedRoom.id,
-          senderId: 'system',
-          senderName: 'System',
-          message: '매치 채팅이 시작되었습니다. 서로 예의를 지켜주세요.',
-          type: 'system',
-          timestamp: selectedRoom.createdAt,
-          isRead: true
-        }
-      ];
-      setMessages(demoMessages);
+      loadMessages(selectedRoom.id);
     }
-  }, [selectedRoom]);
+  }, [selectedRoom?.id]);
+
+  // 실시간 메시지 구독 (새 메시지 자동 수신)
+  useEffect(() => {
+    if (!selectedRoom) return;
+
+    const subscription = supabaseAdmin
+      .channel(`chat_${selectedRoom.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `room_id=eq.${selectedRoom.id}`
+        },
+        (payload) => {
+          const newMsg = payload.new;
+          const chatMessage: ChatMessage = {
+            id: newMsg.id,
+            roomId: newMsg.room_id,
+            senderId: newMsg.sender_id,
+            senderName: newMsg.sender_name,
+            message: newMsg.message,
+            type: newMsg.type,
+            timestamp: newMsg.timestamp,
+            isRead: newMsg.is_read
+          };
+
+          // 내가 보낸 메시지가 아닐 때만 추가 (중복 방지)
+          setMessages(prev => {
+            const exists = prev.some(m => m.id === chatMessage.id);
+            if (exists) return prev;
+            return [...prev, chatMessage];
+          });
+
+          // 새 메시지가 오면 스크롤 내리기
+          setTimeout(() => {
+            scrollViewRef.current?.scrollToEnd({ animated: true });
+          }, 100);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [selectedRoom?.id]);
 
   const formatTime = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -139,7 +271,6 @@ export default function ChatScreen() {
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={styles.container}>
         {!selectedRoom ? (
-          // 채팅방 목록
           <>
             <View style={styles.header}>
               <Text style={styles.headerTitle}>채팅</Text>
@@ -148,7 +279,6 @@ export default function ChatScreen() {
               </Text>
             </View>
 
-            {/* 검색바 */}
             <View style={styles.searchContainer}>
               <Search size={20} color="#9ca3af" />
               <TextInput
@@ -224,7 +354,6 @@ export default function ChatScreen() {
             </ScrollView>
           </>
         ) : (
-          // 채팅방 화면
           <>
             <View style={styles.chatHeader}>
               <TouchableOpacity 
@@ -243,7 +372,12 @@ export default function ChatScreen() {
               </View>
             </View>
 
-            <ScrollView style={styles.messageList} showsVerticalScrollIndicator={false}>
+            <ScrollView 
+              ref={scrollViewRef}
+              style={styles.messageList} 
+              showsVerticalScrollIndicator={false}
+              onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
               {messages.map((message) => (
                 <View
                   key={message.id}
@@ -470,7 +604,6 @@ const styles = StyleSheet.create({
   lastMessage: {
     fontSize: 14,
     color: '#6b7280',
-    numberOfLines: 1,
   },
   unreadBadge: {
     width: 20,

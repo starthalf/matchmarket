@@ -110,7 +110,7 @@ export default function ProfileSettingsScreen() {
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>이름</Text>
+            <Text style={styles.inputLabel}>닉네임</Text>
             <TextInput
               style={styles.textInput}
               value={formData.name}

@@ -326,8 +326,7 @@ export class DataGenerator {
       matchType: supabaseMatch.match_type as '단식' | '남복' | '여복' | '혼복',
       waitingApplicants: supabaseMatch.waiting_applicants,
       waitingList: [],
-      participants: supabaseMatch.participants || [],
-      applications: supabaseMatch.applications || [],
+      participants: [],
       adEnabled: supabaseMatch.ad_enabled,
       ntrpRequirement: {
         min: supabaseMatch.ntrp_min,
@@ -404,8 +403,6 @@ export class DataGenerator {
         is_dummy: isDummyMatch, // 실제 사용자: false, 더미: true
         created_at: match.createdAt,
         is_closed: match.isClosed || false,
-        applications: match.applications || [],
-        participants: match.participants || [],
       };
 
       const { error } = await supabaseAdmin

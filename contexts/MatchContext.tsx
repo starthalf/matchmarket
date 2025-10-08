@@ -11,7 +11,7 @@ interface MatchContextType {
   matches: Match[];
   isLoadingMatches: boolean;
   refreshMatches: () => Promise<void>;
-  updateMatch: (updatedMatch: Match) => Promise<void>;  // 👈 void를 Promise<void>로 변경
+  updateMatch: (updatedMatch: Match) => void;
   addMatch: (newMatch: Match) => Promise<boolean>;
 }
 
@@ -104,69 +104,44 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     await loadMatches();
   };
 
-  const updateMatch = async (updatedMatch: Match) => {
-  console.log('=== MatchContext: updateMatch 호출됨 ===');
-  console.log('MatchContext: updateMatch called for match ID:', updatedMatch.id);
-  console.log('MatchContext: 업데이트할 매치 제목:', updatedMatch.title);
-  console.log('MatchContext: 현재 matches 배열 길이:', matches.length);
-  
-  // 1. 로컬 상태 즉시 업데이트
-  setMatches(prev => 
-    prev.map(match => 
-      match.id === updatedMatch.id ? updatedMatch : match
-    )
-  );
-  
-  // 2. Supabase에도 UPDATE 시도
-  try {
-    const { error } = await supabaseAdmin
-      .from('matches')
-      .update({
-        applications: updatedMatch.applications || [],
-        participants: updatedMatch.participants || [],
-        current_applicants_male: updatedMatch.currentApplicants?.male || 0,
-        current_applicants_female: updatedMatch.currentApplicants?.female || 0,
-        current_applicants_total: updatedMatch.currentApplicants?.total || 0,
-      })
-      .eq('id', updatedMatch.id);
+  const updateMatch = (updatedMatch: Match) => {
+    console.log('=== MatchContext: updateMatch 호출됨 ===');
+    console.log('MatchContext: updateMatch called for match ID:', updatedMatch.id);
+    console.log('MatchContext: 업데이트할 매치 제목:', updatedMatch.title);
+    console.log('MatchContext: 현재 matches 배열 길이:', matches.length);
     
-    if (error) {
-      console.error('Supabase 업데이트 오류:', error);
-      // 에러가 나도 로컬에는 이미 반영되어 있음
-    } else {
-      console.log('✅ 매치 업데이트가 Supabase에 저장됨');
-    }
-  } catch (error) {
-    console.error('Supabase 저장 중 예외:', error);
-    // 로컬에는 이미 반영되어 있으므로 계속 진행
-  }
-  
-  console.log('=== MatchContext: updateMatch 완료 ===');
-};
+    setMatches(prev => 
+      prev.map(match => 
+        match.id === updatedMatch.id ? updatedMatch : match
+      )
+    );
+    
+    console.log('=== MatchContext: updateMatch 완료 ===');
+  };
 
-const addMatch = async (newMatch: Match): Promise<boolean> => {
-  try {
-    console.log('새 매치 추가 중:', newMatch.id);
-    
-    // Supabase에 저장 시도
-    const success = await DataGenerator.saveMatchToSupabase(newMatch);
-    
-    if (success) {
-      console.log('✅ 새 매치가 Supabase에 저장되었습니다');
-      // 로컬 상태에도 추가
-      setMatches(prev => [newMatch, ...prev]);
-      return true;
-    } else {
-      console.log('⚠️ Supabase 저장 실패, 로컬 상태에만 추가합니다');
-      // Supabase 저장 실패해도 로컬에는 추가
-      setMatches(prev => [newMatch, ...prev]);
-      return true; // 사용자에게는 성공으로 보고
+  const addMatch = async (newMatch: Match): Promise<boolean> => {
+    try {
+      console.log('새 매치 추가 중:', newMatch.id);
+      
+      // Supabase에 저장 시도
+      const success = await DataGenerator.saveMatchToSupabase(newMatch);
+      
+      if (success) {
+        console.log('✅ 새 매치가 Supabase에 저장되었습니다');
+        // 로컬 상태에도 추가
+        setMatches(prev => [newMatch, ...prev]);
+        return true;
+      } else {
+        console.log('⚠️ Supabase 저장 실패, 로컬 상태에만 추가합니다');
+        // Supabase 저장 실패해도 로컬에는 추가
+        setMatches(prev => [newMatch, ...prev]);
+        return true; // 사용자에게는 성공으로 보고
+      }
+    } catch (error) {
+      console.error('매치 추가 중 오류:', error);
+      return false;
     }
-  } catch (error) {
-    console.error('매치 추가 중 오류:', error);
-    return false;
-  }
-};
+  };
 
   return (
     <MatchContext.Provider value={{

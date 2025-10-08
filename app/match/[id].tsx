@@ -154,60 +154,6 @@ export default function MatchDetailScreen() {
     }
   };
 
-  const showConfirm = (message: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window !== 'undefined' && window.confirm) {
-      // 웹 환경
-      resolve(window.confirm(message));
-    } else {
-      // 모바일 환경
-      Alert.alert(
-        '확인',
-        message,
-        [
-          { text: '취소', style: 'cancel', onPress: () => resolve(false) },
-          { text: '확인', onPress: () => resolve(true) }
-        ]
-      );
-    }
-  });
-};
-
-const showAlert = (message: string): void => {
-  if (typeof window !== 'undefined' && window.alert) {
-    // 웹 환경
-    window.alert(message);
-  } else {
-    // 모바일 환경
-    Alert.alert('알림', message);
-  }
-};
-
-const handleCancelApplication = async () => {
-  if (!myApplication || !match) return;
-  
-  const confirmed = await showConfirm('참여신청을 취소하시겠습니까?');
-  
-  if (confirmed) {
-    try {
-      const updatedApplications = safeApplications.filter(
-        app => app.id !== myApplication.id
-      );
-      
-      const updatedMatch: Match = {
-        ...match,
-        applications: updatedApplications
-      };
-      
-      updateMatch(updatedMatch);
-      showAlert('참여신청이 취소되었습니다.');
-    } catch (error) {
-      console.error('신청 취소 중 오류:', error);
-      showAlert('신청 취소 중 오류가 발생했습니다.');
-    }
-  }
-};
-
   const handlePaymentComplete = () => {
     setShowPaymentTimer(false);
     Alert.alert(
@@ -392,32 +338,22 @@ const handleCancelApplication = async () => {
           )}
         </View>
         
-        {myApplication && myApplication.status === 'pending' ? (
-          <TouchableOpacity 
-            style={[styles.applyButton, styles.cancelApplicationButton]}
-            onPress={handleCancelApplication}
-          >
-            <Text style={styles.applyButtonText}>신청 취소</Text>
-          </TouchableOpacity>
-        ) : (
-          // 그 외의 경우 - 기존 버튼
-          <TouchableOpacity 
-            style={[
-              styles.applyButton,
-              (!canApply || match.isClosed) && styles.applyButtonDisabled
-            ]} 
-            onPress={handleApply}
-            disabled={!canApply || match.isClosed}
-          >
-            <Text style={styles.applyButtonText}>
-              {match.isClosed ? '마감됨' :
-               isOwnMatch ? '본인 매치' :
-               myApplication ? '신청완료' :
-               myParticipation ? '참가중' :
-               '참여신청'}
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity 
+          style={[
+            styles.applyButton,
+            (!canApply || match.isClosed) && styles.applyButtonDisabled
+          ]} 
+          onPress={handleApply}
+          disabled={!canApply || match.isClosed}
+        >
+          <Text style={styles.applyButtonText}>
+            {match.isClosed ? '마감됨' :
+             isOwnMatch ? '본인 매치' :
+             myApplication ? '신청완료' :
+             myParticipation ? '참가중' :
+             '참여신청'}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* 참여신청 모달 */}
@@ -886,9 +822,6 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     gap: 12,
-  },
-  cancelApplicationButton: {
-    backgroundColor: '#dc2626',
   },
   cancelButton: {
     flex: 1,

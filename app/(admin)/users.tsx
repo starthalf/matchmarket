@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, User, Star, Award, Calendar, TrendingUp, Eye, Heart, FileText, X } from 'lucide-react-native';
-import { mockUsers } from '../../data/mockData';
 import { CertificationBadge } from '../../components/CertificationBadge';
 import { useSafeStyles } from '../../constants/Styles';
 import { supabase } from '../../lib/supabase';
@@ -48,6 +47,7 @@ export default function AdminUsersScreen() {
   const [showCertRequestModal, setShowCertRequestModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [certificationRequests, setCertificationRequests] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -68,12 +68,12 @@ export default function AdminUsersScreen() {
     '5': 2,
   };
 
-  // Supabase에서 인증 신청 목록 가져오기
+  // Supabase에서 사용자 목록과 인증 신청 목록 가져오기
   useEffect(() => {
-    loadCertificationRequests();
+    loadData();
   }, []);
 
-  const loadCertificationRequests = async () => {
+  const loadData = async () => {
     setIsLoading(true);
     try {
       if (!supabase) {
@@ -82,26 +82,62 @@ export default function AdminUsersScreen() {
         return;
       }
 
-      const { data, error } = await supabase
+      // 인증 신청 목록 가져오기
+      const { data: certData, error: certError } = await supabase
         .from('certification_requests')
         .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('인증 신청 목록 로드 오류:', error);
-        showAlert('오류', '인증 신청 목록을 불러오지 못했습니다.');
+      if (certError) {
+        console.error('인증 신청 목록 로드 오류:', certError);
       } else {
-        setCertificationRequests(data || []);
+        setCertificationRequests(certData || []);
+      }
+
+      // 실제 users 테이블에서 사용자 목록 가져오기
+      const { data: usersData, error: usersError } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (usersError) {
+        console.error('사용자 목록 로드 오류:', usersError);
+        showAlert('오류', '사용자 목록을 불러오지 못했습니다.');
+      } else {
+        // Supabase 형식을 앱 형식으로 변환
+        const convertedUsers = usersData?.map(u => ({
+          id: u.id,
+          name: u.name,
+          email: u.email || '',
+          gender: u.gender,
+          ageGroup: u.age_group,
+          ntrp: u.ntrp,
+          experience: u.experience,
+          playStyle: u.play_style,
+          careerType: u.career_type,
+          certification: {
+            ntrp: u.certification_ntrp,
+            career: u.certification_career,
+            youtube: u.certification_youtube,
+            instagram: u.certification_instagram,
+          },
+          profileImage: u.profile_image,
+          viewCount: u.view_count,
+          likeCount: u.like_count,
+          avgRating: u.avg_rating,
+        })) || [];
+        
+        setUsers(convertedUsers);
       }
     } catch (error) {
-      console.error('인증 신청 목록 로드 실패:', error);
+      console.error('데이터 로드 실패:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const filteredUsers = mockUsers
+  const filteredUsers = users
     .filter(user => {
       const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase());
       
@@ -139,8 +175,11 @@ export default function AdminUsersScreen() {
     });
 
   const handleViewCertification = (userId: string) => {
-    const user = mockUsers.find(u => u.id === userId);
+    const user = users.find(u => u.id === userId);
     const userRequests = certificationRequests.filter(req => req.user_id === userId);
+    
+    console.log('User ID:', userId);
+    console.log('User Requests:', userRequests);
     
     if (userRequests.length > 0) {
       setSelectedUser({ ...user, certRequests: userRequests });
@@ -199,16 +238,10 @@ export default function AdminUsersScreen() {
             if (userError) {
               console.error('사용자 인증 상태 업데이트 오류:', userError);
             }
-
-            // 로컬 mockUsers도 업데이트
-            const userIndex = mockUsers.findIndex(u => u.id === user.id);
-            if (userIndex !== -1) {
-              mockUsers[userIndex].certification[request.type] = 'verified';
-            }
           }
 
           // 3. UI 업데이트
-          await loadCertificationRequests();
+          await loadData();
           setShowCertRequestModal(false);
           showAlert('완료', `${certTypeText} 인증이 ${actionText}되었습니다.`);
         } catch (error) {
@@ -222,7 +255,7 @@ export default function AdminUsersScreen() {
   };
 
   const handleUserAction = (userId: string, action: string) => {
-    const user = mockUsers.find(u => u.id === userId);
+    const user = users.find(u => u.id === userId);
     if (!user) return;
 
     switch (action) {
@@ -239,8 +272,8 @@ export default function AdminUsersScreen() {
     }
   };
 
-  const totalUsers = mockUsers.length;
-  const verifiedUsers = mockUsers.filter(u => 
+  const totalUsers = users.length;
+  const verifiedUsers = users.filter(u => 
     u.certification.ntrp === 'verified' || 
     u.certification.career === 'verified' ||
     u.certification.youtube === 'verified' ||
@@ -779,259 +812,4 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  statItem: {
-    alignItems: 'center',
-    gap: 4,
-    flex: 1,
-  },
-  statValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  statLabel: {
-    fontSize: 11,
-    color: '#9ca3af',
-  },
-  userActions: {
-    flexDirection: 'row',
-    gap: 6,
-    flexWrap: 'wrap',
-  },
-  actionButton: {
-    minWidth: 60,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-  },
-  messageButton: {
-    backgroundColor: '#dbeafe',
-    borderWidth: 1,
-    borderColor: '#3b82f6',
-  },
-  messageButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1e40af',
-  },
-  certViewButton: {
-    backgroundColor: '#f3e8ff',
-    borderWidth: 1,
-    borderColor: '#8b5cf6',
-  },
-  certViewButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#7c3aed',
-  },
-  verifyButton: {
-    backgroundColor: '#dcfce7',
-    borderWidth: 1,
-    borderColor: '#16a34a',
-  },
-  verifyButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#15803d',
-  },
-  suspendButton: {
-    backgroundColor: '#fee2e2',
-    borderWidth: 1,
-    borderColor: '#dc2626',
-  },
-  suspendButtonText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#dc2626',
-  },
-  bottomPadding: {
-    height: 40,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#f9fafb',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  modalCancelText: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  placeholder: {
-    width: 32,
-  },
-  modalContent: {
-    flex: 1,
-    paddingTop: 16,
-  },
-  modalSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 20,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  modalSectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 12,
-  },
-  userInfoCard: {
-    gap: 8,
-  },
-  userInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  userInfoLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  userInfoValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  certRequestCard: {
-    backgroundColor: '#fef3c7',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#fbbf24',
-    gap: 8,
-  },
-  certRequestRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  certRequestLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#92400e',
-  },
-  certRequestValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#92400e',
-  },
-  pendingStatus: {
-    color: '#f59e0b',
-  },
-  approvedStatus: {
-    color: '#16a34a',
-  },
-  descriptionCard: {
-    backgroundColor: '#f9fafb',
-    padding: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  descriptionText: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-  },
-  evidenceCard: {
-    gap: 12,
-  },
-  evidenceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f3f4f6',
-    padding: 12,
-    borderRadius: 8,
-    gap: 12,
-  },
-  evidenceFileName: {
-    flex: 1,
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '500',
-  },
-  viewFileButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  viewFileText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  noCertRequestCard: {
-    backgroundColor: '#f9fafb',
-    padding: 40,
-    borderRadius: 8,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  noCertRequestText: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    gap: 12,
-  },
-  modalActionButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 8,
-  },
-  rejectButton: {
-    backgroundColor: '#dc2626',
-  },
-  rejectButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  approveButton: {
-    backgroundColor: '#16a34a',
-  },
-  approveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-  certActionButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 16,
-  },
-});
+  statItem:

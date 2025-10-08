@@ -115,7 +115,7 @@ export default function ProfileSettingsScreen() {
               style={styles.textInput}
               value={formData.name}
               onChangeText={(text) => setFormData({...formData, name: text})}
-              placeholder="이름을 입력하세요"
+              placeholder="닉네임을 입력하세요"
               placeholderTextColor="#9ca3af"
             />
           </View>

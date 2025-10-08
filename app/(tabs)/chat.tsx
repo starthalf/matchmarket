@@ -19,6 +19,8 @@ export default function ChatScreen() {
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollViewRef = useRef<ScrollView>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: ChatMessage }>({});
 
   // 내가 참여한 매치들에서 채팅방 생성
   const myChatRooms: ChatRoom[] = matches

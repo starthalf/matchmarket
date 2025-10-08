@@ -12,7 +12,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Clock, Check, Youtube, Instagram, Award } from 'lucide-react-native';
+import { ArrowLeft, Clock, Check, Award, Video, Image } from 'lucide-react-native';
 import { useSafeStyles } from '../constants/Styles';
 
 export default function CertificationScreen() {
@@ -279,7 +279,7 @@ export default function CertificationScreen() {
         <View style={styles.certificationCard}>
           <View style={styles.certificationHeader}>
             <View style={styles.certificationInfo}>
-              <Youtube size={24} color="#dc2626" />
+<Video size={24} color="#dc2626" />
               <View style={styles.certificationDetails}>
                 <Text style={styles.certificationTitle}>유튜버 인증</Text>
                 <Text style={styles.certificationDescription}>
@@ -312,7 +312,7 @@ export default function CertificationScreen() {
         <View style={styles.certificationCard}>
           <View style={styles.certificationHeader}>
             <View style={styles.certificationInfo}>
-              <Instagram size={24} color="#e1306c" />
+<Image size={24} color="#e1306c" />
               <View style={styles.certificationDetails}>
                 <Text style={styles.certificationTitle}>인플루언서 인증</Text>
                 <Text style={styles.certificationDescription}>

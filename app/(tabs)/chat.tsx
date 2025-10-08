@@ -18,9 +18,8 @@ export default function ChatScreen() {
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [messageInput, setMessageInput] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: ChatMessage }>({});
   const scrollViewRef = useRef<ScrollView>(null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: ChatMessage }>({});
 
   // 내가 참여한 매치들에서 채팅방 생성
   const myChatRooms: ChatRoom[] = matches
@@ -60,6 +59,50 @@ const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: Cha
     searchQuery === '' ||
     (room as any).matchTitle?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // 각 방의 최근 메시지 로드
+  const loadRoomLastMessages = async () => {
+    if (!user) return;
+
+    try {
+      for (const room of myChatRooms) {
+        const { data, error } = await supabaseAdmin
+          .from('chat_messages')
+          .select('*')
+          .eq('room_id', room.id)
+          .order('timestamp', { ascending: false })
+          .limit(1);
+
+        if (!error && data && data.length > 0) {
+          const msg = data[0];
+          const lastMsg: ChatMessage = {
+            id: msg.id,
+            roomId: msg.room_id,
+            senderId: msg.sender_id,
+            senderName: msg.sender_name,
+            message: msg.message,
+            type: msg.type as 'text' | 'system',
+            timestamp: msg.timestamp,
+            isRead: msg.is_read
+          };
+
+          setRoomLastMessages(prev => ({
+            ...prev,
+            [room.id]: lastMsg
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('최근 메시지 로드 오류:', error);
+    }
+  };
+
+  // 채팅방 목록 변경 시 최근 메시지들 로드
+  useEffect(() => {
+    if (user && myChatRooms.length > 0) {
+      loadRoomLastMessages();
+    }
+  }, [user, myChatRooms.length]);
 
   // Supabase에서 메시지 불러오기
   const loadMessages = async (roomId: string) => {
@@ -149,6 +192,12 @@ const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: Cha
     setMessages(prev => [...prev, newMessage]);
     setMessageInput('');
 
+    // 채팅 목록의 최근 메시지도 업데이트
+    setRoomLastMessages(prev => ({
+      ...prev,
+      [selectedRoom.id]: newMessage
+    }));
+
     // Supabase에 저장
     try {
       const { error } = await supabaseAdmin
@@ -219,6 +268,12 @@ const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: Cha
             if (exists) return prev;
             return [...prev, chatMessage];
           });
+
+          // 채팅 목록의 최근 메시지도 업데이트
+          setRoomLastMessages(prev => ({
+            ...prev,
+            [selectedRoom.id]: chatMessage
+          }));
 
           // 새 메시지가 오면 스크롤 내리기
           setTimeout(() => {
@@ -324,7 +379,7 @@ const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: Cha
                           {(room as any).matchTitle || '매치 채팅'}
                         </Text>
                         <Text style={styles.roomTime}>
-                          {formatTime(room.lastMessage?.timestamp || room.updatedAt)}
+                          {formatTime(roomLastMessages[room.id]?.timestamp || room.lastMessage?.timestamp || room.updatedAt)}
                         </Text>
                       </View>
                       
@@ -341,7 +396,7 @@ const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: Cha
                       </View>
                       
                       <Text style={styles.lastMessage}>
-                        {room.lastMessage?.message || '메시지가 없습니다'}
+                        {roomLastMessages[room.id]?.message || room.lastMessage?.message || '메시지가 없습니다'}
                       </Text>
                     </View>
 

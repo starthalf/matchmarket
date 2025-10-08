@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,80 +8,35 @@ import {
   TextInput,
   Alert,
   Modal,
-  Image,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, User, Star, Award, Calendar, TrendingUp, Eye, Heart, FileText, X } from 'lucide-react-native';
 import { mockUsers } from '../../data/mockData';
 import { CertificationBadge } from '../../components/CertificationBadge';
 import { useSafeStyles } from '../../constants/Styles';
+import { supabase } from '../../lib/supabase';
 
-// Mock 인증 신청 데이터
-const mockCertificationRequests = {
-  'dummy_f1': {
-    ntrp: {
-      id: 'cert_ntrp_f1',
-      userId: 'dummy_f1',
-      type: 'ntrp',
-      requestedNtrp: 4.2,
-      description: '대학교 테니스부에서 4년간 활동했으며, 지역 대회에서 여러 차례 입상 경험이 있습니다.',
-      evidenceFiles: ['대회성적표_2024.jpg', '선수증명서.pdf'],
-      status: 'pending',
-      submittedAt: '2024-12-27T10:30:00Z',
-    },
-    instagram: {
-      id: 'cert_ig_f1',
-      userId: 'dummy_f1',
-      type: 'instagram',
-      description: '테니스 관련 인스타그램 계정을 운영하고 있으며, 팔로워 1.5만명을 보유하고 있습니다.',
-      evidenceFiles: ['인스타그램_프로필.jpg', '팔로워수_증명.jpg'],
-      status: 'pending',
-      submittedAt: '2024-12-26T14:20:00Z',
+// 웹/모바일 호환 Alert 함수
+const showAlert = (title: string, message?: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(message || title);
+  } else {
+    Alert.alert(title, message);
+  }
+};
+
+const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+  if (Platform.OS === 'web') {
+    if (window.confirm(message)) {
+      onConfirm();
     }
-  },
-  'dummy_m1': {
-    youtube: {
-      id: 'cert_yt_m1',
-      userId: 'dummy_m1',
-      type: 'youtube',
-      description: '테니스 관련 유튜브 채널을 운영하고 있으며, 구독자 3만명을 보유하고 있습니다.',
-      evidenceFiles: ['유튜브채널_스크린샷.jpg', '구독자수_증명.jpg'],
-      status: 'pending',
-      submittedAt: '2024-12-25T14:20:00Z',
-    }
-  },
-  'dummy_m2': {
-    ntrp: {
-      id: 'cert_ntrp_m2',
-      userId: 'dummy_m2',
-      type: 'ntrp',
-      requestedNtrp: 3.8,
-      description: '실업팀에서 3년간 선수 생활을 했으며, 현재는 코치로 활동하고 있습니다.',
-      evidenceFiles: ['선수경력증명서.jpg', '코치자격증.pdf'],
-      status: 'pending',
-      submittedAt: '2024-12-26T15:20:00Z',
-    },
-    instagram: {
-      id: 'cert_ig_m2',
-      userId: 'dummy_m2',
-      type: 'instagram',
-      description: '테니스 관련 인스타그램 계정을 운영하고 있으며, 팔로워 8천명을 보유하고 있습니다.',
-      evidenceFiles: ['인스타그램_프로필.jpg', '팔로워수_증명.jpg'],
-      status: 'pending',
-      submittedAt: '2024-12-25T09:15:00Z',
-    }
-  },
-  'dummy_f3': {
-    ntrp: {
-      id: 'cert_ntrp_f3',
-      userId: 'dummy_f3',
-      type: 'ntrp',
-      requestedNtrp: 3.5,
-      description: '동호회에서 2년간 활동하며 꾸준히 실력을 향상시켜왔습니다.',
-      evidenceFiles: ['동호회활동증명서.jpg', '대회참가증.jpg'],
-      status: 'pending',
-      submittedAt: '2024-12-24T11:45:00Z',
-    }
+  } else {
+    Alert.alert(title, message, [
+      { text: '취소', style: 'cancel' },
+      { text: '확인', onPress: onConfirm }
+    ]);
   }
 };
 
@@ -92,6 +47,9 @@ export default function AdminUsersScreen() {
   const [filterCertification, setFilterCertification] = useState<'all' | 'verified' | 'pending' | 'none'>('all');
   const [showCertRequestModal, setShowCertRequestModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [certificationRequests, setCertificationRequests] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Mock 사용자 수익 데이터
   const userRevenues = {
@@ -108,6 +66,39 @@ export default function AdminUsersScreen() {
     '3': 5,
     '4': 3,
     '5': 2,
+  };
+
+  // Supabase에서 인증 신청 목록 가져오기
+  useEffect(() => {
+    loadCertificationRequests();
+  }, []);
+
+  const loadCertificationRequests = async () => {
+    setIsLoading(true);
+    try {
+      if (!supabase) {
+        console.warn('Supabase 연결 안 됨');
+        setIsLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('certification_requests')
+        .select('*')
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('인증 신청 목록 로드 오류:', error);
+        showAlert('오류', '인증 신청 목록을 불러오지 못했습니다.');
+      } else {
+        setCertificationRequests(data || []);
+      }
+    } catch (error) {
+      console.error('인증 신청 목록 로드 실패:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const filteredUsers = mockUsers
@@ -148,73 +139,85 @@ export default function AdminUsersScreen() {
     });
 
   const handleViewCertification = (userId: string) => {
-    const userCertRequests = mockCertificationRequests[userId as keyof typeof mockCertificationRequests];
     const user = mockUsers.find(u => u.id === userId);
-    if (userCertRequests) {
-      setSelectedUser({ ...user, certRequests: userCertRequests });
+    const userRequests = certificationRequests.filter(req => req.user_id === userId);
+    
+    if (userRequests.length > 0) {
+      setSelectedUser({ ...user, certRequests: userRequests });
       setShowCertRequestModal(true);
     } else {
-      Alert.alert('알림', '해당 사용자의 인증 신청이 없습니다.');
+      showAlert('알림', '해당 사용자의 인증 신청이 없습니다.');
     }
   };
 
-  const handleCertificationAction = (action: 'approve' | 'reject', certType: 'ntrp' | 'youtube' | 'instagram') => {
-    if (!selectedUser?.certRequests) return;
-
-    const certRequest = selectedUser.certRequests[certType];
-    if (!certRequest) return;
+  const handleCertificationAction = async (action: 'approve' | 'reject', request: any) => {
+    if (!request) return;
 
     const user = selectedUser;
     const actionText = action === 'approve' ? '승인' : '거부';
-    const certTypeText = certType === 'ntrp' ? 'NTRP' : 
-                        certType === 'youtube' ? '유튜버' : 
-                        certType === 'instagram' ? '인플루언서' : '인증';
+    const certTypeText = request.type === 'ntrp' ? 'NTRP' : 
+                        request.type === 'youtube' ? '유튜버' : 
+                        request.type === 'instagram' ? '인플루언서' :
+                        request.type === 'career' ? '선수 경력' : '인증';
     
-    Alert.alert(
+    showConfirm(
       `인증 ${actionText}`,
       `${user?.name}님의 ${certTypeText} 인증을 ${actionText}하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        { text: actionText, onPress: async () => {
-          try {
-            // Supabase에서 사용자 인증 상태 업데이트
-            if (supabase) {
-              const certificationField = `certification_${certType}`;
-              const newStatus = action === 'approve' ? 'verified' : 'none';
-              
-              const { error } = await supabase
-                .from('users')
-                .update({ [certificationField]: newStatus })
-                .eq('id', user.id);
-              
-              if (error) {
-                console.error('인증 상태 업데이트 오류:', error);
-                Alert.alert('오류', '인증 상태 업데이트에 실패했습니다.');
-                return;
-              }
+      async () => {
+        setIsProcessing(true);
+        try {
+          if (!supabase) {
+            showAlert('오류', 'Supabase 연결이 필요합니다.');
+            setIsProcessing(false);
+            return;
+          }
+
+          // 1. certification_requests 테이블 업데이트
+          const { error: requestError } = await supabase
+            .from('certification_requests')
+            .update({ 
+              status: action === 'approve' ? 'approved' : 'rejected',
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', request.id);
+
+          if (requestError) {
+            console.error('인증 요청 업데이트 오류:', requestError);
+            showAlert('오류', '인증 처리에 실패했습니다.');
+            setIsProcessing(false);
+            return;
+          }
+
+          // 2. users 테이블 업데이트 (승인된 경우에만)
+          if (action === 'approve') {
+            const certificationField = `certification_${request.type}`;
+            const { error: userError } = await supabase
+              .from('users')
+              .update({ [certificationField]: 'verified' })
+              .eq('id', user.id);
+
+            if (userError) {
+              console.error('사용자 인증 상태 업데이트 오류:', userError);
             }
-            
-            // 로컬 mockUsers도 업데이트 (UI 즉시 반영용)
+
+            // 로컬 mockUsers도 업데이트
             const userIndex = mockUsers.findIndex(u => u.id === user.id);
             if (userIndex !== -1) {
-              if (action === 'approve') {
-                mockUsers[userIndex].certification[certType] = 'verified';
-              } else {
-                mockUsers[userIndex].certification[certType] = 'none';
-              }
+              mockUsers[userIndex].certification[request.type] = 'verified';
             }
-            
-            // 인증 요청에서 제거
-            delete selectedUser.certRequests[certType];
-            
-            setShowCertRequestModal(false);
-            Alert.alert('완료', `${certTypeText} 인증이 ${actionText}되었습니다.`);
-          } catch (error) {
-            console.error('인증 처리 중 오류:', error);
-            Alert.alert('오류', '인증 처리 중 오류가 발생했습니다.');
           }
-        }}
-      ]
+
+          // 3. UI 업데이트
+          await loadCertificationRequests();
+          setShowCertRequestModal(false);
+          showAlert('완료', `${certTypeText} 인증이 ${actionText}되었습니다.`);
+        } catch (error) {
+          console.error('인증 처리 중 오류:', error);
+          showAlert('오류', '인증 처리 중 오류가 발생했습니다.');
+        } finally {
+          setIsProcessing(false);
+        }
+      }
     );
   };
 
@@ -224,39 +227,36 @@ export default function AdminUsersScreen() {
 
     switch (action) {
       case 'suspend':
-        Alert.alert(
+        showConfirm(
           '사용자 정지',
           `${user.name}님을 정지하시겠습니까?`,
-          [
-            { text: '취소', style: 'cancel' },
-            { text: '정지', onPress: () => Alert.alert('완료', '사용자가 정지되었습니다.') }
-          ]
-        );
-        break;
-      case 'verify':
-        Alert.alert(
-          '인증 승인',
-          `${user.name}님의 인증을 승인하시겠습니까?`,
-          [
-            { text: '취소', style: 'cancel' },
-            { text: '승인', onPress: () => Alert.alert('완료', '인증이 승인되었습니다.') }
-          ]
+          () => showAlert('완료', '사용자가 정지되었습니다.')
         );
         break;
       case 'message':
-        Alert.alert('메시지 발송', `${user.name}님에게 메시지를 발송합니다.`);
+        showAlert('메시지 발송', `${user.name}님에게 메시지를 발송합니다.`);
         break;
     }
   };
 
   const totalUsers = mockUsers.length;
-  const verifiedUsers = mockUsers.filter(u => u.certification.ntrp === 'verified' || u.certification.career === 'verified').length;
-  const pendingUsers = mockUsers.filter(u => 
-    u.certification.ntrp === 'pending' || 
-    u.certification.career === 'pending' ||
-    u.certification.youtube === 'pending' ||
-    u.certification.instagram === 'pending'
+  const verifiedUsers = mockUsers.filter(u => 
+    u.certification.ntrp === 'verified' || 
+    u.certification.career === 'verified' ||
+    u.certification.youtube === 'verified' ||
+    u.certification.instagram === 'verified'
   ).length;
+  const pendingUsers = certificationRequests.length;
+
+  const getCertTypeLabel = (type: string) => {
+    switch (type) {
+      case 'ntrp': return 'NTRP';
+      case 'career': return '선수 경력';
+      case 'youtube': return '유튜버';
+      case 'instagram': return '인플루언서';
+      default: return type;
+    }
+  };
 
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
@@ -267,207 +267,308 @@ export default function AdminUsersScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* 사용자 현황 요약 */}
-        <View style={styles.summarySection}>
-          <Text style={styles.sectionTitle}>사용자 현황</Text>
-          
-          <View style={styles.summaryCards}>
-            <View style={styles.summaryCard}>
-              <User size={24} color="#3b82f6" />
-              <Text style={styles.summaryAmount}>{totalUsers}명</Text>
-              <Text style={styles.summaryLabel}>전체 사용자</Text>
-            </View>
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#dc2626" />
+          <Text style={styles.loadingText}>로딩 중...</Text>
+        </View>
+      ) : (
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* 사용자 현황 요약 */}
+          <View style={styles.summarySection}>
+            <Text style={styles.sectionTitle}>사용자 현황</Text>
             
-            <View style={styles.summaryCard}>
-              <Award size={24} color="#16a34a" />
-              <Text style={styles.summaryAmount}>{verifiedUsers}명</Text>
-              <Text style={styles.summaryLabel}>인증 사용자</Text>
-            </View>
-            
-            <View style={styles.summaryCard}>
-              <Calendar size={24} color="#f59e0b" />
-              <Text style={styles.summaryAmount}>{pendingUsers}명</Text>
-              <Text style={styles.summaryLabel}>인증 대기</Text>
+            <View style={styles.summaryCards}>
+              <View style={styles.summaryCard}>
+                <User size={24} color="#3b82f6" />
+                <Text style={styles.summaryAmount}>{totalUsers}명</Text>
+                <Text style={styles.summaryLabel}>전체 사용자</Text>
+              </View>
+              
+              <View style={styles.summaryCard}>
+                <Award size={24} color="#16a34a" />
+                <Text style={styles.summaryAmount}>{verifiedUsers}명</Text>
+                <Text style={styles.summaryLabel}>인증 사용자</Text>
+              </View>
+              
+              <View style={styles.summaryCard}>
+                <Calendar size={24} color="#f59e0b" />
+                <Text style={styles.summaryAmount}>{pendingUsers}명</Text>
+                <Text style={styles.summaryLabel}>인증 대기</Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* 검색 및 필터 */}
-        <View style={styles.searchSection}>
-          <View style={styles.searchBar}>
-            <Search size={20} color="#6b7280" />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="사용자 검색..."
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholderTextColor="#9ca3af"
-            />
+          {/* 검색 및 필터 */}
+          <View style={styles.searchSection}>
+            <View style={styles.searchBar}>
+              <Search size={20} color="#6b7280" />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="사용자 검색..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                placeholderTextColor="#9ca3af"
+              />
+            </View>
           </View>
-        </View>
 
-        <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {[
-              { key: 'name', label: '이름순' },
-              { key: 'rating', label: '평점순' },
-              { key: 'revenue', label: '수익순' },
-              { key: 'matches', label: '매치순' },
-            ].map((sort) => (
-              <TouchableOpacity
-                key={sort.key}
-                style={[
-                  styles.filterButton,
-                  sortBy === sort.key && styles.filterButtonActive
-                ]}
-                onPress={() => setSortBy(sort.key as any)}
-              >
-                <Text style={[
-                  styles.filterText,
-                  sortBy === sort.key && styles.filterTextActive
-                ]}>
-                  {sort.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        <View style={styles.filterSection}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {[
-              { key: 'all', label: '전체' },
-              { key: 'verified', label: '인증완료' },
-              { key: 'pending', label: '인증대기' },
-              { key: 'none', label: '미인증' },
-            ].map((filter) => (
-              <TouchableOpacity
-                key={filter.key}
-                style={[
-                  styles.certFilterButton,
-                  filterCertification === filter.key && styles.certFilterButtonActive
-                ]}
-                onPress={() => setFilterCertification(filter.key as any)}
-              >
-                <Text style={[
-                  styles.certFilterText,
-                  filterCertification === filter.key && styles.certFilterTextActive
-                ]}>
-                  {filter.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* 사용자 목록 */}
-        <View style={styles.usersSection}>
-          <Text style={styles.sectionTitle}>
-            사용자 목록 ({filteredUsers.length})
-          </Text>
-          
-          {filteredUsers.map((user) => (
-            <View key={user.id} style={styles.userCard}>
-              <View style={styles.userHeader}>
-                <View style={styles.userBasicInfo}>
-                  <View style={styles.userNameRow}>
-                    <Text style={styles.userName}>{user.name}</Text>
-                    <CertificationBadge 
-                      ntrpCert={user.certification.ntrp}
-                      careerCert={user.certification.career}
-                      size="small"
-                    />
-                  </View>
-                  <Text style={styles.userDetails}>
-                    {user.gender} · {user.ageGroup} · NTRP {user.ntrp} · {user.careerType}
+          <View style={styles.filterSection}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {[
+                { key: 'name', label: '이름순' },
+                { key: 'rating', label: '평점순' },
+                { key: 'revenue', label: '수익순' },
+                { key: 'matches', label: '매치순' },
+              ].map((sort) => (
+                <TouchableOpacity
+                  key={sort.key}
+                  style={[
+                    styles.filterButton,
+                    sortBy === sort.key && styles.filterButtonActive
+                  ]}
+                  onPress={() => setSortBy(sort.key as any)}
+                >
+                  <Text style={[
+                    styles.filterText,
+                    sortBy === sort.key && styles.filterTextActive
+                  ]}>
+                    {sort.label}
                   </Text>
-                </View>
-              </View>
-              
-              <View style={styles.userStats}>
-                <View style={styles.statRow}>
-                  <View style={styles.statItem}>
-                    <Star size={16} color="#f59e0b" />
-                    <Text style={styles.statValue}>{user.avgRating}</Text>
-                    <Text style={styles.statLabel}>평점</Text>
-                  </View>
-                  
-                  <View style={styles.statItem}>
-                    <TrendingUp size={16} color="#16a34a" />
-                    <Text style={styles.statValue}>
-                      {(userRevenues[user.id] || 0).toLocaleString()}원
-                    </Text>
-                    <Text style={styles.statLabel}>총 수익</Text>
-                  </View>
-                  
-                  <View style={styles.statItem}>
-                    <Calendar size={16} color="#3b82f6" />
-                    <Text style={styles.statValue}>{userMatchCounts[user.id] || 0}회</Text>
-                    <Text style={styles.statLabel}>매치</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.statRow}>
-                  <View style={styles.statItem}>
-                    <Eye size={16} color="#6b7280" />
-                    <Text style={styles.statValue}>{user.viewCount}</Text>
-                    <Text style={styles.statLabel}>조회</Text>
-                  </View>
-                  
-                  <View style={styles.statItem}>
-                    <Heart size={16} color="#ec4899" />
-                    <Text style={styles.statValue}>{user.likeCount}</Text>
-                    <Text style={styles.statLabel}>좋아요</Text>
-                  </View>
-                  
-                  <View style={styles.statItem}>
-                    <User size={16} color="#9ca3af" />
-                    <Text style={styles.statValue}>
-                      {Math.floor(user.experience / 12)}년
-                    </Text>
-                    <Text style={styles.statLabel}>경력</Text>
-                  </View>
-                </View>
-              </View>
-              
-              <View style={styles.userActions}>
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.messageButton]}
-                  onPress={() => handleUserAction(user.id, 'message')}
-                >
-                  <Text style={styles.messageButtonText}>메시지</Text>
                 </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.certViewButton]}
-                  onPress={() => handleViewCertification(user.id)}
-                >
-                  <Text style={styles.certViewButtonText}>인증보기</Text>
-                </TouchableOpacity>
-                
-                {(user.certification.ntrp === 'pending' || user.certification.career === 'pending') && (
-                  <TouchableOpacity 
-                    style={[styles.actionButton, styles.verifyButton]}
-                    onPress={() => handleUserAction(user.id, 'verify')}
-                  >
-                    <Text style={styles.verifyButtonText}>인증승인</Text>
-                  </TouchableOpacity>
-                )}
-                
-                <TouchableOpacity 
-                  style={[styles.actionButton, styles.suspendButton]}
-                  onPress={() => handleUserAction(user.id, 'suspend')}
-                >
-                  <Text style={styles.suspendButtonText}>정지</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ))}
-        </View>
+              ))}
+            </ScrollView>
+          </View>
 
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+          <View style={styles.filterSection}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {[
+                { key: 'all', label: '전체' },
+                { key: 'verified', label: '인증완료' },
+                { key: 'pending', label: '인증대기' },
+                { key: 'none', label: '미인증' },
+              ].map((filter) => (
+                <TouchableOpacity
+                  key={filter.key}
+                  style={[
+                    styles.certFilterButton,
+                    filterCertification === filter.key && styles.certFilterButtonActive
+                  ]}
+                  onPress={() => setFilterCertification(filter.key as any)}
+                >
+                  <Text style={[
+                    styles.certFilterText,
+                    filterCertification === filter.key && styles.certFilterTextActive
+                  ]}>
+                    {filter.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* 사용자 목록 */}
+          <View style={styles.usersSection}>
+            <Text style={styles.sectionTitle}>
+              사용자 목록 ({filteredUsers.length})
+            </Text>
+            
+            {filteredUsers.map((user) => (
+              <View key={user.id} style={styles.userCard}>
+                <View style={styles.userHeader}>
+                  <View style={styles.userBasicInfo}>
+                    <View style={styles.userNameRow}>
+                      <Text style={styles.userName}>{user.name}</Text>
+                      <CertificationBadge 
+                        ntrpCert={user.certification.ntrp}
+                        careerCert={user.certification.career}
+                        size="small"
+                      />
+                    </View>
+                    <Text style={styles.userDetails}>
+                      {user.gender} · {user.ageGroup} · NTRP {user.ntrp} · {user.careerType}
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.userStats}>
+                  <View style={styles.statRow}>
+                    <View style={styles.statItem}>
+                      <Star size={16} color="#f59e0b" />
+                      <Text style={styles.statValue}>{user.avgRating}</Text>
+                      <Text style={styles.statLabel}>평점</Text>
+                    </View>
+                    
+                    <View style={styles.statItem}>
+                      <TrendingUp size={16} color="#16a34a" />
+                      <Text style={styles.statValue}>
+                        {(userRevenues[user.id] || 0).toLocaleString()}원
+                      </Text>
+                      <Text style={styles.statLabel}>총 수익</Text>
+                    </View>
+                    
+                    <View style={styles.statItem}>
+                      <Calendar size={16} color="#3b82f6" />
+                      <Text style={styles.statValue}>{userMatchCounts[user.id] || 0}회</Text>
+                      <Text style={styles.statLabel}>매치</Text>
+                    </View>
+                  </View>
+                  
+                  <View style={styles.statRow}>
+                    <View style={styles.statItem}>
+                      <Eye size={16} color="#6b7280" />
+                      <Text style={styles.statValue}>{user.viewCount}</Text>
+                      <Text style={styles.statLabel}>조회</Text>
+                    </View>
+                    
+                    <View style={styles.statItem}>
+                      <Heart size={16} color="#ec4899" />
+                      <Text style={styles.statValue}>{user.likeCount}</Text>
+                      <Text style={styles.statLabel}>좋아요</Text>
+                    </View>
+                    
+                    <View style={styles.statItem}>
+                      <User size={16} color="#9ca3af" />
+                      <Text style={styles.statValue}>
+                        {Math.floor(user.experience / 12)}년
+                      </Text>
+                      <Text style={styles.statLabel}>경력</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                <View style={styles.userActions}>
+                  <TouchableOpacity 
+                    style={[styles.actionButton, styles.messageButton]}
+                    onPress={() => handleUserAction(user.id, 'message')}
+                  >
+                    <Text style={styles.messageButtonText}>메시지</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.actionButton, styles.certViewButton]}
+                    onPress={() => handleViewCertification(user.id)}
+                  >
+                    <Text style={styles.certViewButtonText}>인증보기</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.actionButton, styles.suspendButton]}
+                    onPress={() => handleUserAction(user.id, 'suspend')}
+                  >
+                    <Text style={styles.suspendButtonText}>정지</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.bottomPadding} />
+        </ScrollView>
+      )}
+
+      {/* 인증 신청 모달 */}
+      <Modal
+        visible={showCertRequestModal}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCertRequestModal(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <TouchableOpacity onPress={() => setShowCertRequestModal(false)}>
+              <X size={24} color="#6b7280" />
+            </TouchableOpacity>
+            <Text style={styles.modalTitle}>인증 신청 내역</Text>
+            <View style={styles.placeholder} />
+          </View>
+
+          <ScrollView style={styles.modalContent}>
+            {selectedUser && (
+              <>
+                {/* 사용자 정보 */}
+                <View style={styles.modalSection}>
+                  <Text style={styles.modalSectionTitle}>사용자 정보</Text>
+                  <View style={styles.userInfoCard}>
+                    <View style={styles.userInfoRow}>
+                      <Text style={styles.userInfoLabel}>이름</Text>
+                      <Text style={styles.userInfoValue}>{selectedUser.name}</Text>
+                    </View>
+                    <View style={styles.userInfoRow}>
+                      <Text style={styles.userInfoLabel}>NTRP</Text>
+                      <Text style={styles.userInfoValue}>{selectedUser.ntrp}</Text>
+                    </View>
+                    <View style={styles.userInfoRow}>
+                      <Text style={styles.userInfoLabel}>경력</Text>
+                      <Text style={styles.userInfoValue}>{selectedUser.careerType}</Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* 인증 신청 목록 */}
+                {selectedUser.certRequests && selectedUser.certRequests.map((request: any) => (
+                  <View key={request.id} style={styles.modalSection}>
+                    <Text style={styles.modalSectionTitle}>
+                      {getCertTypeLabel(request.type)} 인증 신청
+                    </Text>
+                    
+                    {request.requested_ntrp && (
+                      <View style={styles.certRequestCard}>
+                        <View style={styles.certRequestRow}>
+                          <Text style={styles.certRequestLabel}>신청 NTRP</Text>
+                          <Text style={styles.certRequestValue}>{request.requested_ntrp}</Text>
+                        </View>
+                      </View>
+                    )}
+
+                    <View style={styles.descriptionCard}>
+                      <Text style={styles.descriptionText}>{request.description}</Text>
+                    </View>
+
+                    <View style={styles.certActionButtons}>
+                      <TouchableOpacity 
+                        style={[styles.modalActionButton, styles.rejectButton]}
+                        onPress={() => handleCertificationAction('reject', request)}
+                        disabled={isProcessing}
+                      >
+                        <Text style={styles.rejectButtonText}>
+                          {isProcessing ? '처리중...' : '거부'}
+                        </Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity 
+                        style={[styles.modalActionButton, styles.approveButton]}
+                        onPress={() => handleCertificationAction('approve', request)}
+                        disabled={isProcessing}
+                      >
+                        <Text style={styles.approveButtonText}>
+                          {isProcessing ? '처리중...' : '승인'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                ))}
+
+                {(!selectedUser.certRequests || selectedUser.certRequests.length === 0) && (
+                  <View style={styles.noCertRequestCard}>
+                    <Text style={styles.noCertRequestText}>
+                      인증 신청 내역이 없습니다.
+                    </Text>
+                  </View>
+                )}
+              </>
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* 로딩 오버레이 */}
+      {isProcessing && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#ffffff" />
+          <Text style={styles.loadingOverlayText}>처리 중...</Text>
+        </View>
+      )}
     </SafeAreaView>
   );
 }
@@ -476,6 +577,34 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingOverlayText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
   },
   header: {
     paddingHorizontal: 20,

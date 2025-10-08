@@ -7,6 +7,7 @@ import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { MatchProvider } from '@/contexts/MatchContext';
 import { AdminProvider } from '@/contexts/AdminContext';
+import { ChatProvider } from '@/contexts/ChatContext';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -37,19 +38,21 @@ export default function RootLayout() {
       <AuthProvider>
         <AdminProvider>
           <MatchProvider>
-            {/* StatusBar를 맨 위로 이동하고 더 명확한 설정 */}
-            <StatusBar 
-              style="dark" 
-              backgroundColor="transparent" 
-              translucent={true}
-            />
-            <Stack screenOptions={{ 
-              headerShown: false,
-              // Stack 네비게이션에서도 SafeArea 고려
-              contentStyle: { backgroundColor: '#f9fafb' }
-            }}>
-              <Stack.Screen name="+not-found" />
-            </Stack>
+            <ChatProvider>
+              {/* StatusBar를 맨 위로 이동하고 더 명확한 설정 */}
+              <StatusBar 
+                style="dark" 
+                backgroundColor="transparent" 
+                translucent={true}
+              />
+              <Stack screenOptions={{ 
+                headerShown: false,
+                // Stack 네비게이션에서도 SafeArea 고려
+                contentStyle: { backgroundColor: '#f9fafb' }
+              }}>
+                <Stack.Screen name="+not-found" />
+              </Stack>
+            </ChatProvider>
           </MatchProvider>
         </AdminProvider>
       </AuthProvider>

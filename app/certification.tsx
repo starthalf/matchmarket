@@ -8,12 +8,35 @@ import {
   TextInput,
   Alert,
   Modal,
+  Platform,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Award, PlayCircle, Camera } from 'lucide-react-native';
 import { useSafeStyles } from '../constants/Styles';
+
+// 웹/모바일 호환 Alert 함수
+const showAlert = (title: string, message?: string) => {
+  if (Platform.OS === 'web') {
+    window.alert(message || title);
+  } else {
+    Alert.alert(title, message);
+  }
+};
+
+const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+  if (Platform.OS === 'web') {
+    if (window.confirm(message)) {
+      onConfirm();
+    }
+  } else {
+    Alert.alert(title, message, [
+      { text: '취소', style: 'cancel' },
+      { text: '신청', onPress: onConfirm }
+    ]);
+  }
+};
 
 export default function CertificationScreen() {
   const { user, updateUser } = useAuth();
@@ -50,119 +73,107 @@ export default function CertificationScreen() {
 
   const handleNtrpSubmit = () => {
     if (!ntrpForm.requestedNtrp || !ntrpForm.description) {
-      Alert.alert('입력 오류', '모든 항목을 입력해주세요.');
+      showAlert('입력 오류', '모든 항목을 입력해주세요.');
       return;
     }
 
     const ntrp = parseFloat(ntrpForm.requestedNtrp);
     if (isNaN(ntrp) || ntrp < 1.0 || ntrp > 7.0) {
-      Alert.alert('입력 오류', 'NTRP는 1.0~7.0 사이의 값이어야 합니다.');
+      showAlert('입력 오류', 'NTRP는 1.0~7.0 사이의 값이어야 합니다.');
       return;
     }
 
-    Alert.alert(
+    showConfirm(
       'NTRP 인증 신청',
       `NTRP ${ntrp} 인증을 신청하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '신청', onPress: () => {
-          const updatedUser = {
-            ...user,
-            certification: {
-              ...user.certification,
-              ntrp: 'pending' as const
-            }
-          };
-          updateUser(updatedUser);
-          setShowNtrpModal(false);
-          setNtrpForm({ requestedNtrp: '', description: '' });
-          Alert.alert('신청 완료', 'NTRP 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
-        }}
-      ]
+      () => {
+        const updatedUser = {
+          ...user,
+          certification: {
+            ...user.certification,
+            ntrp: 'pending' as const
+          }
+        };
+        updateUser(updatedUser);
+        setShowNtrpModal(false);
+        setNtrpForm({ requestedNtrp: '', description: '' });
+        showAlert('신청 완료', 'NTRP 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+      }
     );
   };
 
   const handleCareerSubmit = () => {
     if (!careerForm.description) {
-      Alert.alert('입력 오류', '경력 설명을 입력해주세요.');
+      showAlert('입력 오류', '경력 설명을 입력해주세요.');
       return;
     }
 
-    Alert.alert(
+    showConfirm(
       '선수 경력 인증 신청',
       '선수 경력 인증을 신청하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '신청', onPress: () => {
-          const updatedUser = {
-            ...user,
-            certification: {
-              ...user.certification,
-              career: 'pending' as const
-            }
-          };
-          updateUser(updatedUser);
-          setShowCareerModal(false);
-          setCareerForm({ description: '' });
-          Alert.alert('신청 완료', '선수 경력 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
-        }}
-      ]
+      () => {
+        const updatedUser = {
+          ...user,
+          certification: {
+            ...user.certification,
+            career: 'pending' as const
+          }
+        };
+        updateUser(updatedUser);
+        setShowCareerModal(false);
+        setCareerForm({ description: '' });
+        showAlert('신청 완료', '선수 경력 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+      }
     );
   };
 
   const handleYoutubeSubmit = () => {
     if (!youtubeForm.description) {
-      Alert.alert('입력 오류', '유튜브 채널 설명을 입력해주세요.');
+      showAlert('입력 오류', '유튜브 채널 설명을 입력해주세요.');
       return;
     }
 
-    Alert.alert(
+    showConfirm(
       '유튜버 인증 신청',
       '유튜버 인증을 신청하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '신청', onPress: () => {
-          const updatedUser = {
-            ...user,
-            certification: {
-              ...user.certification,
-              youtube: 'pending' as const
-            }
-          };
-          updateUser(updatedUser);
-          setShowYoutubeModal(false);
-          setYoutubeForm({ description: '' });
-          Alert.alert('신청 완료', '유튜버 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
-        }}
-      ]
+      () => {
+        const updatedUser = {
+          ...user,
+          certification: {
+            ...user.certification,
+            youtube: 'pending' as const
+          }
+        };
+        updateUser(updatedUser);
+        setShowYoutubeModal(false);
+        setYoutubeForm({ description: '' });
+        showAlert('신청 완료', '유튜버 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+      }
     );
   };
 
   const handleInstagramSubmit = () => {
     if (!instagramForm.description) {
-      Alert.alert('입력 오류', '인스타그램 계정 설명을 입력해주세요.');
+      showAlert('입력 오류', '인스타그램 계정 설명을 입력해주세요.');
       return;
     }
 
-    Alert.alert(
+    showConfirm(
       '인플루언서 인증 신청',
       '인플루언서 인증을 신청하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '신청', onPress: () => {
-          const updatedUser = {
-            ...user,
-            certification: {
-              ...user.certification,
-              instagram: 'pending' as const
-            }
-          };
-          updateUser(updatedUser);
-          setShowInstagramModal(false);
-          setInstagramForm({ description: '' });
-          Alert.alert('신청 완료', '인플루언서 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
-        }}
-      ]
+      () => {
+        const updatedUser = {
+          ...user,
+          certification: {
+            ...user.certification,
+            instagram: 'pending' as const
+          }
+        };
+        updateUser(updatedUser);
+        setShowInstagramModal(false);
+        setInstagramForm({ description: '' });
+        showAlert('신청 완료', '인플루언서 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+      }
     );
   };
 

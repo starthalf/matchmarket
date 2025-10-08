@@ -9,12 +9,14 @@ import {
   Alert,
   Modal,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { ArrowLeft, Upload, Send, CircleCheck as CheckCircle, Clock, Copy, Mail, Check, Award, PlayCircle, Camera } from 'lucide-react-native';
 import { useSafeStyles } from '../constants/Styles';
+import { supabase } from '../lib/supabase';
 
 // 웹/모바일 호환 Alert 함수
 const showAlert = (title: string, message?: string) => {
@@ -45,6 +47,7 @@ export default function CertificationScreen() {
   const [showCareerModal, setShowCareerModal] = useState(false);
   const [showYoutubeModal, setShowYoutubeModal] = useState(false);
   const [showInstagramModal, setShowInstagramModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [ntrpForm, setNtrpForm] = useState({
     requestedNtrp: '',
@@ -71,7 +74,7 @@ export default function CertificationScreen() {
     );
   }
 
-  const handleNtrpSubmit = () => {
+  const handleNtrpSubmit = async () => {
     if (!ntrpForm.requestedNtrp || !ntrpForm.description) {
       showAlert('입력 오류', '모든 항목을 입력해주세요.');
       return;
@@ -86,23 +89,55 @@ export default function CertificationScreen() {
     showConfirm(
       'NTRP 인증 신청',
       `NTRP ${ntrp} 인증을 신청하시겠습니까?`,
-      () => {
-        const updatedUser = {
-          ...user,
-          certification: {
-            ...user.certification,
-            ntrp: 'pending' as const
+      async () => {
+        setIsSubmitting(true);
+        
+        try {
+          // Supabase에 인증 신청 저장
+          if (supabase) {
+            const { error } = await supabase
+              .from('certification_requests')
+              .insert({
+                user_id: user.id,
+                user_name: user.name,
+                type: 'ntrp',
+                requested_ntrp: ntrp,
+                description: ntrpForm.description,
+                status: 'pending'
+              });
+
+            if (error) {
+              console.error('NTRP 신청 저장 오류:', error);
+              showAlert('오류', '신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+              setIsSubmitting(false);
+              return;
+            }
           }
-        };
-        updateUser(updatedUser);
-        setShowNtrpModal(false);
-        setNtrpForm({ requestedNtrp: '', description: '' });
-        showAlert('신청 완료', 'NTRP 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+
+          // 로컬 user 상태 업데이트
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              ntrp: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
+          
+          setShowNtrpModal(false);
+          setNtrpForm({ requestedNtrp: '', description: '' });
+          showAlert('신청 완료', 'NTRP 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+        } catch (error) {
+          console.error('NTRP 신청 오류:', error);
+          showAlert('오류', '신청 중 오류가 발생했습니다.');
+        } finally {
+          setIsSubmitting(false);
+        }
       }
     );
   };
 
-  const handleCareerSubmit = () => {
+  const handleCareerSubmit = async () => {
     if (!careerForm.description) {
       showAlert('입력 오류', '경력 설명을 입력해주세요.');
       return;
@@ -111,23 +146,54 @@ export default function CertificationScreen() {
     showConfirm(
       '선수 경력 인증 신청',
       '선수 경력 인증을 신청하시겠습니까?',
-      () => {
-        const updatedUser = {
-          ...user,
-          certification: {
-            ...user.certification,
-            career: 'pending' as const
+      async () => {
+        setIsSubmitting(true);
+        
+        try {
+          // Supabase에 인증 신청 저장
+          if (supabase) {
+            const { error } = await supabase
+              .from('certification_requests')
+              .insert({
+                user_id: user.id,
+                user_name: user.name,
+                type: 'career',
+                description: careerForm.description,
+                status: 'pending'
+              });
+
+            if (error) {
+              console.error('선수 경력 신청 저장 오류:', error);
+              showAlert('오류', '신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+              setIsSubmitting(false);
+              return;
+            }
           }
-        };
-        updateUser(updatedUser);
-        setShowCareerModal(false);
-        setCareerForm({ description: '' });
-        showAlert('신청 완료', '선수 경력 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+
+          // 로컬 user 상태 업데이트
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              career: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
+          
+          setShowCareerModal(false);
+          setCareerForm({ description: '' });
+          showAlert('신청 완료', '선수 경력 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+        } catch (error) {
+          console.error('선수 경력 신청 오류:', error);
+          showAlert('오류', '신청 중 오류가 발생했습니다.');
+        } finally {
+          setIsSubmitting(false);
+        }
       }
     );
   };
 
-  const handleYoutubeSubmit = () => {
+  const handleYoutubeSubmit = async () => {
     if (!youtubeForm.description) {
       showAlert('입력 오류', '유튜브 채널 설명을 입력해주세요.');
       return;
@@ -136,23 +202,54 @@ export default function CertificationScreen() {
     showConfirm(
       '유튜버 인증 신청',
       '유튜버 인증을 신청하시겠습니까?',
-      () => {
-        const updatedUser = {
-          ...user,
-          certification: {
-            ...user.certification,
-            youtube: 'pending' as const
+      async () => {
+        setIsSubmitting(true);
+        
+        try {
+          // Supabase에 인증 신청 저장
+          if (supabase) {
+            const { error } = await supabase
+              .from('certification_requests')
+              .insert({
+                user_id: user.id,
+                user_name: user.name,
+                type: 'youtube',
+                description: youtubeForm.description,
+                status: 'pending'
+              });
+
+            if (error) {
+              console.error('유튜버 신청 저장 오류:', error);
+              showAlert('오류', '신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+              setIsSubmitting(false);
+              return;
+            }
           }
-        };
-        updateUser(updatedUser);
-        setShowYoutubeModal(false);
-        setYoutubeForm({ description: '' });
-        showAlert('신청 완료', '유튜버 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+
+          // 로컬 user 상태 업데이트
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              youtube: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
+          
+          setShowYoutubeModal(false);
+          setYoutubeForm({ description: '' });
+          showAlert('신청 완료', '유튜버 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+        } catch (error) {
+          console.error('유튜버 신청 오류:', error);
+          showAlert('오류', '신청 중 오류가 발생했습니다.');
+        } finally {
+          setIsSubmitting(false);
+        }
       }
     );
   };
 
-  const handleInstagramSubmit = () => {
+  const handleInstagramSubmit = async () => {
     if (!instagramForm.description) {
       showAlert('입력 오류', '인스타그램 계정 설명을 입력해주세요.');
       return;
@@ -161,18 +258,49 @@ export default function CertificationScreen() {
     showConfirm(
       '인플루언서 인증 신청',
       '인플루언서 인증을 신청하시겠습니까?',
-      () => {
-        const updatedUser = {
-          ...user,
-          certification: {
-            ...user.certification,
-            instagram: 'pending' as const
+      async () => {
+        setIsSubmitting(true);
+        
+        try {
+          // Supabase에 인증 신청 저장
+          if (supabase) {
+            const { error } = await supabase
+              .from('certification_requests')
+              .insert({
+                user_id: user.id,
+                user_name: user.name,
+                type: 'instagram',
+                description: instagramForm.description,
+                status: 'pending'
+              });
+
+            if (error) {
+              console.error('인플루언서 신청 저장 오류:', error);
+              showAlert('오류', '신청 중 오류가 발생했습니다. 다시 시도해주세요.');
+              setIsSubmitting(false);
+              return;
+            }
           }
-        };
-        updateUser(updatedUser);
-        setShowInstagramModal(false);
-        setInstagramForm({ description: '' });
-        showAlert('신청 완료', '인플루언서 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+
+          // 로컬 user 상태 업데이트
+          const updatedUser = {
+            ...user,
+            certification: {
+              ...user.certification,
+              instagram: 'pending' as const
+            }
+          };
+          updateUser(updatedUser);
+          
+          setShowInstagramModal(false);
+          setInstagramForm({ description: '' });
+          showAlert('신청 완료', '인플루언서 인증 신청이 완료되었습니다. 검토 후 결과를 알려드리겠습니다.');
+        } catch (error) {
+          console.error('인플루언서 신청 오류:', error);
+          showAlert('오류', '신청 중 오류가 발생했습니다.');
+        } finally {
+          setIsSubmitting(false);
+        }
       }
     );
   };
@@ -247,6 +375,7 @@ export default function CertificationScreen() {
             <TouchableOpacity 
               style={styles.applyButton}
               onPress={() => setShowNtrpModal(true)}
+              disabled={isSubmitting}
             >
               <Text style={styles.applyButtonText}>인증 신청</Text>
             </TouchableOpacity>
@@ -280,6 +409,7 @@ export default function CertificationScreen() {
             <TouchableOpacity 
               style={styles.applyButton}
               onPress={() => setShowCareerModal(true)}
+              disabled={isSubmitting}
             >
               <Text style={styles.applyButtonText}>인증 신청</Text>
             </TouchableOpacity>
@@ -313,6 +443,7 @@ export default function CertificationScreen() {
             <TouchableOpacity 
               style={styles.applyButton}
               onPress={() => setShowYoutubeModal(true)}
+              disabled={isSubmitting}
             >
               <Text style={styles.applyButtonText}>인증 신청</Text>
             </TouchableOpacity>
@@ -346,6 +477,7 @@ export default function CertificationScreen() {
             <TouchableOpacity 
               style={styles.applyButton}
               onPress={() => setShowInstagramModal(true)}
+              disabled={isSubmitting}
             >
               <Text style={styles.applyButtonText}>인증 신청</Text>
             </TouchableOpacity>
@@ -355,6 +487,14 @@ export default function CertificationScreen() {
         <View style={styles.bottomPadding} />
       </ScrollView>
 
+      {/* 로딩 오버레이 */}
+      {isSubmitting && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#ec4899" />
+          <Text style={styles.loadingText}>신청 중...</Text>
+        </View>
+      )}
+
       {/* NTRP 인증 모달 */}
       <Modal
         visible={showNtrpModal}
@@ -363,12 +503,14 @@ export default function CertificationScreen() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowNtrpModal(false)}>
+            <TouchableOpacity onPress={() => setShowNtrpModal(false)} disabled={isSubmitting}>
               <Text style={styles.modalCancelText}>취소</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>NTRP 인증 신청</Text>
-            <TouchableOpacity onPress={handleNtrpSubmit}>
-              <Text style={styles.modalSubmitText}>신청</Text>
+            <TouchableOpacity onPress={handleNtrpSubmit} disabled={isSubmitting}>
+              <Text style={[styles.modalSubmitText, isSubmitting && styles.disabledText]}>
+                {isSubmitting ? '처리중...' : '신청'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -385,6 +527,7 @@ export default function CertificationScreen() {
                   placeholder="예) 4.5"
                   placeholderTextColor="#9ca3af"
                   keyboardType="numeric"
+                  editable={!isSubmitting}
                 />
               </View>
 
@@ -398,6 +541,7 @@ export default function CertificationScreen() {
                   placeholderTextColor="#9ca3af"
                   multiline
                   numberOfLines={5}
+                  editable={!isSubmitting}
                 />
               </View>
             </View>
@@ -413,12 +557,14 @@ export default function CertificationScreen() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowCareerModal(false)}>
+            <TouchableOpacity onPress={() => setShowCareerModal(false)} disabled={isSubmitting}>
               <Text style={styles.modalCancelText}>취소</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>선수 경력 인증 신청</Text>
-            <TouchableOpacity onPress={handleCareerSubmit}>
-              <Text style={styles.modalSubmitText}>신청</Text>
+            <TouchableOpacity onPress={handleCareerSubmit} disabled={isSubmitting}>
+              <Text style={[styles.modalSubmitText, isSubmitting && styles.disabledText]}>
+                {isSubmitting ? '처리중...' : '신청'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -436,6 +582,7 @@ export default function CertificationScreen() {
                   placeholderTextColor="#9ca3af"
                   multiline
                   numberOfLines={5}
+                  editable={!isSubmitting}
                 />
               </View>
             </View>
@@ -451,12 +598,14 @@ export default function CertificationScreen() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowYoutubeModal(false)}>
+            <TouchableOpacity onPress={() => setShowYoutubeModal(false)} disabled={isSubmitting}>
               <Text style={styles.modalCancelText}>취소</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>유튜버 인증 신청</Text>
-            <TouchableOpacity onPress={handleYoutubeSubmit}>
-              <Text style={styles.modalSubmitText}>신청</Text>
+            <TouchableOpacity onPress={handleYoutubeSubmit} disabled={isSubmitting}>
+              <Text style={[styles.modalSubmitText, isSubmitting && styles.disabledText]}>
+                {isSubmitting ? '처리중...' : '신청'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -474,6 +623,7 @@ export default function CertificationScreen() {
                   placeholderTextColor="#9ca3af"
                   multiline
                   numberOfLines={5}
+                  editable={!isSubmitting}
                 />
               </View>
             </View>
@@ -489,12 +639,14 @@ export default function CertificationScreen() {
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <TouchableOpacity onPress={() => setShowInstagramModal(false)}>
+            <TouchableOpacity onPress={() => setShowInstagramModal(false)} disabled={isSubmitting}>
               <Text style={styles.modalCancelText}>취소</Text>
             </TouchableOpacity>
             <Text style={styles.modalTitle}>인플루언서 인증 신청</Text>
-            <TouchableOpacity onPress={handleInstagramSubmit}>
-              <Text style={styles.modalSubmitText}>신청</Text>
+            <TouchableOpacity onPress={handleInstagramSubmit} disabled={isSubmitting}>
+              <Text style={[styles.modalSubmitText, isSubmitting && styles.disabledText]}>
+                {isSubmitting ? '처리중...' : '신청'}
+              </Text>
             </TouchableOpacity>
           </View>
 
@@ -512,6 +664,7 @@ export default function CertificationScreen() {
                   placeholderTextColor="#9ca3af"
                   multiline
                   numberOfLines={5}
+                  editable={!isSubmitting}
                 />
               </View>
             </View>
@@ -648,6 +801,23 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
   modalContainer: {
     flex: 1,
     backgroundColor: '#f9fafb',
@@ -675,6 +845,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#ec4899',
+  },
+  disabledText: {
+    opacity: 0.5,
   },
   modalContent: {
     flex: 1,

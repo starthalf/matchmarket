@@ -497,7 +497,7 @@ useEffect(() => {
               <Text style={styles.noteTitle}>📝 참여신청 안내</Text>
               <Text style={styles.noteText}>
                 • 판매자가 신청을 승인하면 결제요청이 전송됩니다{'\n'}
-                • 결제요청 후 5분 내에 입금해주세요{'\n'}
+                • 결제요청 후 5분 내에 입금하지 않으면 참여가 취소됩니다.{'\n'}
                 • 입금완료 후 채팅을 통해 소통할 수 있습니다
               </Text>
             </View>

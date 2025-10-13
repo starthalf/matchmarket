@@ -268,24 +268,33 @@ export default function MatchDetailScreen() {
 
   const handlePaymentComplete = async () => {
     try {
-      // 내 참여 정보 찾기
-      const myParticipant = match.participants.find(p => p.userId === user?.id);
-      
-      if (!myParticipant) {
+      if (!user || !myApplication) {
         Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
         return;
       }
 
-      // 상태를 confirmed로 변경
-      const updatedParticipants = match.participants.map(p => 
-        p.userId === user?.id 
-          ? { ...p, status: 'confirmed', paymentConfirmedAt: new Date().toISOString() }
-          : p
+      // application 상태를 approved에서 제거하고 participant 추가
+      const updatedApplications = safeApplications.filter(
+        app => app.id !== myApplication.id
       );
+
+      // 새로운 참가자로 추가 (confirmed 상태)
+      const newParticipant = {
+        id: `participant_${match.id}_${user.id}_${Date.now()}`,
+        userId: user.id,
+        userName: user.name,
+        gender: user.gender,
+        ntrp: user.ntrp,
+        joinedAt: new Date().toISOString(),
+        status: 'confirmed',
+        paymentAmount: match.currentPrice,
+        paymentConfirmedAt: new Date().toISOString(),
+      };
 
       const updatedMatch = {
         ...match,
-        participants: updatedParticipants
+        applications: updatedApplications,
+        participants: [...safeParticipants, newParticipant]
       };
 
       await updateMatch(updatedMatch);

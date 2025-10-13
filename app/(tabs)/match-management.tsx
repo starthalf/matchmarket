@@ -622,4 +622,33 @@ const styles = StyleSheet.create({
     color: '#9ca3af',
     marginTop: 8,
   },
+  applicationDate: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 8,
+  },
+  paymentAlertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  paymentAlertContent: {
+    flex: 1,
+  },
+  paymentAlertTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#dc2626',
+    marginBottom: 2,
+  },
+  paymentAlertText: {
+    fontSize: 13,
+    color: '#dc2626',
+  },
 });

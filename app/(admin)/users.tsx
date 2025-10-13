@@ -228,69 +228,83 @@ export default function AdminUsersScreen() {
 };
 
   const handleCertificationAction = async (action: 'approve' | 'reject', request: any) => {
-    if (!request) return;
+  if (!request) return;
 
-    const user = selectedUser;
-    const actionText = action === 'approve' ? '승인' : '거부';
-    const certTypeText = request.type === 'ntrp' ? 'NTRP' : 
-                        request.type === 'youtube' ? '유튜버' : 
-                        request.type === 'instagram' ? '인플루언서' :
-                        request.type === 'career' ? '선수 경력' : '인증';
-    
-    showConfirm(
-      `인증 ${actionText}`,
-      `${user?.name}님의 ${certTypeText} 인증을 ${actionText}하시겠습니까?`,
-      async () => {
-        setIsProcessing(true);
-        try {
-          if (!supabase) {
-            showAlert('오류', 'Supabase 연결이 필요합니다.');
-            setIsProcessing(false);
-            return;
-          }
-
-          // 1. certification_requests 테이블 업데이트
-          const { error: requestError } = await supabase
-            .from('certification_requests')
-            .update({ 
-              status: action === 'approve' ? 'approved' : 'rejected',
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', request.id);
-
-          if (requestError) {
-            console.error('인증 요청 업데이트 오류:', requestError);
-            showAlert('오류', '인증 처리에 실패했습니다.');
-            setIsProcessing(false);
-            return;
-          }
-
-          // 2. users 테이블 업데이트 (승인된 경우에만)
-          if (action === 'approve') {
-            const certificationField = `certification_${request.type}`;
-            const { error: userError } = await supabase
-              .from('users')
-              .update({ [certificationField]: 'verified' })
-              .eq('id', user.id);
-
-            if (userError) {
-              console.error('사용자 인증 상태 업데이트 오류:', userError);
-            }
-          }
-
-          // 3. UI 업데이트
-          await loadData();
-          setShowCertRequestModal(false);
-          showAlert('완료', `${certTypeText} 인증이 ${actionText}되었습니다.`);
-        } catch (error) {
-          console.error('인증 처리 중 오류:', error);
-          showAlert('오류', '인증 처리 중 오류가 발생했습니다.');
-        } finally {
+  const user = selectedUser;
+  const actionText = action === 'approve' ? '승인' : '거부';
+  const certTypeText = request.type === 'ntrp' ? 'NTRP' : 
+                      request.type === 'youtube' ? '유튜버' : 
+                      request.type === 'instagram' ? '인플루언서' :
+                      request.type === 'career' ? '선수 경력' : '인증';
+  
+  showConfirm(
+    `인증 ${actionText}`,
+    `${user?.name}님의 ${certTypeText} 인증을 ${actionText}하시겠습니까?`,
+    async () => {
+      setIsProcessing(true);
+      try {
+        if (!supabase) {
+          showAlert('오류', 'Supabase 연결이 필요합니다.');
           setIsProcessing(false);
+          return;
         }
+
+        console.log('🚀 인증 처리 시작:', { action, request, user });
+
+        // 1. certification_requests 테이블 업데이트
+        const { error: requestError } = await supabase
+          .from('certification_requests')
+          .update({ 
+            status: action === 'approve' ? 'approved' : 'rejected',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', request.id);
+
+        console.log('✅ 1단계 - certification_requests 업데이트:', { requestError });
+
+        if (requestError) {
+          console.error('인증 요청 업데이트 오류:', requestError);
+          showAlert('오류', '인증 처리에 실패했습니다.');
+          setIsProcessing(false);
+          return;
+        }
+
+        // 2. users 테이블 업데이트 (승인된 경우에만)
+        if (action === 'approve') {
+          const certificationField = `certification_${request.type}`;
+          console.log('🔄 2단계 - users 테이블 업데이트 시도:', { 
+            userId: user.id, 
+            field: certificationField,
+            value: 'verified'
+          });
+          
+          const { error: userError } = await supabase
+            .from('users')
+            .update({ [certificationField]: 'verified' })
+            .eq('id', user.id);
+
+          console.log('✅ 2단계 - users 테이블 업데이트 결과:', { userError });
+
+          if (userError) {
+            console.error('사용자 인증 상태 업데이트 오류:', userError);
+            showAlert('경고', '인증은 승인되었으나 사용자 상태 업데이트에 실패했습니다.');
+          }
+        }
+
+        // 3. UI 업데이트
+        console.log('🔄 3단계 - 데이터 새로고침');
+        await loadData();
+        setShowCertRequestModal(false);
+        showAlert('완료', `${certTypeText} 인증이 ${actionText}되었습니다.`);
+      } catch (error) {
+        console.error('인증 처리 중 오류:', error);
+        showAlert('오류', '인증 처리 중 오류가 발생했습니다.');
+      } finally {
+        setIsProcessing(false);
       }
-    );
-  };
+    }
+  );
+};
 
   const handleUserAction = (userId: string, action: string) => {
     const user = users.find(u => u.id === userId);

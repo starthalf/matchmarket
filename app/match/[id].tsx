@@ -326,8 +326,6 @@ export default function MatchDetailScreen() {
           return '입금 확인중';
         case 'rejected':
           return '신청 거절됨';
-        case 'expired':
-          return '결제 시간 만료';
         default:
           return null;
       }

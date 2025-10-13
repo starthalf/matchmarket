@@ -90,40 +90,61 @@ export default function MatchDetailScreen() {
     return () => clearInterval(timer);
   }, [showPaymentTimer]);
 
- // 승인 상태 감지 및 입금 모달 자동 띄우기
-useEffect(() => {
-  if (!match || !user) return;
-  
-  const currentApp = safeApplications.find(app => app.userId === user.id);
-  const currentPart = safeParticipants.find(p => p.userId === user.id);
-  
-  // 케이스 1: 실시간 상태 변화 감지 (pending -> approved)
-  if (currentApp?.status === 'approved' && myApplication?.status === 'pending') {
-    setShowPaymentTimer(true);
-    setPaymentTimeLeft(300); // 5분
+  // 승인 상태 감지 및 입금 모달 자동 띄우기
+  useEffect(() => {
+    if (!match || !user) return;
     
-    Alert.alert(
-      '🎾 매치 참가 승인!',
-      '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
-      [{ text: '확인' }]
-    );
-  }
-  
-  // 케이스 2: 로그인 시 이미 approved 상태인 경우 (myApplication이 undefined일 때 = 첫 로드)
-  if (currentApp?.status === 'approved' && myApplication === undefined) {
-    setShowPaymentTimer(true);
-    setPaymentTimeLeft(300); // 5분
+    const currentApp = safeApplications.find(app => app.userId === user.id);
+    const currentPart = safeParticipants.find(p => p.userId === user.id);
     
-    Alert.alert(
-      '💰 입금 대기중',
-      '승인된 매치가 있습니다.\n5분 내에 입금을 완료해주세요.',
-      [{ text: '확인' }]
-    );
-  }
-  
-  setMyApplication(currentApp);
-  setMyParticipation(currentPart);
-}, [match, user, safeApplications, safeParticipants, myApplication?.status]);
+    // approved 상태인 경우에만 남은 시간 계산 (payment_pending은 제외)
+    if (currentApp?.status === 'approved' && currentApp.approvedAt) {
+      const approvedTime = new Date(currentApp.approvedAt).getTime();
+      const now = new Date().getTime();
+      const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
+      const remainingSeconds = Math.max(0, 300 - elapsedSeconds); // 5분 = 300초
+      
+      if (remainingSeconds > 0) {
+        // 남은 시간이 있으면 모달 표시
+        setPaymentTimeLeft(remainingSeconds);
+        setShowPaymentTimer(true);
+        
+        // 처음 승인될 때만 알림 (상태 변화 감지)
+        if (myApplication?.status === 'pending') {
+          Alert.alert(
+            '🎾 매치 참가 승인!',
+            '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
+            [{ text: '확인' }]
+          );
+        } else if (myApplication === undefined) {
+          // 로그인 시
+          Alert.alert(
+            '💰 입금 대기중',
+            `승인된 매치가 있습니다.\n${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초 내에 입금을 완료해주세요.`,
+            [{ text: '확인' }]
+          );
+        }
+      } else {
+        // 시간 만료
+        if (myApplication?.status === 'approved') {
+          // 상태를 expired로 변경
+          const updatedApplications = safeApplications.map(app =>
+            app.id === currentApp.id ? { ...app, status: 'expired' as const } : app
+          );
+          const updatedMatch: Match = {
+            ...match,
+            applications: updatedApplications
+          };
+          updateMatch(updatedMatch);
+          
+          Alert.alert('결제 시간 만료', '결제 시간이 만료되어 참여신청이 취소되었습니다.');
+        }
+      }
+    }
+    
+    setMyApplication(currentApp);
+    setMyParticipation(currentPart);
+  }, [match, user, safeApplications, safeParticipants, myApplication?.status]);
 
   const handleApply = () => {
     if (!user) {
@@ -243,7 +264,23 @@ useEffect(() => {
   };
 
   const handlePaymentComplete = () => {
+    if (!myApplication || !match) return;
+
+    // 입금완료 신고 시 상태를 payment_pending으로 변경
+    const updatedApplications = safeApplications.map(app =>
+      app.id === myApplication.id 
+        ? { ...app, status: 'payment_pending' as const, paymentSubmittedAt: new Date().toISOString() }
+        : app
+    );
+
+    const updatedMatch: Match = {
+      ...match,
+      applications: updatedApplications
+    };
+
+    updateMatch(updatedMatch);
     setShowPaymentTimer(false);
+
     Alert.alert(
       '입금완료 신고',
       '입금완료 신고가 접수되었습니다.\n관리자 확인 후 채팅이 활성화됩니다.',
@@ -281,6 +318,8 @@ useEffect(() => {
           return '승인 대기중';
         case 'approved':
           return '승인됨 - 결제대기';
+        case 'payment_pending':
+          return '입금 확인중';
         case 'rejected':
           return '신청 거절됨';
         case 'expired':
@@ -497,7 +536,7 @@ useEffect(() => {
               <Text style={styles.noteTitle}>📝 참여신청 안내</Text>
               <Text style={styles.noteText}>
                 • 판매자가 신청을 승인하면 결제요청이 전송됩니다{'\n'}
-                • 결제요청 후 5분 내에 입금하지 않으면 참여가 취소됩니다.{'\n'}
+                • 결제요청 후 5분 내에 입금해주세요{'\n'}
                 • 입금완료 후 채팅을 통해 소통할 수 있습니다
               </Text>
             </View>
@@ -885,7 +924,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
- summaryLabel: {
+  summaryLabel: {
     fontSize: 14,
     color: '#6b7280',
   },

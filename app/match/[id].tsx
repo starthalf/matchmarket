@@ -41,6 +41,8 @@ export default function MatchDetailScreen() {
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showPaymentTimer, setShowPaymentTimer] = useState(false);
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(300); // 5분 = 300초
+  const [myApplication, setMyApplication] = useState<MatchApplication | undefined>();
+  const [myParticipation, setMyParticipation] = useState<any>();
 
   const match = matches.find(m => m.id === id);
 
@@ -64,9 +66,6 @@ export default function MatchDetailScreen() {
   const safeApplications = match.applications || [];
   const safeParticipants = match.participants || [];
 
-  // 현재 사용자의 참여 상태 확인
-  const myApplication = safeApplications.find(app => app.userId === user?.id);
-  const myParticipation = safeParticipants.find(p => p.userId === user?.id);
   const isOwnMatch = match.sellerId === user?.id;
 
   const currentTime = new Date();
@@ -90,6 +89,29 @@ export default function MatchDetailScreen() {
 
     return () => clearInterval(timer);
   }, [showPaymentTimer]);
+
+  // 승인 상태 감지 및 입금 모달 자동 띄우기
+  useEffect(() => {
+    if (!match || !user) return;
+    
+    const currentApp = safeApplications.find(app => app.userId === user.id);
+    const currentPart = safeParticipants.find(p => p.userId === user.id);
+    
+    // 승인 상태 변화 감지: pending -> approved
+    if (currentApp?.status === 'approved' && myApplication?.status === 'pending') {
+      setShowPaymentTimer(true);
+      setPaymentTimeLeft(300); // 5분
+      
+      Alert.alert(
+        '🎾 매치 참가 승인!',
+        '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
+        [{ text: '확인' }]
+      );
+    }
+    
+    setMyApplication(currentApp);
+    setMyParticipation(currentPart);
+  }, [match, user, safeApplications, safeParticipants, myApplication?.status]);
 
   const handleApply = () => {
     if (!user) {
@@ -155,58 +177,58 @@ export default function MatchDetailScreen() {
   };
 
   const showConfirm = (message: string): Promise<boolean> => {
-  return new Promise((resolve) => {
-    if (typeof window !== 'undefined' && window.confirm) {
+    return new Promise((resolve) => {
+      if (typeof window !== 'undefined' && window.confirm) {
+        // 웹 환경
+        resolve(window.confirm(message));
+      } else {
+        // 모바일 환경
+        Alert.alert(
+          '확인',
+          message,
+          [
+            { text: '취소', style: 'cancel', onPress: () => resolve(false) },
+            { text: '확인', onPress: () => resolve(true) }
+          ]
+        );
+      }
+    });
+  };
+
+  const showAlert = (message: string): void => {
+    if (typeof window !== 'undefined' && window.alert) {
       // 웹 환경
-      resolve(window.confirm(message));
+      window.alert(message);
     } else {
       // 모바일 환경
-      Alert.alert(
-        '확인',
-        message,
-        [
-          { text: '취소', style: 'cancel', onPress: () => resolve(false) },
-          { text: '확인', onPress: () => resolve(true) }
-        ]
-      );
+      Alert.alert('알림', message);
     }
-  });
-};
+  };
 
-const showAlert = (message: string): void => {
-  if (typeof window !== 'undefined' && window.alert) {
-    // 웹 환경
-    window.alert(message);
-  } else {
-    // 모바일 환경
-    Alert.alert('알림', message);
-  }
-};
-
-const handleCancelApplication = async () => {
-  if (!myApplication || !match) return;
-  
-  const confirmed = await showConfirm('참여신청을 취소하시겠습니까?');
-  
-  if (confirmed) {
-    try {
-      const updatedApplications = safeApplications.filter(
-        app => app.id !== myApplication.id
-      );
-      
-      const updatedMatch: Match = {
-        ...match,
-        applications: updatedApplications
-      };
-      
-      updateMatch(updatedMatch);
-      showAlert('참여신청이 취소되었습니다.');
-    } catch (error) {
-      console.error('신청 취소 중 오류:', error);
-      showAlert('신청 취소 중 오류가 발생했습니다.');
+  const handleCancelApplication = async () => {
+    if (!myApplication || !match) return;
+    
+    const confirmed = await showConfirm('참여신청을 취소하시겠습니까?');
+    
+    if (confirmed) {
+      try {
+        const updatedApplications = safeApplications.filter(
+          app => app.id !== myApplication.id
+        );
+        
+        const updatedMatch: Match = {
+          ...match,
+          applications: updatedApplications
+        };
+        
+        updateMatch(updatedMatch);
+        showAlert('참여신청이 취소되었습니다.');
+      } catch (error) {
+        console.error('신청 취소 중 오류:', error);
+        showAlert('신청 취소 중 오류가 발생했습니다.');
+      }
     }
-  }
-};
+  };
 
   const handlePaymentComplete = () => {
     setShowPaymentTimer(false);
@@ -303,11 +325,11 @@ const handleCancelApplication = async () => {
               </Text>
             </View>
             <View style={styles.detailRow}>
-  <Shield size={16} color="#6b7280" />
-  <Text style={styles.detailText}>
-    NTRP {match.ntrpRequirement.min.toFixed(1)} - {match.ntrpRequirement.max.toFixed(1)}
-  </Text>
-</View>
+              <Shield size={16} color="#6b7280" />
+              <Text style={styles.detailText}>
+                NTRP {match.ntrpRequirement.min.toFixed(1)} - {match.ntrpRequirement.max.toFixed(1)}
+              </Text>
+            </View>
           </View>
 
           {match.description && (
@@ -336,9 +358,9 @@ const handleCancelApplication = async () => {
                 <Text style={styles.sellerMeta}>
                   {match.seller?.gender || ''} · {match.seller?.ageGroup || ''} · NTRP {match.seller?.ntrp?.toFixed(1) || '0.0'}
                 </Text>
-               <Text style={styles.sellerDetailText}>
-  경력 {Math.floor((match.seller?.experience || 0) / 12)}년 · {match.seller?.careerType || ''} · {match.seller?.playStyle || ''}
-</Text>
+                <Text style={styles.sellerDetailText}>
+                  경력 {Math.floor((match.seller?.experience || 0) / 12)}년 · {match.seller?.careerType || ''} · {match.seller?.playStyle || ''}
+                </Text>
               </View>
             </View>
             <View style={styles.sellerStats}>
@@ -378,7 +400,7 @@ const handleCancelApplication = async () => {
           </Text>
         </View>
 
-               <View style={styles.bottomPadding} />
+        <View style={styles.bottomPadding} />
       </ScrollView>
 
       {/* 하단 고정 영역 */}
@@ -852,7 +874,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6',
   },
   summaryLabel: {
-    fontSize: 14,
+    fontSize: 14
     color: '#6b7280',
   },
   summaryValue: {

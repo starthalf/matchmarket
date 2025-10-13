@@ -90,28 +90,40 @@ export default function MatchDetailScreen() {
     return () => clearInterval(timer);
   }, [showPaymentTimer]);
 
-  // 승인 상태 감지 및 입금 모달 자동 띄우기
-  useEffect(() => {
-    if (!match || !user) return;
+ // 승인 상태 감지 및 입금 모달 자동 띄우기
+useEffect(() => {
+  if (!match || !user) return;
+  
+  const currentApp = safeApplications.find(app => app.userId === user.id);
+  const currentPart = safeParticipants.find(p => p.userId === user.id);
+  
+  // 케이스 1: 실시간 상태 변화 감지 (pending -> approved)
+  if (currentApp?.status === 'approved' && myApplication?.status === 'pending') {
+    setShowPaymentTimer(true);
+    setPaymentTimeLeft(300); // 5분
     
-    const currentApp = safeApplications.find(app => app.userId === user.id);
-    const currentPart = safeParticipants.find(p => p.userId === user.id);
+    Alert.alert(
+      '🎾 매치 참가 승인!',
+      '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
+      [{ text: '확인' }]
+    );
+  }
+  
+  // 케이스 2: 로그인 시 이미 approved 상태인 경우 (myApplication이 undefined일 때 = 첫 로드)
+  if (currentApp?.status === 'approved' && myApplication === undefined) {
+    setShowPaymentTimer(true);
+    setPaymentTimeLeft(300); // 5분
     
-    // 승인 상태 변화 감지: pending -> approved
-    if (currentApp?.status === 'approved' && myApplication?.status === 'pending') {
-      setShowPaymentTimer(true);
-      setPaymentTimeLeft(300); // 5분
-      
-      Alert.alert(
-        '🎾 매치 참가 승인!',
-        '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
-        [{ text: '확인' }]
-      );
-    }
-    
-    setMyApplication(currentApp);
-    setMyParticipation(currentPart);
-  }, [match, user, safeApplications, safeParticipants, myApplication?.status]);
+    Alert.alert(
+      '💰 입금 대기중',
+      '승인된 매치가 있습니다.\n5분 내에 입금을 완료해주세요.',
+      [{ text: '확인' }]
+    );
+  }
+  
+  setMyApplication(currentApp);
+  setMyParticipation(currentPart);
+}, [match, user, safeApplications, safeParticipants, myApplication?.status]);
 
   const handleApply = () => {
     if (!user) {

@@ -174,20 +174,34 @@ export default function AdminUsersScreen() {
       }
     });
 
-  const handleViewCertification = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    const userRequests = certificationRequests.filter(req => req.user_id === userId);
-    
+ const handleViewCertification = async (userId: string) => {
+  const user = users.find(u => u.id === userId);
+  
+  // 실시간으로 해당 사용자의 인증 신청 조회
+  if (supabase) {
+    const { data: userRequests, error } = await supabase
+      .from('certification_requests')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('인증 신청 조회 오류:', error);
+      showAlert('오류', '인증 신청을 불러오지 못했습니다.');
+      return;
+    }
+
     console.log('User ID:', userId);
     console.log('User Requests:', userRequests);
     
-    if (userRequests.length > 0) {
+    if (userRequests && userRequests.length > 0) {
       setSelectedUser({ ...user, certRequests: userRequests });
       setShowCertRequestModal(true);
     } else {
       showAlert('알림', '해당 사용자의 인증 신청이 없습니다.');
     }
-  };
+  }
+};
 
   const handleCertificationAction = async (action: 'approve' | 'reject', request: any) => {
     if (!request) return;

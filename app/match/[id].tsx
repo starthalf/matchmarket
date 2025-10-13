@@ -266,29 +266,40 @@ export default function MatchDetailScreen() {
     }
   };
 
-  const handlePaymentComplete = () => {
-    if (!myApplication || !match) return;
+  const handlePaymentComplete = async () => {
+    try {
+      // 내 참여 정보 찾기
+      const myParticipant = match.participants.find(p => p.userId === user?.id);
+      
+      if (!myParticipant) {
+        Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
+        return;
+      }
 
-    // 입금완료 신고 시 상태를 payment_pending으로 변경
-    const updatedApplications = safeApplications.map(app =>
-      app.id === myApplication.id 
-        ? { ...app, status: 'payment_pending' as const, paymentSubmittedAt: new Date().toISOString() }
-        : app
-    );
+      // 상태를 confirmed로 변경
+      const updatedParticipants = match.participants.map(p => 
+        p.userId === user?.id 
+          ? { ...p, status: 'confirmed', paymentConfirmedAt: new Date().toISOString() }
+          : p
+      );
 
-    const updatedMatch: Match = {
-      ...match,
-      applications: updatedApplications
-    };
+      const updatedMatch = {
+        ...match,
+        participants: updatedParticipants
+      };
 
-    updateMatch(updatedMatch);
-    setShowPaymentTimer(false);
-
-    Alert.alert(
-      '입금완료 신고',
-      '입금완료 신고가 접수되었습니다.\n관리자 확인 후 채팅이 활성화됩니다.',
-      [{ text: '확인' }]
-    );
+      await updateMatch(updatedMatch);
+      setShowPaymentTimer(false);
+      
+      Alert.alert(
+        '입금완료',
+        '입금이 완료되었습니다.\n매치 참가가 확정되었습니다!',
+        [{ text: '확인' }]
+      );
+    } catch (error) {
+      console.error('입금완료 처리 중 오류:', error);
+      Alert.alert('오류', '입금완료 처리 중 오류가 발생했습니다.');
+    }
   };
 
   const formatTime = (seconds: number) => {

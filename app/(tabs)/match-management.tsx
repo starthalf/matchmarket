@@ -133,7 +133,7 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
       case 'approved': return '입금대기';
       case 'rejected': return '거절됨';
       case 'confirmed': return '입금완료';
-      default: return '알수없음';
+      default: return status; // 디버깅용: 예상치 못한 상태를 그대로 표시
     }
   };
 

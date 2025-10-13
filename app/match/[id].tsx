@@ -104,7 +104,7 @@ export default function MatchDetailScreen() {
       const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
       const remainingSeconds = Math.max(0, 300 - elapsedSeconds); // 5분 = 300초
       
-      if (remainingSeconds > 0) {
+     if (remainingSeconds > 0) {
         // 남은 시간이 있으면 모달 표시
         setPaymentTimeLeft(remainingSeconds);
         setShowPaymentTimer(true);
@@ -125,25 +125,24 @@ export default function MatchDetailScreen() {
           );
         }
       } else {
-       } else {
-  // 시간 만료 - applications 배열에서 완전히 제거
-  if (myApplication?.status === 'approved') {
-    // applications 배열에서 제거
-    const updatedApplications = safeApplications.filter(
-      app => app.id !== currentApp.id
-    );
-    const updatedMatch: Match = {
-      ...match,
-      applications: updatedApplications
-    };
-    updateMatch(updatedMatch);
-    
-    // 모달 닫기
-    setShowPaymentTimer(false);
-    
-    Alert.alert('결제 시간 만료', '결제 시간이 만료되어 참여신청이 취소되었습니다.');
-  }
-}
+        // 시간 만료 - applications 배열에서 완전히 제거
+        if (myApplication?.status === 'approved') {
+          // applications 배열에서 제거
+          const updatedApplications = safeApplications.filter(
+            app => app.id !== currentApp.id
+          );
+          const updatedMatch: Match = {
+            ...match,
+            applications: updatedApplications
+          };
+          updateMatch(updatedMatch);
+          
+          // 모달 닫기
+          setShowPaymentTimer(false);
+          
+          Alert.alert('결제 시간 만료', '결제 시간이 만료되어 참여신청이 취소되었습니다.');
+        }
+      }
     }
     
     setMyApplication(currentApp);

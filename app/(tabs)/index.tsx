@@ -77,15 +77,15 @@ export default function HomeScreen() {
     }
   };
 
-  const handleAdminLogin = async () => {
-    // 간단한 데모 관리자 로그인
-    const result = await adminLogin('admin@demo.com', 'admin123');
-    if (result.success) {
-      Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
-    } else {
-      Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
-    }
-  };
+ const handleAdminLogin = async () => {
+  // 실제 관리자 계정으로 로그인
+  const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
+  if (result.success) {
+    Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
+  } else {
+    Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
+  }
+};
 
   return (
     <SafeAreaView style={safeStyles.safeContainer}>

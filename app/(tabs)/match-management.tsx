@@ -314,51 +314,75 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
                 </View>
               ) : (
                 myApplications.map((match) => {
-                  const myApplication = match.applications?.find(app => app.userId === user.id);
-                  if (!myApplication) return null;
+  const myApplication = match.applications?.find(app => app.userId === user.id);
+  if (!myApplication) return null;
 
-                  return (
-                    <TouchableOpacity
-                      key={match.id}
-                      style={styles.applicationMatchCard}
-                      onPress={() => router.push(`/match/${match.id}`)}
-                    >
-                      <View style={styles.matchHeader}>
-                        <Text style={styles.matchTitle}>{match.title}</Text>
-                        <View style={[
-                          styles.statusBadge,
-                          { backgroundColor: getStatusColor(myApplication.status) + '20' }
-                        ]}>
-                          <Text style={[
-                            styles.statusBadgeText,
-                            { color: getStatusColor(myApplication.status) }
-                          ]}>
-                            {getStatusText(myApplication.status)}
-                          </Text>
-                        </View>
-                      </View>
+  // 입금 필요 여부 확인
+  const needsPayment = myApplication.status === 'approved' && myApplication.approvedAt;
+  let remainingTime = 0;
+  
+  if (needsPayment) {
+    const approvedTime = new Date(myApplication.approvedAt!).getTime();
+    const now = new Date().getTime();
+    const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
+    remainingTime = Math.max(0, 300 - elapsedSeconds); // 5분 = 300초
+  }
 
-                      <View style={styles.matchInfo}>
-                        <View style={styles.matchInfoRow}>
-                          <Calendar size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            {match.date} {match.time}
-                          </Text>
-                        </View>
-                        <View style={styles.matchInfoRow}>
-                          <Users size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            신청가격: {myApplication.appliedPrice.toLocaleString()}원
-                          </Text>
-                        </View>
-                      </View>
+  return (
+    <TouchableOpacity
+      key={match.id}
+      style={styles.applicationMatchCard}
+      onPress={() => router.push(`/match/${match.id}`)}
+    >
+      {/* 입금 필요 알림 배너 */}
+      {needsPayment && remainingTime > 0 && (
+        <View style={styles.paymentAlertBanner}>
+          <Clock size={20} color="#dc2626" />
+          <View style={styles.paymentAlertContent}>
+            <Text style={styles.paymentAlertTitle}>💰 입금이 필요합니다!</Text>
+            <Text style={styles.paymentAlertText}>
+              {Math.floor(remainingTime / 60)}분 {remainingTime % 60}초 내에 입금해주세요
+            </Text>
+          </View>
+        </View>
+      )}
 
-                      <Text style={styles.applicationDate}>
-                        신청일: {new Date(myApplication.appliedAt).toLocaleDateString()}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })
+      <View style={styles.matchHeader}>
+        <Text style={styles.matchTitle}>{match.title}</Text>
+        <View style={[
+          styles.statusBadge,
+          { backgroundColor: getStatusColor(myApplication.status) + '20' }
+        ]}>
+          <Text style={[
+            styles.statusBadgeText,
+            { color: getStatusColor(myApplication.status) }
+          ]}>
+            {getStatusText(myApplication.status)}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.matchInfo}>
+        <View style={styles.matchInfoRow}>
+          <Calendar size={16} color="#6b7280" />
+          <Text style={styles.matchInfoText}>
+            {match.date} {match.time}
+          </Text>
+        </View>
+        <View style={styles.matchInfoRow}>
+          <Users size={16} color="#6b7280" />
+          <Text style={styles.matchInfoText}>
+            신청가격: {myApplication.appliedPrice.toLocaleString()}원
+          </Text>
+        </View>
+      </View>
+
+      <Text style={styles.applicationDate}>
+        신청일: {new Date(myApplication.appliedAt).toLocaleDateString()}
+      </Text>
+    </TouchableOpacity>
+  );
+})
               )}
             </View>
           )}

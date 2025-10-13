@@ -31,12 +31,16 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
     if (!application) return;
 
     // 웹 환경에서는 바로 실행, 모바일에서는 Alert 표시
-    const executeApproval = () => {
-      const updatedApplications = match.applications!.map(app =>
-        app.id === applicationId 
-          ? { ...app, status: 'approved' as const }
-          : app
-      );
+   const executeApproval = () => {
+  const updatedApplications = match.applications!.map(app =>
+    app.id === applicationId 
+      ? { 
+          ...app, 
+          status: 'approved' as const,
+          approvedAt: new Date().toISOString() // 승인 시각 기록
+        }
+      : app
+  );
 
       updateMatch({
         ...match,

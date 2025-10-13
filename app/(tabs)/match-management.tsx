@@ -120,9 +120,10 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return '#f59e0b';
-      case 'approved': return '#10b981';
-      case 'rejected': return '#ef4444';
+      case 'pending': return '#f59e0b';      // 주황색 (대기중)
+      case 'approved': return '#3b82f6';     // 파란색 (입금대기)
+      case 'rejected': return '#ef4444';     // 빨간색 (거절됨)
+      case 'confirmed': return '#10b981';    // 초록색 (입금완료)
       default: return '#6b7280';
     }
   };

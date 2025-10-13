@@ -177,6 +177,9 @@ export default function AdminUsersScreen() {
  const handleViewCertification = async (userId: string) => {
   const user = users.find(u => u.id === userId);
   
+  console.log('🔍 인증보기 클릭 - userId:', userId);
+  console.log('🔍 찾은 user:', user);
+  
   // 실시간으로 해당 사용자의 인증 신청 조회
   if (supabase) {
     const { data: userRequests, error } = await supabase
@@ -185,6 +188,8 @@ export default function AdminUsersScreen() {
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
 
+    console.log('🔍 Supabase 쿼리 결과:', { userRequests, error });
+    
     if (error) {
       console.error('인증 신청 조회 오류:', error);
       showAlert('오류', '인증 신청을 불러오지 못했습니다.');
@@ -195,11 +200,15 @@ export default function AdminUsersScreen() {
     console.log('User Requests:', userRequests);
     
     if (userRequests && userRequests.length > 0) {
+      console.log('✅ 인증 신청 있음 - 모달 열기');
       setSelectedUser({ ...user, certRequests: userRequests });
       setShowCertRequestModal(true);
     } else {
+      console.log('❌ 인증 신청 없음');
       showAlert('알림', '해당 사용자의 인증 신청이 없습니다.');
     }
+  } else {
+    console.log('❌ Supabase 연결 없음');
   }
 };
 

@@ -3,12 +3,30 @@ import { Tabs } from 'expo-router';
 import { Users, Plus, ClipboardList, MessageCircle } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
+import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function TabLayout() {
   const { user, isLoading } = useAuth();
   const { unreadCount } = useChat();
+  const { matches } = useMatches();
+
+  // 입금이 필요한 매치 개수 계산
+  const paymentNeededCount = matches.filter(match => {
+    const myApplication = match.applications?.find(app => app.userId === user?.id);
+    if (!myApplication || myApplication.status !== 'approved' || !myApplication.approvedAt) {
+      return false;
+    }
+    
+    // 5분 이내인지 확인
+    const approvedTime = new Date(myApplication.approvedAt).getTime();
+    const now = new Date().getTime();
+    const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
+    const remainingSeconds = Math.max(0, 300 - elapsedSeconds);
+    
+    return remainingSeconds > 0;
+  }).length;
 
   // 로딩 중인 경우만 로딩 화면 표시
   if (isLoading) {
@@ -71,6 +89,16 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => (
             <ClipboardList size={size} color={color} />
           ),
+          // 입금 필요 배지 표시
+          tabBarBadge: paymentNeededCount > 0 ? '' : undefined,
+          tabBarBadgeStyle: {
+            backgroundColor: '#ef4444',
+            minWidth: 8,
+            height: 8,
+            borderRadius: 4,
+            top: 8,
+            right: -4,
+          },
         }}
         listeners={{
           tabPress: (e: any) => {

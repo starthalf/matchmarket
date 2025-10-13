@@ -130,8 +130,9 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
   const getStatusText = (status: string) => {
     switch (status) {
       case 'pending': return '대기중';
-      case 'approved': return '승인됨';
+      case 'approved': return '입금대기';
       case 'rejected': return '거절됨';
+      case 'confirmed': return '입금완료';
       default: return '알수없음';
     }
   };

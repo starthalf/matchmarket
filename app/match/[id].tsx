@@ -873,8 +873,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
-  summaryLabel: {
-    fontSize: 14
+ summaryLabel: {
+    fontSize: 14,
     color: '#6b7280',
   },
   summaryValue: {

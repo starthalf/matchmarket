@@ -125,21 +125,25 @@ export default function MatchDetailScreen() {
           );
         }
       } else {
-        // 시간 만료
-        if (myApplication?.status === 'approved') {
-          // 상태를 expired로 변경
-          const updatedApplications = safeApplications.map(app =>
-            app.id === currentApp.id ? { ...app, status: 'expired' as const } : app
-          );
-          const updatedMatch: Match = {
-            ...match,
-            applications: updatedApplications
-          };
-          updateMatch(updatedMatch);
-          
-          Alert.alert('결제 시간 만료', '결제 시간이 만료되어 참여신청이 취소되었습니다.');
-        }
-      }
+       } else {
+  // 시간 만료 - applications 배열에서 완전히 제거
+  if (myApplication?.status === 'approved') {
+    // applications 배열에서 제거
+    const updatedApplications = safeApplications.filter(
+      app => app.id !== currentApp.id
+    );
+    const updatedMatch: Match = {
+      ...match,
+      applications: updatedApplications
+    };
+    updateMatch(updatedMatch);
+    
+    // 모달 닫기
+    setShowPaymentTimer(false);
+    
+    Alert.alert('결제 시간 만료', '결제 시간이 만료되어 참여신청이 취소되었습니다.');
+  }
+}
     }
     
     setMyApplication(currentApp);

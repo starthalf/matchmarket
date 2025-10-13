@@ -93,7 +93,7 @@ export default function CertificationScreen() {
         setIsSubmitting(true);
         
         try {
-          // Supabase에 인증 신청 저장
+          // 1. certification_requests 테이블에 저장
           if (supabase) {
             const { error } = await supabase
               .from('certification_requests')
@@ -112,9 +112,19 @@ export default function CertificationScreen() {
               setIsSubmitting(false);
               return;
             }
+
+            // 2. users 테이블의 certification_ntrp도 'pending'으로 업데이트
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ certification_ntrp: 'pending' })
+              .eq('id', user.id);
+
+            if (updateError) {
+              console.error('사용자 인증 상태 업데이트 오류:', updateError);
+            }
           }
 
-          // 로컬 user 상태 업데이트
+          // 3. 로컬 user 상태 업데이트
           const updatedUser = {
             ...user,
             certification: {
@@ -150,7 +160,7 @@ export default function CertificationScreen() {
         setIsSubmitting(true);
         
         try {
-          // Supabase에 인증 신청 저장
+          // 1. certification_requests 테이블에 저장
           if (supabase) {
             const { error } = await supabase
               .from('certification_requests')
@@ -168,9 +178,19 @@ export default function CertificationScreen() {
               setIsSubmitting(false);
               return;
             }
+
+            // 2. users 테이블의 certification_career도 'pending'으로 업데이트
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ certification_career: 'pending' })
+              .eq('id', user.id);
+
+            if (updateError) {
+              console.error('사용자 인증 상태 업데이트 오류:', updateError);
+            }
           }
 
-          // 로컬 user 상태 업데이트
+          // 3. 로컬 user 상태 업데이트
           const updatedUser = {
             ...user,
             certification: {
@@ -206,7 +226,7 @@ export default function CertificationScreen() {
         setIsSubmitting(true);
         
         try {
-          // Supabase에 인증 신청 저장
+          // 1. certification_requests 테이블에 저장
           if (supabase) {
             const { error } = await supabase
               .from('certification_requests')
@@ -224,9 +244,19 @@ export default function CertificationScreen() {
               setIsSubmitting(false);
               return;
             }
+
+            // 2. users 테이블의 certification_youtube도 'pending'으로 업데이트
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ certification_youtube: 'pending' })
+              .eq('id', user.id);
+
+            if (updateError) {
+              console.error('사용자 인증 상태 업데이트 오류:', updateError);
+            }
           }
 
-          // 로컬 user 상태 업데이트
+          // 3. 로컬 user 상태 업데이트
           const updatedUser = {
             ...user,
             certification: {
@@ -262,7 +292,7 @@ export default function CertificationScreen() {
         setIsSubmitting(true);
         
         try {
-          // Supabase에 인증 신청 저장
+          // 1. certification_requests 테이블에 저장
           if (supabase) {
             const { error } = await supabase
               .from('certification_requests')
@@ -280,9 +310,19 @@ export default function CertificationScreen() {
               setIsSubmitting(false);
               return;
             }
+
+            // 2. users 테이블의 certification_instagram도 'pending'으로 업데이트
+            const { error: updateError } = await supabase
+              .from('users')
+              .update({ certification_instagram: 'pending' })
+              .eq('id', user.id);
+
+            if (updateError) {
+              console.error('사용자 인증 상태 업데이트 오류:', updateError);
+            }
           }
 
-          // 로컬 user 상태 업데이트
+          // 3. 로컬 user 상태 업데이트
           const updatedUser = {
             ...user,
             certification: {
@@ -741,6 +781,72 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     shadowColor: '#000',
+    const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f9fafb',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  backButton: {
+    padding: 4,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  placeholder: {
+    width: 32,
+  },
+  content: {
+    flex: 1,
+    paddingTop: 16,
+  },
+  infoSection: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  infoTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  infoContent: {
+    gap: 8,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#6b7280',
+    lineHeight: 20,
+  },
+  certificationCard: {
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 2,
@@ -766,22 +872,22 @@ const styles = StyleSheet.create({
   },
   certificationTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#111827',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   certificationDescription: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#6b7280',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#f9fafb',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
   },
   statusText: {
     fontSize: 12,
@@ -790,16 +896,16 @@ const styles = StyleSheet.create({
   applyButton: {
     backgroundColor: '#ec4899',
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
   },
   applyButtonText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#ffffff',
   },
   bottomPadding: {
-    height: 40,
+    height: 80,
   },
   loadingOverlay: {
     position: 'absolute',
@@ -810,7 +916,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 9999,
+    zIndex: 1000,
   },
   loadingText: {
     marginTop: 12,
@@ -820,7 +926,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#ffffff',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -828,7 +934,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#ffffff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
@@ -837,64 +942,54 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '600',
     color: '#111827',
   },
   modalSubmitText: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: '#ec4899',
   },
   disabledText: {
-    opacity: 0.5,
+    color: '#d1d5db',
   },
   modalContent: {
     flex: 1,
     paddingTop: 16,
   },
   modalSection: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
   },
   modalSectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#111827',
     marginBottom: 16,
   },
   inputGroup: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '500',
     color: '#374151',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   textInput: {
     borderWidth: 1,
     borderColor: '#d1d5db',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    fontSize: 16,
-    color: '#374151',
+    fontSize: 15,
+    color: '#111827',
     backgroundColor: '#ffffff',
   },
   textArea: {
     height: 120,
     textAlignVertical: 'top',
+    paddingTop: 12,
   },
 });

@@ -180,8 +180,16 @@ export default function AdminUsersScreen() {
   console.log('🔍 인증보기 클릭 - userId:', userId);
   console.log('🔍 찾은 user:', user);
   
-  // 실시간으로 해당 사용자의 인증 신청 조회
   if (supabase) {
+    // 1. 먼저 모든 인증 요청을 가져와서 확인
+    const { data: allRequests, error: allError } = await supabase
+      .from('certification_requests')
+      .select('*');
+    
+    console.log('📋 모든 인증 요청:', allRequests);
+    console.log('📋 에러:', allError);
+    
+    // 2. 특정 사용자의 인증 요청 조회
     const { data: userRequests, error } = await supabase
       .from('certification_requests')
       .select('*')
@@ -189,6 +197,10 @@ export default function AdminUsersScreen() {
       .order('created_at', { ascending: false });
 
     console.log('🔍 Supabase 쿼리 결과:', { userRequests, error });
+    
+    // 3. JavaScript에서 필터링해보기
+    const filteredRequests = allRequests?.filter(req => req.user_id === userId);
+    console.log('🔍 JavaScript 필터링 결과:', filteredRequests);
     
     if (error) {
       console.error('인증 신청 조회 오류:', error);
@@ -199,9 +211,12 @@ export default function AdminUsersScreen() {
     console.log('User ID:', userId);
     console.log('User Requests:', userRequests);
     
-    if (userRequests && userRequests.length > 0) {
+    // 일단 allRequests에서 필터링한 결과 사용
+    const finalRequests = filteredRequests || userRequests;
+    
+    if (finalRequests && finalRequests.length > 0) {
       console.log('✅ 인증 신청 있음 - 모달 열기');
-      setSelectedUser({ ...user, certRequests: userRequests });
+      setSelectedUser({ ...user, certRequests: finalRequests });
       setShowCertRequestModal(true);
     } else {
       console.log('❌ 인증 신청 없음');

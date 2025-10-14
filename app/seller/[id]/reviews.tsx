@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useLocalSearchParams } from 'expo-router';
-import { ArrowLeft, Star, User } from 'lucide-react-native';
+import { ArrowLeft, Star, User as UserIcon } from 'lucide-react-native';
 import { mockUsers, mockReviews } from '../../../data/mockData';
 import { CertificationBadge } from '../../../components/CertificationBadge';
 import { useSafeStyles } from '../../../constants/Styles';
@@ -151,9 +151,9 @@ export default function SellerReviewsScreen() {
                   style={styles.profileImage}
                 />
               ) : (
-                <View style={styles.defaultProfileImage}>
-                  <User size={32} color="#9ca3af" />
-                </View>
+               <View style={styles.defaultProfileImage}>
+  <UserIcon size={32} color="#9ca3af" />
+</View>
               )}
             </View>
             

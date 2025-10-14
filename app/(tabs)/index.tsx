@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ec4899',
   },
   chipsContainer: {
-    backgroundColor: '#eeeeee',
+    backgroundColor: '#fff',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   paddingHorizontal: 16,
   paddingVertical: 8,
   borderRadius: 24,
-  backgroundColor: '#ffffff',  // 흰 배경
+  backgroundColor: '#eeeeee',  // 흰 배경
   marginRight: 8,
   borderWidth: 1.5,            // 테두리 두께
   borderColor: '#d1d5db',      // 회색 테두리

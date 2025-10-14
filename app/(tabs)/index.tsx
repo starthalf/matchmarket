@@ -665,7 +665,7 @@ chipActive: {
   borderColor: '#ec4899',      // 핑크 테두리
 },
 chipText: {
-  fontSize: 11,
+  fontSize: 12,
   fontWeight: '600',
   color: '#374151',            // 어두운 회색 글씨
 },

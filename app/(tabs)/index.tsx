@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 9,
     backgroundColor: '#eeeeee',
     gap: 12,
   },
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 9,
     gap: 8,
   },
   searchInput: {

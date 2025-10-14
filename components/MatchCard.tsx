@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 12,
     position: 'relative',
   },
   sellerInfo: {

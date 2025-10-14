@@ -623,7 +623,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#eeeeee',
+    backgroundColor: '#f9fafb',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 12,
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   filterIconButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#eeeeee',
   },
   sortIconButton: {
     padding: 10,

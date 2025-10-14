@@ -463,28 +463,28 @@ export default function HomeScreen() {
               match.venue.toLowerCase().includes(searchQuery.toLowerCase())
             )
             // 그룹별 필터 로직 (AND 조건)
-            .filter(match => {
-              let passes = true;
-              
-              // 레벨 필터
-              if (levelFilter === 'pro') {
-                passes = passes && match.ntrpRange.min >= 4.0;
-              }
-              
-              // 매치 유형 필터
-              if (matchTypeFilter === 'womens') {
-                passes = passes && match.matchType === '여복';
-              } else if (matchTypeFilter === 'mixed') {
-                passes = passes && match.matchType === '혼복';
-              }
-              
-              // 시간 필터
-              if (timeFilter === 'today') {
-                passes = passes && isToday(match.date);
-              }
-              
-              return passes;
-            })
+.filter(match => {
+  let passes = true;
+  
+  // 레벨 필터 - 판매자가 선수인 매치만
+  if (levelFilter === 'pro') {
+    passes = passes && match.seller.careerType === '선수';
+  }
+  
+  // 매치 유형 필터
+  if (matchTypeFilter === 'womens') {
+    passes = passes && match.matchType === '여복';
+  } else if (matchTypeFilter === 'mixed') {
+    passes = passes && match.matchType === '혼복';
+  }
+  
+  // 시간 필터
+  if (timeFilter === 'today') {
+    passes = passes && isToday(match.date);
+  }
+  
+  return passes;
+})
             // 정렬
             .sort((a, b) => {
               if (sortBy === 'popular') {

@@ -197,6 +197,8 @@ export default function MatchDetailScreen() {
       };
 
       updateMatch(updatedMatch);
+      // 🔥 알림 저장 추가
+      await AsyncStorage.setItem('hasNewMatchApplication', 'true');
       setShowApplicationModal(false);
 
       Alert.alert(

@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   filterIconButton: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#eeeeee',
+    backgroundColor: '#f9fafb',
   },
   sortIconButton: {
     padding: 10,
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ec4899',
   },
   chipsContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#eeeeee',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,

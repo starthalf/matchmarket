@@ -104,18 +104,38 @@ export default function TabLayout() {
         options={{
           title: "매치관리",
           tabBarIcon: ({ size, color }) => (
-            <ClipboardList size={size} color={color} />
+            <View style={{ position: 'relative' }}>
+              <ClipboardList size={size} color={color} />
+              {/* 신규 참가 신청 알림 (우선순위 1) */}
+              {hasNewApplication && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#ef4444',
+                  }}
+                />
+              )}
+              {/* 입금 필요 알림 (우선순위 2) */}
+              {!hasNewApplication && paymentNeededCount > 0 && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#ef4444',
+                  }}
+                />
+              )}
+            </View>
           ),
-          // 입금 필요 배지 표시
-          tabBarBadge: paymentNeededCount > 0 ? '' : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: '#ef4444',
-            minWidth: 8,
-            height: 8,
-            borderRadius: 4,
-            top: 8,
-            right: -4,
-          },
         }}
         listeners={{
           tabPress: (e: any) => {

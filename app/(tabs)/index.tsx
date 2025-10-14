@@ -21,7 +21,9 @@ import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 
-type FilterType = 'pro' | 'womens' | 'mixed' | 'today';
+type MatchTypeFilter = 'womens' | 'mixed' | null;
+type LevelFilter = 'pro' | null;
+type TimeFilter = 'today' | null;
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
@@ -31,7 +33,11 @@ export default function HomeScreen() {
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
-  const [selectedFilters, setSelectedFilters] = useState<FilterType[]>([]); // 배열로 변경
+  
+  // 그룹별로 필터 분리
+  const [matchTypeFilter, setMatchTypeFilter] = useState<MatchTypeFilter>(null);
+  const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   
   // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
@@ -103,17 +109,19 @@ export default function HomeScreen() {
     setShowSortModal(false);
   };
 
-  // 필터 토글 핸들러
-  const toggleFilter = (filter: FilterType) => {
-    setSelectedFilters(prev => {
-      if (prev.includes(filter)) {
-        // 이미 선택되어 있으면 제거
-        return prev.filter(f => f !== filter);
-      } else {
-        // 선택되어 있지 않으면 추가
-        return [...prev, filter];
-      }
-    });
+  // 매치 유형 필터 토글 (하나만 선택)
+  const toggleMatchTypeFilter = (type: 'womens' | 'mixed') => {
+    setMatchTypeFilter(prev => prev === type ? null : type);
+  };
+
+  // 레벨 필터 토글
+  const toggleLevelFilter = () => {
+    setLevelFilter(prev => prev === 'pro' ? null : 'pro');
+  };
+
+  // 시간 필터 토글
+  const toggleTimeFilter = () => {
+    setTimeFilter(prev => prev === 'today' ? null : 'today');
   };
 
   // 오늘 날짜 확인
@@ -297,34 +305,36 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* 필터 칩들 (전체 제거, 중복 선택 가능) */}
+      {/* 필터 칩들 (그룹별 로직) */}
       <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {/* 레벨 필터 */}
           <TouchableOpacity
             style={[
               styles.chip,
-              selectedFilters.includes('pro') && styles.chipActive
+              levelFilter === 'pro' && styles.chipActive
             ]}
-            onPress={() => toggleFilter('pro')}
+            onPress={toggleLevelFilter}
           >
             <Text style={[
               styles.chipText,
-              selectedFilters.includes('pro') && styles.chipTextActive
+              levelFilter === 'pro' && styles.chipTextActive
             ]}>
-              선수
+              선출
             </Text>
           </TouchableOpacity>
 
+          {/* 매치 유형 필터 */}
           <TouchableOpacity
             style={[
               styles.chip,
-              selectedFilters.includes('womens') && styles.chipActive
+              matchTypeFilter === 'womens' && styles.chipActive
             ]}
-            onPress={() => toggleFilter('womens')}
+            onPress={() => toggleMatchTypeFilter('womens')}
           >
             <Text style={[
               styles.chipText,
-              selectedFilters.includes('womens') && styles.chipTextActive
+              matchTypeFilter === 'womens' && styles.chipTextActive
             ]}>
               여복
             </Text>
@@ -333,28 +343,29 @@ export default function HomeScreen() {
           <TouchableOpacity
             style={[
               styles.chip,
-              selectedFilters.includes('mixed') && styles.chipActive
+              matchTypeFilter === 'mixed' && styles.chipActive
             ]}
-            onPress={() => toggleFilter('mixed')}
+            onPress={() => toggleMatchTypeFilter('mixed')}
           >
             <Text style={[
               styles.chipText,
-              selectedFilters.includes('mixed') && styles.chipTextActive
+              matchTypeFilter === 'mixed' && styles.chipTextActive
             ]}>
               혼복
             </Text>
           </TouchableOpacity>
 
+          {/* 시간 필터 */}
           <TouchableOpacity
             style={[
               styles.chip,
-              selectedFilters.includes('today') && styles.chipActive
+              timeFilter === 'today' && styles.chipActive
             ]}
-            onPress={() => toggleFilter('today')}
+            onPress={toggleTimeFilter}
           >
             <Text style={[
               styles.chipText,
-              selectedFilters.includes('today') && styles.chipTextActive
+              timeFilter === 'today' && styles.chipTextActive
             ]}>
               오늘
             </Text>
@@ -451,19 +462,28 @@ export default function HomeScreen() {
               match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               match.venue.toLowerCase().includes(searchQuery.toLowerCase())
             )
-            // 중복 필터 로직 (OR 조건)
+            // 그룹별 필터 로직 (AND 조건)
             .filter(match => {
-              // 선택된 필터가 없으면 모든 매치 표시
-              if (selectedFilters.length === 0) return true;
+              let passes = true;
               
-              // 선택된 필터 중 하나라도 만족하면 표시
-              return selectedFilters.some(filter => {
-                if (filter === 'pro') return match.ntrpRange.min >= 4.0;
-                if (filter === 'womens') return match.matchType === '여복';
-                if (filter === 'mixed') return match.matchType === '혼복';
-                if (filter === 'today') return isToday(match.date);
-                return false;
-              });
+              // 레벨 필터
+              if (levelFilter === 'pro') {
+                passes = passes && match.ntrpRange.min >= 4.0;
+              }
+              
+              // 매치 유형 필터
+              if (matchTypeFilter === 'womens') {
+                passes = passes && match.matchType === '여복';
+              } else if (matchTypeFilter === 'mixed') {
+                passes = passes && match.matchType === '혼복';
+              }
+              
+              // 시간 필터
+              if (timeFilter === 'today') {
+                passes = passes && isToday(match.date);
+              }
+              
+              return passes;
             })
             // 정렬
             .sort((a, b) => {
@@ -627,14 +647,14 @@ const styles = StyleSheet.create({
   chipsContainer: {
     backgroundColor: '#fff',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
     backgroundColor: '#f3f4f6',
     marginRight: 8,
     borderWidth: 1,
@@ -645,7 +665,7 @@ const styles = StyleSheet.create({
     borderColor: '#ec4899',
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#6b7280',
   },

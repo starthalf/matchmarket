@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#fff',
-    gap: 50,
+    gap: 12,
   },
   searchInputContainer: {
     flex: 1,

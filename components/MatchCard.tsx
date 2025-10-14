@@ -122,7 +122,7 @@ const handlePress = () => {
       {/* 모집 현황 - 새로운 형태 */}
       <View style={styles.recruitmentStatus}>
         <View style={styles.ntrpRequirement}>
-          <Shield size={12} color="#1e40af" />
+          <Shield size={14} color="#6b7280" />
           <Text style={styles.ntrpText}>
             NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
           </Text>
@@ -310,18 +310,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   ntrpRequirement: {
-    backgroundColor: '#eff6ff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   ntrpText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#1e40af',
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#6b7280',
   },
   recruitmentInfo: {
     flexDirection: 'row',

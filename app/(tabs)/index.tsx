@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#eeeeee',
     gap: 12,
   },
   searchInputContainer: {

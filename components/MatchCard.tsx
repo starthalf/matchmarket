@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     color: '#ec4899',
   },
   matchInfo: {
-    marginBottom: 8,
+    marginBottom: 6,
   },
   infoRow: {
     flexDirection: 'row',
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   ntrpRequirement: {
     flexDirection: 'row',

@@ -27,8 +27,8 @@ export default function HomeScreen() {
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'popular' | 'female' | 'time' | 'ntrp'>('popular');
-  const [showFemaleOnly, setShowFemaleOnly] = useState(false);
+  const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
+  const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
 
   // Track component mount status
   useEffect(() => {
@@ -77,15 +77,15 @@ export default function HomeScreen() {
     }
   };
 
- const handleAdminLogin = async () => {
-  // 실제 관리자 계정으로 로그인
-  const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
-  if (result.success) {
-    Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
-  } else {
-    Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
-  }
-};
+  const handleAdminLogin = async () => {
+    // 실제 관리자 계정으로 로그인
+    const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
+    if (result.success) {
+      Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
+    } else {
+      Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
+    }
+  };
 
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
@@ -97,21 +97,21 @@ export default function HomeScreen() {
           </View>
           <View style={styles.headerIcons}>
             <TouchableOpacity 
-  style={styles.headerLoginIcon}
-  onPress={() => {
-    if (user) {
-      router.push('/profile');
-    } else {
-      router.push('/auth/login');
-    }
-  }}
->
-  {user ? (
-    <User size={20} color="#16a34a" />
-  ) : (
-    <LogIn size={20} color="#6b7280" />
-  )}
-</TouchableOpacity>
+              style={styles.headerLoginIcon}
+              onPress={() => {
+                if (user) {
+                  router.push('/profile');
+                } else {
+                  router.push('/auth/login');
+                }
+              }}
+            >
+              {user ? (
+                <User size={20} color="#16a34a" />
+              ) : (
+                <LogIn size={20} color="#6b7280" />
+              )}
+            </TouchableOpacity>
             
             {/* 관리자 로그인했을 때만 Supabase 테스트 버튼 표시 */}
             {isAdmin && (
@@ -169,50 +169,49 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
                 </TouchableOpacity>
-               // 기존 디버그 버튼을 이것으로 교체
-<TouchableOpacity 
-  style={{ backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: '#f59e0b' }}
-  onPress={async () => {
-    try {
-      const { SupabaseDebug } = await import('../../utils/supabaseDebug');
-      
-      // 간단한 체크부터 시작
-      const simpleResult = await SupabaseDebug.simpleCheck('hcgkhlee@gmail.com');
-      console.log('🔍 간단한 체크:', simpleResult);
-      
-      if (simpleResult.canLogin) {
-        Alert.alert('디버그 결과', `✅ 로그인 가능!\n프로필: ${simpleResult.hasProfile ? '있음' : '없음'}`);
-        return;
-      }
-      
-      // 로그인이 안 되면 상세 디버깅
-      const detailResult = await SupabaseDebug.debugUserStatus('hcgkhlee@gmail.com');
-      console.log('🔍 상세 디버그:', detailResult);
-      
-      if (detailResult.error) {
-        Alert.alert('디버그 실패', detailResult.error);
-        return;
-      }
-      
-      let message = `=== 계정 상태 ===\n`;
-      message += `이메일: ${detailResult.authUser?.email || '없음'}\n`;
-      message += `이메일 확인: ${detailResult.authUser?.emailConfirmed ? '✅' : '❌'}\n`;
-      message += `프로필: ${detailResult.profile?.exists ? '✅' : '❌'}\n`;
-      message += `로그인 테스트: ${detailResult.loginTest?.success ? '✅' : '❌'}\n`;
-      if (detailResult.loginTest?.error) {
-        message += `로그인 오류: ${detailResult.loginTest.error}`;
-      }
-      
-      Alert.alert('디버그 결과', message);
-      
-    } catch (error) {
-      console.error('디버그 버튼 오류:', error);
-      Alert.alert('오류', `디버깅 실패: ${error}`);
-    }
-  }}
->
-  <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>🔍 디버그</Text>
-</TouchableOpacity>
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#f59e0b', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: '#f59e0b' }}
+                  onPress={async () => {
+                    try {
+                      const { SupabaseDebug } = await import('../../utils/supabaseDebug');
+                      
+                      // 간단한 체크부터 시작
+                      const simpleResult = await SupabaseDebug.simpleCheck('hcgkhlee@gmail.com');
+                      console.log('🔍 간단한 체크:', simpleResult);
+                      
+                      if (simpleResult.canLogin) {
+                        Alert.alert('디버그 결과', `✅ 로그인 가능!\n프로필: ${simpleResult.hasProfile ? '있음' : '없음'}`);
+                        return;
+                      }
+                      
+                      // 로그인이 안 되면 상세 디버깅
+                      const detailResult = await SupabaseDebug.debugUserStatus('hcgkhlee@gmail.com');
+                      console.log('🔍 상세 디버그:', detailResult);
+                      
+                      if (detailResult.error) {
+                        Alert.alert('디버그 실패', detailResult.error);
+                        return;
+                      }
+                      
+                      let message = `=== 계정 상태 ===\n`;
+                      message += `이메일: ${detailResult.authUser?.email || '없음'}\n`;
+                      message += `이메일 확인: ${detailResult.authUser?.emailConfirmed ? '✅' : '❌'}\n`;
+                      message += `프로필: ${detailResult.profile?.exists ? '✅' : '❌'}\n`;
+                      message += `로그인 테스트: ${detailResult.loginTest?.success ? '✅' : '❌'}\n`;
+                      if (detailResult.loginTest?.error) {
+                        message += `로그인 오류: ${detailResult.loginTest.error}`;
+                      }
+                      
+                      Alert.alert('디버그 결과', message);
+                      
+                    } catch (error) {
+                      console.error('디버그 버튼 오류:', error);
+                      Alert.alert('오류', `디버깅 실패: ${error}`);
+                    }
+                  }}
+                >
+                  <Text style={{ color: 'white', fontSize: 12, fontWeight: '500' }}>🔍 디버그</Text>
+                </TouchableOpacity>
               </>
             ) : (
               <TouchableOpacity 
@@ -239,7 +238,7 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* 검색 및 필터 */}
+      {/* 검색 */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Search size={20} color="#9ca3af" />
@@ -251,17 +250,45 @@ export default function HomeScreen() {
             onChangeText={setSearchQuery}
           />
         </View>
-        <TouchableOpacity style={styles.filterButton}>
+        <TouchableOpacity style={styles.filterIconButton}>
           <Filter size={20} color="#6b7280" />
         </TouchableOpacity>
       </View>
 
-      {/* 정렬 및 필터 옵션 */}
+      {/* 필터 섹션 */}
+      <View style={styles.filterContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <Text style={styles.filterLabel}>필터:</Text>
+          {[
+            { key: 'all', label: '전체' },
+            { key: 'male', label: '남성 매치' },
+            { key: 'female', label: '여성 매치' },
+          ].map((filter) => (
+            <TouchableOpacity
+              key={filter.key}
+              style={[
+                styles.filterButton,
+                genderFilter === filter.key && styles.filterButtonActive
+              ]}
+              onPress={() => setGenderFilter(filter.key as any)}
+            >
+              <Text style={[
+                styles.filterButtonText,
+                genderFilter === filter.key && styles.filterButtonTextActive
+              ]}>
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* 정렬 섹션 */}
       <View style={styles.sortContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <Text style={styles.sortLabel}>정렬:</Text>
           {[
             { key: 'popular', label: '인기순' },
-            { key: 'female', label: '여성 매치' },
             { key: 'time', label: '시간순' },
             { key: 'ntrp', label: 'NTRP순' },
           ].map((option) => (
@@ -292,12 +319,33 @@ export default function HomeScreen() {
           </View>
         ) : (
           displayMatches
+            // 검색 필터
             .filter(match => 
               searchQuery === '' || 
               match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               match.venue.toLowerCase().includes(searchQuery.toLowerCase())
             )
-            .filter(match => !showFemaleOnly || match.targetGender === '여성')
+            // 성별 필터
+            .filter(match => {
+              if (genderFilter === 'all') return true;
+              if (genderFilter === 'male') return match.targetGender === '남성' || match.targetGender === '혼성';
+              if (genderFilter === 'female') return match.targetGender === '여성' || match.targetGender === '혼성';
+              return true;
+            })
+            // 정렬
+            .sort((a, b) => {
+              if (sortBy === 'popular') {
+                // 인기순: 신청자 수로 정렬
+                return b.applicationsCount - a.applicationsCount;
+              } else if (sortBy === 'time') {
+                // 시간순: 가까운 날짜가 먼저
+                return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
+              } else if (sortBy === 'ntrp') {
+                // NTRP순: 높은 레벨이 먼저
+                return b.ntrpRange.max - a.ntrpRange.max;
+              }
+              return 0;
+            })
             .map((match) => (
               <MatchCard 
                 key={match.id} 
@@ -329,12 +377,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   headerLoginIcon: {
-  padding: 8,
-  borderRadius: 20,
-  backgroundColor: '#ffffff',
-  borderWidth: 1,
-  borderColor: '#e5e7eb',
-},
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
   supabaseTestIcon: {
     padding: 8,
     borderRadius: 8,
@@ -436,10 +484,43 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#374151',
   },
-  filterButton: {
+  filterIconButton: {
     padding: 8,
     borderRadius: 8,
     backgroundColor: '#f9fafb',
+  },
+  filterContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  filterLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginRight: 8,
+  },
+  filterButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#f3f4f6',
+    marginRight: 8,
+  },
+  filterButtonActive: {
+    backgroundColor: '#3b82f6',
+  },
+  filterButtonText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#6b7280',
+  },
+  filterButtonTextActive: {
+    color: '#fff',
   },
   sortContainer: {
     backgroundColor: '#fff',
@@ -447,6 +528,14 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sortLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginRight: 8,
   },
   sortButton: {
     paddingHorizontal: 16,

@@ -8,6 +8,7 @@ import { useMatches } from '../../contexts/MatchContext';
 import { Match, MatchApplication } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
 import { router } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function MatchManagementScreen() {
   const { user } = useAuth();
@@ -22,6 +23,10 @@ export default function MatchManagementScreen() {
   const myApplications = matches.filter(match => 
     match.applications?.some(app => app.userId === user?.id)
   );
+    // 🔥 페이지 진입 시 알림 제거
+  useEffect(() => {
+    AsyncStorage.removeItem('hasNewMatchApplication');
+  }, []);
 
 const handleApproveApplication = (matchId: string, applicationId: string) => {
     const match = matches.find(m => m.id === matchId);

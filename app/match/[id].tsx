@@ -30,6 +30,7 @@ import { useMatches } from '../../contexts/MatchContext';
 import { PriceDisplay } from '../../components/PriceDisplay';
 import { useSafeStyles } from '../../constants/Styles';
 import { Match, MatchApplication } from '../../types/tennis';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

@@ -2,13 +2,14 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Clock, 
-  MapPin, 
-  UserRound, 
-  Eye, 
+import {
+  Clock,
+  MapPin,
+  UserRound,
+  Eye,
   Users,
-  Star
+  Star,
+  Shield
 } from 'lucide-react-native';
 import { Match } from '../types/tennis';
 import { PriceDisplay } from './PriceDisplay';
@@ -121,6 +122,7 @@ const handlePress = () => {
       {/* 모집 현황 - 새로운 형태 */}
       <View style={styles.recruitmentStatus}>
         <View style={styles.ntrpRequirement}>
+          <Shield size={12} color="#1e40af" />
           <Text style={styles.ntrpText}>
             NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
           </Text>
@@ -304,7 +306,7 @@ const styles = StyleSheet.create({
   recruitmentStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 6,
     marginBottom: 12,
   },
   ntrpRequirement: {
@@ -312,6 +314,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
   },
   ntrpText: {
     fontSize: 11,
@@ -322,13 +327,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    flex: 1,
-    justifyContent: 'flex-end',
   },
   recruitmentText: {
-    fontSize: 12,
-    color: '#374151',
-    fontWeight: '600',
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
   },
   applicationText: {
     fontSize: 12,

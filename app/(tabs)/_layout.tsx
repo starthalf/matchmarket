@@ -6,11 +6,28 @@ import { useChat } from '../../contexts/ChatContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React from 'react';
 
 export default function TabLayout() {
   const { user, isLoading } = useAuth();
   const { unreadCount } = useChat();
   const { matches } = useMatches();
+  // 🔥 신규 참가 신청 알림
+  const [hasNewApplication, setHasNewApplication] = React.useState(false);
+  
+  React.useEffect(() => {
+    const checkNotification = async () => {
+      const value = await AsyncStorage.getItem('hasNewMatchApplication');
+      setHasNewApplication(value === 'true');
+    };
+    checkNotification();
+    
+    // 1초마다 체크 (실시간 업데이트)
+    const interval = setInterval(checkNotification, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   // 입금이 필요한 매치 개수 계산
   const paymentNeededCount = matches.filter(match => {

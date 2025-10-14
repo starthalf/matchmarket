@@ -9,9 +9,10 @@ import {
   TouchableOpacity,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell, ArrowUpDown } from 'lucide-react-native';
+import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell, ArrowUpDown, X, Check } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
@@ -30,8 +31,9 @@ export default function HomeScreen() {
   const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
   
-  // 스크롤 감지를 위한 상태
+  // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
+  const [showSortModal, setShowSortModal] = useState(false);
 
   // Track component mount status
   useEffect(() => {
@@ -90,7 +92,23 @@ export default function HomeScreen() {
   // 스크롤 핸들러
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
-    setShowSortButton(offsetY > 50); // 50px 이상 스크롤하면 Sort 버튼 표시
+    setShowSortButton(offsetY > 50);
+  };
+
+  // Sort 선택 핸들러
+  const handleSortSelect = (sort: 'popular' | 'time' | 'ntrp') => {
+    setSortBy(sort);
+    setShowSortModal(false);
+  };
+
+  // Sort 라벨 가져오기
+  const getSortLabel = () => {
+    switch (sortBy) {
+      case 'popular': return '인기순';
+      case 'time': return '시간순';
+      case 'ntrp': return 'NTRP순';
+      default: return '인기순';
+    }
   };
 
   return (
@@ -253,35 +271,21 @@ export default function HomeScreen() {
         </View>
         
         {/* 스크롤하면 나타나는 Sort 버튼 */}
-        {showSortButton && (
+        {showSortButton ? (
           <TouchableOpacity 
             style={styles.sortIconButton}
-            onPress={() => {
-              // Sort 옵션을 보여주는 액션시트 또는 모달
-              Alert.alert(
-                '정렬',
-                '정렬 방식을 선택하세요',
-                [
-                  { text: '인기순', onPress: () => setSortBy('popular') },
-                  { text: '시간순', onPress: () => setSortBy('time') },
-                  { text: 'NTRP순', onPress: () => setSortBy('ntrp') },
-                  { text: '취소', style: 'cancel' }
-                ]
-              );
-            }}
+            onPress={() => setShowSortModal(true)}
           >
-            <ArrowUpDown size={20} color="#6b7280" />
+            <ArrowUpDown size={18} color="#ffffff" />
           </TouchableOpacity>
-        )}
-        
-        {!showSortButton && (
+        ) : (
           <TouchableOpacity style={styles.filterIconButton}>
             <Filter size={20} color="#6b7280" />
           </TouchableOpacity>
         )}
       </View>
 
-      {/* 필터 칩들 (항상 표시) */}
+      {/* 필터 칩들 (항상 표시 - 필터만!) */}
       <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity
@@ -328,57 +332,78 @@ export default function HomeScreen() {
               여성 매치
             </Text>
           </TouchableOpacity>
-
-          {/* 구분선 */}
-          <View style={styles.chipDivider} />
-
-          {/* 정렬 칩들 */}
-          <TouchableOpacity
-            style={[
-              styles.chip,
-              sortBy === 'popular' && styles.chipActive
-            ]}
-            onPress={() => setSortBy('popular')}
-          >
-            <Text style={[
-              styles.chipText,
-              sortBy === 'popular' && styles.chipTextActive
-            ]}>
-              인기순
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.chip,
-              sortBy === 'time' && styles.chipActive
-            ]}
-            onPress={() => setSortBy('time')}
-          >
-            <Text style={[
-              styles.chipText,
-              sortBy === 'time' && styles.chipTextActive
-            ]}>
-              시간순
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[
-              styles.chip,
-              sortBy === 'ntrp' && styles.chipActive
-            ]}
-            onPress={() => setSortBy('ntrp')}
-          >
-            <Text style={[
-              styles.chipText,
-              sortBy === 'ntrp' && styles.chipTextActive
-            ]}>
-              NTRP순
-            </Text>
-          </TouchableOpacity>
         </ScrollView>
       </View>
+
+      {/* Sort 모달 */}
+      <Modal
+        visible={showSortModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSortModal(false)}
+        >
+          <View style={styles.sortModalContainer}>
+            <View style={styles.sortModalHeader}>
+              <Text style={styles.sortModalTitle}>정렬</Text>
+              <TouchableOpacity onPress={() => setShowSortModal(false)}>
+                <X size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.sortOptions}>
+              <TouchableOpacity
+                style={styles.sortOption}
+                onPress={() => handleSortSelect('popular')}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === 'popular' && styles.sortOptionTextActive
+                ]}>
+                  인기순
+                </Text>
+                {sortBy === 'popular' && (
+                  <Check size={20} color="#ec4899" />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sortOption}
+                onPress={() => handleSortSelect('time')}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === 'time' && styles.sortOptionTextActive
+                ]}>
+                  시간순
+                </Text>
+                {sortBy === 'time' && (
+                  <Check size={20} color="#ec4899" />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.sortOption}
+                onPress={() => handleSortSelect('ntrp')}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === 'ntrp' && styles.sortOptionTextActive
+                ]}>
+                  NTRP순
+                </Text>
+                {sortBy === 'ntrp' && (
+                  <Check size={20} color="#ec4899" />
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* 매치 목록 */}
       <ScrollView 
@@ -558,21 +583,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
   },
   sortIconButton: {
-    padding: 8,
+    padding: 10,
     borderRadius: 8,
     backgroundColor: '#ec4899',
   },
   chipsContainer: {
     backgroundColor: '#fff',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   chip: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 24,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
     backgroundColor: '#f3f4f6',
     marginRight: 8,
     borderWidth: 1,
@@ -583,19 +608,57 @@ const styles = StyleSheet.create({
     borderColor: '#ec4899',
   },
   chipText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
     color: '#6b7280',
   },
   chipTextActive: {
     color: '#ffffff',
   },
-  chipDivider: {
-    width: 1,
-    height: 24,
-    backgroundColor: '#d1d5db',
-    marginHorizontal: 8,
-    alignSelf: 'center',
+  // Sort 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sortModalContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    width: '80%',
+    maxWidth: 400,
+    padding: 20,
+  },
+  sortModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sortModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  sortOptions: {
+    gap: 4,
+  },
+  sortOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  sortOptionText: {
+    fontSize: 16,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  sortOptionTextActive: {
+    color: '#ec4899',
+    fontWeight: '600',
   },
   matchList: {
     flex: 1,

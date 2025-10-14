@@ -652,8 +652,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   chip: {
-  paddingHorizontal: 20,
-  paddingVertical: 10,
+  paddingHorizontal: 16,
+  paddingVertical: 8,
   borderRadius: 24,
   backgroundColor: '#ffffff',  // 흰 배경
   marginRight: 8,
@@ -665,7 +665,7 @@ chipActive: {
   borderColor: '#ec4899',      // 핑크 테두리
 },
 chipText: {
-  fontSize: 14,
+  fontSize: 11,
   fontWeight: '600',
   color: '#374151',            // 어두운 회색 글씨
 },

@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell } from 'lucide-react-native';
+import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell, ArrowUpDown } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
@@ -29,6 +29,9 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
   const [genderFilter, setGenderFilter] = useState<'all' | 'male' | 'female'>('all');
+  
+  // 스크롤 감지를 위한 상태
+  const [showSortButton, setShowSortButton] = useState(false);
 
   // Track component mount status
   useEffect(() => {
@@ -40,7 +43,6 @@ export default function HomeScreen() {
 
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
-      // mockUsers에서 해당 사용자 찾기
       const { mockUsers } = await import('../../data/mockData');
       const targetUser = mockUsers.find(u => u.name === userIdentifier);
       
@@ -65,7 +67,6 @@ export default function HomeScreen() {
     if (isAdmin) {
       router.push('/(admin)/dashboard');
     } else {
-      // 관리자가 아닌 경우 로그인 유도
       Alert.alert(
         '관리자 로그인',
         '관리자 기능에 접근하려면 로그인이 필요합니다.',
@@ -78,13 +79,18 @@ export default function HomeScreen() {
   };
 
   const handleAdminLogin = async () => {
-    // 실제 관리자 계정으로 로그인
     const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
     if (result.success) {
       Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
     } else {
       Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
     }
+  };
+
+  // 스크롤 핸들러
+  const handleScroll = (event: any) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowSortButton(offsetY > 50); // 50px 이상 스크롤하면 Sort 버튼 표시
   };
 
   return (
@@ -113,7 +119,6 @@ export default function HomeScreen() {
               )}
             </TouchableOpacity>
             
-            {/* 관리자 로그인했을 때만 Supabase 테스트 버튼 표시 */}
             {isAdmin && (
               <TouchableOpacity 
                 style={styles.supabaseTestIcon}
@@ -123,7 +128,6 @@ export default function HomeScreen() {
               </TouchableOpacity>
             )}
             
-            {/* 관리자 로그인했을 때만 관리자(실드) 버튼 표시 */}
             {isAdmin && (
               <TouchableOpacity 
                 style={styles.adminButton}
@@ -136,7 +140,7 @@ export default function HomeScreen() {
         </View>
       </View>
     
-      {/* 개발 모드에서만 표시되는 데모 컨트롤 */}
+      {/* 개발 모드 데모 컨트롤 */}
       {__DEV__ && (
         <View style={styles.demoControls}>
           <Text style={styles.demoTitle}>
@@ -175,7 +179,6 @@ export default function HomeScreen() {
                     try {
                       const { SupabaseDebug } = await import('../../utils/supabaseDebug');
                       
-                      // 간단한 체크부터 시작
                       const simpleResult = await SupabaseDebug.simpleCheck('hcgkhlee@gmail.com');
                       console.log('🔍 간단한 체크:', simpleResult);
                       
@@ -184,7 +187,6 @@ export default function HomeScreen() {
                         return;
                       }
                       
-                      // 로그인이 안 되면 상세 디버깅
                       const detailResult = await SupabaseDebug.debugUserStatus('hcgkhlee@gmail.com');
                       console.log('🔍 상세 디버그:', detailResult);
                       
@@ -225,7 +227,6 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Preview 빌드에서만 표시되는 관리자 로그인 버튼 */}
       {!__DEV__ && !isAdmin && (
         <View style={styles.previewAdminSection}>
           <TouchableOpacity 
@@ -238,7 +239,7 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* 검색 */}
+      {/* 검색창 + Sort 버튼 */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
           <Search size={20} color="#9ca3af" />
@@ -250,98 +251,165 @@ export default function HomeScreen() {
             onChangeText={setSearchQuery}
           />
         </View>
-        <TouchableOpacity style={styles.filterIconButton}>
-          <Filter size={20} color="#6b7280" />
-        </TouchableOpacity>
+        
+        {/* 스크롤하면 나타나는 Sort 버튼 */}
+        {showSortButton && (
+          <TouchableOpacity 
+            style={styles.sortIconButton}
+            onPress={() => {
+              // Sort 옵션을 보여주는 액션시트 또는 모달
+              Alert.alert(
+                '정렬',
+                '정렬 방식을 선택하세요',
+                [
+                  { text: '인기순', onPress: () => setSortBy('popular') },
+                  { text: '시간순', onPress: () => setSortBy('time') },
+                  { text: 'NTRP순', onPress: () => setSortBy('ntrp') },
+                  { text: '취소', style: 'cancel' }
+                ]
+              );
+            }}
+          >
+            <ArrowUpDown size={20} color="#6b7280" />
+          </TouchableOpacity>
+        )}
+        
+        {!showSortButton && (
+          <TouchableOpacity style={styles.filterIconButton}>
+            <Filter size={20} color="#6b7280" />
+          </TouchableOpacity>
+        )}
       </View>
 
-      {/* 필터 섹션 */}
-      <View style={styles.filterContainer}>
+      {/* 필터 칩들 (항상 표시) */}
+      <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <Text style={styles.filterLabel}>필터:</Text>
-          {[
-            { key: 'all', label: '전체' },
-            { key: 'male', label: '남성 매치' },
-            { key: 'female', label: '여성 매치' },
-          ].map((filter) => (
-            <TouchableOpacity
-              key={filter.key}
-              style={[
-                styles.filterButton,
-                genderFilter === filter.key && styles.filterButtonActive
-              ]}
-              onPress={() => setGenderFilter(filter.key as any)}
-            >
-              <Text style={[
-                styles.filterButtonText,
-                genderFilter === filter.key && styles.filterButtonTextActive
-              ]}>
-                {filter.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              genderFilter === 'all' && styles.chipActive
+            ]}
+            onPress={() => setGenderFilter('all')}
+          >
+            <Text style={[
+              styles.chipText,
+              genderFilter === 'all' && styles.chipTextActive
+            ]}>
+              전체
+            </Text>
+          </TouchableOpacity>
 
-      {/* 정렬 섹션 */}
-      <View style={styles.sortContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <Text style={styles.sortLabel}>정렬:</Text>
-          {[
-            { key: 'popular', label: '인기순' },
-            { key: 'time', label: '시간순' },
-            { key: 'ntrp', label: 'NTRP순' },
-          ].map((option) => (
-            <TouchableOpacity
-              key={option.key}
-              style={[
-                styles.sortButton,
-                sortBy === option.key && styles.sortButtonActive
-              ]}
-              onPress={() => setSortBy(option.key as any)}
-            >
-              <Text style={[
-                styles.sortButtonText,
-                sortBy === option.key && styles.sortButtonTextActive
-              ]}>
-                {option.label}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              genderFilter === 'male' && styles.chipActive
+            ]}
+            onPress={() => setGenderFilter('male')}
+          >
+            <Text style={[
+              styles.chipText,
+              genderFilter === 'male' && styles.chipTextActive
+            ]}>
+              남성 매치
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              genderFilter === 'female' && styles.chipActive
+            ]}
+            onPress={() => setGenderFilter('female')}
+          >
+            <Text style={[
+              styles.chipText,
+              genderFilter === 'female' && styles.chipTextActive
+            ]}>
+              여성 매치
+            </Text>
+          </TouchableOpacity>
+
+          {/* 구분선 */}
+          <View style={styles.chipDivider} />
+
+          {/* 정렬 칩들 */}
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              sortBy === 'popular' && styles.chipActive
+            ]}
+            onPress={() => setSortBy('popular')}
+          >
+            <Text style={[
+              styles.chipText,
+              sortBy === 'popular' && styles.chipTextActive
+            ]}>
+              인기순
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              sortBy === 'time' && styles.chipActive
+            ]}
+            onPress={() => setSortBy('time')}
+          >
+            <Text style={[
+              styles.chipText,
+              sortBy === 'time' && styles.chipTextActive
+            ]}>
+              시간순
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              sortBy === 'ntrp' && styles.chipActive
+            ]}
+            onPress={() => setSortBy('ntrp')}
+          >
+            <Text style={[
+              styles.chipText,
+              sortBy === 'ntrp' && styles.chipTextActive
+            ]}>
+              NTRP순
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
       {/* 매치 목록 */}
-      <ScrollView style={styles.matchList} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.matchList} 
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+      >
         {isLoadingMatches ? (
           <View style={styles.loadingContainer}>
             <Text style={styles.loadingText}>매치를 불러오는 중...</Text>
           </View>
         ) : (
           displayMatches
-            // 검색 필터
             .filter(match => 
               searchQuery === '' || 
               match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               match.venue.toLowerCase().includes(searchQuery.toLowerCase())
             )
-            // 성별 필터
             .filter(match => {
               if (genderFilter === 'all') return true;
               if (genderFilter === 'male') return match.targetGender === '남성' || match.targetGender === '혼성';
               if (genderFilter === 'female') return match.targetGender === '여성' || match.targetGender === '혼성';
               return true;
             })
-            // 정렬
             .sort((a, b) => {
               if (sortBy === 'popular') {
-                // 인기순: 신청자 수로 정렬
                 return b.applicationsCount - a.applicationsCount;
               } else if (sortBy === 'time') {
-                // 시간순: 가까운 날짜가 먼저
                 return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
               } else if (sortBy === 'ntrp') {
-                // NTRP순: 높은 레벨이 먼저
                 return b.ntrpRange.max - a.ntrpRange.max;
               }
               return 0;
@@ -489,71 +557,45 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#f9fafb',
   },
-  filterContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  filterLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-    marginRight: 8,
-  },
-  filterButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#f3f4f6',
-    marginRight: 8,
-  },
-  filterButtonActive: {
-    backgroundColor: '#3b82f6',
-  },
-  filterButtonText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  filterButtonTextActive: {
-    color: '#fff',
-  },
-  sortContainer: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  sortLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#6b7280',
-    marginRight: 8,
-  },
-  sortButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
-    marginRight: 8,
-  },
-  sortButtonActive: {
+  sortIconButton: {
+    padding: 8,
+    borderRadius: 8,
     backgroundColor: '#ec4899',
   },
-  sortButtonText: {
+  chipsContainer: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  chip: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 24,
+    backgroundColor: '#f3f4f6',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  chipActive: {
+    backgroundColor: '#ec4899',
+    borderColor: '#ec4899',
+  },
+  chipText: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
     color: '#6b7280',
   },
-  sortButtonTextActive: {
-    color: '#fff',
+  chipTextActive: {
+    color: '#ffffff',
+  },
+  chipDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: '#d1d5db',
+    marginHorizontal: 8,
+    alignSelf: 'center',
   },
   matchList: {
     flex: 1,

@@ -18,14 +18,92 @@ import { User } from '../../../types/tennis';
 
 export default function SellerReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const seller = mockUsers.find(u => u.id === id);
+  const [seller, setSeller] = React.useState<User | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const reviews = mockReviews.filter(r => r.sellerId === id);
   const safeStyles = useSafeStyles();
+
+  // 판매자 정보 로드
+  React.useEffect(() => {
+    const loadSeller = async () => {
+      // 1. mockUsers에서 먼저 찾기
+      let foundSeller = mockUsers.find(u => u.id === id);
+      
+      // 2. mockUsers에 없으면 Supabase에서 찾기
+      if (!foundSeller && supabase) {
+        try {
+          const { data, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', id)
+            .single();
+          
+          if (data && !error) {
+            // Supabase 데이터를 User 타입으로 변환
+            foundSeller = {
+              id: data.id,
+              name: data.name,
+              email: '',
+              gender: data.gender,
+              ageGroup: data.age_group,
+              ntrp: data.ntrp,
+              experience: data.experience,
+              playStyle: data.play_style,
+              careerType: data.career_type,
+              certification: {
+                ntrp: data.certification_ntrp,
+                career: data.certification_career,
+                youtube: data.certification_youtube,
+                instagram: data.certification_instagram,
+              },
+              profileImage: data.profile_image,
+              viewCount: data.view_count,
+              likeCount: data.like_count,
+              avgRating: data.avg_rating,
+            };
+          }
+        } catch (error) {
+          console.error('판매자 정보 로드 오류:', error);
+        }
+      }
+      
+      setSeller(foundSeller || null);
+      setIsLoading(false);
+    };
+
+    loadSeller();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <SafeAreaView style={safeStyles.safeContainer}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text>로딩 중...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   if (!seller) {
     return (
       <SafeAreaView style={safeStyles.safeContainer}>
-        <Text>판매자를 찾을 수 없습니다.</Text>
+        <View style={safeStyles.safeHeader}>
+          <View style={safeStyles.safeHeaderContent}>
+            <TouchableOpacity 
+              style={safeStyles.backButton} 
+              onPress={() => router.back()}
+            >
+              <ArrowLeft size={24} color="#374151" />
+            </TouchableOpacity>
+            <Text style={safeStyles.headerTitle}>리뷰</Text>
+            <View style={safeStyles.placeholder} />
+          </View>
+        </View>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ fontSize: 16, color: '#6b7280', textAlign: 'center' }}>
+            판매자를 찾을 수 없습니다.
+          </Text>
+        </View>
       </SafeAreaView>
     );
   }

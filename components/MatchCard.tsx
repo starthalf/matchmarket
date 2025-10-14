@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
     color: '#ec4899',
   },
   matchInfo: {
-    marginBottom: 12,
+    marginBottom: 8,
   },
   infoRow: {
     flexDirection: 'row',
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   infoText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#6b7280',
     fontWeight: '500',
   },
@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    marginBottom: 8,
+    marginBottom: 10,
   },
   ntrpRequirement: {
     flexDirection: 'row',
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   ntrpText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
     color: '#6b7280',
   },
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   recruitmentText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#6b7280',
     fontWeight: '500',
   },

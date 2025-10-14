@@ -605,6 +605,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#fee2e2',
+    
     borderColor: '#ef4444',
   },
   logoutButtonText: {
@@ -615,7 +616,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 5,
+    paddingVertical: 12,
     backgroundColor: '#eeeeee',
     gap: 12,
   },

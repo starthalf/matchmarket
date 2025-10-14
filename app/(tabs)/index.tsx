@@ -652,26 +652,26 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e5e7eb',
   },
   chip: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 24,
-    backgroundColor: '#f3f4f6',
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  chipActive: {
-    backgroundColor: '#ec4899',
-    borderColor: '#ec4899',
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6b7280',
-  },
-  chipTextActive: {
-    color: '#ffffff',
-  },
+  paddingHorizontal: 20,
+  paddingVertical: 10,
+  borderRadius: 24,
+  backgroundColor: '#ffffff',  // 흰 배경
+  marginRight: 8,
+  borderWidth: 1.5,            // 테두리 두께
+  borderColor: '#d1d5db',      // 회색 테두리
+},
+chipActive: {
+  backgroundColor: '#ec4899',  // 핑크 배경 (기존 컬러 유지)
+  borderColor: '#ec4899',      // 핑크 테두리
+},
+chipText: {
+  fontSize: 14,
+  fontWeight: '600',
+  color: '#374151',            // 어두운 회색 글씨
+},
+chipTextActive: {
+  color: '#ffffff',            // 흰 글씨
+},
   // Sort 모달 스타일
   modalOverlay: {
     flex: 1,

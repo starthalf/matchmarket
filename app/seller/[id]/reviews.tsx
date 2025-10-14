@@ -13,6 +13,8 @@ import { ArrowLeft, Star, User } from 'lucide-react-native';
 import { mockUsers, mockReviews } from '../../../data/mockData';
 import { CertificationBadge } from '../../../components/CertificationBadge';
 import { useSafeStyles } from '../../../constants/Styles';
+import { supabase } from '../../../lib/supabase';
+import { User } from '../../../types/tennis';
 
 export default function SellerReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

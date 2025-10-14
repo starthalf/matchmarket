@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
   chipsContainer: {
     backgroundColor: '#eeeeee',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },

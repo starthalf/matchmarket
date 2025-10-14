@@ -306,8 +306,8 @@ const styles = StyleSheet.create({
   recruitmentStatus: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginBottom: 12,
+    gap: 12,
+    marginBottom: 8,
   },
   ntrpRequirement: {
     flexDirection: 'row',

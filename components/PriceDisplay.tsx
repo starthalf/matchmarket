@@ -45,10 +45,7 @@ export function PriceDisplay({
     const interval = setInterval(() => {
       setAnimatedPrice(prevPrice => {
         const targetPrice = calculateDynamicPrice();
-        
-        // 실시간 미세 변동 (±1% 범위에서 목표가격으로 수렴)
-        const variation = (Math.random() - 0.5) * 0.02; // -1% ~ +1%
-        const newPrice = targetPrice * (1 + variation);
+        const newPrice = targetPrice; // random variation 제거
         
         // 최종 가격 제한
         const finalPrice = Math.min(

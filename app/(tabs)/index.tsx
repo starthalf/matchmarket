@@ -659,7 +659,7 @@ const styles = StyleSheet.create({
   sortIconButton: {
     padding: 10,
     borderRadius: 10,
-    backgroundColor: '#ea4c89',
+    backgroundColor: '#0d0c22',
   },
   chipsContainer: {
     backgroundColor: '#f8f7f4',
@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   sortOptionTextActive: {
-    color: '#0d0c22',
+    color: '#ea4c89',
     fontWeight: '600',
   },
   matchList: {

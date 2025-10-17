@@ -405,7 +405,7 @@ export default function HomeScreen() {
                   인기순
                 </Text>
                 {sortBy === 'popular' && (
-                  <Check size={20} color="#ec4899" />
+                  <Check size={20} color="#ea4c89" />
                 )}
               </TouchableOpacity>
 
@@ -420,7 +420,7 @@ export default function HomeScreen() {
                   시간순
                 </Text>
                 {sortBy === 'time' && (
-                  <Check size={20} color="#ec4899" />
+                  <Check size={20} color="#ea4c89" />
                 )}
               </TouchableOpacity>
 
@@ -435,7 +435,7 @@ export default function HomeScreen() {
                   NTRP순
                 </Text>
                 {sortBy === 'ntrp' && (
-                  <Check size={20} color="#ec4899" />
+                  <Check size={20} color="#ea4c89" />
                 )}
               </TouchableOpacity>
             </View>
@@ -463,28 +463,28 @@ export default function HomeScreen() {
               match.venue.toLowerCase().includes(searchQuery.toLowerCase())
             )
             // 그룹별 필터 로직 (AND 조건)
-.filter(match => {
-  let passes = true;
-  
-  // 레벨 필터 - 판매자가 선수인 매치만
-  if (levelFilter === 'pro') {
-    passes = passes && match.seller.careerType === '선수';
-  }
-  
-  // 매치 유형 필터
-  if (matchTypeFilter === 'womens') {
-    passes = passes && match.matchType === '여복';
-  } else if (matchTypeFilter === 'mixed') {
-    passes = passes && match.matchType === '혼복';
-  }
-  
-  // 시간 필터
-  if (timeFilter === 'today') {
-    passes = passes && isToday(match.date);
-  }
-  
-  return passes;
-})
+            .filter(match => {
+              let passes = true;
+              
+              // 레벨 필터 - 판매자가 선수인 매치만
+              if (levelFilter === 'pro') {
+                passes = passes && match.seller.careerType === '선수';
+              }
+              
+              // 매치 유형 필터
+              if (matchTypeFilter === 'womens') {
+                passes = passes && match.matchType === '여복';
+              } else if (matchTypeFilter === 'mixed') {
+                passes = passes && match.matchType === '혼복';
+              }
+              
+              // 시간 필터
+              if (timeFilter === 'today') {
+                passes = passes && isToday(match.date);
+              }
+              
+              return passes;
+            })
             // 정렬
             .sort((a, b) => {
               if (sortBy === 'popular') {
@@ -605,7 +605,6 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: '#fee2e2',
-    
     borderColor: '#ef4444',
   },
   logoutButtonText: {
@@ -617,62 +616,86 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 9,
-    backgroundColor: '#eeeeee',
+    backgroundColor: '#f8f7f4',
     gap: 12,
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
     paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingVertical: 10,
     gap: 8,
+    borderWidth: 0,
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#374151',
+    color: '#0d0c22',
   },
   filterIconButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f9fafb',
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   sortIconButton: {
     padding: 10,
-    borderRadius: 8,
-    backgroundColor: '#ec4899',
+    borderRadius: 10,
+    backgroundColor: '#ea4c89',
   },
   chipsContainer: {
-    backgroundColor: '#eeeeee',
+    backgroundColor: '#f8f7f4',
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    paddingVertical: 10,
+    borderBottomWidth: 0,
   },
   chip: {
-  paddingHorizontal: 16,
-  paddingVertical: 8,
-  borderRadius: 24,
-  backgroundColor: '#ffffff',  // 흰 배경
-  marginRight: 8,
-  borderWidth: 1.5,            // 테두리 두께
-  borderColor: '#d1d5db',      // 회색 테두리
-},
-chipActive: {
-  backgroundColor: '#ec4899',  // 핑크 배경 (기존 컬러 유지)
-  borderColor: '#ec4899',      // 핑크 테두리
-},
-chipText: {
-  fontSize: 12,
-  fontWeight: '600',
-  color: '#374151',            // 어두운 회색 글씨
-},
-chipTextActive: {
-  color: '#ffffff',            // 흰 글씨
-},
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
+    marginRight: 8,
+    borderWidth: 0,
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  chipActive: {
+    backgroundColor: '#ea4c89',
+    shadowColor: '#ea4c89',
+    shadowOpacity: 0.3,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6e6d7a',
+  },
+  chipTextActive: {
+    color: '#ffffff',
+  },
   // Sort 모달 스타일
   modalOverlay: {
     flex: 1,
@@ -682,10 +705,18 @@ chipTextActive: {
   },
   sortModalContainer: {
     backgroundColor: '#ffffff',
-    borderRadius: 16,
+    borderRadius: 20,
     width: '80%',
     maxWidth: 400,
-    padding: 20,
+    padding: 24,
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
   sortModalHeader: {
     flexDirection: 'row',
@@ -696,7 +727,7 @@ chipTextActive: {
   sortModalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1f2937',
+    color: '#0d0c22',
   },
   sortOptions: {
     gap: 4,
@@ -711,16 +742,16 @@ chipTextActive: {
   },
   sortOptionText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#6e6d7a',
     fontWeight: '500',
   },
   sortOptionTextActive: {
-    color: '#ec4899',
+    color: '#ea4c89',
     fontWeight: '600',
   },
   matchList: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f8f7f4',
   },
   loadingContainer: {
     padding: 32,

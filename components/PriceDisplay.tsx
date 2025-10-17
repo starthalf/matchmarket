@@ -32,7 +32,7 @@ export function PriceDisplay({
     const factors: PricingFactors = {
       viewCount,
       applicationsCount,
-      expectedApplicants: expectedParticipants * 10, // 모집인원의 10배
+      expectedApplicants: expectedParticipants * 5, // 모집인원의 5배로 변경
       hoursUntilMatch,
       basePrice,
       maxPrice

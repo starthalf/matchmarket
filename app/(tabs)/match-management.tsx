@@ -494,10 +494,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
     marginTop: 16,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    marginBottom: 8,  // 추가: 하단 여백
+    borderRadius: 16,  // 12 → 16으로 증가
+    padding: 18,       // 16 → 18로 증가
+    borderWidth: 1.5,  // 1 → 1.5로 증가 (테두리 강조)
+    borderColor: '#d1d5db',  // #e5e7eb → #d1d5db (약간 진하게)
+    // 그림자 추가 (입체감)
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   matchHeader: {
     flexDirection: 'row',
@@ -619,10 +629,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
     marginTop: 16,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    marginBottom: 8,  // 추가: 하단 여백
+    borderRadius: 16,  // 12 → 16으로 증가
+    padding: 18,       // 16 → 18로 증가
+    borderWidth: 1.5,  // 1 → 1.5로 증가
+    borderColor: '#d1d5db',  // 약간 진하게
+    // 그림자 추가
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
   },
   applicationDate: {
     fontSize: 12,

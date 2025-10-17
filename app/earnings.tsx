@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import { getCurrentUser } from '../data/mockData';
 import { AdminSettingsManager } from '../utils/adminSettings';
 import { getMockEarnings, EarningsData } from '../data/mockData';
 import { useSafeStyles } from '../constants/Styles';
+import { EarningsManager } from '../utils/earningsManager';
 
 interface WithdrawalHistory {
   id: string;
@@ -64,20 +65,41 @@ export default function EarningsScreen() {
   
   // 모의 데이터 - 실제로는 서버에서 가져와야 함
   const [hasRegisteredAccount, setHasRegisteredAccount] = useState(false);
-  const [lastWithdrawalDate, setLastWithdrawalDate] = useState<string | null>('2024-12-10'); // 마지막 출금일
+  const [lastWithdrawalDate, setLastWithdrawalDate] = useState<string | null>('2024-12-10');
   const [registeredAccount, setRegisteredAccount] = useState({
     bankName: '국민은행',
     accountNumber: '123-456-789012',
     accountHolder: '이서브',
   });
-  const [earnings, setEarnings] = useState(() => getMockEarnings());
+  const [earnings, setEarnings] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const totalEarnings = earnings.reduce((sum, earning) => sum + earning.totalRevenue, 0);
-  const totalMatchBaseCost = earnings.reduce((sum, earning) => sum + earning.matchBaseCost, 0);
-  const totalMatchAdditionalRevenue = earnings.reduce((sum, earning) => sum + earning.matchAdditionalRevenue, 0);
-  const totalAdRevenue = earnings.reduce((sum, earning) => sum + earning.adShare, 0);
+  // Supabase에서 수익 데이터 로드
+  useEffect(() => {
+    loadEarnings();
+  }, [currentUser]);
+
+  const loadEarnings = async () => {
+    if (!currentUser) return;
+    
+    setIsLoading(true);
+    try {
+      const data = await EarningsManager.getEarningsBySeller(currentUser.id);
+      setEarnings(data);
+    } catch (error) {
+      console.error('수익 데이터 로드 실패:', error);
+      // 에러 시 mock 데이터 사용
+      setEarnings(getMockEarnings());
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const totalEarnings = earnings.reduce((sum, earning) => sum + Number(earning.total_revenue || 0), 0);
+  const totalMatchBaseCost = earnings.reduce((sum, earning) => sum + Number(earning.match_base_cost || 0), 0);
+  const totalMatchAdditionalRevenue = earnings.reduce((sum, earning) => sum + Number(earning.match_additional_revenue || 0), 0);
+  const totalAdRevenue = earnings.reduce((sum, earning) => sum + Number(earning.ad_share || 0), 0);
   
-  // 출금 가능 금액 = 총 수익 - 이미 출금한 금액
   const totalWithdrawn = mockWithdrawalHistory
     .filter(w => w.status === 'completed')
     .reduce((sum, w) => sum + w.amount, 0);
@@ -261,62 +283,73 @@ export default function EarningsScreen() {
         <View style={styles.earningsSection}>
           <Text style={styles.sectionTitle}>수익 내역</Text>
           
-          {earnings.map((earning) => (
-            <View key={earning.id} style={styles.earningCard}>
-              <View style={styles.earningHeader}>
-                <Text style={styles.matchTitle} numberOfLines={1}>
-                  {earning.matchTitle}
-                </Text>
-              </View>
-              
-              <View style={styles.earningDetails}>
-                <View style={styles.detailRow}>
-                  <Calendar size={14} color="#6b7280" />
-                  <Text style={styles.detailText}>매치일: {earning.date}</Text>
-                </View>
-                
-                <View style={styles.detailRow}>
-                  <Eye size={14} color="#6b7280" />
-                  <Text style={styles.detailText}>
-                    조회 {earning.adViews.toLocaleString()} · 클릭 {earning.adClicks}
+          {isLoading ? (
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>로딩 중...</Text>
+            </View>
+          ) : earnings.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>아직 정산된 수익이 없습니다</Text>
+              <Text style={styles.emptySubtext}>매치 완료 후 수익이 자동으로 정산됩니다</Text>
+            </View>
+          ) : (
+            earnings.map((earning) => (
+              <View key={earning.id} style={styles.earningCard}>
+                <View style={styles.earningHeader}>
+                  <Text style={styles.matchTitle} numberOfLines={1}>
+                    {earning.match_title}
                   </Text>
                 </View>
                 
-                <View style={styles.revenueRow}>
-                  <View style={styles.revenueItem}>
-                    <Text style={styles.revenueLabel}>매치 기본비용</Text>
-                    <Text style={styles.revenueAmount}>
-                      {earning.matchBaseCost.toLocaleString()}원
+                <View style={styles.earningDetails}>
+                  <View style={styles.detailRow}>
+                    <Calendar size={14} color="#6b7280" />
+                    <Text style={styles.detailText}>매치일: {earning.match_date}</Text>
+                  </View>
+                  
+                  <View style={styles.detailRow}>
+                    <Eye size={14} color="#6b7280" />
+                    <Text style={styles.detailText}>
+                      조회 {Number(earning.ad_views || 0).toLocaleString()} · 클릭 {Number(earning.ad_clicks || 0)}
                     </Text>
                   </View>
                   
-                  <View style={styles.revenueItem}>
-                    <Text style={styles.revenueLabel}>매치 추가수익</Text>
-                    <Text style={styles.revenueAmount}>
-                      {earning.matchAdditionalRevenue.toLocaleString()}원
-                    </Text>
+                  <View style={styles.revenueRow}>
+                    <View style={styles.revenueItem}>
+                      <Text style={styles.revenueLabel}>매치 기본비용</Text>
+                      <Text style={styles.revenueAmount}>
+                        {Number(earning.match_base_cost || 0).toLocaleString()}원
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.revenueItem}>
+                      <Text style={styles.revenueLabel}>매치 추가수익</Text>
+                      <Text style={styles.revenueAmount}>
+                        {Number(earning.match_additional_revenue || 0).toLocaleString()}원
+                      </Text>
+                    </View>
+                    
+                    <View style={styles.revenueItem}>
+                      <Text style={styles.revenueLabel}>광고 수익 (50%)</Text>
+                      <Text style={styles.revenueAmount}>
+                        {Number(earning.ad_share || 0).toLocaleString()}원
+                      </Text>
+                    </View>
                   </View>
                   
-                  <View style={styles.revenueItem}>
-                    <Text style={styles.revenueLabel}>광고 수익 (50%)</Text>
-                    <Text style={styles.revenueAmount}>
-                      {earning.adShare.toLocaleString()}원
-                    </Text>
+                  <View style={styles.totalRevenueRow}>
+                    <View style={styles.totalRevenueItem}>
+                      <Text style={styles.totalRevenueLabel}>총 수익</Text>
+                      <Text style={styles.myShareAmount}>
+                        {Number(earning.total_revenue || 0).toLocaleString()}원
+                      </Text>
+                    </View>
                   </View>
+                  
                 </View>
-                
-                <View style={styles.totalRevenueRow}>
-                  <View style={styles.totalRevenueItem}>
-                    <Text style={styles.totalRevenueLabel}>총 수익</Text>
-                    <Text style={styles.myShareAmount}>
-                      {earning.totalRevenue.toLocaleString()}원
-                    </Text>
-                  </View>
-                </View>
-                
               </View>
-            </View>
-          ))}
+            ))
+          )}
         </View>
 
         {/* 정산 안내 */}
@@ -555,6 +588,29 @@ const styles = StyleSheet.create({
   earningsSection: {
     marginHorizontal: 16,
     marginBottom: 16,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+  emptyContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
   },
   earningCard: {
     backgroundColor: '#ffffff',

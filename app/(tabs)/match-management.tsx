@@ -185,13 +185,29 @@ export default function MatchManagementScreen() {
   };
 
   // 경기완료 처리
-  const handleCompleteMatch = (match: Match) => {
-    const executeComplete = () => {
-      updateMatch({
+  const handleCompleteMatch = async (match: Match) => {
+    const executeComplete = async () => {
+      // 1. 매치 완료 처리
+      await updateMatch({
         ...match,
         isCompleted: true,
         completedAt: new Date().toISOString()
       });
+      
+      // 2. 수익 데이터 생성 및 저장
+      const success = await EarningsManager.createEarningFromMatch(match);
+      
+      if (success) {
+        Alert.alert(
+          '완료', 
+          '경기가 완료 처리되었습니다.\n수익이 정산되었습니다. 수익 정산 메뉴에서 확인하세요.'
+        );
+      } else {
+        Alert.alert(
+          '완료',
+          '경기가 완료 처리되었습니다.\n수익 계산 중 오류가 발생했습니다.'
+        );
+      }
     };
 
     if (typeof window !== 'undefined' && window.confirm) {

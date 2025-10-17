@@ -402,32 +402,30 @@ const handleApproveApplication = (matchId: string, applicationId: string) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f8f7f4',
   },
   header: {
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomWidth: 0,
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
+    color: '#0d0c22',
     marginBottom: 4,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#6e6d7a',
   },
   tabContainer: {
     flexDirection: 'row',
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomWidth: 0,
   },
   tabButton: {
     flex: 1,
@@ -437,15 +435,15 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabButtonActive: {
-    borderBottomColor: '#ec4899',
+    borderBottomColor: '#ea4c89',
   },
   tabButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6b7280',
+    color: '#6e6d7a',
   },
   tabButtonTextActive: {
-    color: '#ec4899',
+    color: '#ea4c89',
   },
   content: {
     flex: 1,
@@ -457,7 +455,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#6e6d7a',
   },
   emptyStateContainer: {
     flex: 1,
@@ -469,18 +467,18 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#111827',
+    color: '#0d0c22',
     marginTop: 16,
     marginBottom: 8,
   },
   emptyStateSubtitle: {
     fontSize: 16,
-    color: '#6b7280',
+    color: '#6e6d7a',
     textAlign: 'center',
     marginBottom: 24,
   },
   emptyStateButton: {
-    backgroundColor: '#ec4899',
+    backgroundColor: '#ea4c89',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 12,
@@ -494,20 +492,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
     marginTop: 16,
-    marginBottom: 8,  // 추가: 하단 여백
-    borderRadius: 16,  // 12 → 16으로 증가
-    padding: 18,       // 16 → 18로 증가
-    borderWidth: 1.5,  // 1 → 1.5로 증가 (테두리 강조)
-    borderColor: '#d1d5db',  // #e5e7eb → #d1d5db (약간 진하게)
-    // 그림자 추가 (입체감)
-    shadowColor: '#000',
+    marginBottom: 8,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 0,
+    shadowColor: '#0d0c22',
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   matchHeader: {
     flexDirection: 'row',
@@ -518,7 +514,7 @@ const styles = StyleSheet.create({
   matchTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#111827',
+    color: '#0d0c22',
     flex: 1,
     marginRight: 12,
   },
@@ -541,7 +537,7 @@ const styles = StyleSheet.create({
   },
   matchInfoText: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#6e6d7a',
   },
   applicationsSection: {
     marginTop: 16,
@@ -552,11 +548,11 @@ const styles = StyleSheet.create({
   applicationsSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#0d0c22',
     marginBottom: 12,
   },
   applicationItem: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: '#f8f7f4',
     padding: 12,
     borderRadius: 8,
     marginBottom: 8,
@@ -573,11 +569,11 @@ const styles = StyleSheet.create({
   applicationUserName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#111827',
+    color: '#0d0c22',
   },
   applicationUserDetails: {
     fontSize: 14,
-    color: '#6b7280',
+    color: '#6e6d7a',
     marginTop: 2,
   },
   applicationStatus: {
@@ -600,8 +596,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 4,
     backgroundColor: '#ffffff',
-    paddingVertical: 8,
-    borderRadius: 8,
+    paddingVertical: 10,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ef4444',
   },
@@ -616,9 +612,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
-    backgroundColor: '#10b981',
-    paddingVertical: 8,
-    borderRadius: 8,
+    backgroundColor: '#0d0c22',
+    paddingVertical: 10,
+    borderRadius: 10,
   },
   approveButtonText: {
     color: '#ffffff',
@@ -629,25 +625,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
     marginTop: 16,
-    marginBottom: 8,  // 추가: 하단 여백
-    borderRadius: 16,  // 12 → 16으로 증가
-    padding: 18,       // 16 → 18로 증가
-    borderWidth: 1.5,  // 1 → 1.5로 증가
-    borderColor: '#d1d5db',  // 약간 진하게
-    // 그림자 추가
-    shadowColor: '#000',
+    marginBottom: 8,
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 0,
+    shadowColor: '#0d0c22',
     shadowOffset: {
       width: 0,
-      height: 3,
+      height: 4,
     },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  applicationDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 8,
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 3,
   },
   applicationDate: {
     fontSize: 12,

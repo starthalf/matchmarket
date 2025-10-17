@@ -120,6 +120,9 @@ export interface Match {
   location: string;
   createdAt: string;
   isClosed?: boolean;
+    // 🔥 아래 두 줄을 추가하세요
+  isCompleted?: boolean;      // 경기 완료 여부
+  completedAt?: string;        // 경기 완료 시각 (ISO 8601 형식)
 }
 
 // 🆕 채팅 관련 인터페이스

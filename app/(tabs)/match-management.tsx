@@ -57,7 +57,7 @@ export default function MatchManagementScreen() {
     const interval = setInterval(checkAndCloseExpiredMatches, 60000);
 
     return () => clearInterval(interval);
-  }, [myMatches]);
+  }, [myMatches, updateMatch]);
 
   const handleApproveApplication = (matchId: string, applicationId: string) => {
     const match = matches.find(m => m.id === matchId);
@@ -626,37 +626,6 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 3,
   },
-  applicationDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 8,
-  },
-  paymentAlertBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fee2e2',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-  },
-  paymentAlertContent: {
-    flex: 1,
-  },
-  paymentAlertTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#dc2626',
-    marginBottom: 2,
-  },
-  paymentAlertText: {
-    fontSize: 13,
-    color: '#dc2626',
-  },
-});
-  },
   matchHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -839,3 +808,34 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
+  },
+  applicationDate: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 8,
+  },
+  paymentAlertBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fee2e2',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 12,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  paymentAlertContent: {
+    flex: 1,
+  },
+  paymentAlertTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#dc2626',
+    marginBottom: 2,
+  },
+  paymentAlertText: {
+    fontSize: 13,
+    color: '#dc2626',
+  },
+});

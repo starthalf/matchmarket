@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { Match, MatchApplication } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
+import { EarningsManager } from '../../utils/earningsManager';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

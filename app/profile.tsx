@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Settings, Award, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Camera, User } from 'lucide-react-native';
+import { Settings, Award, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Camera, User, CreditCard } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { CertificationBadge } from '../components/CertificationBadge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -379,23 +379,28 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* 수익 정산 */}
+        {/* 매치판매 관리 */}
         <View style={styles.menuSection}>
-          <Text style={styles.sectionTitle}>수익 관리</Text>
+          <Text style={styles.sectionTitle}>매치판매 관리</Text>
+          
+          <View style={styles.noticeBox}>
+            <Text style={styles.noticeText}>
+              경기완료 버튼을 눌러야 수익금을 정산받을 수 있습니다.
+            </Text>
+          </View>
           
           <TouchableOpacity 
             style={styles.menuItem}
             onPress={() => router.push('/earnings')}
           >
             <View style={styles.menuItemLeft}>
-              <Award size={20} color="#16a34a" />
+              <CreditCard size={20} color="#16a34a" />
               <Text style={styles.menuItemText}>수익 정산</Text>
             </View>
             <Text style={styles.menuItemArrow}>›</Text>
           </TouchableOpacity>
         </View>
 
-        {/* 활동 통계 */}
         <View style={styles.statsSection}>
           <Text style={styles.sectionTitle}>활동 통계</Text>
           
@@ -656,5 +661,52 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  menuSection: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  menuItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  menuItemText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  menuItemArrow: {
+    fontSize: 20,
+    color: '#9ca3af',
+  },
+  noticeBox: {
+    backgroundColor: '#fef3c7',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#fbbf24',
+  },
+  noticeText: {
+    fontSize: 12,
+    color: '#92400e',
+    fontWeight: '500',
+    lineHeight: 16,
   },
 });

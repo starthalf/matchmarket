@@ -684,8 +684,8 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   chipActive: {
-    backgroundColor: '#ea4c89',
-    shadowColor: '#ea4c89',
+    backgroundColor: '#0d0c22',
+    shadowColor: '#0d0c22',
     shadowOpacity: 0.3,
   },
   chipText: {

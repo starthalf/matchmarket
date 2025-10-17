@@ -193,8 +193,7 @@ export class PricingCalculator {
   /**
    * 간소화된 동적 가격 계산
    * - 조회수 할증: 500회 이상부터 (최대 10%)
-   * - 참여신청자 할증: 모집인원수의 10배 이상부터 (최대 100%)
-   * - 시간 할인: 10시간 전부터 (최대 20%)
+   * - 참여신청자 할증: 모집인원수의 5배 이상부터 (최대 100%)
    */
   static calculateDynamicPrice(factors: PricingFactors): number {
     let price = factors.basePrice;
@@ -205,19 +204,13 @@ export class PricingCalculator {
       price *= (1 + viewMultiplier);
     }
     
-    // 2. 참여신청자 할증 (모집인원 × 10배 이상부터, 최대 100%)
+    // 2. 참여신청자 할증 (모집인원 × 5배 이상부터, 최대 100%)
     if (factors.applicationsCount >= factors.expectedApplicants) {
       const applicationMultiplier = Math.min(1.0, (factors.applicationsCount - factors.expectedApplicants) / factors.expectedApplicants);
       price *= (1 + applicationMultiplier);
     }
     
-    // 3. 시간 할인 (10시간 전부터, 최대 20%)
-    if (factors.hoursUntilMatch <= 10 && factors.hoursUntilMatch >= 0) {
-      const timeDiscount = Math.min(0.2, (10 - factors.hoursUntilMatch) / 10 * 0.2);
-      price *= (1 - timeDiscount);
-    }
-    
-    // 4. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
+    // 3. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
     price = Math.max(factors.basePrice, price);
     price = Math.min(factors.maxPrice, price);
     

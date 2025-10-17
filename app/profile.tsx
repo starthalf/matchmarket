@@ -379,6 +379,22 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* 수익 정산 */}
+        <View style={styles.menuSection}>
+          <Text style={styles.sectionTitle}>수익 관리</Text>
+          
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={() => router.push('/earnings')}
+          >
+            <View style={styles.menuItemLeft}>
+              <Award size={20} color="#16a34a" />
+              <Text style={styles.menuItemText}>수익 정산</Text>
+            </View>
+            <Text style={styles.menuItemArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* 활동 통계 */}
         <View style={styles.statsSection}>
           <Text style={styles.sectionTitle}>활동 통계</Text>

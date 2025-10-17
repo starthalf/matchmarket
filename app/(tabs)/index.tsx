@@ -746,7 +746,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   sortOptionTextActive: {
-    color: '#ea4c89',
+    color: '#0d0c22',
     fontWeight: '600',
   },
   matchList: {

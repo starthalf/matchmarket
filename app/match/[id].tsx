@@ -314,7 +314,7 @@ export default function MatchDetailScreen() {
       console.error('입금완료 처리 중 오류:', error);
       Alert.alert('오류', '입금완료 처리 중 오류가 발생했습니다.');
     }
-  };
+  }; 
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);

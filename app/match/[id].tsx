@@ -269,43 +269,51 @@ export default function MatchDetailScreen() {
     }
   };
 
-  const handlePaymentComplete = async () => {
+const handlePaymentComplete = async () => {
     try {
       if (!user || !myApplication) {
         Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
         return;
       }
 
-      // application 상태를 approved에서 제거하고 participant 추가
+      // participants에서 payment_pending 상태인 내 정보 찾기
+      const myPendingParticipation = safeParticipants.find(
+        p => p.userId === user.id && p.status === 'payment_pending'
+      );
+
+      if (!myPendingParticipation) {
+        Alert.alert('오류', '입금 대기 중인 참가 정보를 찾을 수 없습니다.');
+        return;
+      }
+
+      // applications에서 제거
       const updatedApplications = safeApplications.filter(
         app => app.id !== myApplication.id
       );
 
-      // 새로운 참가자로 추가 (confirmed 상태)
-      const newParticipant = {
-        id: `participant_${match.id}_${user.id}_${Date.now()}`,
-        userId: user.id,
-        userName: user.name,
-        gender: user.gender,
-        ntrp: user.ntrp,
-        joinedAt: new Date().toISOString(),
-        status: 'confirmed',
-        paymentAmount: match.currentPrice,
-        paymentConfirmedAt: new Date().toISOString(),
-      };
+      // participants의 상태를 payment_submitted로 변경 (새로 추가하지 않음!)
+      const updatedParticipants = safeParticipants.map(p => 
+        p.userId === user.id && p.status === 'payment_pending'
+          ? { 
+              ...p, 
+              status: 'payment_submitted',
+              paymentSubmittedAt: new Date().toISOString() 
+            }
+          : p
+      );
 
       const updatedMatch = {
         ...match,
         applications: updatedApplications,
-        participants: [...safeParticipants, newParticipant]
+        participants: updatedParticipants
       };
 
       await updateMatch(updatedMatch);
       setShowPaymentTimer(false);
       
       Alert.alert(
-        '입금완료',
-        '입금이 완료되었습니다.\n매치 참가가 확정되었습니다!',
+        '입금완료 신고',
+        '입금완료 신고가 접수되었습니다.\n관리자 확인 후 참가가 최종 확정됩니다.',
         [{ text: '확인' }]
       );
     } catch (error) {

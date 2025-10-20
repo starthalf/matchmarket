@@ -289,11 +289,20 @@ export default function MyMatchesScreen() {
   const newClosedStatus = !match.isClosed;
   const statusText = newClosedStatus ? '마감' : '모집 재개';
   
+  console.log('🔥 마감 토글 클릭:', {
+    matchId: match.id,
+    matchTitle: match.title,
+    현재isClosed: match.isClosed,
+    새로운isClosed: newClosedStatus
+  });
+  
   setConfirmModalData({
     title: `매치 ${statusText}`,
     message: `"${match.title}" 매치를 ${statusText}하시겠습니까?${newClosedStatus ? '\n\n마감 시 더 이상 대기자를 받지 않습니다.' : ''}`,
     confirmText: statusText,
-    onConfirm: async () => {  // 👈 async 추가
+    onConfirm: async () => {
+      console.log('✅ 사용자가 확인 버튼 클릭');
+      
       // 업데이트된 매치 객체 생성
       const updatedMatch = {
         ...match,
@@ -303,8 +312,16 @@ export default function MyMatchesScreen() {
         waitingList: newClosedStatus ? [] : match.waitingList
       };
       
+      console.log('📦 업데이트할 매치 객체:', {
+        matchId: updatedMatch.id,
+        isClosed: updatedMatch.isClosed,
+        title: updatedMatch.title
+      });
+      
       // ✅ updateMatch 호출로 상태 저장
+      console.log('🚀 updateMatch 호출 시작...');
       await updateMatch(updatedMatch);
+      console.log('✅ updateMatch 호출 완료');
       
       setShowConfirmModal(false);
       

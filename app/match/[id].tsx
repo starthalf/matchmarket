@@ -269,65 +269,39 @@ export default function MatchDetailScreen() {
     }
   };
 
-const handlePaymentComplete = async () => {
+ const handlePaymentComplete = async () => {
     try {
       if (!user || !myApplication) {
         Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
-        console.log('Debug - user:', user?.id);
-        console.log('Debug - myApplication:', myApplication);
         return;
       }
-
-      // participants에서 내 정보 찾기 (payment_pending 또는 confirmed 상태 모두 허용)
-      const myParticipation = safeParticipants.find(
-        p => p.userId === user.id
-      );
-
-      console.log('Debug - safeParticipants:', safeParticipants);
-      console.log('Debug - myParticipation:', myParticipation);
-
-      if (!myParticipation) {
-        Alert.alert('오류', '참가 정보를 찾을 수 없습니다.\n관리자에게 문의해주세요.');
-        return;
-      }
-
-      // 이미 입금 신고를 했거나 확정된 상태라면 중복 처리 방지
-      if (myParticipation.status === 'payment_submitted' || myParticipation.status === 'confirmed') {
-        Alert.alert('알림', '이미 입금 처리가 완료되었습니다.');
-        setShowPaymentTimer(false);
-        return;
-      }
-
-      // applications에서 제거
+      // application 상태를 approved에서 제거하고 participant 추가
       const updatedApplications = safeApplications.filter(
         app => app.id !== myApplication.id
       );
-
-      // participants의 상태를 payment_submitted로 변경
-      const updatedParticipants = safeParticipants.map(p => 
-        p.userId === user.id
-          ? { 
-              ...p, 
-              status: 'payment_submitted',
-              paymentSubmittedAt: new Date().toISOString() 
-            }
-          : p
-      );
-
+      // 새로운 참가자로 추가 (confirmed 상태)
+      const newParticipant = {
+        id: participant_${match.id}_${user.id}_${Date.now()},
+        userId: user.id,
+        userName: user.name,
+        gender: user.gender,
+        ntrp: user.ntrp,
+        joinedAt: new Date().toISOString(),
+        status: 'confirmed',
+        paymentAmount: match.currentPrice,
+        paymentConfirmedAt: new Date().toISOString(),
+      };
       const updatedMatch = {
         ...match,
         applications: updatedApplications,
-        participants: updatedParticipants
+        participants: [...safeParticipants, newParticipant]
       };
-
-      console.log('Debug - updatedMatch:', updatedMatch);
-
       await updateMatch(updatedMatch);
       setShowPaymentTimer(false);
-      
+
       Alert.alert(
-        '입금완료 신고',
-        '입금완료 신고가 접수되었습니다.\n관리자 확인 후 참가가 최종 확정됩니다.',
+        '입금완료',
+        '입금이 완료되었습니다.\n매치 참가가 확정되었습니다!',
         [{ text: '확인' }]
       );
     } catch (error) {

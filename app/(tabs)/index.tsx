@@ -512,16 +512,16 @@ const toggleRecruitingFilter = () => {
   return passes;
 })
             // 정렬
-            .sort((a, b) => {
-              if (sortBy === 'popular') {
-                return b.applicationsCount - a.applicationsCount;
-              } else if (sortBy === 'time') {
-                return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
-              } else if (sortBy === 'ntrp') {
-                return b.ntrpRange.max - a.ntrpRange.max;
-              }
-              return 0;
-            })
+           .sort((a, b) => {
+  if (sortBy === 'popular') {
+    return b.applicationsCount - a.applicationsCount;
+  } else if (sortBy === 'time') {
+    return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
+  } else if (sortBy === 'ntrp') {
+    return b.ntrpRequirement.max - a.ntrpRequirement.max;
+  }
+  return 0;
+})
             .map((match) => (
               <MatchCard 
                 key={match.id} 

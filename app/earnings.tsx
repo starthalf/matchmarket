@@ -59,17 +59,27 @@ export default function EarningsScreen() {
   }, [currentUser]);
 
   const loadEarnings = async () => {
-    if (!currentUser) return;
+    console.log('=== loadEarnings 시작 ===');
+    console.log('currentUser:', currentUser);
+    
+    if (!currentUser) {
+      console.log('❌ currentUser가 없음, 로딩 종료');
+      setIsLoading(false);
+      return;
+    }
     
     setIsLoading(true);
     try {
+      console.log('📡 Supabase에서 수익 데이터 조회 중...');
       const data = await EarningsManager.getEarningsBySeller(currentUser.id);
+      console.log('✅ 수익 데이터 조회 완료:', data);
       setEarnings(data);
     } catch (error) {
-      console.error('수익 데이터 로드 실패:', error);
-      // 에러 시 mock 데이터 사용
-      setEarnings(getMockEarnings());
+      console.error('❌ 수익 데이터 로드 실패:', error);
+      // 에러 시 빈 배열 사용 (아직 수익 없음)
+      setEarnings([]);
     } finally {
+      console.log('로딩 종료');
       setIsLoading(false);
     }
   };

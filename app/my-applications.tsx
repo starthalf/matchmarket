@@ -42,7 +42,7 @@ export default function MyApplicationsScreen() {
     }
 
     // 대기자 목록에서 내 정보 찾기
-    const myWaiting = match.waitingList.find(w => w.userId === user.id);
+    const myWaiting = match.waitingList?.find(w => w.userId === user.id);
     if (myWaiting) {
       return {
         match,
@@ -63,7 +63,7 @@ export default function MyApplicationsScreen() {
     if (app.type === 'participant') {
       switch (filterStatus) {
         case 'confirmed': return app.participation?.status === 'confirmed';
-        case 'pending': return app.participation?.status === 'payment_pending';
+        case 'pending': return app.participation?.status === 'payment_pending' || app.participation?.status === 'payment_submitted';
         case 'cancelled': return app.participation?.status === 'cancelled_by_user' || app.participation?.status === 'refunded';
         default: return false;
       }
@@ -76,58 +76,91 @@ export default function MyApplicationsScreen() {
 
   const getStatusInfo = (app: any) => {
     if (app.type === 'participant') {
-      const status = app.participation.status;
+      const status = app.participation?.status;
       switch (status) {
         case 'confirmed':
-          return { text: '참가확정', color: '#16a34a', icon: <CheckCircle size={16} color="#16a34a" /> };
+          return {
+            text: '참가확정',
+            color: '#dcfce7',
+            textColor: '#16a34a',
+            icon: <CheckCircle size={16} color="#16a34a" />
+          };
         case 'payment_pending':
-          return { text: '입금확인중', color: '#f59e0b', icon: <Clock size={16} color="#f59e0b" /> };
+          return {
+            text: '입금대기',
+            color: '#fef3c7',
+            textColor: '#f59e0b',
+            icon: <Clock size={16} color="#f59e0b" />
+          };
+        case 'payment_submitted':
+          return {
+            text: '입금확인중',
+            color: '#dbeafe',
+            textColor: '#3b82f6',
+            icon: <Clock size={16} color="#3b82f6" />
+          };
         case 'cancelled_by_user':
-          return { text: '취소됨', color: '#dc2626', icon: <X size={16} color="#dc2626" /> };
-        case 'refunded':
-          return { text: '환불완료', color: '#6b7280', icon: <CheckCircle size={16} color="#6b7280" /> };
+          return {
+            text: '참가취소',
+            color: '#fee2e2',
+            textColor: '#dc2626',
+            icon: <X size={16} color="#dc2626" />
+          };
         default:
-          return { text: '알 수 없음', color: '#6b7280', icon: <AlertTriangle size={16} color="#6b7280" /> };
+          return {
+            text: '알 수 없음',
+            color: '#f3f4f6',
+            textColor: '#6b7280',
+            icon: <AlertTriangle size={16} color="#6b7280" />
+          };
       }
-    } else {
-      return { text: '대기중', color: '#f59e0b', icon: <Clock size={16} color="#f59e0b" /> };
+    } else if (app.type === 'waiting') {
+      return {
+        text: '대기중',
+        color: '#fef3c7',
+        textColor: '#f59e0b',
+        icon: <Clock size={16} color="#f59e0b" />
+      };
     }
+    return {
+      text: '알 수 없음',
+      color: '#f3f4f6',
+      textColor: '#6b7280',
+      icon: <AlertTriangle size={16} color="#6b7280" />
+    };
   };
 
   const getWaitingPosition = (app: any) => {
-    if (app.type !== 'waiting') return null;
+    if (app.type !== 'waiting' || !app.waiting) return null;
     
-    const waitingList = app.match.waitingList
-      .filter((w: any) => w.status === 'waiting')
-      .sort((a: any, b: any) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime());
-    
-    const position = waitingList.findIndex((w: any) => w.userId === user.id);
-    return position >= 0 ? position + 1 : null;
+    const waitingList = app.match.waitingList || [];
+    const position = waitingList.findIndex((w: any) => w.userId === user.id) + 1;
+    return position > 0 ? position : null;
   };
 
   const handleMatchPress = (matchId: string) => {
     router.push(`/match/${matchId}`);
   };
 
-  const handleCancelApplication = (app: any) => {
-    if (app.type === 'waiting') {
-      Alert.alert(
-        '대기 취소',
-        '대기자 신청을 취소하시겠습니까?',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '대기 취소', onPress: () => {
-            // 대기자 목록에서 제거
-            const waiterIndex = app.match.waitingList.findIndex((w: any) => w.userId === user.id);
-            if (waiterIndex > -1) {
-              app.match.waitingList.splice(waiterIndex, 1);
-              app.match.waitingApplicants = Math.max(0, app.match.waitingApplicants - 1);
-            }
-            Alert.alert('대기 취소 완료', '대기자 신청이 취소되었습니다.');
-          }}
-        ]
-      );
-    }
+  const handleCancelWaiting = (app: any) => {
+    if (app.type !== 'waiting') return;
+    
+    Alert.alert(
+      '대기 취소',
+      '정말로 대기를 취소하시겠습니까?',
+      [
+        { text: '취소', style: 'cancel' },
+        { text: '대기 취소', onPress: () => {
+          // 대기자 목록에서 제거
+          const waiterIndex = app.match.waitingList?.findIndex((w: any) => w.userId === user.id);
+          if (waiterIndex !== undefined && waiterIndex > -1 && app.match.waitingList) {
+            app.match.waitingList.splice(waiterIndex, 1);
+            app.match.waitingApplicants = Math.max(0, (app.match.waitingApplicants || 0) - 1);
+          }
+          Alert.alert('대기 취소 완료', '대기자 신청이 취소되었습니다.');
+        }}
+      ]
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -147,7 +180,7 @@ export default function MyApplicationsScreen() {
   ).length;
   
   const pendingCount = myApplications.filter(app => 
-    app?.type === 'participant' && app.participation?.status === 'payment_pending'
+    app?.type === 'participant' && (app.participation?.status === 'payment_pending' || app.participation?.status === 'payment_submitted')
   ).length;
   
   const waitingCount = myApplications.filter(app => app?.type === 'waiting').length;
@@ -254,7 +287,9 @@ export default function MyApplicationsScreen() {
                       </Text>
                       <View style={[styles.statusBadge, { backgroundColor: statusInfo.color }]}>
                         {statusInfo.icon}
-                        <Text style={styles.statusText}>{statusInfo.text}</Text>
+                        <Text style={[styles.statusText, { color: statusInfo.textColor }]}>
+                          {statusInfo.text}
+                        </Text>
                       </View>
                     </View>
                   </View>
@@ -276,17 +311,14 @@ export default function MyApplicationsScreen() {
                       <View style={styles.detailRow}>
                         <CreditCard size={16} color="#6b7280" />
                         <Text style={styles.detailText}>
-                          결제금액: {app.participation?.paymentAmount.toLocaleString()}원
+                          참가비: {app.participation?.paymentAmount?.toLocaleString() || app.match.currentPrice.toLocaleString()}원
                         </Text>
                       </View>
                     )}
                     
-                    {app.type === 'waiting' && waitingPosition && (
-                      <View style={styles.detailRow}>
-                        <User size={16} color="#6b7280" />
-                        <Text style={styles.detailText}>
-                          대기순서: {waitingPosition}번째
-                        </Text>
+                    {waitingPosition && (
+                      <View style={styles.waitingInfo}>
+                        <Text style={styles.waitingPosition}>대기 순서: {waitingPosition}번</Text>
                       </View>
                     )}
                   </View>
@@ -294,10 +326,13 @@ export default function MyApplicationsScreen() {
                   {app.type === 'waiting' && (
                     <View style={styles.actionButtons}>
                       <TouchableOpacity 
-                        style={styles.cancelWaitingButton}
-                        onPress={() => handleCancelApplication(app)}
+                        style={styles.cancelButton}
+                        onPress={(e) => {
+                          e.stopPropagation();
+                          handleCancelWaiting(app);
+                        }}
                       >
-                        <Text style={styles.cancelWaitingButtonText}>대기 취소</Text>
+                        <Text style={styles.cancelButtonText}>대기 취소</Text>
                       </TouchableOpacity>
                     </View>
                   )}
@@ -314,44 +349,18 @@ export default function MyApplicationsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  content: {
     flex: 1,
     backgroundColor: '#f9fafb',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  placeholder: {
-    width: 32,
-  },
-  content: {
-    flex: 1,
-    paddingTop: 16,
-  },
   summarySection: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   summaryCards: {
     flexDirection: 'row',
@@ -360,8 +369,8 @@ const styles = StyleSheet.create({
   summaryCard: {
     flex: 1,
     backgroundColor: '#ffffff',
-    borderRadius: 12,
     padding: 16,
+    borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -372,16 +381,15 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   summaryAmount: {
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: '700',
     color: '#111827',
     marginTop: 8,
-    marginBottom: 4,
   },
   summaryLabel: {
     fontSize: 12,
     color: '#6b7280',
-    textAlign: 'center',
+    marginTop: 4,
   },
   filterSection: {
     paddingHorizontal: 16,
@@ -390,11 +398,11 @@ const styles = StyleSheet.create({
   filterButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
-    marginRight: 8,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#d1d5db',
+    borderColor: '#e5e7eb',
+    marginRight: 8,
   },
   filterButtonActive: {
     backgroundColor: '#ec4899',
@@ -409,20 +417,11 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   applicationsSection: {
-    marginHorizontal: 16,
+    paddingHorizontal: 16,
   },
   emptyState: {
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 40,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    paddingVertical: 60,
   },
   emptyTitle: {
     fontSize: 18,
@@ -467,18 +466,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 12,
   },
   statusText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#ffffff',
   },
   applicationDetails: {
     gap: 8,
-    marginBottom: 12,
   },
   detailRow: {
     flexDirection: 'row',
@@ -489,19 +486,32 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
   },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 8,
+  waitingInfo: {
+    marginTop: 4,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
   },
-  cancelWaitingButton: {
+  waitingPosition: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#f59e0b',
+  },
+  actionButtons: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#f3f4f6',
+  },
+  cancelButton: {
     backgroundColor: '#fee2e2',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 8,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#dc2626',
   },
-  cancelWaitingButtonText: {
+  cancelButtonText: {
     fontSize: 14,
     fontWeight: '600',
     color: '#dc2626',

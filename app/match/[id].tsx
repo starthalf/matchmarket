@@ -269,7 +269,7 @@ export default function MatchDetailScreen() {
     }
   };
 
- const handlePaymentComplete = async () => {
+const handlePaymentComplete = async () => {
     try {
       if (!user || !myApplication) {
         Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
@@ -278,16 +278,23 @@ export default function MatchDetailScreen() {
         return;
       }
 
-      // participants에서 payment_pending 상태인 내 정보 찾기
-      const myPendingParticipation = safeParticipants.find(
-        p => p.userId === user.id && p.status === 'payment_pending'
+      // participants에서 내 정보 찾기 (payment_pending 또는 confirmed 상태 모두 허용)
+      const myParticipation = safeParticipants.find(
+        p => p.userId === user.id
       );
 
       console.log('Debug - safeParticipants:', safeParticipants);
-      console.log('Debug - myPendingParticipation:', myPendingParticipation);
+      console.log('Debug - myParticipation:', myParticipation);
 
-      if (!myPendingParticipation) {
-        Alert.alert('오류', '입금 대기 중인 참가 정보를 찾을 수 없습니다.\n관리자에게 문의해주세요.');
+      if (!myParticipation) {
+        Alert.alert('오류', '참가 정보를 찾을 수 없습니다.\n관리자에게 문의해주세요.');
+        return;
+      }
+
+      // 이미 입금 신고를 했거나 확정된 상태라면 중복 처리 방지
+      if (myParticipation.status === 'payment_submitted' || myParticipation.status === 'confirmed') {
+        Alert.alert('알림', '이미 입금 처리가 완료되었습니다.');
+        setShowPaymentTimer(false);
         return;
       }
 
@@ -298,7 +305,7 @@ export default function MatchDetailScreen() {
 
       // participants의 상태를 payment_submitted로 변경
       const updatedParticipants = safeParticipants.map(p => 
-        p.userId === user.id && p.status === 'payment_pending'
+        p.userId === user.id
           ? { 
               ...p, 
               status: 'payment_submitted',

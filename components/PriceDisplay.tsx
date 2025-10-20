@@ -54,7 +54,7 @@ export function PriceDisplay({
         );
         
         setIsIncreasing(finalPrice > prevPrice);
-        return Math.round(finalPrice / 1000) * 1000;
+        return finalPrice;
       });
     }, 5000);
 

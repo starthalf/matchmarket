@@ -269,10 +269,12 @@ export default function MatchDetailScreen() {
     }
   };
 
-const handlePaymentComplete = async () => {
+ const handlePaymentComplete = async () => {
     try {
       if (!user || !myApplication) {
         Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
+        console.log('Debug - user:', user?.id);
+        console.log('Debug - myApplication:', myApplication);
         return;
       }
 
@@ -281,8 +283,11 @@ const handlePaymentComplete = async () => {
         p => p.userId === user.id && p.status === 'payment_pending'
       );
 
+      console.log('Debug - safeParticipants:', safeParticipants);
+      console.log('Debug - myPendingParticipation:', myPendingParticipation);
+
       if (!myPendingParticipation) {
-        Alert.alert('오류', '입금 대기 중인 참가 정보를 찾을 수 없습니다.');
+        Alert.alert('오류', '입금 대기 중인 참가 정보를 찾을 수 없습니다.\n관리자에게 문의해주세요.');
         return;
       }
 
@@ -291,7 +296,7 @@ const handlePaymentComplete = async () => {
         app => app.id !== myApplication.id
       );
 
-      // participants의 상태를 payment_submitted로 변경 (새로 추가하지 않음!)
+      // participants의 상태를 payment_submitted로 변경
       const updatedParticipants = safeParticipants.map(p => 
         p.userId === user.id && p.status === 'payment_pending'
           ? { 
@@ -307,6 +312,8 @@ const handlePaymentComplete = async () => {
         applications: updatedApplications,
         participants: updatedParticipants
       };
+
+      console.log('Debug - updatedMatch:', updatedMatch);
 
       await updateMatch(updatedMatch);
       setShowPaymentTimer(false);

@@ -63,10 +63,9 @@ export default function EarningsScreen() {
     console.log('currentUser:', currentUser);
     
     if (!currentUser) {
-      console.log('❌ currentUser가 없음, 로딩 종료');
-      setIsLoading(false);
-      return;
-    }
+  setIsLoading(false); // 👈 이게 추가되어서 해결됨!
+  return;
+}
     
     setIsLoading(true);
     try {

@@ -29,7 +29,28 @@ interface WithdrawalHistory {
   accountHolder: string;
 }
 
-const mockWithdrawalHistory: WithdrawalHistory[] = [];
+const mockWithdrawalHistory: WithdrawalHistory[] = [
+  {
+    id: 'w1',
+    amount: 125000,
+    requestedAt: '2024-12-10T09:30:00Z',
+    processedAt: '2024-12-12T14:20:00Z',
+    status: 'completed',
+    bankName: '국민은행',
+    accountNumber: '123-456-789012',
+    accountHolder: '이서브',
+  },
+  {
+    id: 'w2',
+    amount: 89000,
+    requestedAt: '2024-11-25T16:45:00Z',
+    processedAt: '2024-11-27T11:30:00Z',
+    status: 'completed',
+    bankName: '국민은행',
+    accountNumber: '123-456-789012',
+    accountHolder: '이서브',
+  },
+];
 
 export default function EarningsScreen() {
   const currentUser = getCurrentUser();
@@ -59,26 +80,17 @@ export default function EarningsScreen() {
   }, [currentUser]);
 
   const loadEarnings = async () => {
-    console.log('=== loadEarnings 시작 ===');
-    console.log('currentUser:', currentUser);
-    
-    if (!currentUser) {
-  setIsLoading(false); // 👈 이게 추가되어서 해결됨!
-  return;
-}
+    if (!currentUser) return;
     
     setIsLoading(true);
     try {
-      console.log('📡 Supabase에서 수익 데이터 조회 중...');
       const data = await EarningsManager.getEarningsBySeller(currentUser.id);
-      console.log('✅ 수익 데이터 조회 완료:', data);
       setEarnings(data);
     } catch (error) {
-      console.error('❌ 수익 데이터 로드 실패:', error);
-      // 에러 시 빈 배열 사용 (아직 수익 없음)
-      setEarnings([]);
+      console.error('수익 데이터 로드 실패:', error);
+      // 에러 시 mock 데이터 사용
+      setEarnings(getMockEarnings());
     } finally {
-      console.log('로딩 종료');
       setIsLoading(false);
     }
   };

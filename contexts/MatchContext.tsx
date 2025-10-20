@@ -119,18 +119,16 @@ export function MatchProvider({ children }: { children: ReactNode }) {
   
   // 2. Supabase에도 UPDATE 시도
   try {
-   const { error } = await supabaseAdmin
-  .from('matches')
-  .update({
-    applications: updatedMatch.applications || [],
-    participants: updatedMatch.participants || [],
-    current_applicants_male: updatedMatch.currentApplicants?.male || 0,
-    current_applicants_female: updatedMatch.currentApplicants?.female || 0,
-    current_applicants_total: updatedMatch.currentApplicants?.total || 0,
-    is_closed: updatedMatch.isClosed || false,  // ✅ 추가!
-    waiting_applicants: updatedMatch.waitingApplicants || 0,  // ✅ 추가 (선택)
-  })
-  .eq('id', updatedMatch.id);
+    const { error } = await supabaseAdmin
+      .from('matches')
+      .update({
+        applications: updatedMatch.applications || [],
+        participants: updatedMatch.participants || [],
+        current_applicants_male: updatedMatch.currentApplicants?.male || 0,
+        current_applicants_female: updatedMatch.currentApplicants?.female || 0,
+        current_applicants_total: updatedMatch.currentApplicants?.total || 0,
+      })
+      .eq('id', updatedMatch.id);
     
     if (error) {
       console.error('Supabase 업데이트 오류:', error);

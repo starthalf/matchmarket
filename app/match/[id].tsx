@@ -269,88 +269,47 @@ export default function MatchDetailScreen() {
     }
   };
 
-const handlePaymentComplete = async () => {
-    console.log('🔵 입금완료 버튼 클릭됨!');
-    
+  const handlePaymentComplete = async () => {
     try {
       if (!user || !myApplication) {
-        console.log('❌ user 또는 myApplication 없음');
         Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
         return;
       }
 
-      console.log('✅ user와 myApplication 확인됨');
-
-      // ✅ applications에서 제거하지 않고 상태만 변경
-      const updatedApplications = (match.applications || []).map(app =>
-        app.id === myApplication.id
-          ? { ...app, status: 'payment_submitted' as const }
-          : app
+      // application 상태를 approved에서 제거하고 participant 추가
+      const updatedApplications = safeApplications.filter(
+        app => app.id !== myApplication.id
       );
 
-      // participants에서 내 정보 찾기
-      const existingParticipant = match.participants?.find(p => p.userId === user.id);
-
-      let updatedParticipants;
-      let updatedCurrentApplicants = { ...match.currentApplicants };
-
-      if (existingParticipant) {
-        // 이미 participants에 있으면 상태만 confirmed로 변경
-        console.log('✅ 기존 participant 상태 업데이트');
-        updatedParticipants = match.participants.map(p => 
-          p.userId === user.id
-            ? { 
-                ...p, 
-                status: 'confirmed' as const,
-                paymentConfirmedAt: new Date().toISOString() 
-              }
-            : p
-        );
-      } else {
-        // participants에 없으면 새로 추가 (confirmed 상태로)
-        console.log('✅ 새 participant 추가 (confirmed)');
-        const newParticipant = {
-          id: `participant_${match.id}_${user.id}_${Date.now()}`,
-          userId: user.id,
-          userName: user.name,
-          gender: user.gender,
-          ntrp: user.ntrp,
-          joinedAt: new Date().toISOString(),
-          status: 'confirmed' as const,
-          paymentAmount: myApplication.appliedPrice,
-          paymentConfirmedAt: new Date().toISOString(),
-        };
-        updatedParticipants = [...(match.participants || []), newParticipant];
-        
-        // currentApplicants 증가
-        if (user.gender === '남성') {
-          updatedCurrentApplicants.male += 1;
-        } else {
-          updatedCurrentApplicants.female += 1;
-        }
-        updatedCurrentApplicants.total += 1;
-      }
+      // 새로운 참가자로 추가 (confirmed 상태)
+      const newParticipant = {
+        id: `participant_${match.id}_${user.id}_${Date.now()}`,
+        userId: user.id,
+        userName: user.name,
+        gender: user.gender,
+        ntrp: user.ntrp,
+        joinedAt: new Date().toISOString(),
+        status: 'confirmed',
+        paymentAmount: match.currentPrice,
+        paymentConfirmedAt: new Date().toISOString(),
+      };
 
       const updatedMatch = {
         ...match,
         applications: updatedApplications,
-        participants: updatedParticipants,
-        currentApplicants: updatedCurrentApplicants
+        participants: [...safeParticipants, newParticipant]
       };
 
-      console.log('💾 매치 업데이트 중...');
       await updateMatch(updatedMatch);
-      
-      console.log('✅ 입금완료! 참가 확정됨');
       setShowPaymentTimer(false);
       
       Alert.alert(
         '입금완료',
-        '입금이 완료되었습니다.\n매치 참가가 확정되었습니다! 🎾',
+        '입금이 완료되었습니다.\n매치 참가가 확정되었습니다!',
         [{ text: '확인' }]
       );
     } catch (error) {
-      console.error('❌ 입금완료 처리 중 오류:', error);
+      console.error('입금완료 처리 중 오류:', error);
       Alert.alert('오류', '입금완료 처리 중 오류가 발생했습니다.');
     }
   };

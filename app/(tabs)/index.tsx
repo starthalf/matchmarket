@@ -38,7 +38,6 @@ export default function HomeScreen() {
   const [matchTypeFilter, setMatchTypeFilter] = useState<MatchTypeFilter>(null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
-  const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   
   // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
@@ -124,11 +123,6 @@ export default function HomeScreen() {
   const toggleTimeFilter = () => {
     setTimeFilter(prev => prev === 'today' ? null : 'today');
   };
-
-  // 모집중 필터 토글
-const toggleRecruitingFilter = () => {
-  setRecruitingFilter(prev => !prev);
-};
 
   // 오늘 날짜 확인
   const isToday = (dateString: string) => {
@@ -376,21 +370,6 @@ const toggleRecruitingFilter = () => {
               오늘
             </Text>
           </TouchableOpacity>
-          {/* 모집중 필터 */}
-<TouchableOpacity
-  style={[
-    styles.chip,
-    recruitingFilter && styles.chipActive
-  ]}
-  onPress={toggleRecruitingFilter}
->
-  <Text style={[
-    styles.chipText,
-    recruitingFilter && styles.chipTextActive
-  ]}>
-    모집중
-  </Text>
-</TouchableOpacity>
         </ScrollView>
       </View>
 
@@ -483,44 +462,40 @@ const toggleRecruitingFilter = () => {
               match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               match.venue.toLowerCase().includes(searchQuery.toLowerCase())
             )
-           .filter(match => {
-  let passes = true;
-  
-  // 레벨 필터 - 판매자가 선수인 매치만
-  if (levelFilter === 'pro') {
-    passes = passes && match.seller.careerType === '선수';
-  }
-  
-  // 매치 유형 필터
-  if (matchTypeFilter === 'womens') {
-    passes = passes && match.matchType === '여복';
-  } else if (matchTypeFilter === 'mixed') {
-    passes = passes && match.matchType === '혼복';
-  }
-  
-  // 시간 필터
-  if (timeFilter === 'today') {
-    passes = passes && isToday(match.date);
-  }
-  
-  // 모집중 필터 - 마감되지 않은 매치만
-  if (recruitingFilter) {
-    passes = passes && !match.isClosed;
-  }
-  
-  return passes;
-})
+            // 그룹별 필터 로직 (AND 조건)
+            .filter(match => {
+              let passes = true;
+              
+              // 레벨 필터 - 판매자가 선수인 매치만
+              if (levelFilter === 'pro') {
+                passes = passes && match.seller.careerType === '선수';
+              }
+              
+              // 매치 유형 필터
+              if (matchTypeFilter === 'womens') {
+                passes = passes && match.matchType === '여복';
+              } else if (matchTypeFilter === 'mixed') {
+                passes = passes && match.matchType === '혼복';
+              }
+              
+              // 시간 필터
+              if (timeFilter === 'today') {
+                passes = passes && isToday(match.date);
+              }
+              
+              return passes;
+            })
             // 정렬
             .sort((a, b) => {
-  if (sortBy === 'popular') {
-    return b.applicationsCount - a.applicationsCount;
-  } else if (sortBy === 'time') {
-    return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
-  } else if (sortBy === 'ntrp') {
-    return b.ntrpRequirement.max - a.ntrpRequirement.max;
-  }
-  return 0;
-})
+              if (sortBy === 'popular') {
+                return b.applicationsCount - a.applicationsCount;
+              } else if (sortBy === 'time') {
+                return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
+              } else if (sortBy === 'ntrp') {
+                return b.ntrpRange.max - a.ntrpRange.max;
+              }
+              return 0;
+            })
             .map((match) => (
               <MatchCard 
                 key={match.id} 

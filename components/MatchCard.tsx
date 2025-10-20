@@ -32,6 +32,10 @@ export function MatchCard({ match }: MatchCardProps) {
   const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
   
 const handlePress = () => {
+  if (match.isClosed) {
+    return;
+  }
+
   if (!user) {
     router.push('/auth/login');
     return;
@@ -55,7 +59,12 @@ const handlePress = () => {
   };
 
   return (
-    <TouchableOpacity style={styles.card} onPress={handlePress} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={[styles.card, match.isClosed && styles.cardDisabled]}
+      onPress={handlePress}
+      activeOpacity={match.isClosed ? 1 : 0.7}
+      disabled={match.isClosed}
+    >
       {/* 상단 - 판매자 정보 */}
       <View style={styles.header}>
         <View style={styles.sellerInfo}>
@@ -372,5 +381,8 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
+  },
+  cardDisabled: {
+    opacity: 0.7,
   },
 });

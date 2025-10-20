@@ -484,7 +484,7 @@ const toggleRecruitingFilter = () => {
               match.venue.toLowerCase().includes(searchQuery.toLowerCase())
             )
             // 그룹별 필터 로직 (AND 조건)
-            .filter(match => {
+.filter(match => {
   let passes = true;
   
   // 레벨 필터 - 판매자가 선수인 매치만
@@ -506,7 +506,7 @@ const toggleRecruitingFilter = () => {
   
   // 모집중 필터 - 마감되지 않은 매치만
   if (recruitingFilter) {
-    passes = passes && match.status !== 'closed';
+    passes = passes && !match.isClosed;
   }
   
   return passes;

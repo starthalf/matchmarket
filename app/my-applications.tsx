@@ -509,4 +509,4 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
-}); 
+});

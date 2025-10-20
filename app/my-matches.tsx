@@ -45,13 +45,13 @@ export default function MyMatchesScreen() {
 
   const myMatches = matches.filter(match => match.sellerId === user.id);
 
-  const getMatchParticipants = (match: any) => {
+ const getMatchParticipants = (match: any) => {
     if (!match.participants || !Array.isArray(match.participants)) {
       return [];
     }
 
     return match.participants
-      .filter(p => p.status === 'confirmed' || p.status === 'payment_pending')
+      .filter(p => p.status === 'confirmed' || p.status === 'payment_pending' || p.status === 'payment_submitted')
       .map(p => {
         const user = mockUsers.find(u => u.id === p.userId);
         return {

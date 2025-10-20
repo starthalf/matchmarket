@@ -281,9 +281,11 @@ const handlePaymentComplete = async () => {
 
       console.log('✅ user와 myApplication 확인됨');
 
-      // applications에서 제거
-      const updatedApplications = (match.applications || []).filter(
-        app => app.id !== myApplication.id
+      // ✅ applications에서 제거하지 않고 상태만 변경
+      const updatedApplications = (match.applications || []).map(app =>
+        app.id === myApplication.id
+          ? { ...app, status: 'payment_submitted' as const }
+          : app
       );
 
       // participants에서 내 정보 찾기

@@ -23,47 +23,7 @@ interface WithdrawalHistory {
   accountHolder: string;
 }
 
-const mockWithdrawalHistory: WithdrawalHistory[] = [
-  {
-    id: 'w1',
-    amount: 125000,
-    requestedAt: '2024-12-10T09:30:00Z',
-    processedAt: '2024-12-12T14:20:00Z',
-    status: 'completed',
-    bankName: '국민은행',
-    accountNumber: '123-456-789012',
-    accountHolder: '이서브',
-  },
-  {
-    id: 'w2',
-    amount: 89000,
-    requestedAt: '2024-11-25T16:45:00Z',
-    processedAt: '2024-11-27T11:30:00Z',
-    status: 'completed',
-    bankName: '국민은행',
-    accountNumber: '123-456-789012',
-    accountHolder: '이서브',
-  },
-  {
-    id: 'w3',
-    amount: 67500,
-    requestedAt: '2024-11-10T14:15:00Z',
-    processedAt: '2024-11-12T10:45:00Z',
-    status: 'completed',
-    bankName: '국민은행',
-    accountNumber: '123-456-789012',
-    accountHolder: '이서브',
-  },
-  {
-    id: 'w4',
-    amount: 45000,
-    requestedAt: '2024-10-28T11:20:00Z',
-    status: 'pending',
-    bankName: '국민은행',
-    accountNumber: '123-456-789012',
-    accountHolder: '이서브',
-  },
-];
+const mockWithdrawalHistory: WithdrawalHistory[] = [];
 
 export default function WithdrawalHistoryScreen() {
   const safeStyles = useSafeStyles();

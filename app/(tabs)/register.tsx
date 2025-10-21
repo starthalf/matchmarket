@@ -23,6 +23,7 @@ import { useMatches } from '../../contexts/MatchContext';
 import { Match } from '../../types/tennis';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();
@@ -192,6 +193,11 @@ setFormData({
 
 // 매치 상세페이지로 즉시 이동
 console.log('매치 상세페이지로 이동:', newMatchId);
+
+// 🔥 판매자에게 채팅 알림 전송
+if (currentUser) {
+  await AsyncStorage.setItem(`hasNewChatRoom_${currentUser.id}`, 'true');
+}
 
 // 웹 환경에서 알림 표시
 if (Platform.OS === 'web' && typeof window !== 'undefined') {

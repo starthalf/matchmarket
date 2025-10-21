@@ -270,49 +270,42 @@ export default function MatchDetailScreen() {
   };
 
   const handlePaymentComplete = async () => {
-    try {
-      if (!user || !myApplication) {
-        Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
-        return;
-      }
-
-      // application 상태를 approved에서 제거하고 participant 추가
-      const updatedApplications = safeApplications.filter(
-        app => app.id !== myApplication.id
-      );
-
-      // 새로운 참가자로 추가 (confirmed 상태)
-      const newParticipant = {
-        id: `participant_${match.id}_${user.id}_${Date.now()}`,
-        userId: user.id,
-        userName: user.name,
-        gender: user.gender,
-        ntrp: user.ntrp,
-        joinedAt: new Date().toISOString(),
-        status: 'confirmed',
-        paymentAmount: match.currentPrice,
-        paymentConfirmedAt: new Date().toISOString(),
-      };
-
-      const updatedMatch = {
-        ...match,
-        applications: updatedApplications,
-        participants: [...safeParticipants, newParticipant]
-      };
-
-      await updateMatch(updatedMatch);
-      setShowPaymentTimer(false);
-      
-      Alert.alert(
-        '입금완료',
-        '입금이 완료되었습니다.\n매치 참가가 확정되었습니다!',
-        [{ text: '확인' }]
-      );
-    } catch (error) {
-      console.error('입금완료 처리 중 오류:', error);
-      Alert.alert('오류', '입금완료 처리 중 오류가 발생했습니다.');
+  try {
+    if (!user || !myApplication) {
+      Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
+      return;
     }
-  };
+
+    // ❌ 기존: application을 제거하고 participant 추가
+    // ✅ 수정: application의 status만 'confirmed'로 변경
+    const updatedApplications = safeApplications.map(app =>
+      app.id === myApplication.id
+        ? {
+            ...app,
+            status: 'confirmed',
+            paymentConfirmedAt: new Date().toISOString()
+          }
+        : app
+    );
+
+    const updatedMatch = {
+      ...match,
+      applications: updatedApplications
+    };
+
+    await updateMatch(updatedMatch);
+    setShowPaymentTimer(false);
+    
+    Alert.alert(
+      '입금완료',
+      '입금이 완료되었습니다.\n매치 참가가 확정되었습니다!',
+      [{ text: '확인' }]
+    );
+  } catch (error) {
+    console.error('입금완료 처리 중 오류:', error);
+    Alert.alert('오류', '입금완료 처리 중 오류가 발생했습니다.');
+  }
+};
 
   const formatTime = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);

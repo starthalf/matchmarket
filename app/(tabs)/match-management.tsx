@@ -10,6 +10,7 @@ import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager } from '../../utils/earningsManager';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { subscribeToParticipantUpdates } from '../../lib/supabase';
 
 export default function MatchManagementScreen() {
   const { user } = useAuth();
@@ -59,6 +60,34 @@ export default function MatchManagementScreen() {
 
     return () => clearInterval(interval);
   }, [myMatches, updateMatch]);
+
+   // 🔥 실시간 승인 감지 및 매치 상세 화면으로 자동 이동
+  useEffect(() => {
+    if (!user) return;
+
+    const unsubscribe = subscribeToParticipantUpdates(user.id, (updatedParticipant) => {
+      // 승인된 매치 찾기
+      const approvedMatch = matches.find(m => m.id === updatedParticipant.match_id);
+      
+      if (approvedMatch) {
+        Alert.alert(
+          '🎾 매치 참가 승인!',
+          '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
+          [
+            { 
+              text: '입금하기', 
+              onPress: () => {
+                // 매치 상세 화면으로 자동 이동 (입금 모달이 자동으로 뜸)
+                router.push(`/match/${approvedMatch.id}`);
+              }
+            }
+          ]
+        );
+      }
+    });
+
+    return () => unsubscribe();
+  }, [user, matches]);
 
   const handleApproveApplication = (matchId: string, applicationId: string) => {
   const match = matches.find(m => m.id === matchId);

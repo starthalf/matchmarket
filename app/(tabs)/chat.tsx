@@ -24,21 +24,24 @@ export default function ChatScreen() {
   const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: ChatMessage }>({});
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // 내가 참여한 매치들에서 채팅방 생성
-  const myChatRooms: ChatRoom[] = matches
-    .filter(match => {
-      return match.sellerId === user?.id || 
-             match.applications?.some(app => 
-               app.userId === user?.id && app.status === 'approved'
-             );
-    })
-    .map(match => ({
-      id: `chat_${match.id}`,
-      matchId: match.id,
-      participantIds: [
-        match.sellerId,
-        ...(match.applications?.filter(app => app.status === 'approved').map(app => app.userId) || [])
-      ],
+ // 내가 참여한 매치들에서 채팅방 생성
+const myChatRooms: ChatRoom[] = matches
+  .filter(match => {
+    return match.sellerId === user?.id || 
+           match.applications?.some(app => 
+             app.userId === user?.id && 
+             (app.status === 'approved' || app.status === 'confirmed')  // ✅ confirmed도 포함
+           );
+  })
+  .map(match => ({
+    id: `chat_${match.id}`,
+    matchId: match.id,
+    participantIds: [
+      match.sellerId,
+      ...(match.applications?.filter(app => 
+        app.status === 'approved' || app.status === 'confirmed'  // ✅ confirmed도 포함
+      ).map(app => app.userId) || [])
+    ],
       lastMessage: {
         id: `msg_${match.id}_last`,
         roomId: `chat_${match.id}`,

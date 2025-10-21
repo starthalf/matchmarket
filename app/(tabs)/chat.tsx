@@ -24,6 +24,13 @@ export default function ChatScreen() {
   const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: ChatMessage }>({});
   const scrollViewRef = useRef<ScrollView>(null);
 
+   // 🔥 이 부분 추가 - 채팅 화면 진입 시 알림 제거
+  useEffect(() => {
+    if (user) {
+      AsyncStorage.removeItem(`hasNewChatRoom_${user.id}`);
+    }
+  }, [user]);
+
  // 내가 참여한 매치들에서 채팅방 생성
 const myChatRooms: ChatRoom[] = matches
   .filter(match => {

@@ -61,51 +61,57 @@ export default function MatchManagementScreen() {
   }, [myMatches, updateMatch]);
 
   const handleApproveApplication = (matchId: string, applicationId: string) => {
-    const match = matches.find(m => m.id === matchId);
-    if (!match || !match.applications) return;
+  const match = matches.find(m => m.id === matchId);
+  if (!match || !match.applications) return;
 
-    const application = match.applications.find(app => app.id === applicationId);
-    if (!application) return;
+  const application = match.applications.find(app => app.id === applicationId);
+  if (!application) return;
 
-    const executeApproval = () => {
-      const updatedApplications = match.applications!.map(app =>
-        app.id === applicationId 
-          ? { 
-              ...app, 
-              status: 'approved' as const,
-              approvedAt: new Date().toISOString()
-            }
-          : app
-      );
-
-      updateMatch({
-        ...match,
-        applications: updatedApplications
-      });
-    };
-
-    if (typeof window !== 'undefined' && window.confirm) {
-      if (window.confirm(`${application.userName}님의 참여신청을 승인하시겠습니까?`)) {
-        executeApproval();
-        window.alert('참여신청이 승인되었습니다.');
-      }
-    } else {
-      Alert.alert(
-        '참여신청 승인',
-        `${application.userName}님의 참여신청을 승인하시겠습니까?`,
-        [
-          { text: '취소', style: 'cancel' },
-          {
-            text: '승인',
-            onPress: () => {
-              executeApproval();
-              Alert.alert('승인 완료', '참여신청이 승인되었습니다.\n결제요청이 전송됩니다.');
-            }
+  const executeApproval = async () => {  // ✅ async 추가
+    const updatedApplications = match.applications!.map(app =>
+      app.id === applicationId 
+        ? { 
+            ...app, 
+            status: 'approved' as const,
+            approvedAt: new Date().toISOString()
           }
-        ]
-      );
-    }
+        : app
+    );
+
+    await updateMatch({
+      ...match,
+      applications: updatedApplications
+    });
+
+    // 🔥 참여자에게 채팅 알림 전송
+    await AsyncStorage.setItem(
+      `hasNewChatRoom_${application.userId}`, 
+      'true'
+    );
   };
+
+  if (typeof window !== 'undefined' && window.confirm) {
+    if (window.confirm(`${application.userName}님의 참여신청을 승인하시겠습니까?`)) {
+      executeApproval();
+      window.alert('참여신청이 승인되었습니다.');
+    }
+  } else {
+    Alert.alert(
+      '참여신청 승인',
+      `${application.userName}님의 참여신청을 승인하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '승인',
+          onPress: () => {
+            executeApproval();
+            Alert.alert('승인 완료', '참여신청이 승인되었습니다.\n결제요청이 전송됩니다.');
+          }
+        }
+      ]
+    );
+  }
+};
 
   const handleRejectApplication = (matchId: string, applicationId: string) => {
     const match = matches.find(m => m.id === matchId);

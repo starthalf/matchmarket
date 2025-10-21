@@ -198,9 +198,11 @@ export default function MatchDetailScreen() {
       };
 
       updateMatch(updatedMatch);
-      // 🔥 알림 저장 추가
-      await AsyncStorage.setItem('hasNewMatchApplication', 'true');
-      setShowApplicationModal(false);
+
+// 🔥 판매자에게 매치관리 알림 전송
+await AsyncStorage.setItem('hasNewMatchApplication', 'true');
+
+setShowApplicationModal(false);
 
       Alert.alert(
         '참여신청 완료! 🎾',

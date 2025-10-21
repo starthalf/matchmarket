@@ -285,38 +285,40 @@ export default function MyMatchesScreen() {
     setShowParticipantsModal(true);
   };
 
-  const handleToggleClosedStatus = (match: any) => {
-    const newClosedStatus = !match.isClosed;
-    const statusText = newClosedStatus ? '마감' : '모집 재개';
-    
-    setConfirmModalData({
-      title: `매치 ${statusText}`,
-      message: `"${match.title}" 매치를 ${statusText}하시겠습니까?${newClosedStatus ? '\n\n마감 시 더 이상 대기자를 받지 않습니다.' : ''}`,
-      confirmText: statusText,
-      onConfirm: () => {
-        match.isClosed = newClosedStatus;
-        
-        if (newClosedStatus) {
-          match.currentApplicants = { ...match.expectedParticipants };
-          match.waitingApplicants = 0;
-          match.waitingList = [];
-        }
-        
-        setShowConfirmModal(false);
-        
-        setTimeout(() => {
-          setConfirmModalData({
-            title: '완료',
-            message: `매치가 ${statusText}되었습니다.`,
-            confirmText: '확인',
-            onConfirm: () => setShowConfirmModal(false),
-          });
-          setShowConfirmModal(true);
-        }, 100);
-      },
-    });
-    setShowConfirmModal(true);
-  };
+ const handleToggleClosedStatus = (match: any) => {
+  const newClosedStatus = !match.isClosed;
+  const statusText = newClosedStatus ? '마감' : '모집 재개';
+  
+  setConfirmModalData({
+    title: `매치 ${statusText}`,
+    message: `"${match.title}" 매치를 ${statusText}하시겠습니까?${newClosedStatus ? '\n\n마감 시 더 이상 대기자를 받지 않습니다.' : ''}`,
+    confirmText: statusText,
+    onConfirm: async () => {
+      const updatedMatch = {
+        ...match,
+        isClosed: newClosedStatus,
+        currentApplicants: newClosedStatus ? { ...match.expectedParticipants } : match.currentApplicants,
+        waitingApplicants: newClosedStatus ? 0 : match.waitingApplicants,
+        waitingList: newClosedStatus ? [] : match.waitingList
+      };
+      
+      await updateMatch(updatedMatch);
+      
+      setShowConfirmModal(false);
+      
+      setTimeout(() => {
+        setConfirmModalData({
+          title: '완료',
+          message: `매치가 ${statusText}되었습니다.`,
+          confirmText: '확인',
+          onConfirm: () => setShowConfirmModal(false),
+        });
+        setShowConfirmModal(true);
+      }, 100);
+    },
+  });
+  setShowConfirmModal(true);
+};
 
   const getMatchStatus = (match: any) => {
     if (completedMatches.has(match.id)) {

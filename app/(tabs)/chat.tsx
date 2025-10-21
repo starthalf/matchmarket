@@ -57,7 +57,9 @@ const myChatRooms: ChatRoom[] = matches
       matchTitle: match.title,
       matchDate: match.date,
       matchTime: match.time,
-      participantCount: 1 + (match.applications?.filter(app => app.status === 'approved').length || 0)
+      participantCount: 1 + (match.applications?.filter(app => 
+  app.status === 'approved' || app.status === 'confirmed'  // ✅ confirmed도 포함
+).length || 0)
     }));
 
   // 검색 필터링

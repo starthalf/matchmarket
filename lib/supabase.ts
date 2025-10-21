@@ -162,3 +162,37 @@ export interface AppSettings {
   value: string;
   updated_at: string;
 }
+
+// 🔥 Realtime 구독 함수 추가 (179줄 이후)
+export const subscribeToParticipantUpdates = (
+  userId: string, 
+  callback: (payload: any) => void
+) => {
+  if (!supabase) {
+    console.warn('Supabase client not configured');
+    return () => {};
+  }
+
+  const channel = supabase
+    .channel(`participant-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'match_participants',
+        filter: `user_id=eq.${userId}`
+      },
+      (payload) => {
+        console.log('🔔 참가자 상태 변경:', payload);
+        if (payload.new.status === 'approved') {
+          callback(payload.new);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => {
+    supabase.removeChannel(channel);
+  };
+};

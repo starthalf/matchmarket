@@ -15,18 +15,25 @@ export default function TabLayout() {
   const { matches } = useMatches();
   // 🔥 신규 참가 신청 알림
   const [hasNewApplication, setHasNewApplication] = React.useState(false);
+  const [hasNewChatRoom, setHasNewChatRoom] = React.useState(false);  // ✅ 추가
   
   React.useEffect(() => {
     const checkNotification = async () => {
       const value = await AsyncStorage.getItem('hasNewMatchApplication');
       setHasNewApplication(value === 'true');
+      
+      // 🔥 채팅방 알림 체크
+      if (user) {
+        const chatNotif = await AsyncStorage.getItem(`hasNewChatRoom_${user.id}`);
+        setHasNewChatRoom(chatNotif === 'true');
+      }
     };
     checkNotification();
     
     // 1초마다 체크 (실시간 업데이트)
     const interval = setInterval(checkNotification, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [user]);  // ✅ user 의존성 추가
 
   // 입금이 필요한 매치 개수 계산
   const paymentNeededCount = matches.filter(match => {
@@ -150,24 +157,34 @@ export default function TabLayout() {
         options={{
           title: "채팅",
           tabBarIcon: ({ size, color }) => (
-            <MessageCircle size={size} color={color} />
+            <View style={{ position: 'relative' }}>
+              <MessageCircle size={size} color={color} />
+              {/* 🔥 새 채팅방 또는 읽지 않은 메시지 알림 */}
+              {(hasNewChatRoom || unreadCount > 0) && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#ef4444',
+                  }}
+                />
+              )}
+            </View>
           ),
-          // 빨간 점 배지 표시 (읽지 않은 메시지가 있을 때만)
-          tabBarBadge: unreadCount > 0 ? '' : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: '#ef4444',
-            minWidth: 8,
-            height: 8,
-            borderRadius: 4,
-            top: 8,
-            right: -4,
-          },
         }}
         listeners={{
-          tabPress: (e: any) => {
+          tabPress: async (e: any) => {
             if (!user) {
               e.preventDefault();
               router.push('/auth/login');
+            } else {
+              // 🔥 채팅 탭 클릭 시 알림 제거
+              await AsyncStorage.removeItem(`hasNewChatRoom_${user.id}`);
+              setHasNewChatRoom(false);
             }
           },
         }}

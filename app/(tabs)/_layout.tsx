@@ -6,8 +6,8 @@ import { useChat } from '../../contexts/ChatContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
+import { getUnreadNotificationCount, subscribeToNotifications, markNotificationsAsRead } from '../../lib/supabase';
 
 export default function TabLayout() {
   const { user, isLoading } = useAuth();

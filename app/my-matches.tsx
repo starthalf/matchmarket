@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+// app/my-matches.tsx
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -45,6 +46,48 @@ export default function MyMatchesScreen() {
 
   const myMatches = matches.filter(match => match.sellerId === user.id);
 
+  // 🔥 입금 대기 시간 만료된 신청 자동 제거
+  useEffect(() => {
+    const checkAndRemoveExpiredApplications = () => {
+      const now = new Date().getTime();
+      
+      myMatches.forEach(match => {
+        if (!match.applications || match.applications.length === 0) return;
+        
+        const updatedApplications = match.applications.filter(app => {
+          // approved 상태이고 approvedAt이 있는 경우만 체크
+          if (app.status === 'approved' && app.approvedAt) {
+            const approvedTime = new Date(app.approvedAt).getTime();
+            const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
+            const remainingSeconds = Math.max(0, 300 - elapsedSeconds); // 5분
+            
+            // 시간이 만료되면 false를 반환하여 필터링됨
+            return remainingSeconds > 0;
+          }
+          
+          // 다른 상태는 그대로 유지
+          return true;
+        });
+        
+        // applications가 변경되었으면 업데이트
+        if (updatedApplications.length !== match.applications.length) {
+          updateMatch({
+            ...match,
+            applications: updatedApplications
+          });
+        }
+      });
+    };
+    
+    // 컴포넌트 마운트 시 체크
+    checkAndRemoveExpiredApplications();
+    
+    // 10초마다 체크
+    const interval = setInterval(checkAndRemoveExpiredApplications, 10000);
+    
+    return () => clearInterval(interval);
+  }, [myMatches, updateMatch]);
+
   const getMatchParticipants = (match: any) => {
     if (!match.participants || !Array.isArray(match.participants)) {
       return [];
@@ -66,6 +109,8 @@ export default function MyMatchesScreen() {
       })
       .sort((a, b) => new Date(a.joinedAt).getTime() - new Date(b.joinedAt).getTime());
   };
+
+  // ... 나머지 코드는 동일 ...
 
   const getMatchApplications = (match: any) => {
     if (!match.applications || !Array.isArray(match.applications)) {

@@ -155,10 +155,13 @@ export default function MatchManagementScreen() {
       applications: updatedApplications
     });
 
-    // 🔥 참여자에게 채팅 알림 전송
-    await AsyncStorage.setItem(
-      `hasNewChatRoom_${application.userId}`, 
-      'true'
+   // 🔥 참여자에게 채팅 알림 전송 (Supabase)
+    await createNotification(
+      application.userId,
+      'new_chat_room',
+      match.id,
+      user?.id,
+      user?.name
     );
   };
 

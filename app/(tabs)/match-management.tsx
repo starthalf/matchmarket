@@ -195,17 +195,26 @@ export default function MatchManagementScreen() {
     const application = match.applications.find(app => app.id === applicationId);
     if (!application) return;
 
-    const executeRejection = () => {
+    const executeRejection = async () => {
       const updatedApplications = match.applications!.map(app =>
         app.id === applicationId 
           ? { ...app, status: 'rejected' as const }
           : app
       );
 
-      updateMatch({
+      await updateMatch({
         ...match,
         applications: updatedApplications
       });
+
+      // 🔥 참여자에게 거절 알림 전송 (Supabase)
+      await createNotification(
+        application.userId,
+        'rejected',
+        match.id,
+        user?.id,
+        match.title
+      );
     };
 
     if (typeof window !== 'undefined' && window.confirm) {

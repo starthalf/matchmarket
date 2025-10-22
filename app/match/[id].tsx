@@ -31,7 +31,6 @@ import { PriceDisplay } from '../../components/PriceDisplay';
 import { useSafeStyles } from '../../constants/Styles';
 import { Match, MatchApplication } from '../../types/tennis';
 import { createNotification } from '../../lib/supabase';
-import { createNotification } from '../../lib/supabase';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

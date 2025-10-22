@@ -685,75 +685,174 @@ const pastMyApplications = myApplications.filter(match => {
                     관심있는 매치에 참여신청해보세요
                   </Text>
                 </View>
-              ) : (
-                myApplications.map((match) => {
-                  const myApplication = match.applications?.find(app => app.userId === user.id);
-                  if (!myApplication) return null;
+             ) : (
+                <>
+                  {/* 🔥 진행 예정 신청 */}
+                  {upcomingMyApplications.length > 0 && (
+                    <View style={{ marginBottom: 24 }}>
+                      <View style={{ 
+                        flexDirection: 'row', 
+                        alignItems: 'center', 
+                        marginBottom: 12,
+                        paddingHorizontal: 16
+                      }}>
+                        <Calendar size={20} color="#16a34a" />
+                        <Text style={{ 
+                          fontSize: 18, 
+                          fontWeight: '700', 
+                          color: '#16a34a',
+                          marginLeft: 8
+                        }}>
+                          진행 예정 ({upcomingMyApplications.length})
+                        </Text>
+                      </View>
+                      
+                      {upcomingMyApplications.map((match) => {
+                        const myApplication = match.applications?.find(app => app.userId === user.id);
+                        if (!myApplication) return null;
 
-                  const needsPayment = myApplication.status === 'approved' && myApplication.approvedAt;
-                  let remainingTime = 0;
-                  
-                  if (needsPayment) {
-                    const approvedTime = new Date(myApplication.approvedAt!).getTime();
-                    const now = new Date().getTime();
-                    const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
-                    remainingTime = Math.max(0, 300 - elapsedSeconds);
-                  }
+                        const needsPayment = myApplication.status === 'approved' && myApplication.approvedAt;
+                        let remainingTime = 0;
+                        
+                        if (needsPayment) {
+                          const approvedTime = new Date(myApplication.approvedAt!).getTime();
+                          const now = new Date().getTime();
+                          const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
+                          remainingTime = Math.max(0, 300 - elapsedSeconds);
+                        }
 
-                  return (
-                    <TouchableOpacity
-                      key={match.id}
-                      style={styles.applicationMatchCard}
-                      onPress={() => router.push(`/match/${match.id}`)}
-                    >
-                      {needsPayment && remainingTime > 0 && (
-                        <View style={styles.paymentAlertBanner}>
-                          <Clock size={20} color="#dc2626" />
-                          <View style={styles.paymentAlertContent}>
-                            <Text style={styles.paymentAlertTitle}>💰 입금이 필요합니다!</Text>
-                            <Text style={styles.paymentAlertText}>
-                              {Math.floor(remainingTime / 60)}분 {remainingTime % 60}초 내에 입금해주세요
+                        return (
+                          <TouchableOpacity
+                            key={match.id}
+                            style={styles.applicationMatchCard}
+                            onPress={() => router.push(`/match/${match.id}`)}
+                          >
+                            {needsPayment && remainingTime > 0 && (
+                              <View style={styles.paymentAlertBanner}>
+                                <Clock size={20} color="#dc2626" />
+                                <View style={styles.paymentAlertContent}>
+                                  <Text style={styles.paymentAlertTitle}>💰 입금이 필요합니다!</Text>
+                                  <Text style={styles.paymentAlertText}>
+                                    {Math.floor(remainingTime / 60)}분 {remainingTime % 60}초 내에 입금해주세요
+                                  </Text>
+                                </View>
+                              </View>
+                            )}
+
+                            <View style={styles.matchHeader}>
+                              <Text style={styles.matchTitle}>{match.title}</Text>
+                              <View style={[
+                                styles.statusBadge,
+                                { backgroundColor: getStatusColor(myApplication.status) + '20' }
+                              ]}>
+                                <Text style={[
+                                  styles.statusBadgeText,
+                                  { color: getStatusColor(myApplication.status) }
+                                ]}>
+                                  {getStatusText(myApplication.status)}
+                                </Text>
+                              </View>
+                            </View>
+
+                            <View style={styles.matchInfo}>
+                              <View style={styles.matchInfoRow}>
+                                <Calendar size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  {match.date} {match.time}
+                                </Text>
+                              </View>
+                              <View style={styles.matchInfoRow}>
+                                <Users size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  신청가격: {myApplication.appliedPrice.toLocaleString()}원
+                                </Text>
+                              </View>
+                            </View>
+
+                            <Text style={styles.applicationDate}>
+                              신청일: {new Date(myApplication.appliedAt).toLocaleDateString()}
                             </Text>
-                          </View>
-                        </View>
-                      )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
 
-                      <View style={styles.matchHeader}>
-                        <Text style={styles.matchTitle}>{match.title}</Text>
-                        <View style={[
-                          styles.statusBadge,
-                          { backgroundColor: getStatusColor(myApplication.status) + '20' }
-                        ]}>
-                          <Text style={[
-                            styles.statusBadgeText,
-                            { color: getStatusColor(myApplication.status) }
-                          ]}>
-                            {getStatusText(myApplication.status)}
+                  {/* 🔥 지난 신청 매치 */}
+                  {pastMyApplications.length > 0 && (
+                    <View style={{ paddingHorizontal: 16 }}>
+                      <TouchableOpacity
+                        onPress={() => setShowPastMatches(!showPastMatches)}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: '#f3f4f6',
+                          padding: 16,
+                          borderRadius: 12,
+                          marginBottom: showPastMatches ? 12 : 0,
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Clock size={20} color="#6b7280" />
+                          <Text style={{ 
+                            fontSize: 16, 
+                            fontWeight: '600', 
+                            color: '#6b7280',
+                            marginLeft: 8
+                          }}>
+                            지난 신청 ({pastMyApplications.length})
                           </Text>
                         </View>
-                      </View>
+                        <Text style={{ fontSize: 18, color: '#6b7280' }}>
+                          {showPastMatches ? '▲' : '▼'}
+                        </Text>
+                      </TouchableOpacity>
 
-                      <View style={styles.matchInfo}>
-                        <View style={styles.matchInfoRow}>
-                          <Calendar size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            {match.date} {match.time}
-                          </Text>
-                        </View>
-                        <View style={styles.matchInfoRow}>
-                          <Users size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            신청가격: {myApplication.appliedPrice.toLocaleString()}원
-                          </Text>
-                        </View>
-                      </View>
+                      {showPastMatches && pastMyApplications.map((match) => {
+                        const myApplication = match.applications?.find(app => app.userId === user.id);
+                        if (!myApplication) return null;
 
-                      <Text style={styles.applicationDate}>
-                        신청일: {new Date(myApplication.appliedAt).toLocaleDateString()}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })
+                        return (
+                          <TouchableOpacity
+                            key={match.id}
+                            style={[styles.applicationMatchCard, { opacity: 0.6 }]}
+                            onPress={() => router.push(`/match/${match.id}`)}
+                          >
+                            <View style={styles.matchHeader}>
+                              <Text style={styles.matchTitle}>{match.title}</Text>
+                              <View style={[styles.statusBadge, { backgroundColor: '#e5e7eb' }]}>
+                                <Text style={[styles.statusBadgeText, { color: '#6b7280' }]}>
+                                  종료
+                                </Text>
+                              </View>
+                            </View>
+
+                            <View style={styles.matchInfo}>
+                              <View style={styles.matchInfoRow}>
+                                <Calendar size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  {match.date} {match.time}
+                                </Text>
+                              </View>
+                              <View style={styles.matchInfoRow}>
+                                <Users size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  신청가격: {myApplication.appliedPrice.toLocaleString()}원
+                                </Text>
+                              </View>
+                            </View>
+
+                            <Text style={styles.applicationDate}>
+                              신청일: {new Date(myApplication.appliedAt).toLocaleDateString()}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  )}
+                </>
               )}
             </View>
           )}

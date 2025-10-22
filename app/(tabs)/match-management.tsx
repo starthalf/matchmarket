@@ -9,8 +9,7 @@ import { Match, MatchApplication } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager } from '../../utils/earningsManager';
 import { router } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { subscribeToParticipantUpdates } from '../../lib/supabase';
+import { subscribeToParticipantUpdates, createNotification, markNotificationsAsRead } from '../../lib/supabase';
 
 export default function MatchManagementScreen() {
   const { user } = useAuth();

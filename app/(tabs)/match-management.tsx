@@ -61,6 +61,48 @@ export default function MatchManagementScreen() {
     return () => clearInterval(interval);
   }, [myMatches, updateMatch]);
 
+  // 🔥 입금 대기 시간 만료된 신청 자동 제거
+  useEffect(() => {
+    const checkAndRemoveExpiredApplications = () => {
+      const now = new Date().getTime();
+      
+      myMatches.forEach(match => {
+        if (!match.applications || match.applications.length === 0) return;
+        
+        const updatedApplications = match.applications.filter(app => {
+          // approved 상태이고 approvedAt이 있는 경우만 체크
+          if (app.status === 'approved' && app.approvedAt) {
+            const approvedTime = new Date(app.approvedAt).getTime();
+            const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
+            const remainingSeconds = Math.max(0, 300 - elapsedSeconds); // 5분
+            
+            // 시간이 만료되면 false를 반환하여 필터링됨
+            return remainingSeconds > 0;
+          }
+          
+          // 다른 상태는 그대로 유지
+          return true;
+        });
+        
+        // applications가 변경되었으면 업데이트
+        if (updatedApplications.length !== match.applications.length) {
+          updateMatch({
+            ...match,
+            applications: updatedApplications
+          });
+        }
+      });
+    };
+    
+    // 컴포넌트 마운트 시 체크
+    checkAndRemoveExpiredApplications();
+    
+    // 10초마다 체크 (더 자주 체크)
+    const interval = setInterval(checkAndRemoveExpiredApplications, 10000);
+    
+    return () => clearInterval(interval);
+  }, [myMatches, updateMatch]);
+
    // 🔥 실시간 승인 감지 및 매치 상세 화면으로 자동 이동
   useEffect(() => {
     if (!user) return;
@@ -96,7 +138,7 @@ export default function MatchManagementScreen() {
   const application = match.applications.find(app => app.id === applicationId);
   if (!application) return;
 
-  const executeApproval = async () => {  // ✅ async 추가
+  const executeApproval = async () => {
     const updatedApplications = match.applications!.map(app =>
       app.id === applicationId 
         ? { 
@@ -777,117 +819,4 @@ const styles = StyleSheet.create({
   applicationItem: {
     backgroundColor: '#f8f7f4',
     padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  applicationUser: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  applicationUserInfo: {
-    flex: 1,
-  },
-  applicationUserName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#0d0c22',
-  },
-  applicationUserDetails: {
-    fontSize: 14,
-    color: '#6e6d7a',
-    marginTop: 2,
-  },
-  applicationStatus: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  applicationStatusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  applicationActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  rejectButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    backgroundColor: '#ffffff',
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#ef4444',
-  },
-  rejectButtonText: {
-    color: '#ef4444',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  approveButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    backgroundColor: '#0d0c22',
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  approveButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  applicationMatchCard: {
-    backgroundColor: '#ffffff',
-    marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 8,
-    borderRadius: 20,
-    padding: 20,
-    borderWidth: 0,
-    shadowColor: '#0d0c22',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 3,
-  },
-  applicationDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginTop: 8,
-  },
-  paymentAlertBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fee2e2',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 12,
-    gap: 12,
-    borderWidth: 1,
-    borderColor: '#fecaca',
-  },
-  paymentAlertContent: {
-    flex: 1,
-  },
-  paymentAlertTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#dc2626',
-    marginBottom: 2,
-  },
-  paymentAlertText: {
-    fontSize: 13,
-    color: '#dc2626',
-  },
-});
+    borderRadius:

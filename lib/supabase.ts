@@ -196,3 +196,120 @@ export const subscribeToParticipantUpdates = (
     supabase.removeChannel(channel);
   };
 };
+// ========================================
+// 🔥 알림 관리 함수들 (STEP 2에서 추가)
+// ========================================
+
+/**
+ * 알림 생성
+ */
+export async function createNotification(
+  userId: string,
+  type: 'new_application' | 'new_chat_room' | 'approved',
+  matchId: string,
+  relatedUserId?: string,
+  relatedUserName?: string
+) {
+  try {
+    const { error } = await supabaseAdmin
+      .from('notifications')
+      .insert({
+        user_id: userId,
+        type: type,
+        match_id: matchId,
+        related_user_id: relatedUserId,
+        related_user_name: relatedUserName,
+        read: false,
+        created_at: new Date().toISOString()
+      });
+
+    if (error) {
+      console.error('알림 저장 실패:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('알림 생성 중 오류:', error);
+    return false;
+  }
+}
+
+/**
+ * 읽지 않은 알림 개수 조회
+ */
+export async function getUnreadNotificationCount(userId: string, type?: string) {
+  try {
+    let query = supabaseAdmin
+      .from('notifications')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .eq('read', false);
+
+    if (type) {
+      query = query.eq('type', type);
+    }
+
+    const { count, error } = await query;
+
+    if (error) {
+      console.error('알림 개수 조회 실패:', error);
+      return 0;
+    }
+    return count || 0;
+  } catch (error) {
+    console.error('알림 개수 조회 중 오류:', error);
+    return 0;
+  }
+}
+
+/**
+ * 특정 타입의 알림을 모두 읽음 처리
+ */
+export async function markNotificationsAsRead(userId: string, type?: string) {
+  try {
+    let query = supabaseAdmin
+      .from('notifications')
+      .update({ read: true })
+      .eq('user_id', userId)
+      .eq('read', false);
+
+    if (type) {
+      query = query.eq('type', type);
+    }
+
+    const { error } = await query;
+
+    if (error) {
+      console.error('알림 읽음 처리 실패:', error);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('알림 읽음 처리 중 오류:', error);
+    return false;
+  }
+}
+
+/**
+ * 알림 실시간 구독
+ */
+export function subscribeToNotifications(
+  userId: string,
+  callback: (payload: any) => void
+) {
+  const subscription = supabaseAdmin
+    .channel(`notifications_${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${userId}`
+      },
+      callback
+    )
+    .subscribe();
+
+  return () => subscription.unsubscribe();
+}

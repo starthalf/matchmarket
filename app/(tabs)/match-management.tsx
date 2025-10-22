@@ -478,15 +478,19 @@ const pastMyApplications = myApplications.filter(match => {
                               />
                             </View>
                             
-                            {match.isClosed && !match.isCompleted && (
-                              <TouchableOpacity
-                                style={styles.completeButton}
-                                onPress={() => handleCompleteMatch(match)}
-                                activeOpacity={0.7}
-                              >
-                                <CheckCircle size={18} color="#ffffff" />
-                                <Text style={styles.completeButtonText}>경기완료</Text>
-                              </TouchableOpacity>
+                           // 새 코드 (추가)
+<TouchableOpacity
+  style={[
+    styles.completeButton,
+    !match.isClosed && styles.completeButtonDisabled
+  ]}
+  onPress={() => match.isClosed && handleCompleteMatch(match)}
+  activeOpacity={match.isClosed ? 0.7 : 1}
+  disabled={!match.isClosed}
+>
+  <CheckCircle size={18} color="#ffffff" />
+  <Text style={styles.completeButtonText}>경기완료</Text>
+</TouchableOpacity>
                             )}
 
                             {match.isCompleted && (

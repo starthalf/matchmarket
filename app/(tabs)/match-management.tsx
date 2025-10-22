@@ -984,22 +984,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#374151',
   },
-  completeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: '#16a34a',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    flex: 1,
-  },
-  completeButtonText: {
-    color: '#ffffff',
-    fontWeight: '600',
-    fontSize: 14,
-  },
+ // 새 코드
+// 새 코드
+completeButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: 6,
+  backgroundColor: '#ea4c89',
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  borderRadius: 10,
+  flex: 1,
+},
+completeButtonDisabled: {
+  backgroundColor: '#d1d5db',
+  opacity: 0.5,
+},
+completeButtonText: {
+  color: '#ffffff',
+  fontWeight: '600',
+  fontSize: 14,
+},
+completeButtonTextDisabled: {
+  color: '#9ca3af',  // 비활성화 시 회색 텍스트
+},
   completedBadge: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -389,6 +389,7 @@ const pastMyApplications = myApplications.filter(match => {
       </View>
 
       <View style={styles.container}>
+        <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[
               styles.tabButton,

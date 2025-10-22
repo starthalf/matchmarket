@@ -25,10 +25,12 @@ export default function MatchManagementScreen() {
     match.applications?.some(app => app.userId === user?.id)
   );
 
- // 페이지 진입 시 알림 읽음 처리
+// 페이지 진입 시 알림 읽음 처리
   useEffect(() => {
     if (user) {
       markNotificationsAsRead(user.id, 'new_application');
+      markNotificationsAsRead(user.id, 'rejected'); // 🔥 거절 알림도 읽음 처리
+      markNotificationsAsRead(user.id, 'payment_confirmed'); // 🔥 입금완료 알림도 읽음 처리
     }
   }, [user]);
 

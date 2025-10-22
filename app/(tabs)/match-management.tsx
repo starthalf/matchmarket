@@ -690,15 +690,7 @@ const pastMyApplications = myApplications.filter(match => {
                         marginBottom: 12,
                         paddingHorizontal: 16
                       }}>
-                        <Calendar size={20} color="#16a34a" />
-                        <Text style={{ 
-                          fontSize: 18, 
-                          fontWeight: '700', 
-                          color: '#16a34a',
-                          marginLeft: 8
-                        }}>
-                          진행 예정 ({upcomingMyApplications.length})
-                        </Text>
+                       
                       </View>
                       
                       {upcomingMyApplications.map((match) => {

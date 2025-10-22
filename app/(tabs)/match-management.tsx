@@ -984,8 +984,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#374151',
   },
- // 새 코드
-// 새 코드
 completeButton: {
   flexDirection: 'row',
   alignItems: 'center',

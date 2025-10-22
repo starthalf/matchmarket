@@ -1180,10 +1180,6 @@ completeButtonTextDisabled: {
     fontSize: 13,
     color: '#dc2626',
   },
-  paymentAlertText: {
-    fontSize: 13,
-    color: '#dc2626',
-  },
   profileButton: {
     padding: 8,
     borderRadius: 20,

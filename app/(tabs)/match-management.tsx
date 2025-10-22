@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ClipboardList, Users, Check, X, Clock, Calendar, CheckCircle } from 'lucide-react-native';
+import { ClipboardList, Users, Check, X, Clock, Calendar, CheckCircle, User as UserIcon, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { Match, MatchApplication } from '../../types/tennis';

@@ -31,6 +31,7 @@ import { PriceDisplay } from '../../components/PriceDisplay';
 import { useSafeStyles } from '../../constants/Styles';
 import { Match, MatchApplication } from '../../types/tennis';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createNotification } from '../../lib/supabase';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -199,10 +200,16 @@ export default function MatchDetailScreen() {
 
       updateMatch(updatedMatch);
 
-// 🔥 판매자에게 매치관리 알림 전송
-await AsyncStorage.setItem('hasNewMatchApplication', 'true');
+// 🔥 판매자에게 매치관리 알림 전송 (Supabase)
+      await createNotification(
+        match.sellerId,
+        'new_application',
+        match.id,
+        user.id,
+        user.name
+      );
 
-setShowApplicationModal(false);
+      setShowApplicationModal(false);
 
       Alert.alert(
         '참여신청 완료! 🎾',

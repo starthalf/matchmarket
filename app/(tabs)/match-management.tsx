@@ -219,7 +219,7 @@ export default function MatchManagementScreen() {
 
     if (typeof window !== 'undefined' && window.confirm) {
       if (window.confirm(`${application.userName}님의 참여신청을 거절하시겠습니까?`)) {
-        executeRejection();
+        await executeRejection();
         window.alert('참여신청이 거절되었습니다.');
       }
     } else {

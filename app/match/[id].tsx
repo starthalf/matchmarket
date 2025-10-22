@@ -277,7 +277,7 @@ export default function MatchDetailScreen() {
     }
   };
 
-  const handlePaymentComplete = async () => {
+ const handlePaymentComplete = async () => {
   try {
     if (!user || !myApplication) {
       Alert.alert('오류', '참여 정보를 찾을 수 없습니다.');
@@ -302,6 +302,16 @@ export default function MatchDetailScreen() {
     };
 
     await updateMatch(updatedMatch);
+    
+    // 🔥 판매자에게 입금완료 알림 전송 (Supabase)
+    await createNotification(
+      match.sellerId,
+      'payment_confirmed',
+      match.id,
+      user.id,
+      user.name
+    );
+    
     setShowPaymentTimer(false);
     
     Alert.alert(

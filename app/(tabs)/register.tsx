@@ -194,9 +194,15 @@ setFormData({
 // 매치 상세페이지로 즉시 이동
 console.log('매치 상세페이지로 이동:', newMatchId);
 
-// 🔥 판매자에게 채팅 알림 전송
+// 🔥 판매자에게 채팅 알림 전송 (Supabase)
 if (currentUser) {
-  await AsyncStorage.setItem(`hasNewChatRoom_${currentUser.id}`, 'true');
+  await createNotification(
+    currentUser.id,
+    'new_chat_room',
+    newMatchId,
+    currentUser.id,
+    currentUser.name
+  );
 }
 
 // 웹 환경에서 알림 표시

@@ -188,8 +188,8 @@ export default function TabLayout() {
               e.preventDefault();
               router.push('/auth/login');
             } else {
-              // 🔥 채팅 탭 클릭 시 알림 제거
-              await AsyncStorage.removeItem(`hasNewChatRoom_${user.id}`);
+              // 🔥 채팅 탭 클릭 시 알림 읽음 처리
+              await markNotificationsAsRead(user.id, 'new_chat_room');
               setHasNewChatRoom(false);
             }
           },

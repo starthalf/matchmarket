@@ -23,7 +23,7 @@ import { useMatches } from '../../contexts/MatchContext';
 import { Match } from '../../types/tennis';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createNotification } from '../../lib/supabase';
 
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();

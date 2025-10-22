@@ -538,8 +538,8 @@ const pastMyApplications = myApplications.filter(match => {
                                         {application.userName}
                                       </Text>
                                       <Text style={styles.applicationUserDetails}>
-                                        NTRP {application.userNtrp} · {application.userGender}
-                                      </Text>
+  NTRP {application.userNtrp} · {application.userGender} · 신청가격: {application.appliedPrice.toLocaleString()}원
+</Text>
                                     </View>
                                     <View style={[
                                       styles.applicationStatus,

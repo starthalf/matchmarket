@@ -478,7 +478,6 @@ const pastMyApplications = myApplications.filter(match => {
                               />
                             </View>
                             
-                           // 새 코드 (추가)
 <TouchableOpacity
   style={[
     styles.completeButton,

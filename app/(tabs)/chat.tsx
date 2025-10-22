@@ -25,10 +25,10 @@ export default function ChatScreen() {
   const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: ChatMessage }>({});
   const scrollViewRef = useRef<ScrollView>(null);
 
-   // 🔥 이 부분 추가 - 채팅 화면 진입 시 알림 제거
+ // 🔥 채팅 화면 진입 시 알림 읽음 처리
   useEffect(() => {
     if (user) {
-      AsyncStorage.removeItem(`hasNewChatRoom_${user.id}`);
+      markNotificationsAsRead(user.id, 'new_chat_room');
     }
   }, [user]);
 

@@ -11,7 +11,7 @@ import { useSafeStyles } from '../../constants/Styles';
 import { router } from 'expo-router';
 import { supabaseAdmin } from '../../lib/supabase';
 import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';  // ✅ 이 줄 추가
+import { markNotificationsAsRead } from '../../lib/supabase';
 
 export default function ChatScreen() {
   const { user } = useAuth();

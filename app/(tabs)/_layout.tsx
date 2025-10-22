@@ -13,9 +13,11 @@ export default function TabLayout() {
   const { user, isLoading } = useAuth();
   const { unreadCount } = useChat();
   const { matches } = useMatches();
- // 🔥 Supabase 기반 알림 상태
+// 🔥 Supabase 기반 알림 상태
   const [hasNewApplication, setHasNewApplication] = React.useState(false);
   const [hasNewChatRoom, setHasNewChatRoom] = React.useState(false);
+  const [hasRejected, setHasRejected] = React.useState(false); // 🔥 추가
+  const [hasPaymentConfirmed, setHasPaymentConfirmed] = React.useState(false); // 🔥 추가
   
   // 알림 개수 조회 및 실시간 구독
   React.useEffect(() => {
@@ -25,9 +27,13 @@ export default function TabLayout() {
     const loadNotifications = async () => {
       const appCount = await getUnreadNotificationCount(user.id, 'new_application');
       const chatCount = await getUnreadNotificationCount(user.id, 'new_chat_room');
+      const rejectedCount = await getUnreadNotificationCount(user.id, 'rejected'); // 🔥 추가
+      const paymentCount = await getUnreadNotificationCount(user.id, 'payment_confirmed'); // 🔥 추가
       
       setHasNewApplication(appCount > 0);
       setHasNewChatRoom(chatCount > 0);
+      setHasRejected(rejectedCount > 0); // 🔥 추가
+      setHasPaymentConfirmed(paymentCount > 0); // 🔥 추가
     };
 
     loadNotifications();

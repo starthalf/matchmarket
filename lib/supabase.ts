@@ -205,7 +205,7 @@ export const subscribeToParticipantUpdates = (
  */
 export async function createNotification(
   userId: string,
-  type: 'new_application' | 'new_chat_room' | 'approved',
+  type: 'new_application' | 'new_chat_room' | 'approved' | 'rejected' | 'payment_confirmed',
   matchId: string,
   relatedUserId?: string,
   relatedUserName?: string

@@ -16,6 +16,7 @@ export default function MatchManagementScreen() {
   const { matches, updateMatch } = useMatches();
   const safeStyles = useSafeStyles();
   const [selectedTab, setSelectedTab] = useState<'my-matches' | 'applications'>('my-matches');
+  const [showPastMatches, setShowPastMatches] = useState(false);
 
   // 내가 등록한 매치들
   const myMatches = matches.filter(match => match.sellerId === user?.id);

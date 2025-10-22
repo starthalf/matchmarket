@@ -359,29 +359,36 @@ const pastMyApplications = myApplications.filter(match => {
 
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
-      <View style={styles.container}>
-        <View style={styles.header}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
           <View>
-            <Text style={styles.headerTitle}>매치관리</Text>
-            <Text style={styles.headerSubtitle}>
+            <Text style={styles.title}>매치관리</Text>
+            <Text style={styles.subtitle}>
               등록한 매치와 참여신청을 관리하세요
             </Text>
           </View>
-          <TouchableOpacity 
-            style={styles.profileButton}
-            onPress={() => {
-              if (user) {
-                router.push('/profile');
-              } else {
-                router.push('/auth/login');
-              }
-            }}
-          >
-            {user ? <UserIcon size={20} color="#374151" /> : <LogIn size={20} color="#374151" />}
-          </TouchableOpacity>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity 
+              style={styles.headerLoginIcon}
+              onPress={() => {
+                if (user) {
+                  router.push('/profile');
+                } else {
+                  router.push('/auth/login');
+                }
+              }}
+            >
+              {user ? (
+                <User size={20} color="#16a34a" />
+              ) : (
+                <LogIn size={20} color="#6b7280" />
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
+      </View>
 
-        <View style={styles.tabContainer}>
+      <View style={styles.container}>
           <TouchableOpacity
             style={[
               styles.tabButton,

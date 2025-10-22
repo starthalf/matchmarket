@@ -190,7 +190,7 @@ export default function MatchManagementScreen() {
   }
 };
 
-  const handleRejectApplication = (matchId: string, applicationId: string) => {
+ const handleRejectApplication = (matchId: string, applicationId: string) => {
     const match = matches.find(m => m.id === matchId);
     if (!match || !match.applications) return;
 
@@ -219,7 +219,7 @@ export default function MatchManagementScreen() {
       );
     };
 
-   if (typeof window !== 'undefined' && window.confirm) {
+    if (typeof window !== 'undefined' && window.confirm) {
       if (window.confirm(`${application.userName}님의 참여신청을 거절하시겠습니까?`)) {
         executeRejection().then(() => {
           window.alert('참여신청이 거절되었습니다.');
@@ -231,7 +231,7 @@ export default function MatchManagementScreen() {
         `${application.userName}님의 참여신청을 거절하시겠습니까?`,
         [
           { text: '취소', style: 'cancel' },
-         {
+          {
             text: '거절',
             style: 'destructive',
             onPress: async () => {

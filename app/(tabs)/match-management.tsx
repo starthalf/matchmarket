@@ -389,6 +389,28 @@ const pastMyApplications = myApplications.filter(match => {
       </View>
 
       <View style={styles.container}>
+          <View style={styles.headerIcons}>
+            <TouchableOpacity 
+              style={styles.headerLoginIcon}
+              onPress={() => {
+                if (user) {
+                  router.push('/profile');
+                } else {
+                  router.push('/auth/login');
+                }
+              }}
+            >
+              {user ? (
+                <User size={20} color="#16a34a" />
+              ) : (
+                <LogIn size={20} color="#6b7280" />
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.container}>
         <View style={styles.tabContainer}>
           <TouchableOpacity
             style={[

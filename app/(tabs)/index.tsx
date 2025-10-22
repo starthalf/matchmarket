@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   Modal,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell, ArrowUpDown, X, Check } from 'lucide-react-native';
@@ -28,7 +29,7 @@ type TimeFilter = 'today' | null;
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
   const { isAdmin, adminLogin } = useAdmin();
-  const { matches: displayMatches, isLoadingMatches } = useMatches();
+  const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +44,7 @@ export default function HomeScreen() {
   // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Track component mount status
   useEffect(() => {
@@ -108,6 +110,13 @@ export default function HomeScreen() {
   const handleSortSelect = (sort: 'popular' | 'time' | 'ntrp') => {
     setSortBy(sort);
     setShowSortModal(false);
+  };
+
+  // Pull to Refresh 핸들러
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshMatches();
+    setRefreshing(false);
   };
 
   // 매치 유형 필터 토글 (하나만 선택)
@@ -465,11 +474,19 @@ const toggleRecruitingFilter = () => {
       </Modal>
 
       {/* 매치 목록 */}
-      <ScrollView 
-        style={styles.matchList} 
+      <ScrollView
+        style={styles.matchList}
         showsVerticalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#ea4c89"
+            colors={['#ea4c89']}
+          />
+        }
       >
         {isLoadingMatches ? (
           <View style={styles.loadingContainer}>

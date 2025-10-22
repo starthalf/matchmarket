@@ -35,6 +35,94 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     loadMatches();
   }, []);
 
+  // 자동 마감 체크: 날짜가 지난 매치 자동 마감
+  useEffect(() => {
+    const checkAndCloseExpiredMatches = () => {
+      const now = new Date();
+      let hasChanges = false;
+
+      setMatches(prev => {
+        const updated = prev.map(match => {
+          if (!match.isClosed) {
+            const matchDateTime = new Date(`${match.date} ${match.time}`);
+
+            if (now > matchDateTime) {
+              hasChanges = true;
+              console.log(`🔒 자동 마감: ${match.title}`);
+
+              // Supabase에도 업데이트
+              supabaseAdmin
+                .from('matches')
+                .update({ is_closed: true })
+                .eq('id', match.id)
+                .then(({ error }) => {
+                  if (error) {
+                    console.error('Supabase 자동 마감 업데이트 실패:', error);
+                  }
+                });
+
+              return { ...match, isClosed: true };
+            }
+          }
+          return match;
+        });
+
+        return hasChanges ? updated : prev;
+      });
+    };
+
+    // 컴포넌트 마운트 시 즉시 체크
+    checkAndCloseExpiredMatches();
+
+    // 1분마다 체크
+    const interval = setInterval(checkAndCloseExpiredMatches, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Supabase 실시간 구독: 다른 사용자의 매치 변경사항 실시간 반영
+  useEffect(() => {
+    const subscription = supabaseAdmin
+      .channel('matches_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'matches'
+        },
+        (payload) => {
+          console.log('📡 실시간 매치 업데이트 감지:', payload);
+
+          // 변경된 매치 데이터를 로컬 상태에 반영
+          setMatches(prev =>
+            prev.map(match => {
+              if (match.id === payload.new.id) {
+                return {
+                  ...match,
+                  isClosed: payload.new.is_closed,
+                  isCompleted: payload.new.is_completed,
+                  applications: payload.new.applications || match.applications,
+                  participants: payload.new.participants || match.participants,
+                  currentApplicants: {
+                    male: payload.new.current_applicants_male || 0,
+                    female: payload.new.current_applicants_female || 0,
+                    total: payload.new.current_applicants_total || 0
+                  }
+                };
+              }
+              return match;
+            })
+          );
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
   const loadMatches = async () => {
     try {
       console.log('매치 데이터 로딩 시작...');
@@ -122,6 +210,8 @@ export function MatchProvider({ children }: { children: ReactNode }) {
     const { error } = await supabaseAdmin
       .from('matches')
       .update({
+        is_closed: updatedMatch.isClosed,
+        is_completed: updatedMatch.isCompleted,
         applications: updatedMatch.applications || [],
         participants: updatedMatch.participants || [],
         current_applicants_male: updatedMatch.currentApplicants?.male || 0,

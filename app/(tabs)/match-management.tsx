@@ -62,35 +62,7 @@ const pastMyApplications = myApplications.filter(match => {
     }
   }, [user]);
 
-  // 매치 시간이 지났는지 체크하여 자동 마감
-  useEffect(() => {
-    const checkAndCloseExpiredMatches = () => {
-      const now = new Date();
-      
-      myMatches.forEach(match => {
-        if (!match.isClosed) {
-          // 매치 날짜와 시간을 파싱
-          const matchDateTime = new Date(`${match.date} ${match.time}`);
-          
-          // 현재 시간이 매치 시간을 넘었으면 자동 마감
-          if (now > matchDateTime) {
-            updateMatch({
-              ...match,
-              isClosed: true
-            });
-          }
-        }
-      });
-    };
-
-    // 컴포넌트 마운트 시 체크
-    checkAndCloseExpiredMatches();
-
-    // 1분마다 체크
-    const interval = setInterval(checkAndCloseExpiredMatches, 60000);
-
-    return () => clearInterval(interval);
-  }, [myMatches, updateMatch]);
+  // 자동 마감 로직은 MatchContext에서 중앙 관리되므로 여기서는 제거
 
   // 🔥 입금 대기 시간 만료된 신청 자동 제거
   useEffect(() => {

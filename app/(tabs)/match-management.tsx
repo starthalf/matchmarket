@@ -361,10 +361,24 @@ const pastMyApplications = myApplications.filter(match => {
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>매치관리</Text>
-          <Text style={styles.headerSubtitle}>
-            등록한 매치와 참여신청을 관리하세요
-          </Text>
+          <View>
+            <Text style={styles.headerTitle}>매치관리</Text>
+            <Text style={styles.headerSubtitle}>
+              등록한 매치와 참여신청을 관리하세요
+            </Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.profileButton}
+            onPress={() => {
+              if (user) {
+                router.push('/profile');
+              } else {
+                router.push('/auth/login');
+              }
+            }}
+          >
+            {user ? <UserIcon size={20} color="#374151" /> : <LogIn size={20} color="#374151" />}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.tabContainer}>

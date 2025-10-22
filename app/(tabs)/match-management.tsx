@@ -441,131 +441,238 @@ const pastMyApplications = myApplications.filter(match => {
                     <Text style={styles.emptyStateButtonText}>매치 등록하기</Text>
                   </TouchableOpacity>
                 </View>
-              ) : (
-                myMatches.map((match) => (
-                  <View key={match.id} style={styles.matchCard}>
-                    <TouchableOpacity
-                      onPress={() => router.push(`/match/${match.id}`)}
-                      activeOpacity={0.7}
-                    >
-                      <View style={styles.matchHeader}>
-                        <Text style={styles.matchTitle}>{match.title}</Text>
-                        <View style={[
-                          styles.statusBadge,
-                          { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
-                        ]}>
-                          <Text style={[
-                            styles.statusBadgeText,
-                            { color: match.isClosed ? '#dc2626' : '#16a34a' }
-                          ]}>
-                            {match.isClosed ? '마감' : '모집중'}
-                          </Text>
-                        </View>
-                      </View>
-                      <View style={styles.matchInfo}>
-                        <View style={styles.matchInfoRow}>
-                          <Calendar size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            {match.date} {match.time}
-                          </Text>
-                        </View>
-                        <View style={styles.matchInfoRow}>
-                          <Users size={16} color="#6b7280" />
-                          <Text style={styles.matchInfoText}>
-                            {match.applications?.length || 0}명 신청 / {match.expectedParticipants.total}명 모집
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-
-                    {/* 모집중/마감 토글 & 경기완료 버튼 */}
-                    <View style={styles.matchControlSection}>
-                      <View style={styles.recruitmentToggle}>
-                        <Text style={styles.recruitmentToggleLabel}>
-                          {match.isClosed ? '마감됨' : '모집중'}
+) : (
+                <>
+                  {/* 🔥 진행 예정 매치 */}
+                  {upcomingMyMatches.length > 0 && (
+                    <View style={{ marginBottom: 24 }}>
+                      <View style={{ 
+                        flexDirection: 'row', 
+                        alignItems: 'center', 
+                        marginBottom: 12,
+                        paddingHorizontal: 16
+                      }}>
+                        <Calendar size={20} color="#16a34a" />
+                        <Text style={{ 
+                          fontSize: 18, 
+                          fontWeight: '700', 
+                          color: '#16a34a',
+                          marginLeft: 8
+                        }}>
+                          진행 예정 ({upcomingMyMatches.length})
                         </Text>
-                        <Switch
-                          value={!match.isClosed}
-                          onValueChange={() => handleToggleRecruitment(match)}
-                          trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                          thumbColor={!match.isClosed ? '#16a34a' : '#f3f4f6'}
-                        />
                       </View>
                       
-                      {match.isClosed && !match.isCompleted && (
-                        <TouchableOpacity
-                          style={styles.completeButton}
-                          onPress={() => handleCompleteMatch(match)}
-                          activeOpacity={0.7}
-                        >
-                          <CheckCircle size={18} color="#ffffff" />
-                          <Text style={styles.completeButtonText}>경기완료</Text>
-                        </TouchableOpacity>
-                      )}
-
-                      {match.isCompleted && (
-                        <View style={styles.completedBadge}>
-                          <CheckCircle size={16} color="#16a34a" />
-                          <Text style={styles.completedBadgeText}>완료됨</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    {match.applications && match.applications.length > 0 && (
-                      <View style={styles.applicationsSection}>
-                        <Text style={styles.applicationsSectionTitle}>
-                          참여신청 ({match.applications.length})
-                        </Text>
-                        {match.applications.map((application) => (
-                          <View key={application.id} style={styles.applicationItem}>
-                            <View style={styles.applicationUser}>
-                              <View style={styles.applicationUserInfo}>
-                                <Text style={styles.applicationUserName}>
-                                  {application.userName}
-                                </Text>
-                                <Text style={styles.applicationUserDetails}>
-                                  NTRP {application.userNtrp} · {application.userGender}
-                                </Text>
-                              </View>
+                      {upcomingMyMatches.map((match) => (
+                        <View key={match.id} style={styles.matchCard}>
+                          <TouchableOpacity
+                            onPress={() => router.push(`/match/${match.id}`)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={styles.matchHeader}>
+                              <Text style={styles.matchTitle}>{match.title}</Text>
                               <View style={[
-                                styles.applicationStatus,
-                                { backgroundColor: getStatusColor(application.status) + '20' }
+                                styles.statusBadge,
+                                { backgroundColor: match.isClosed ? '#fee2e2' : '#dcfce7' }
                               ]}>
                                 <Text style={[
-                                  styles.applicationStatusText,
-                                  { color: getStatusColor(application.status) }
+                                  styles.statusBadgeText,
+                                  { color: match.isClosed ? '#dc2626' : '#16a34a' }
                                 ]}>
-                                  {getStatusText(application.status)}
+                                  {match.isClosed ? '마감' : '모집중'}
                                 </Text>
                               </View>
                             </View>
-                            {application.status === 'pending' && (
-                              <View style={styles.applicationActions}>
-                                <TouchableOpacity
-                                  style={styles.rejectButton}
-                                  onPress={() => handleRejectApplication(match.id, application.id)}
-                                  activeOpacity={0.7}
-                                >
-                                  <X size={16} color="#ef4444" />
-                                  <Text style={styles.rejectButtonText}>거절</Text>
-                                </TouchableOpacity>
-                                
-                                <TouchableOpacity
-                                  style={styles.approveButton}
-                                  onPress={() => handleApproveApplication(match.id, application.id)}
-                                  activeOpacity={0.7}
-                                >
-                                  <Check size={16} color="#ffffff" />
-                                  <Text style={styles.approveButtonText}>승인</Text>
-                                </TouchableOpacity>
+                            <View style={styles.matchInfo}>
+                              <View style={styles.matchInfoRow}>
+                                <Calendar size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  {match.date} {match.time}
+                                </Text>
+                              </View>
+                              <View style={styles.matchInfoRow}>
+                                <Users size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  {match.applications?.length || 0}명 신청 / {match.expectedParticipants.total}명 모집
+                                </Text>
+                              </View>
+                            </View>
+                          </TouchableOpacity>
+
+                          <View style={styles.matchControlSection}>
+                            <View style={styles.recruitmentToggle}>
+                              <Text style={styles.recruitmentToggleLabel}>
+                                {match.isClosed ? '마감됨' : '모집중'}
+                              </Text>
+                              <Switch
+                                value={!match.isClosed}
+                                onValueChange={() => handleToggleRecruitment(match)}
+                                trackColor={{ false: '#d1d5db', true: '#86efac' }}
+                                thumbColor={!match.isClosed ? '#16a34a' : '#f3f4f6'}
+                              />
+                            </View>
+                            
+                            {match.isClosed && !match.isCompleted && (
+                              <TouchableOpacity
+                                style={styles.completeButton}
+                                onPress={() => handleCompleteMatch(match)}
+                                activeOpacity={0.7}
+                              >
+                                <CheckCircle size={18} color="#ffffff" />
+                                <Text style={styles.completeButtonText}>경기완료</Text>
+                              </TouchableOpacity>
+                            )}
+
+                            {match.isCompleted && (
+                              <View style={styles.completedBadge}>
+                                <CheckCircle size={16} color="#16a34a" />
+                                <Text style={styles.completedBadgeText}>완료됨</Text>
                               </View>
                             )}
                           </View>
-                        ))}
-                      </View>
-                    )}
-                  </View>
-                ))
+
+                          {match.applications && match.applications.length > 0 && (
+                            <View style={styles.applicationsSection}>
+                              <Text style={styles.applicationsSectionTitle}>
+                                참여신청 ({match.applications.length})
+                              </Text>
+                              {match.applications.map((application) => (
+                                <View key={application.id} style={styles.applicationItem}>
+                                  <View style={styles.applicationUser}>
+                                    <View style={styles.applicationUserInfo}>
+                                      <Text style={styles.applicationUserName}>
+                                        {application.userName}
+                                      </Text>
+                                      <Text style={styles.applicationUserDetails}>
+                                        NTRP {application.userNtrp} · {application.userGender}
+                                      </Text>
+                                    </View>
+                                    <View style={[
+                                      styles.applicationStatus,
+                                      { backgroundColor: getStatusColor(application.status) + '20' }
+                                    ]}>
+                                      <Text style={[
+                                        styles.applicationStatusText,
+                                        { color: getStatusColor(application.status) }
+                                      ]}>
+                                        {getStatusText(application.status)}
+                                      </Text>
+                                    </View>
+                                  </View>
+                                  {application.status === 'pending' && (
+                                    <View style={styles.applicationActions}>
+                                      <TouchableOpacity
+                                        style={styles.rejectButton}
+                                        onPress={() => handleRejectApplication(match.id, application.id)}
+                                        activeOpacity={0.7}
+                                      >
+                                        <X size={16} color="#ef4444" />
+                                        <Text style={styles.rejectButtonText}>거절</Text>
+                                      </TouchableOpacity>
+                                      
+                                      <TouchableOpacity
+                                        style={styles.approveButton}
+                                        onPress={() => handleApproveApplication(match.id, application.id)}
+                                        activeOpacity={0.7}
+                                      >
+                                        <Check size={16} color="#ffffff" />
+                                        <Text style={styles.approveButtonText}>승인</Text>
+                                      </TouchableOpacity>
+                                    </View>
+                                  )}
+                                </View>
+                              ))}
+                            </View>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+
+                  {/* 🔥 지난 매치 (접기/펼치기) */}
+                  {pastMyMatches.length > 0 && (
+                    <View style={{ paddingHorizontal: 16 }}>
+                      <TouchableOpacity
+                        onPress={() => setShowPastMatches(!showPastMatches)}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          backgroundColor: '#f3f4f6',
+                          padding: 16,
+                          borderRadius: 12,
+                          marginBottom: showPastMatches ? 12 : 0,
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                          <Clock size={20} color="#6b7280" />
+                          <Text style={{ 
+                            fontSize: 16, 
+                            fontWeight: '600', 
+                            color: '#6b7280',
+                            marginLeft: 8
+                          }}>
+                            지난 매치 ({pastMyMatches.length})
+                          </Text>
+                        </View>
+                        <Text style={{ fontSize: 18, color: '#6b7280' }}>
+                          {showPastMatches ? '▲' : '▼'}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {showPastMatches && pastMyMatches.map((match) => (
+                        <View key={match.id} style={[styles.matchCard, { opacity: 0.6 }]}>
+                          <TouchableOpacity
+                            onPress={() => router.push(`/match/${match.id}`)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={styles.matchHeader}>
+                              <Text style={styles.matchTitle}>{match.title}</Text>
+                              <View style={[styles.statusBadge, { backgroundColor: '#e5e7eb' }]}>
+                                <Text style={[styles.statusBadgeText, { color: '#6b7280' }]}>
+                                  종료
+                                </Text>
+                              </View>
+                            </View>
+                            <View style={styles.matchInfo}>
+                              <View style={styles.matchInfoRow}>
+                                <Calendar size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  {match.date} {match.time}
+                                </Text>
+                              </View>
+                              <View style={styles.matchInfoRow}>
+                                <Users size={16} color="#6b7280" />
+                                <Text style={styles.matchInfoText}>
+                                  {match.applications?.length || 0}명 참여
+                                </Text>
+                              </View>
+                            </View>
+                          </TouchableOpacity>
+
+                          {match.isCompleted && (
+                            <View style={styles.completedBadge}>
+                              <CheckCircle size={16} color="#16a34a" />
+                              <Text style={styles.completedBadgeText}>완료됨</Text>
+                            </View>
+                          )}
+
+                          {!match.isCompleted && (
+                            <TouchableOpacity
+                              style={styles.completeButton}
+                              onPress={() => handleCompleteMatch(match)}
+                              activeOpacity={0.7}
+                            >
+                              <CheckCircle size={18} color="#ffffff" />
+                              <Text style={styles.completeButtonText}>경기완료</Text>
+                            </TouchableOpacity>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </>
               )}
             </View>
           ) : (

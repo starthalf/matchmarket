@@ -26,6 +26,31 @@ export default function MatchManagementScreen() {
     match.applications?.some(app => app.userId === user?.id)
   );
 
+  // 현재 시간
+const now = new Date();
+
+// 내 매치를 진행 예정 / 지난 매치로 분류
+const upcomingMyMatches = myMatches.filter(match => {
+  const matchDateTime = new Date(`${match.date} ${match.time}`);
+  return matchDateTime >= now;
+});
+
+const pastMyMatches = myMatches.filter(match => {
+  const matchDateTime = new Date(`${match.date} ${match.time}`);
+  return matchDateTime < now;
+});
+
+// 내 신청 매치도 분류
+const upcomingMyApplications = myApplications.filter(match => {
+  const matchDateTime = new Date(`${match.date} ${match.time}`);
+  return matchDateTime >= now;
+});
+
+const pastMyApplications = myApplications.filter(match => {
+  const matchDateTime = new Date(`${match.date} ${match.time}`);
+  return matchDateTime < now;
+});
+
 // 페이지 진입 시 알림 읽음 처리
   useEffect(() => {
     if (user) {

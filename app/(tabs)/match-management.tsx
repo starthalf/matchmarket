@@ -228,11 +228,11 @@ export default function MatchManagementScreen() {
         `${application.userName}님의 참여신청을 거절하시겠습니까?`,
         [
           { text: '취소', style: 'cancel' },
-          {
+         {
             text: '거절',
             style: 'destructive',
-            onPress: () => {
-              executeRejection();
+            onPress: async () => {
+              await executeRejection();
               Alert.alert('거절 완료', '참여신청이 거절되었습니다.');
             }
           }

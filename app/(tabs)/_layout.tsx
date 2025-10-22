@@ -124,22 +124,8 @@ export default function TabLayout() {
           tabBarIcon: ({ size, color }) => (
             <View style={{ position: 'relative' }}>
               <ClipboardList size={size} color={color} />
-              {/* 신규 참가 신청 알림 (우선순위 1) */}
-              {hasNewApplication && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -4,
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: '#ef4444',
-                  }}
-                />
-              )}
-              {/* 입금 필요 알림 (우선순위 2) */}
-              {!hasNewApplication && paymentNeededCount > 0 && (
+              {/* 매치관리 알림 통합 표시 */}
+              {(hasNewApplication || hasRejected || hasPaymentConfirmed || paymentNeededCount > 0) && (
                 <View
                   style={{
                     position: 'absolute',

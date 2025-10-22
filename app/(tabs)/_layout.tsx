@@ -13,27 +13,33 @@ export default function TabLayout() {
   const { user, isLoading } = useAuth();
   const { unreadCount } = useChat();
   const { matches } = useMatches();
-  // 🔥 신규 참가 신청 알림
+ // 🔥 Supabase 기반 알림 상태
   const [hasNewApplication, setHasNewApplication] = React.useState(false);
-  const [hasNewChatRoom, setHasNewChatRoom] = React.useState(false);  // ✅ 추가
+  const [hasNewChatRoom, setHasNewChatRoom] = React.useState(false);
   
+  // 알림 개수 조회 및 실시간 구독
   React.useEffect(() => {
-    const checkNotification = async () => {
-      const value = await AsyncStorage.getItem('hasNewMatchApplication');
-      setHasNewApplication(value === 'true');
+    if (!user) return;
+
+    // 초기 알림 개수 로드
+    const loadNotifications = async () => {
+      const appCount = await getUnreadNotificationCount(user.id, 'new_application');
+      const chatCount = await getUnreadNotificationCount(user.id, 'new_chat_room');
       
-      // 🔥 채팅방 알림 체크
-      if (user) {
-        const chatNotif = await AsyncStorage.getItem(`hasNewChatRoom_${user.id}`);
-        setHasNewChatRoom(chatNotif === 'true');
-      }
+      setHasNewApplication(appCount > 0);
+      setHasNewChatRoom(chatCount > 0);
     };
-    checkNotification();
-    
-    // 1초마다 체크 (실시간 업데이트)
-    const interval = setInterval(checkNotification, 1000);
-    return () => clearInterval(interval);
-  }, [user]);  // ✅ user 의존성 추가
+
+    loadNotifications();
+
+    // 실시간 알림 구독
+    const unsubscribe = subscribeToNotifications(user.id, (payload) => {
+      console.log('새 알림:', payload);
+      loadNotifications(); // 새 알림 오면 다시 로드
+    });
+
+    return () => unsubscribe();
+  }, [user]);
 
   // 입금이 필요한 매치 개수 계산
   const paymentNeededCount = matches.filter(match => {

@@ -853,25 +853,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f8f7f4',
   },
-  header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerTitle: {
+  title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#0d0c22',
-    marginBottom: 4,
+    color: '#ea4c89',
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 14,
-    color: '#6e6d7a',
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerLoginIcon: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   tabContainer: {
     flexDirection: 'row',

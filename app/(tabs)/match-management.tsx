@@ -1180,6 +1180,10 @@ completeButtonTextDisabled: {
     fontSize: 13,
     color: '#dc2626',
   },
+  paymentAlertText: {
+    fontSize: 13,
+    color: '#dc2626',
+  },
   profileButton: {
     padding: 8,
     borderRadius: 20,
@@ -1187,5 +1191,4 @@ completeButtonTextDisabled: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-});
 });

@@ -25,10 +25,12 @@ export default function MatchManagementScreen() {
     match.applications?.some(app => app.userId === user?.id)
   );
 
-  // 페이지 진입 시 알림 제거
+ // 페이지 진입 시 알림 읽음 처리
   useEffect(() => {
-    AsyncStorage.removeItem('hasNewMatchApplication');
-  }, []);
+    if (user) {
+      markNotificationsAsRead(user.id, 'new_application');
+    }
+  }, [user]);
 
   // 매치 시간이 지났는지 체크하여 자동 마감
   useEffect(() => {

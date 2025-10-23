@@ -3,11 +3,11 @@
 export interface User {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   gender: '남성' | '여성';
   ageGroup: '20대' | '30대' | '40대' | '50대+';
   ntrp: number;
-  experience: number; // 개월 수
+  experience: number;
   playStyle: '공격형' | '수비형' | '올라운드';
   careerType: '동호인' | '선수';
   certification: {
@@ -20,6 +20,10 @@ export interface User {
   viewCount: number;
   likeCount: number;
   avgRating: number;
+  // ✅ 계좌 정보 추가
+  bankName?: string;
+  accountNumber?: string;
+  accountHolder?: string;
 }
 
 // 🆕 새로운 참여신청 인터페이스 - 대기시스템 대신 사용
@@ -33,7 +37,7 @@ export interface MatchApplication {
   userProfileImage?: string;
   appliedPrice: number; // 참여신청 당시의 가격
   appliedAt: string;
-  status: 'pending' | 'approved' | 'rejected' | 'expired';
+  status: 'pending' | 'approved' | 'rejected' | 'expired' | 'payment_submitted' | 'confirmed';
   approvedAt?: string;
   rejectedAt?: string;
   paymentRequestedAt?: string;
@@ -52,6 +56,7 @@ export interface WaitingApplicant {
   paymentRequestedAt?: string;
   paymentExpiresAt?: string;
   paymentSubmittedAt?: string;
+  paymentConfirmedAt?: string; // 판매자 입금확인 시각
   depositorName?: string;
 }
 

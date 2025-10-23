@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { MessageCircle, Send, Users, Calendar, Search } from 'lucide-react-native';
+import { MessageCircle, Send, Users, Calendar, Search, User, LogIn } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { useChat } from '../../contexts/ChatContext';
@@ -38,7 +38,7 @@ const myChatRooms: ChatRoom[] = matches
     return match.sellerId === user?.id || 
            match.applications?.some(app => 
              app.userId === user?.id && 
-             (app.status === 'approved' || app.status === 'confirmed')  // ✅ confirmed도 포함
+             app.status === 'confirmed'  // 입금확인 후에만 채팅방 입장
            );
   })
   .map(match => ({
@@ -47,7 +47,7 @@ const myChatRooms: ChatRoom[] = matches
     participantIds: [
       match.sellerId,
       ...(match.applications?.filter(app => 
-        app.status === 'approved' || app.status === 'confirmed'  // ✅ confirmed도 포함
+        app.status === 'confirmed'  // 입금확인 후에만 채팅방 입장
       ).map(app => app.userId) || [])
     ],
       lastMessage: {
@@ -65,8 +65,8 @@ const myChatRooms: ChatRoom[] = matches
       matchTitle: match.title,
       matchDate: match.date,
       matchTime: match.time,
-      participantCount: 1 + (match.applications?.filter(app => 
-  app.status === 'approved' || app.status === 'confirmed'  // ✅ confirmed도 포함
+   participantCount: 1 + (match.applications?.filter(app => 
+  app.status === 'confirmed'  // 입금확인 후에만 채팅방 입장
 ).length || 0)
     }));
 
@@ -345,11 +345,33 @@ const myChatRooms: ChatRoom[] = matches
       <View style={styles.container}>
         {!selectedRoom ? (
           <>
-            <View style={styles.header}>
-              <Text style={styles.headerTitle}>채팅</Text>
-              <Text style={styles.headerSubtitle}>
-                매치 참여자들과 소통하세요
-              </Text>
+            <View style={safeStyles.safeHeader}>
+              <View style={safeStyles.safeHeaderContent}>
+                <View>
+                  <Text style={styles.title}>채팅</Text>
+                  <Text style={styles.subtitle}>
+                    매치 참여자들과 소통하세요
+                  </Text>
+                </View>
+                <View style={styles.headerIcons}>
+                  <TouchableOpacity 
+                    style={styles.headerLoginIcon}
+                    onPress={() => {
+                      if (user) {
+                        router.push('/profile');
+                      } else {
+                        router.push('/auth/login');
+                      }
+                    }}
+                  >
+                    {user ? (
+                      <User size={20} color="#16a34a" />
+                    ) : (
+                      <LogIn size={20} color="#6b7280" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
 
             <View style={styles.searchContainer}>
@@ -520,23 +542,27 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb',
   },
-  header: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerTitle: {
+  title: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#111827',
-    marginBottom: 4,
+    color: '#ea4c89',
   },
-  headerSubtitle: {
+  subtitle: {
     fontSize: 14,
     color: '#6b7280',
+    marginTop: 2,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerLoginIcon: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   searchContainer: {
     flexDirection: 'row',

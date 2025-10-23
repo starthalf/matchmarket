@@ -287,14 +287,14 @@ export default function MatchDetailScreen() {
     // ❌ 기존: application을 제거하고 participant 추가
     // ✅ 수정: application의 status만 'confirmed'로 변경
     const updatedApplications = safeApplications.map(app =>
-      app.id === myApplication.id
-        ? {
-            ...app,
-            status: 'confirmed',
-            paymentConfirmedAt: new Date().toISOString()
-          }
-        : app
-    );
+  app.id === myApplication.id
+    ? {
+        ...app,
+        status: 'payment_submitted',
+        paymentSubmittedAt: new Date().toISOString()
+      }
+    : app
+);
 
     const updatedMatch = {
       ...match,
@@ -315,10 +315,10 @@ export default function MatchDetailScreen() {
     setShowPaymentTimer(false);
     
     Alert.alert(
-      '입금완료',
-      '입금이 완료되었습니다.\n매치 참가가 확정되었습니다!',
-      [{ text: '확인' }]
-    );
+  '입금완료',
+  '입금이 완료되었습니다.\n판매자가 확인하면 참가가 확정됩니다.',
+  [{ text: '확인' }]
+);
   } catch (error) {
     console.error('입금완료 처리 중 오류:', error);
     Alert.alert('오류', '입금완료 처리 중 오류가 발생했습니다.');
@@ -350,19 +350,21 @@ export default function MatchDetailScreen() {
     }
     
     if (myApplication) {
-      switch (myApplication.status) {
-        case 'pending':
-          return '승인 대기중';
-        case 'approved':
-          return '승인됨 - 결제대기';
-        case 'payment_pending':
-          return '입금 확인중';
-        case 'rejected':
-          return '신청 거절됨';
-        default:
-          return null;
-      }
-    }
+  switch (myApplication.status) {
+    case 'pending':
+      return '승인 대기중';
+    case 'approved':
+      return '승인됨 - 결제대기';
+    case 'payment_submitted':
+      return '입금 확인 대기중';
+    case 'confirmed':
+      return '참여 확정';
+    case 'rejected':
+      return '신청 거절됨';
+    default:
+      return null;
+  }
+}
     
     return null;
   };

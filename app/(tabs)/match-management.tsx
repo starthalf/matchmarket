@@ -244,6 +244,63 @@ const pastMyApplications = myApplications.filter(match => {
     }
   };
 
+// 🆕 입금 확인 처리
+const handleConfirmPayment = (matchId: string, applicationId: string) => {
+  const match = matches.find(m => m.id === matchId);
+  if (!match || !match.applications) return;
+
+  const application = match.applications.find(app => app.id === applicationId);
+  if (!application) return;
+
+  const executeConfirmation = async () => {
+    const updatedApplications = match.applications!.map(app =>
+      app.id === applicationId 
+        ? { 
+            ...app, 
+            status: 'confirmed' as const,
+            paymentConfirmedAt: new Date().toISOString()
+          }
+        : app
+    );
+
+    await updateMatch({
+      ...match,
+      applications: updatedApplications
+    });
+
+    // 🔥 참여자에게 채팅 알림 전송 (Supabase)
+    await createNotification(
+      application.userId,
+      'new_chat_room',
+      match.id,
+      user?.id,
+      user?.name
+    );
+  };
+
+  if (typeof window !== 'undefined' && window.confirm) {
+    if (window.confirm(`${application.userName}님의 입금을 확인하시겠습니까?\n\n확인 시 참여가 확정되어 채팅방에 입장됩니다.`)) {
+      executeConfirmation();
+      window.alert('입금이 확인되었습니다.');
+    }
+  } else {
+    Alert.alert(
+      '입금 확인',
+      `${application.userName}님의 입금을 확인하시겠습니까?\n\n확인 시 참여가 확정되어 채팅방에 입장됩니다.`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '입금 확인',
+          onPress: () => {
+            executeConfirmation();
+            Alert.alert('확인 완료', '입금이 확인되어 참여가 확정되었습니다.');
+          }
+        }
+      ]
+    );
+  }
+};
+  
   // 모집중/마감 토글
   const handleToggleRecruitment = (match: Match) => {
     const newStatus = !match.isClosed;
@@ -278,6 +335,7 @@ const pastMyApplications = myApplications.filter(match => {
     }
   };
 
+ /* 경기완료 기능 - 비활성화
   // 경기완료 처리
   const handleCompleteMatch = async (match: Match) => {
     const executeComplete = async () => {
@@ -326,26 +384,29 @@ const pastMyApplications = myApplications.filter(match => {
       );
     }
   };
+  */
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending': return '#f59e0b';
-      case 'approved': return '#3b82f6';
-      case 'rejected': return '#ef4444';
-      case 'confirmed': return '#10b981';
-      default: return '#6b7280';
-    }
-  };
+  switch (status) {
+    case 'pending': return '#f59e0b';
+    case 'approved': return '#3b82f6';
+    case 'payment_submitted': return '#8b5cf6';
+    case 'confirmed': return '#10b981';
+    case 'rejected': return '#ef4444';
+    default: return '#6b7280';
+  }
+};
 
   const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending': return '대기중';
-      case 'approved': return '입금대기';
-      case 'rejected': return '거절됨';
-      case 'confirmed': return '입금완료';
-      default: return status;
-    }
-  };
+  switch (status) {
+    case 'pending': return '승인 대기';
+    case 'approved': return '승인됨';
+    case 'payment_submitted': return '입금 확인 대기';
+    case 'confirmed': return '참여 확정';
+    case 'rejected': return '거절됨';
+    default: return '알 수 없음';
+  }
+};
 
   if (!user) {
     return (
@@ -488,43 +549,45 @@ const pastMyApplications = myApplications.filter(match => {
                           </TouchableOpacity>
 
                           <View style={styles.matchControlSection}>
-                            <View style={styles.recruitmentToggle}>
-                              <Text style={styles.recruitmentToggleLabel}>
-                                {match.isClosed ? '마감됨' : '모집중'}
-                              </Text>
-                              <Switch
-                                value={!match.isClosed}
-                                onValueChange={() => handleToggleRecruitment(match)}
-                                trackColor={{ false: '#d1d5db', true: '#86efac' }}
-                                thumbColor={!match.isClosed ? '#16a34a' : '#f3f4f6'}
-                              />
-                            </View>
-                            
-                            <TouchableOpacity
-  style={[
-    styles.completeButton,
-    !match.isClosed && styles.completeButtonDisabled
-  ]}
-  onPress={() => match.isClosed && handleCompleteMatch(match)}
-  activeOpacity={match.isClosed ? 0.7 : 1}
-  disabled={!match.isClosed}
->
-  <CheckCircle size={18} color={match.isClosed ? "#ffffff" : "#9ca3af"} />
-  <Text style={[
-    styles.completeButtonText,
-    !match.isClosed && styles.completeButtonTextDisabled
-  ]}>
-    경기완료
-  </Text>
-</TouchableOpacity>
-
-                            {match.isCompleted && (
-                              <View style={styles.completedBadge}>
-                                <CheckCircle size={16} color="#16a34a" />
-                                <Text style={styles.completedBadgeText}>완료됨</Text>
-                              </View>
-                            )}
-                          </View>
+  <View style={styles.recruitmentToggle}>
+    <Text style={styles.recruitmentToggleLabel}>
+      {match.isClosed ? '마감됨' : '모집중'}
+    </Text>
+    <Switch
+      value={!match.isClosed}
+      onValueChange={() => handleToggleRecruitment(match)}
+      trackColor={{ false: '#d1d5db', true: '#86efac' }}
+      thumbColor={!match.isClosed ? '#16a34a' : '#f3f4f6'}
+    />
+  </View>
+  
+  {/* 경기완료 버튼 - 비활성화
+  <TouchableOpacity
+    style={[
+      styles.completeButton,
+      !match.isClosed && styles.completeButtonDisabled
+    ]}
+    onPress={() => match.isClosed && handleCompleteMatch(match)}
+    activeOpacity={match.isClosed ? 0.7 : 1}
+    disabled={!match.isClosed}
+  >
+    <CheckCircle size={18} color={match.isClosed ? "#ffffff" : "#9ca3af"} />
+    <Text style={[
+      styles.completeButtonText,
+      !match.isClosed && styles.completeButtonTextDisabled
+    ]}>
+      경기완료
+    </Text>
+  </TouchableOpacity>
+  
+  {match.isCompleted && (
+    <View style={styles.completedBadge}>
+      <CheckCircle size={16} color="#16a34a" />
+      <Text style={styles.completedBadgeText}>완료됨</Text>
+    </View>
+  )}
+  */}
+</View>
 
                           {match.applications && match.applications.length > 0 && (
                             <View style={styles.applicationsSection}>
@@ -555,26 +618,40 @@ const pastMyApplications = myApplications.filter(match => {
                                     </View>
                                   </View>
                                   {application.status === 'pending' && (
-                                    <View style={styles.applicationActions}>
-                                      <TouchableOpacity
-                                        style={styles.rejectButton}
-                                        onPress={() => handleRejectApplication(match.id, application.id)}
-                                        activeOpacity={0.7}
-                                      >
-                                        <X size={16} color="#ef4444" />
-                                        <Text style={styles.rejectButtonText}>거절</Text>
-                                      </TouchableOpacity>
-                                      
-                                      <TouchableOpacity
-                                        style={styles.approveButton}
-                                        onPress={() => handleApproveApplication(match.id, application.id)}
-                                        activeOpacity={0.7}
-                                      >
-                                        <Check size={16} color="#ffffff" />
-                                        <Text style={styles.approveButtonText}>승인</Text>
-                                      </TouchableOpacity>
-                                    </View>
-                                  )}
+  <View style={styles.applicationActions}>
+    <TouchableOpacity
+      style={styles.rejectButton}
+      onPress={() => handleRejectApplication(match.id, application.id)}
+      activeOpacity={0.7}
+    >
+      <X size={16} color="#ef4444" />
+      <Text style={styles.rejectButtonText}>거절</Text>
+    </TouchableOpacity>
+    
+    <TouchableOpacity
+      style={styles.approveButton}
+      onPress={() => handleApproveApplication(match.id, application.id)}
+      activeOpacity={0.7}
+    >
+      <Check size={16} color="#ffffff" />
+      <Text style={styles.approveButtonText}>승인</Text>
+    </TouchableOpacity>
+  </View>
+)}
+
+{/* 🆕 여기에 추가 */}
+{application.status === 'payment_submitted' && (
+  <View style={styles.applicationActions}>
+    <TouchableOpacity
+      style={[styles.approveButton, { backgroundColor: '#10b981' }]}
+      onPress={() => handleConfirmPayment(match.id, application.id)}
+      activeOpacity={0.7}
+    >
+      <Check size={16} color="#ffffff" />
+      <Text style={styles.approveButtonText}>입금 확인</Text>
+    </TouchableOpacity>
+  </View>
+)}
                                 </View>
                               ))}
                             </View>

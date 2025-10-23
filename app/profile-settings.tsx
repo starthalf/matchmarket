@@ -8,15 +8,17 @@ import {
   TextInput,
   Alert,
   Switch,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, User, Mail, Lock, Bell, Shield, Trash2, LogOut } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Lock, Bell, Shield, Trash2, LogOut, CreditCard } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { useSafeStyles } from '../constants/Styles';
+import { supabase } from '../lib/supabase';
 
 export default function ProfileSettingsScreen() {
-  const { user: currentUser, logout } = useAuth();
+  const { user: currentUser, logout, updateUser } = useAuth();
   const safeStyles = useSafeStyles();
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
@@ -25,6 +27,10 @@ export default function ProfileSettingsScreen() {
     experience: currentUser?.experience.toString() || '',
     playStyle: currentUser?.playStyle || '올라운드',
     careerType: currentUser?.careerType || '동호인',
+    // 계좌 정보 추가
+    bankName: currentUser?.bankName || '',
+    accountNumber: currentUser?.accountNumber || '',
+    accountHolder: currentUser?.accountHolder || '',
   });
   
   const [notifications, setNotifications] = useState({
@@ -33,17 +39,148 @@ export default function ProfileSettingsScreen() {
     sms: false,
   });
 
-  const handleSaveProfile = () => {
-    Alert.alert(
-      '프로필 저장',
-      '프로필 정보를 저장하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '저장', onPress: () => {
-          Alert.alert('완료', '프로필이 저장되었습니다.');
-        }}
-      ]
-    );
+  const handleSaveProfile = async () => {
+    console.log('handleSaveProfile 호출됨');
+    
+    // 계좌 정보 유효성 검사
+    if (formData.bankName || formData.accountNumber || formData.accountHolder) {
+      if (!formData.bankName || !formData.accountNumber || !formData.accountHolder) {
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+          window.alert('계좌 정보를 입력하시려면 은행명, 계좌번호, 예금주를 모두 입력해주세요.');
+        } else {
+          Alert.alert('입력 오류', '계좌 정보를 입력하시려면 은행명, 계좌번호, 예금주를 모두 입력해주세요.');
+        }
+        return;
+      }
+    }
+
+    // 웹 환경
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (!window.confirm('프로필 정보를 저장하시겠습니까?')) {
+        return;
+      }
+
+      try {
+        if (!currentUser) {
+          window.alert('로그인 정보가 없습니다.');
+          return;
+        }
+
+        console.log('프로필 저장 시작:', currentUser.id);
+        console.log('저장할 데이터:', {
+          name: formData.name,
+          ntrp: parseFloat(formData.ntrp),
+          experience: parseInt(formData.experience),
+          play_style: formData.playStyle,
+          career_type: formData.careerType,
+          bank_name: formData.bankName,
+          account_number: formData.accountNumber,
+          account_holder: formData.accountHolder,
+        });
+
+        // Supabase에 저장
+        const { error } = await supabase
+          .from('users')
+          .update({
+            name: formData.name,
+            ntrp: parseFloat(formData.ntrp),
+            experience: parseInt(formData.experience),
+            play_style: formData.playStyle,
+            career_type: formData.careerType,
+            bank_name: formData.bankName || null,
+            account_number: formData.accountNumber || null,
+            account_holder: formData.accountHolder || null,
+          })
+          .eq('id', currentUser.id);
+
+        if (error) {
+          console.error('프로필 저장 오류:', error);
+          window.alert('프로필 저장 중 오류가 발생했습니다: ' + error.message);
+          return;
+        }
+
+        console.log('프로필 저장 성공!');
+
+        // 로컬 상태 업데이트
+        const updatedUser = {
+          ...currentUser,
+          name: formData.name,
+          ntrp: parseFloat(formData.ntrp),
+          experience: parseInt(formData.experience),
+          playStyle: formData.playStyle as '공격형' | '수비형' | '올라운드',
+          careerType: formData.careerType as '동호인' | '선수',
+          bankName: formData.bankName,
+          accountNumber: formData.accountNumber,
+          accountHolder: formData.accountHolder,
+        };
+
+        updateUser(updatedUser);
+        window.alert('프로필이 저장되었습니다.');
+      } catch (error) {
+        console.error('저장 중 오류:', error);
+        window.alert('프로필 저장 중 오류가 발생했습니다.');
+      }
+    } else {
+      // 모바일 환경
+      Alert.alert(
+        '프로필 저장',
+        '프로필 정보를 저장하시겠습니까?',
+        [
+          { text: '취소', style: 'cancel' },
+          { 
+            text: '저장', 
+            onPress: async () => {
+              try {
+                if (!currentUser) {
+                  Alert.alert('오류', '로그인 정보가 없습니다.');
+                  return;
+                }
+
+                // Supabase에 저장
+                const { error } = await supabase
+                  .from('users')
+                  .update({
+                    name: formData.name,
+                    ntrp: parseFloat(formData.ntrp),
+                    experience: parseInt(formData.experience),
+                    play_style: formData.playStyle,
+                    career_type: formData.careerType,
+                    bank_name: formData.bankName || null,
+                    account_number: formData.accountNumber || null,
+                    account_holder: formData.accountHolder || null,
+                  })
+                  .eq('id', currentUser.id);
+
+                if (error) {
+                  console.error('프로필 저장 오류:', error);
+                  Alert.alert('오류', '프로필 저장 중 오류가 발생했습니다.');
+                  return;
+                }
+
+                // 로컬 상태 업데이트
+                const updatedUser = {
+                  ...currentUser,
+                  name: formData.name,
+                  ntrp: parseFloat(formData.ntrp),
+                  experience: parseInt(formData.experience),
+                  playStyle: formData.playStyle as '공격형' | '수비형' | '올라운드',
+                  careerType: formData.careerType as '동호인' | '선수',
+                  bankName: formData.bankName,
+                  accountNumber: formData.accountNumber,
+                  accountHolder: formData.accountHolder,
+                };
+
+                updateUser(updatedUser);
+                Alert.alert('완료', '프로필이 저장되었습니다.');
+              } catch (error) {
+                console.error('저장 중 오류:', error);
+                Alert.alert('오류', '프로필 저장 중 오류가 발생했습니다.');
+              }
+            }
+          }
+        ]
+      );
+    }
   };
 
   const handleChangePassword = () => {
@@ -55,27 +192,39 @@ export default function ProfileSettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      '계정 삭제',
-      '정말로 계정을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며, 모든 데이터가 영구적으로 삭제됩니다.',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '삭제', style: 'destructive', onPress: () => {
-          Alert.alert('계정 삭제', '계정 삭제가 요청되었습니다. 고객센터에서 처리됩니다.');
-        }}
-      ]
-    );
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (window.confirm('정말로 계정을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며, 모든 데이터가 영구적으로 삭제됩니다.')) {
+        window.alert('계정 삭제가 요청되었습니다. 고객센터에서 처리됩니다.');
+      }
+    } else {
+      Alert.alert(
+        '계정 삭제',
+        '정말로 계정을 삭제하시겠습니까?\n\n이 작업은 되돌릴 수 없으며, 모든 데이터가 영구적으로 삭제됩니다.',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '삭제', style: 'destructive', onPress: () => {
+            Alert.alert('계정 삭제', '계정 삭제가 요청되었습니다. 고객센터에서 처리됩니다.');
+          }}
+        ]
+      );
+    }
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      '로그아웃',
-      '정말로 로그아웃하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { text: '로그아웃', onPress: logout }
-      ]
-    );
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (window.confirm('정말로 로그아웃하시겠습니까?')) {
+        logout();
+      }
+    } else {
+      Alert.alert(
+        '로그아웃',
+        '정말로 로그아웃하시겠습니까?',
+        [
+          { text: '취소', style: 'cancel' },
+          { text: '로그아웃', onPress: logout }
+        ]
+      );
+    }
   };
 
   if (!currentUser) {
@@ -182,6 +331,59 @@ export default function ProfileSettingsScreen() {
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
             <Text style={styles.saveButtonText}>프로필 저장</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* 계좌 정보 섹션 추가 */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <CreditCard size={20} color="#3b82f6" />
+            <Text style={styles.sectionTitle}>계좌 정보</Text>
+          </View>
+          
+          <View style={styles.noticeBox}>
+            <Text style={styles.noticeText}>
+              입금 받으실 계좌를 등록해주세요.{'\n'}
+              매치 판매 시 계좌 정보가 필수입니다.
+            </Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>은행명</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.bankName}
+              onChangeText={(text) => setFormData({...formData, bankName: text})}
+              placeholder="예: 국민은행"
+              placeholderTextColor="#9ca3af"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>계좌번호</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.accountNumber}
+              onChangeText={(text) => setFormData({...formData, accountNumber: text})}
+              placeholder="계좌번호 입력 (- 없이)"
+              placeholderTextColor="#9ca3af"
+              keyboardType="number-pad"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>예금주</Text>
+            <TextInput
+              style={styles.textInput}
+              value={formData.accountHolder}
+              onChangeText={(text) => setFormData({...formData, accountHolder: text})}
+              placeholder="예금주명"
+              placeholderTextColor="#9ca3af"
+            />
+          </View>
+
+          <TouchableOpacity style={styles.saveButton} onPress={handleSaveProfile}>
+            <Text style={styles.saveButtonText}>계좌 정보 저장</Text>
           </TouchableOpacity>
         </View>
 
@@ -322,6 +524,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
+  },
+  noticeBox: {
+    backgroundColor: '#dbeafe',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+  },
+  noticeText: {
+    fontSize: 13,
+    color: '#1e40af',
+    fontWeight: '500',
+    lineHeight: 18,
   },
   inputGroup: {
     marginBottom: 16,

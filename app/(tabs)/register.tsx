@@ -75,12 +75,30 @@ export default function RegisterScreen() {
     );
   }
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
+  // ✅ 계좌 정보 확인 (최우선 검사)
+  if (!currentUser?.bankName || !currentUser?.accountNumber || !currentUser?.accountHolder) {
+    Alert.alert(
+      '계좌 정보 필요',
+      '매치를 판매하려면 먼저 계좌 정보를 등록해야 합니다.\n프로필 설정에서 계좌 정보를 입력해주세요.',
+      [
+        { text: '취소', style: 'cancel' },
+        { 
+          text: '설정으로 이동', 
+          onPress: () => router.push('/profile-settings')
+        }
+      ]
+    );
+    return;
+  }
+
   if (!formData.title || !formData.court || !formData.basePrice || 
       (!formData.maleCount && !formData.femaleCount) || !formData.ntrpMin || !formData.ntrpMax) {
     Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
     return;
   }
+  
+  // 나머지 기존 코드...
 
   if (!currentUser) {
     Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
@@ -521,9 +539,6 @@ router.push(`/match/${newMatchId}`);
             </View>
           </View>
             
-            <Text style={styles.ntrpHint}>
-              참가자의 NTRP 실력 범위를 설정하세요 (1.0-7.0)
-            </Text>
           </View>
         </View>
 

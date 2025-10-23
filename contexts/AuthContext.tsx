@@ -31,6 +31,9 @@ interface SupabaseUser {
   view_count: number;
   like_count: number;
   avg_rating: number;
+  bank_name?: string;
+  account_number?: string;
+  account_holder?: string;
   created_at: string;
   updated_at: string;
 }
@@ -144,6 +147,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       viewCount: supabaseUser.view_count,
       likeCount: supabaseUser.like_count,
       avgRating: supabaseUser.avg_rating,
+      bankName: supabaseUser.bank_name,
+      accountNumber: supabaseUser.account_number,
+      accountHolder: supabaseUser.account_holder,
     };
   };
 

@@ -886,7 +886,7 @@ matchTypeButton: {
   priceInfoCard: {
     backgroundColor: '#fef3c7',
     marginHorizontal: 16,
-    marginBottom: 2,
+    marginBottom: 16, 
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,

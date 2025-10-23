@@ -511,6 +511,7 @@ export default function MatchDetailScreen() {
               applicationsCount={safeApplications.length}
               expectedParticipants={match.expectedParticipants?.total || 0}
               isClosed={match.isClosed}
+              onPriceChange={setDisplayPrice} // 이 줄 추가
             />
           </View>
           <Text style={styles.priceNote}>
@@ -523,10 +524,10 @@ export default function MatchDetailScreen() {
 
       {/* 하단 고정 영역 */}
       <View style={styles.bottomBar}>
-        <View style={styles.priceDisplay}>
-          <Text style={styles.currentPrice}>
-            {match.currentPrice.toLocaleString()}원
-          </Text>
+<View style={styles.priceDisplay}>
+  <Text style={styles.currentPrice}>
+    {displayPrice.toLocaleString()}원
+  </Text>
           {statusText && (
             <Text style={styles.statusText}>{statusText}</Text>
           )}

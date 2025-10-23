@@ -47,6 +47,7 @@ export default function MatchDetailScreen() {
   const [myApplication, setMyApplication] = useState<MatchApplication | undefined>();
   const [myParticipation, setMyParticipation] = useState<any>();
   const [sellerInfo, setSellerInfo] = useState<any>(null);  // 이 줄 추가
+  const [displayPrice, setDisplayPrice] = useState(match.currentPrice);
 
   const match = matches.find(m => m.id === id);
 

@@ -244,6 +244,8 @@ const pastMyApplications = myApplications.filter(match => {
     }
   };
 
+// 수정할 부분: 248번째 줄부터 302번째 줄까지
+
 // 🆕 입금 확인 처리
 const handleConfirmPayment = (matchId: string, applicationId: string) => {
   const match = matches.find(m => m.id === matchId);
@@ -263,10 +265,22 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
         : app
     );
 
-    await updateMatch({
+    const updatedMatch = {
       ...match,
       applications: updatedApplications
-    });
+    };
+
+    await updateMatch(updatedMatch);
+
+    // 🔥 수익정산 생성 (입금 확인 시점)
+    try {
+      const earningCreated = await EarningsManager.createEarningFromMatch(updatedMatch);
+      if (earningCreated) {
+        console.log('✅ 수익정산이 생성되었습니다.');
+      }
+    } catch (error) {
+      console.error('수익정산 생성 실패:', error);
+    }
 
     // 🔥 참여자에게 채팅 알림 전송 (Supabase)
     await createNotification(

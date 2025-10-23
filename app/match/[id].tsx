@@ -45,11 +45,11 @@ export default function MatchDetailScreen() {
   const [showPaymentTimer, setShowPaymentTimer] = useState(false);
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(300); // 5분 = 300초
   const [myApplication, setMyApplication] = useState<MatchApplication | undefined>();
-  const [myParticipation, setMyParticipation] = useState<any>();
-  const [sellerInfo, setSellerInfo] = useState<any>(null);  // 이 줄 추가
-  const [displayPrice, setDisplayPrice] = useState(match.currentPrice);
+const [myParticipation, setMyParticipation] = useState<any>();
+const [sellerInfo, setSellerInfo] = useState<any>(null);
 
-  const match = matches.find(m => m.id === id);
+const match = matches.find(m => m.id === id);
+const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // ✅ match 정의 후에 사용
 
   if (!match) {
     return (

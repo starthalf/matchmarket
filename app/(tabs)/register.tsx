@@ -554,7 +554,7 @@ router.push(`/match/${newMatchId}`);
             />
           </View>
             
-<View style={styles.inputGroup}>
+<View style={[styles.inputGroup, {marginBottom: 0}]}>
             <Text style={styles.inputLabel}>판매 기본 가격 *</Text>
             <View style={styles.inputWithIcon}>
               <Text style={styles.wonSymbol}>₩</Text>

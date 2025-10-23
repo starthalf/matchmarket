@@ -661,7 +661,13 @@ export default function MatchDetailScreen() {
               <View style={styles.paymentDetail}>
                 <Text style={styles.paymentLabel}>입금 계좌</Text>
                 <Text style={styles.paymentAccount}>
-                  국민은행 123-456-789012 (주)테니스매치
+                  {sellerInfo?.bankName} {sellerInfo?.accountNumber}
+                </Text>
+              </View>
+              <View style={styles.paymentDetail}>
+                <Text style={styles.paymentLabel}>예금주</Text>
+                <Text style={styles.paymentAccount}>
+                  {sellerInfo?.accountHolder}
                 </Text>
               </View>
             </View>

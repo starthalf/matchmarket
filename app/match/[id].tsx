@@ -470,7 +470,7 @@ export default function MatchDetailScreen() {
 
         {/* 가격 정보 */}
         <View style={styles.priceCard}>
-          <Text style={styles.priceCardTitle}>실시간 가격</Text>
+          <Text style={styles.priceCardTitle}>매치 가격</Text>
           <View style={styles.priceInfo}>
             <PriceDisplay
               currentPrice={match.currentPrice}

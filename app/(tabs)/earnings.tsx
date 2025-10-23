@@ -11,12 +11,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle } from 'lucide-react-native';
-import { getCurrentUser } from '../data/mockData';
-import { AdminSettingsManager } from '../utils/adminSettings';
-import { getMockEarnings, EarningsData } from '../data/mockData';
-import { useSafeStyles } from '../constants/Styles';
-import { EarningsManager, MonthlySettlement } from '../utils/earningsManager';
+import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle } from 'lucide-react-native';
+import { getCurrentUser } from '../../data/mockData';
+import { AdminSettingsManager } from '../../utils/adminSettings';
+import { getMockEarnings, EarningsData } from '../../data/mockData';
+import { useSafeStyles } from '../../constants/Styles';
+import { EarningsManager, MonthlySettlement } from '../../utils/earningsManager';
 
 export default function EarningsScreen() {
   const currentUser = getCurrentUser();
@@ -116,13 +116,7 @@ export default function EarningsScreen() {
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
-          <TouchableOpacity 
-            style={safeStyles.backButton} 
-            onPress={() => router.back()}
-          >
-            <ArrowLeft size={24} color="#374151" />
-          </TouchableOpacity>
-          <Text style={safeStyles.headerTitle}>수익 정산</Text>
+          <Text style={safeStyles.headerTitle}>수익 관리</Text>
           <View style={safeStyles.placeholder} />
         </View>
       </View>

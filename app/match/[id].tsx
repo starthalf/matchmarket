@@ -484,7 +484,7 @@ export default function MatchDetailScreen() {
             />
           </View>
           <Text style={styles.priceNote}>
-            * 가격은 실시간으로 변동됩니다
+            * 가격은 인기가 높아지면 변동됩니다
           </Text>
         </View>
 

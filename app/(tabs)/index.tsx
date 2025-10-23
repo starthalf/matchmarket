@@ -496,9 +496,10 @@ const toggleRecruitingFilter = () => {
           displayMatches
             // 검색 필터
             .filter(match => 
-              searchQuery === '' || 
-              match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              match.venue.toLowerCase().includes(searchQuery.toLowerCase())
+              // 수정된 코드 (null 체크 추가)
+searchQuery === '' ||
+match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+(match.venue && match.venue.toLowerCase().includes(searchQuery.toLowerCase()))
             )
             // 그룹별 필터 로직 (AND 조건)
 .filter(match => {

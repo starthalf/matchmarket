@@ -658,11 +658,26 @@ export default function MatchDetailScreen() {
                   {match.currentPrice.toLocaleString()}원
                 </Text>
               </View>
-              <View style={styles.paymentDetail}>
+<View style={styles.paymentDetail}>
                 <Text style={styles.paymentLabel}>입금 계좌</Text>
-                <Text style={styles.paymentAccount}>
-                  {sellerInfo?.bankName} {sellerInfo?.accountNumber}
-                </Text>
+                <View style={styles.accountWithCopy}>
+                  <Text style={styles.paymentAccount}>
+                    {sellerInfo?.bankName} {sellerInfo?.accountNumber}
+                  </Text>
+                  <TouchableOpacity 
+                    style={styles.copyButton}
+                    onPress={() => {
+                      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                        navigator.clipboard.writeText(sellerInfo?.accountNumber || '');
+                        if (typeof window !== 'undefined' && window.alert) {
+                          window.alert('계좌번호가 복사되었습니다.');
+                        }
+                      }
+                    }}
+                  >
+                    <Text style={styles.copyButtonText}>복사</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
               <View style={styles.paymentDetail}>
                 <Text style={styles.paymentLabel}>예금주</Text>

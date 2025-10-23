@@ -12,6 +12,7 @@ interface PriceDisplayProps {
   applicationsCount: number; // 참여신청자 수
   expectedParticipants: number; // 모집인원 총합
   isClosed?: boolean;
+  onPriceChange?: (price: number) => void; // 추가된 부분
 }
 
 export function PriceDisplay({ 
@@ -22,7 +23,8 @@ export function PriceDisplay({
   viewCount,
   applicationsCount,
   expectedParticipants,
-  isClosed = false
+  isClosed = false,
+  onPriceChange // 추가된 부분
 }: PriceDisplayProps) {
   const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
   const [isIncreasing, setIsIncreasing] = useState(false);
@@ -54,6 +56,12 @@ export function PriceDisplay({
         );
         
         setIsIncreasing(finalPrice > basePrice); // basePrice와 비교로 변경
+        
+        // 부모 컴포넌트에 가격 변경 알림 (추가된 부분)
+        if (onPriceChange) {
+          onPriceChange(finalPrice);
+        }
+        
         return finalPrice;
       });
     }, 5000);

@@ -503,16 +503,17 @@ const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // 
           <Text style={styles.priceCardTitle}>매치 가격</Text>
           <View style={styles.priceInfo}>
             <PriceDisplay
-              currentPrice={match.currentPrice}
-              basePrice={match.basePrice}
-              maxPrice={match.maxPrice || 200000}
-              hoursUntilMatch={hoursUntilMatch}
-              viewCount={match.seller?.viewCount || 0}
-              applicationsCount={safeApplications.length}
-              expectedParticipants={match.expectedParticipants?.total || 0}
-              isClosed={match.isClosed}
-              onPriceChange={setDisplayPrice} // 이 줄 추가
-            />
+              <PriceDisplay
+  currentPrice={match.currentPrice}
+  basePrice={match.basePrice}
+  maxPrice={match.maxPrice || 200000}
+  hoursUntilMatch={hoursUntilMatch}
+  viewCount={match.seller?.viewCount || 0}
+  applicationsCount={safeApplications.length}
+  expectedParticipants={match.expectedParticipants?.total || 0}
+  isClosed={match.isClosed}
+  onPriceChange={setDisplayPrice}
+/>
           </View>
           <Text style={styles.priceNote}>
             * 가격은 인기가 높아지면 변동됩니다

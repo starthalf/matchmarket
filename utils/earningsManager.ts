@@ -20,6 +20,23 @@ export interface EarningsData {
   created_at: string;
 }
 
+export interface MonthlySettlement {
+  id: string;
+  seller_id: string;
+  year: number;
+  month: number;
+  match_count: number;
+  total_revenue: number;
+  additional_revenue: number;
+  commission_due: number;
+  payment_status: 'pending' | 'paid' | 'confirmed';
+  payment_date?: string;
+  confirmed_by?: string;
+  confirmed_at?: string;
+  is_blocked: boolean;
+  created_at: string;
+}
+
 export class EarningsManager {
   /**
    * 매치 완료 시 수익 데이터 생성 및 저장
@@ -37,33 +54,34 @@ export class EarningsManager {
       const participantCount = approvedApplications.length;
       const matchBasePrice = match.basePrice * participantCount;
       
-      // 2. 실제 결제 금액 계산 (각 참여자의 appliedPrice 합계)
+      // 2. 실제 결제 금액 계산
       const matchTotalPaid = approvedApplications.reduce(
         (sum, app) => sum + (app.appliedPrice || match.basePrice),
         0
       );
       
-      // 3. 수익 계산
-      const matchBaseCost = matchBasePrice; // 기본비용은 전액
+      // 3. 추가 수익 계산 (기본가격 초과분 전체 100%)
       const additionalAmount = Math.max(0, matchTotalPaid - matchBasePrice);
-      const matchAdditionalRevenue = additionalAmount * 0.85; // 15% 수수료
+      const commissionRate = 0.15;
+      const matchAdditionalRevenue = additionalAmount; // 추가 수익 전체 (100%)
+      const commissionDue = additionalAmount * commissionRate; // 플랫폼 수수료 15%
       
-      // 4. 광고 수익 (mock - 실제로는 광고 시스템에서 가져와야 함)
+      // 4. 광고 수익
       const adViews = match.expectedViews || Math.floor(Math.random() * 2000) + 500;
       const adClicks = Math.floor(adViews * (Math.random() * 0.1 + 0.05));
       const adRevenue = adClicks * (Math.random() * 200 + 100);
       const adShare = match.adEnabled ? adRevenue * 0.5 : 0;
       
-      // 5. 총 수익
-      const totalRevenue = matchBaseCost + matchAdditionalRevenue + adShare;
+      // 5. 총 수익 (판매자 관점: 실제 받은 전체 금액 + 광고수익)
+      const totalRevenue = matchTotalPaid + adShare;
       
       console.log('수익 계산 완료:', {
         participantCount,
         matchBasePrice,
         matchTotalPaid,
-        matchBaseCost,
+        additionalAmount,
         matchAdditionalRevenue,
-        adShare,
+        commissionDue,
         totalRevenue
       });
       
@@ -77,7 +95,7 @@ export class EarningsManager {
           match_date: match.date,
           match_base_price: matchBasePrice,
           match_total_paid: matchTotalPaid,
-          match_base_cost: matchBaseCost,
+          match_base_cost: matchBasePrice,
           match_additional_revenue: matchAdditionalRevenue,
           ad_views: adViews,
           ad_clicks: adClicks,
@@ -93,11 +111,143 @@ export class EarningsManager {
         return false;
       }
       
+      // 7. 월별 정산 데이터 업데이트
+      await this.updateMonthlySettlement(match.sellerId, match.date, {
+        totalRevenue: matchTotalPaid,
+        additionalRevenue: additionalAmount,
+        commissionDue: commissionDue
+      });
+      
       console.log('✅ 수익 데이터가 Supabase에 저장됨:', data.id);
       return true;
       
     } catch (error) {
       console.error('수익 데이터 생성 중 오류:', error);
+      return false;
+    }
+  }
+  
+  /**
+   * 월별 정산 데이터 업데이트
+   */
+  static async updateMonthlySettlement(
+    sellerId: string, 
+    matchDate: string,
+    revenue: {
+      totalRevenue: number;
+      additionalRevenue: number;
+      commissionDue: number;
+    }
+  ): Promise<void> {
+    try {
+      const date = new Date(matchDate);
+      const year = date.getFullYear();
+      const month = date.getMonth() + 1;
+      
+      // 기존 정산 데이터 조회
+      const { data: existing } = await supabaseAdmin
+        .from('monthly_settlements')
+        .select('*')
+        .eq('seller_id', sellerId)
+        .eq('year', year)
+        .eq('month', month)
+        .single();
+      
+      if (existing) {
+        // 업데이트
+        await supabaseAdmin
+          .from('monthly_settlements')
+          .update({
+            match_count: existing.match_count + 1,
+            total_revenue: existing.total_revenue + revenue.totalRevenue,
+            additional_revenue: existing.additional_revenue + revenue.additionalRevenue,
+            commission_due: existing.commission_due + revenue.commissionDue,
+          })
+          .eq('id', existing.id);
+      } else {
+        // 새로 생성
+        await supabaseAdmin
+          .from('monthly_settlements')
+          .insert({
+            seller_id: sellerId,
+            year,
+            month,
+            match_count: 1,
+            total_revenue: revenue.totalRevenue,
+            additional_revenue: revenue.additionalRevenue,
+            commission_due: revenue.commissionDue,
+            payment_status: 'pending',
+            is_blocked: false,
+          });
+      }
+    } catch (error) {
+      console.error('월별 정산 업데이트 오류:', error);
+    }
+  }
+  
+  /**
+   * 특정 판매자의 당월 정산 데이터 조회
+   */
+  static async getCurrentMonthSettlement(sellerId: string): Promise<MonthlySettlement | null> {
+    try {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = now.getMonth() + 1;
+      
+      const { data, error } = await supabaseAdmin
+        .from('monthly_settlements')
+        .select('*')
+        .eq('seller_id', sellerId)
+        .eq('year', year)
+        .eq('month', month)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error('당월 정산 조회 오류:', error);
+        return null;
+      }
+      
+      return data || null;
+    } catch (error) {
+      console.error('당월 정산 조회 중 오류:', error);
+      return null;
+    }
+  }
+  
+  /**
+   * 미정산 내역 조회 (pending 상태)
+   */
+  static async getUnpaidSettlements(sellerId: string): Promise<MonthlySettlement[]> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('monthly_settlements')
+        .select('*')
+        .eq('seller_id', sellerId)
+        .neq('payment_status', 'confirmed')
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+      
+      if (error) {
+        console.error('미정산 내역 조회 오류:', error);
+        return [];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error('미정산 내역 조회 중 오류:', error);
+      return [];
+    }
+  }
+  
+  /**
+   * 판매자 차단 여부 확인
+   */
+  static async isSellerBlocked(sellerId: string): Promise<boolean> {
+    try {
+      const unpaid = await this.getUnpaidSettlements(sellerId);
+      return unpaid.some(settlement => settlement.is_blocked);
+    } catch (error) {
+      console.error('판매자 차단 여부 확인 오류:', error);
       return false;
     }
   }

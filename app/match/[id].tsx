@@ -31,6 +31,7 @@ import { PriceDisplay } from '../../components/PriceDisplay';
 import { useSafeStyles } from '../../constants/Styles';
 import { Match, MatchApplication } from '../../types/tennis';
 import { createNotification } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';  // 이 줄 추가
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -44,6 +45,7 @@ export default function MatchDetailScreen() {
   const [paymentTimeLeft, setPaymentTimeLeft] = useState(300); // 5분 = 300초
   const [myApplication, setMyApplication] = useState<MatchApplication | undefined>();
   const [myParticipation, setMyParticipation] = useState<any>();
+  const [sellerInfo, setSellerInfo] = useState<any>(null);  // 이 줄 추가
 
   const match = matches.find(m => m.id === id);
 
@@ -149,6 +151,32 @@ export default function MatchDetailScreen() {
     setMyApplication(currentApp);
     setMyParticipation(currentPart);
   }, [match, user, safeApplications, safeParticipants, myApplication?.status]);
+
+  // 판매자 정보 가져오기
+  useEffect(() => {
+    const fetchSellerInfo = async () => {
+      if (!match?.sellerId) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('users')
+          .select('bankName:bank_name, accountNumber:account_number, accountHolder:account_holder, name')
+          .eq('id', match.sellerId)
+          .single();
+        
+        if (error) {
+          console.error('판매자 정보 조회 오류:', error);
+          return;
+        }
+        
+        setSellerInfo(data);
+      } catch (error) {
+        console.error('판매자 정보 가져오기 실패:', error);
+      }
+    };
+    
+    fetchSellerInfo();
+  }, [match?.sellerId]);
 
   const handleApply = () => {
     if (!user) {

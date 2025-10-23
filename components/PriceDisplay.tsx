@@ -53,7 +53,7 @@ export function PriceDisplay({
           Math.max(basePrice, newPrice)
         );
         
-        setIsIncreasing(finalPrice > prevPrice);
+        setIsIncreasing(finalPrice > basePrice); // basePrice와 비교로 변경
         return finalPrice;
       });
     }, 5000);

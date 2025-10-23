@@ -503,7 +503,6 @@ const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // 
           <Text style={styles.priceCardTitle}>매치 가격</Text>
           <View style={styles.priceInfo}>
             <PriceDisplay
-              <PriceDisplay
   currentPrice={match.currentPrice}
   basePrice={match.basePrice}
   maxPrice={match.maxPrice || 200000}

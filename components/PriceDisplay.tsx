@@ -61,7 +61,7 @@ export function PriceDisplay({
     return () => clearInterval(interval);
   }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants]);
 
-  const priceChangePercentage = ((animatedPrice - basePrice) / basePrice * 100).toFixed(0);
+  const priceChangePercentage = Math.abs(((animatedPrice - basePrice) / basePrice * 100)).toFixed(0);
   const showChange = Math.abs(parseInt(priceChangePercentage)) > 0;
 
   return (

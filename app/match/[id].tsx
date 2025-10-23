@@ -1155,4 +1155,4 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#f3f4f6',
   },
-}); 
+});

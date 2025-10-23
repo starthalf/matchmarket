@@ -1144,4 +1144,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  paymentCompleteButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  accountWithCopy: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  copyButton: {
+    backgroundColor: '#ec4899',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+  },
+  copyButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
+  },
 });

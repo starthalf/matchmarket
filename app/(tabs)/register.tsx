@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   inputGroup: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   inputLabel: {
     fontSize: 14,

@@ -1140,12 +1140,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  paymentCompleteButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  paymentCompleteButtonText: {
+ paymentCompleteButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
@@ -1156,14 +1151,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   copyButton: {
-    backgroundColor: '#ec4899',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    padding: 6,
     borderRadius: 6,
-  },
-  copyButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
+    backgroundColor: '#f3f4f6',
   },
 });

@@ -155,7 +155,7 @@ export default function TabLayout() {
         options={{
           title: "채팅",
           tabBarIcon: ({ size, color }) => (
-            <View style={{ position: 'relative' }}>
+            <View style={{ position: 'relative' }}> 
               <MessageCircle size={size} color={color} />
               {/* 🔥 새 채팅방 또는 읽지 않은 메시지 알림 */}
               {(hasNewChatRoom || unreadCount > 0) && (

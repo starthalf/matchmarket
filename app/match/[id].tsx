@@ -676,7 +676,7 @@ export default function MatchDetailScreen() {
                       }
                     }}
                   >
-                    <Text style={styles.copyButtonText}>복사</Text>
+                    <Copy size={16} color="#6b7280" />
                   </TouchableOpacity>
                 </View>
               </View>

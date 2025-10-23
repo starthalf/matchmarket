@@ -1,6 +1,6 @@
 // app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
-import { Users, Plus, ClipboardList, MessageCircle } from 'lucide-react-native';
+import { Users, Plus, ClipboardList, MessageCircle, DollarSign } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
 import { useMatches } from '../../contexts/MatchContext';
@@ -183,6 +183,23 @@ export default function TabLayout() {
               // 🔥 채팅 탭 클릭 시 알림 읽음 처리
               await markNotificationsAsRead(user.id, 'new_chat_room');
               setHasNewChatRoom(false);
+            }
+          },
+        }}
+      />
+      <Tabs.Screen
+        name="earnings"
+        options={{
+          title: "수익관리",
+          tabBarIcon: ({ size, color }) => (
+            <DollarSign size={size} color={color} />
+          ),
+        }}
+        listeners={{
+          tabPress: (e: any) => {
+            if (!user) {
+              e.preventDefault();
+              router.push('/auth/login');
             }
           },
         }}

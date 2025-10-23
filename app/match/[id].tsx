@@ -23,7 +23,8 @@ import {
   Users,
   Send,
   X,
-  Timer
+  Timer,
+  Copy
 } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';

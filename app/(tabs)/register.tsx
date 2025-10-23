@@ -78,30 +78,42 @@ export default function RegisterScreen() {
  const handleSubmit = async () => {
   // ✅ 계좌 정보 확인 (최우선 검사)
   if (!currentUser?.bankName || !currentUser?.accountNumber || !currentUser?.accountHolder) {
-    Alert.alert(
-      '계좌 정보 필요',
-      '매치를 판매하려면 먼저 계좌 정보를 등록해야 합니다.\n프로필 설정에서 계좌 정보를 입력해주세요.',
-      [
-        { text: '취소', style: 'cancel' },
-        { 
-          text: '설정으로 이동', 
-          onPress: () => router.push('/profile-settings')
-        }
-      ]
-    );
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      if (window.confirm('매치를 판매하려면 먼저 계좌 정보를 등록해야 합니다.\n프로필 설정에서 계좌 정보를 입력해주세요.\n\n설정 페이지로 이동하시겠습니까?')) {
+        router.push('/profile-settings');
+      }
+    } else {
+      Alert.alert(
+        '계좌 정보 필요',
+        '매치를 판매하려면 먼저 계좌 정보를 등록해야 합니다.\n프로필 설정에서 계좌 정보를 입력해주세요.',
+        [
+          { text: '취소', style: 'cancel' },
+          {
+            text: '설정으로 이동',
+            onPress: () => router.push('/profile-settings')
+          }
+        ]
+      );
+    }
     return;
   }
 
-  if (!formData.title || !formData.court || !formData.basePrice || 
+  if (!formData.title || !formData.court || !formData.basePrice ||
       (!formData.maleCount && !formData.femaleCount) || !formData.ntrpMin || !formData.ntrpMax) {
-    Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.alert('모든 필수 항목을 입력해주세요.');
+    } else {
+      Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
+    }
     return;
   }
-  
-  // 나머지 기존 코드...
 
   if (!currentUser) {
-    Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.alert('로그인 정보가 없습니다. 다시 로그인해주세요.');
+    } else {
+      Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
+    }
     router.replace('/auth/login');
     return;
   }
@@ -114,17 +126,29 @@ export default function RegisterScreen() {
   const ntrpMaxNum = parseFloat(formData.ntrpMax);
 
   if (isNaN(basePriceNum) || basePriceNum <= 0) {
-    Alert.alert('입력 오류', '올바른 가격을 입력해주세요.');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.alert('올바른 가격을 입력해주세요.');
+    } else {
+      Alert.alert('입력 오류', '올바른 가격을 입력해주세요.');
+    }
     return;
   }
 
   if (maleCountNum + femaleCountNum === 0) {
-    Alert.alert('입력 오류', '최소 1명 이상의 참가자가 필요합니다.');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.alert('최소 1명 이상의 참가자가 필요합니다.');
+    } else {
+      Alert.alert('입력 오류', '최소 1명 이상의 참가자가 필요합니다.');
+    }
     return;
   }
 
   if (isNaN(ntrpMinNum) || isNaN(ntrpMaxNum) || ntrpMinNum > ntrpMaxNum) {
-    Alert.alert('입력 오류', 'NTRP 범위를 올바르게 입력해주세요.');
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.alert('NTRP 범위를 올바르게 입력해주세요.');
+    } else {
+      Alert.alert('입력 오류', 'NTRP 범위를 올바르게 입력해주세요.');
+    }
     return;
   }
 
@@ -223,16 +247,22 @@ if (currentUser) {
   );
 }
 
-// 웹 환경에서 알림 표시
+// 알림 표시
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
   window.alert('매치가 성공적으로 등록되었습니다! 🎾');
+} else {
+  Alert.alert('성공', '매치가 성공적으로 등록되었습니다! 🎾');
 }
 
 router.push(`/match/${newMatchId}`);
 
 } catch (error) {
   console.error('매치 등록 중 오류:', error);
-  // 웹에서는 console.error만 사용하거나 간단한 처리
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    window.alert('매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+  } else {
+    Alert.alert('오류', '매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.');
+  }
 } finally {
   setIsSubmitting(false);
 }

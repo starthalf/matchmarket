@@ -156,15 +156,11 @@ const handlePress = () => {
           <PriceDisplay
             currentPrice={match.currentPrice}
             basePrice={match.basePrice}
-            initialPrice={match.initialPrice}
-            expectedViews={match.expectedViews}
             maxPrice={match.maxPrice}
             hoursUntilMatch={hoursUntilMatch}
             viewCount={match.seller.viewCount}
-            waitingApplicants={match.waitingApplicants}
-            expectedWaitingApplicants={match.expectedWaitingApplicants}
-            sellerGender={match.seller.gender}
-            sellerNtrp={match.seller.ntrp}
+            applicationsCount={applications.length}
+            expectedParticipants={match.expectedParticipants.total}
             isClosed={match.isClosed}
           />
         </View>

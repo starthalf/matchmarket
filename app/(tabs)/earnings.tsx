@@ -287,43 +287,6 @@ export default function EarningsScreen() {
           </View>
         )}
 
-        {/* 수익 요약 */}
-        <View style={styles.summarySection}>
-          <Text style={styles.sectionTitle}>전체 수익 현황</Text>
-          
-          <View style={styles.compactSummaryGrid}>
-            <View style={styles.compactSummaryCard}>
-              <View style={styles.compactIconWrapper}>
-                <DollarSign size={16} color="#16a34a" />
-              </View>
-              <View style={styles.compactTextWrapper}>
-                <Text style={styles.compactLabel}>총 수익</Text>
-                <Text style={styles.compactAmount}>{totalEarnings.toLocaleString()}원</Text>
-              </View>
-            </View>
-            
-            <View style={styles.compactSummaryCard}>
-              <View style={styles.compactIconWrapper}>
-                <Users size={16} color="#3b82f6" />
-              </View>
-              <View style={styles.compactTextWrapper}>
-                <Text style={styles.compactLabel}>매치 기본 수익</Text>
-                <Text style={styles.compactAmount}>{totalMatchBaseCost.toLocaleString()}원</Text>
-              </View>
-            </View>
-            
-            <View style={styles.compactSummaryCard}>
-              <View style={styles.compactIconWrapper}>
-                <TrendingUp size={16} color="#9333ea" />
-              </View>
-              <View style={styles.compactTextWrapper}>
-                <Text style={styles.compactLabel}>추가 수익</Text>
-                <Text style={styles.compactAmount}>{totalMatchAdditionalRevenue.toLocaleString()}원</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
         {/* 기간 선택 */}
         <View style={styles.periodSection}>
           <View style={styles.periodButtons}>

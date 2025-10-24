@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle } from 'lucide-react-native';
+import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle, ClipboardList } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminSettingsManager } from '../../utils/adminSettings';
 import { getMockEarnings, EarningsData } from '../../data/mockData';

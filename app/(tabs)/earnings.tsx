@@ -287,6 +287,24 @@ export default function EarningsScreen() {
                   .toLocaleString()}원
               </Text>
             </View>
+
+            <View style={styles.depositAccountSection}>
+              <Text style={styles.depositAccountTitle}>입금 계좌</Text>
+              <View style={styles.depositAccountInfo}>
+                <View style={styles.depositAccountRow}>
+                  <Text style={styles.depositAccountLabel}>은행명</Text>
+                  <Text style={styles.depositAccountValue}>국민은행</Text>
+                </View>
+                <View style={styles.depositAccountRow}>
+                  <Text style={styles.depositAccountLabel}>계좌번호</Text>
+                  <Text style={styles.depositAccountValue}>123-456-789012</Text>
+                </View>
+                <View style={styles.depositAccountRow}>
+                  <Text style={styles.depositAccountLabel}>예금주</Text>
+                  <Text style={styles.depositAccountValue}>매치마켓</Text>
+                </View>
+              </View>
+            </View>
           </View>
         )}
 
@@ -629,6 +647,41 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#dc2626',
+  },
+  depositAccountSection: {
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  depositAccountTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 12,
+  },
+  depositAccountInfo: {
+    backgroundColor: '#f0fdf4',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#86efac',
+  },
+  depositAccountRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  depositAccountLabel: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  depositAccountValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#166534',
   },
   summarySection: {
     backgroundColor: '#ffffff',

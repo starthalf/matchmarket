@@ -15,19 +15,20 @@ interface PriceDisplayProps {
   onPriceChange?: (price: number) => void; // 추가된 부분
 }
 
-export function PriceDisplay({ 
-  currentPrice, 
-  basePrice, 
-  maxPrice, 
+export function PriceDisplay({
+  currentPrice,
+  basePrice,
+  maxPrice,
   hoursUntilMatch,
   viewCount,
   applicationsCount,
   expectedParticipants,
   isClosed = false,
-  onPriceChange // 추가된 부분
+  onPriceChange
 }: PriceDisplayProps) {
   const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
   const [isIncreasing, setIsIncreasing] = useState(false);
+  const [lastSignificantPrice, setLastSignificantPrice] = useState(currentPrice);
 
   // 동적 가격 계산
   const calculateDynamicPrice = () => {
@@ -44,27 +45,28 @@ export function PriceDisplay({
   };
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAnimatedPrice(prevPrice => {
-        const targetPrice = calculateDynamicPrice();
-        const newPrice = targetPrice; // random variation 제거
-        
-        // 최종 가격 제한
-        const finalPrice = Math.min(
-          maxPrice,
-          Math.max(basePrice, newPrice)
-        );
-        
-        setIsIncreasing(finalPrice > basePrice); // basePrice와 비교로 변경
-        
-        // 부모 컴포넌트에 가격 변경 알림 (추가된 부분)
+    const updatePrice = () => {
+      const targetPrice = calculateDynamicPrice();
+      const newPrice = Math.min(maxPrice, Math.max(basePrice, targetPrice));
+
+      const priceChangeRatio = Math.abs(newPrice - lastSignificantPrice) / basePrice;
+
+      if (priceChangeRatio >= 0.03 || lastSignificantPrice === currentPrice) {
+        setAnimatedPrice(newPrice);
+        setLastSignificantPrice(newPrice);
+        setIsIncreasing(newPrice > basePrice);
+
         if (onPriceChange) {
-          onPriceChange(finalPrice);
+          onPriceChange(newPrice);
         }
-        
-        return finalPrice;
-      });
-    }, 5000);
+      }
+    };
+
+    updatePrice();
+
+    const interval = setInterval(() => {
+      updatePrice();
+    }, 120000);
 
     return () => clearInterval(interval);
   }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants]);

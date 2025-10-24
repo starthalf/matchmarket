@@ -9,25 +9,25 @@ interface PriceDisplayProps {
   maxPrice: number;
   hoursUntilMatch: number;
   viewCount: number;
-  applicationsCount: number;
-  expectedParticipants: number;
+  applicationsCount: number; // 참여신청자 수
+  expectedParticipants: number; // 모집인원 총합
   isClosed?: boolean;
-  onPriceChange: (price: number) => void;
+  onPriceChange?: (price: number) => void; // 추가된 부분
 }
 
-export function PriceDisplay({
-  currentPrice,
-  basePrice,
-  maxPrice,
+export function PriceDisplay({ 
+  currentPrice, 
+  basePrice, 
+  maxPrice, 
   hoursUntilMatch,
   viewCount,
   applicationsCount,
   expectedParticipants,
   isClosed = false,
-  onPriceChange
+  onPriceChange // 추가된 부분
 }: PriceDisplayProps) {
+  const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
   const [isIncreasing, setIsIncreasing] = useState(false);
-  const [lastSignificantPrice, setLastSignificantPrice] = useState(currentPrice);
 
   // 동적 가격 계산
   const calculateDynamicPrice = () => {
@@ -44,40 +44,43 @@ export function PriceDisplay({
   };
 
   useEffect(() => {
-    const updatePrice = () => {
-      const targetPrice = calculateDynamicPrice();
-      const newPrice = Math.min(maxPrice, Math.max(basePrice, targetPrice));
-
-      const priceChangeRatio = Math.abs(newPrice - lastSignificantPrice) / basePrice;
-
-      if (priceChangeRatio >= 0.03 || lastSignificantPrice === currentPrice) {
-        setLastSignificantPrice(newPrice);
-        setIsIncreasing(newPrice > basePrice);
-        onPriceChange(newPrice);
-      }
-    };
-
-    updatePrice();
-
     const interval = setInterval(() => {
-      updatePrice();
-    }, 120000);
+      setAnimatedPrice(prevPrice => {
+        const targetPrice = calculateDynamicPrice();
+        const newPrice = targetPrice; // random variation 제거
+        
+        // 최종 가격 제한
+        const finalPrice = Math.min(
+          maxPrice,
+          Math.max(basePrice, newPrice)
+        );
+        
+        setIsIncreasing(finalPrice > basePrice); // basePrice와 비교로 변경
+        
+        // 부모 컴포넌트에 가격 변경 알림 (추가된 부분)
+        if (onPriceChange) {
+          onPriceChange(finalPrice);
+        }
+        
+        return finalPrice;
+      });
+    }, 5000);
 
     return () => clearInterval(interval);
-  }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants, currentPrice]);
+  }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants]);
 
-  const priceChangePercentage = Math.abs(((currentPrice - basePrice) / basePrice * 100)).toFixed(0);
+  const priceChangePercentage = Math.abs(((animatedPrice - basePrice) / basePrice * 100)).toFixed(0);
   const showChange = Math.abs(parseInt(priceChangePercentage)) > 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.priceRow}>
         <Text style={[
-          styles.price,
+          styles.price, 
           isIncreasing && styles.increasing,
           isClosed && styles.closedPrice
         ]}>
-          {currentPrice.toLocaleString()}원
+          {animatedPrice.toLocaleString()}원
         </Text>
         {showChange && !isClosed && (
           <View style={[

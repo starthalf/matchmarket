@@ -101,18 +101,38 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="register"
+        name="chat"
         options={{
-          title: "매치판매",
+          title: "채팅",
           tabBarIcon: ({ size, color }) => (
-            <Plus size={size} color={color} />
+            <View style={{ position: 'relative' }}>
+              <MessageCircle size={size} color={color} />
+              {/* 🔥 새 채팅방 또는 읽지 않은 메시지 알림 */}
+              {(hasNewChatRoom || unreadCount > 0) && (
+                <View
+                  style={{
+                    position: 'absolute',
+                    top: -4,
+                    right: -4,
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: '#ef4444',
+                  }}
+                />
+              )}
+            </View>
           ),
         }}
         listeners={{
-          tabPress: (e: any) => {
+          tabPress: async (e: any) => {
             if (!user) {
               e.preventDefault();
               router.push('/auth/login');
+            } else {
+              // 🔥 채팅 탭 클릭 시 알림 읽음 처리
+              await markNotificationsAsRead(user.id, 'new_chat_room');
+              setHasNewChatRoom(false);
             }
           },
         }}
@@ -151,42 +171,23 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="register"
         options={{
-          title: "채팅",
+          title: "매치판매",
           tabBarIcon: ({ size, color }) => (
-            <View style={{ position: 'relative' }}>
-              <MessageCircle size={size} color={color} />
-              {/* 🔥 새 채팅방 또는 읽지 않은 메시지 알림 */}
-              {(hasNewChatRoom || unreadCount > 0) && (
-                <View
-                  style={{
-                    position: 'absolute',
-                    top: -4,
-                    right: -4,
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    backgroundColor: '#ef4444',
-                  }}
-                />
-              )}
-            </View>
+            <Plus size={size} color={color} />
           ),
         }}
         listeners={{
-          tabPress: async (e: any) => {
+          tabPress: (e: any) => {
             if (!user) {
               e.preventDefault();
               router.push('/auth/login');
-            } else {
-              // 🔥 채팅 탭 클릭 시 알림 읽음 처리
-              await markNotificationsAsRead(user.id, 'new_chat_room');
-              setHasNewChatRoom(false);
             }
           },
         }}
       />
+      
       <Tabs.Screen
         name="earnings"
         options={{

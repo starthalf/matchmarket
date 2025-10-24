@@ -221,7 +221,7 @@ export class PricingCalculator {
     price = Math.max(factors.basePrice, price);
     price = Math.min(factors.maxPrice, price);
 
-    return Math.round(price);
+    return Math.round(price / 100) * 100;
   }
 }
 

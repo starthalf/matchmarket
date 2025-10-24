@@ -153,39 +153,59 @@ export default function EarningsScreen() {
           
           {currentMonthSettlement ? (
             <>
-              <View style={styles.settlementCards}>
-                <View style={styles.settlementCard}>
-                  <Text style={styles.settlementLabel}>매치 판매 건수</Text>
-                  <Text style={styles.settlementValue}>{currentMonthSettlement.match_count}건</Text>
+              <View style={styles.compactSettlementGrid}>
+                <View style={styles.compactSettlementCard}>
+                  <View style={styles.compactIconWrapper}>
+                    <ClipboardList size={16} color="#6b7280" />
+                  </View>
+                  <View style={styles.compactTextWrapper}>
+                    <Text style={styles.compactLabel}>매치 판매 건수</Text>
+                    <Text style={styles.compactAmount}>{currentMonthSettlement.match_count}건</Text>
+                  </View>
                 </View>
                 
-                <View style={styles.settlementCard}>
-                  <Text style={styles.settlementLabel}>매치 판매 총수익</Text>
-                  <Text style={[styles.settlementValue, { color: '#16a34a' }]}>
-                    {currentMonthSettlement.total_revenue.toLocaleString()}원
-                  </Text>
+                <View style={styles.compactSettlementCard}>
+                  <View style={[styles.compactIconWrapper, { backgroundColor: '#f0fdf4' }]}>
+                    <DollarSign size={16} color="#16a34a" />
+                  </View>
+                  <View style={styles.compactTextWrapper}>
+                    <Text style={styles.compactLabel}>매치 판매 총수익</Text>
+                    <Text style={[styles.compactAmount, { color: '#16a34a' }]}>
+                      {currentMonthSettlement.total_revenue.toLocaleString()}원
+                    </Text>
+                  </View>
                 </View>
                 
-                <View style={[styles.settlementCard, styles.highlightCard]}>
-                  <Text style={styles.settlementLabel}>추가 수익 (인기도)</Text>
-                  <Text style={[styles.settlementValue, { color: '#9333ea' }]}>
-                    {currentMonthSettlement.additional_revenue.toLocaleString()}원
-                  </Text>
-                  <Text style={styles.settlementNote}>※ 이 중 15% 수수료 납부</Text>
+                <View style={[styles.compactSettlementCard, { backgroundColor: '#faf5ff' }]}>
+                  <View style={[styles.compactIconWrapper, { backgroundColor: '#f3e8ff' }]}>
+                    <TrendingUp size={16} color="#9333ea" />
+                  </View>
+                  <View style={styles.compactTextWrapper}>
+                    <Text style={styles.compactLabel}>추가 수익 (인기도)</Text>
+                    <Text style={[styles.compactAmount, { color: '#9333ea' }]}>
+                      {currentMonthSettlement.additional_revenue.toLocaleString()}원
+                    </Text>
+                    <Text style={styles.compactNote}>※ 이 중 15% 수수료 납부</Text>
+                  </View>
                 </View>
                 
-                <View style={[styles.settlementCard, styles.commissionCard]}>
-                  <Text style={styles.settlementLabel}>납부할 수수료</Text>
-                  <Text style={[styles.settlementValue, { color: '#f97316' }]}>
-                    {currentMonthSettlement.commission_due.toLocaleString()}원
-                  </Text>
-                  <Text style={styles.settlementNote}>(추가수익의 15%)</Text>
+                <View style={[styles.compactSettlementCard, { backgroundColor: '#fff7ed' }]}>
+                  <View style={[styles.compactIconWrapper, { backgroundColor: '#ffedd5' }]}>
+                    <AlertCircle size={16} color="#f97316" />
+                  </View>
+                  <View style={styles.compactTextWrapper}>
+                    <Text style={styles.compactLabel}>납부할 수수료</Text>
+                    <Text style={[styles.compactAmount, { color: '#f97316' }]}>
+                      {currentMonthSettlement.commission_due.toLocaleString()}원
+                    </Text>
+                    <Text style={styles.compactNote}>(추가수익의 15%)</Text>
+                  </View>
                 </View>
               </View>
 
               {currentMonthSettlement.commission_due > 0 && (
                 <View style={styles.paymentNotice}>
-                  <AlertCircle size={20} color="#f59e0b" />
+                  <AlertCircle size={18} color="#f59e0b" />
                   <View style={styles.noticeContent}>
                     <Text style={styles.noticeTitle}>수수료 납부 안내</Text>
                     <Text style={styles.noticeText}>
@@ -461,6 +481,26 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  // 🔥 컴팩트 정산 그리드
+  compactSettlementGrid: {
+    gap: 8,
+  },
+  compactSettlementCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 10,
+  },
+  compactNote: {
+    fontSize: 10,
+    color: '#9ca3af',
+    marginTop: 2,
+  },
+  // 기존 스타일 유지
   settlementCards: {
     gap: 12,
     marginTop: 12,
@@ -500,9 +540,9 @@ const styles = StyleSheet.create({
   paymentNotice: {
     flexDirection: 'row',
     backgroundColor: '#fffbeb',
-    marginTop: 12,
+    marginTop: 10,
     borderRadius: 8,
-    padding: 12,
+    padding: 10,
     borderWidth: 1,
     borderColor: '#fcd34d',
     gap: 8,

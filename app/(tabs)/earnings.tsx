@@ -148,7 +148,7 @@ export default function EarningsScreen() {
         {/* 이번 달 월별 정산 */}
         <View style={styles.monthlySettlementSection}>
           <Text style={styles.sectionTitle}>
-            이번 달 정산 ({new Date().getFullYear()}년 {new Date().getMonth() + 1}월)
+            이번 달 수익현황 ({new Date().getFullYear()}년 {new Date().getMonth() + 1}월)
           </Text>
           
           {currentMonthSettlement ? (

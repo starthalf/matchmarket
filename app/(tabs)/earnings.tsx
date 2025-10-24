@@ -283,31 +283,35 @@ export default function EarningsScreen() {
         <View style={styles.summarySection}>
           <Text style={styles.sectionTitle}>전체 수익 현황</Text>
           
-          <View style={styles.summaryCards}>
-            <View style={styles.summaryCard}>
-              <DollarSign size={24} color="#16a34a" />
-              <Text style={styles.summaryAmount}>{totalEarnings.toLocaleString()}원</Text>
-              <Text style={styles.summaryLabel}>총 수익</Text>
+          <View style={styles.compactSummaryGrid}>
+            <View style={styles.compactSummaryCard}>
+              <View style={styles.compactIconWrapper}>
+                <DollarSign size={16} color="#16a34a" />
+              </View>
+              <View style={styles.compactTextWrapper}>
+                <Text style={styles.compactLabel}>총 수익</Text>
+                <Text style={styles.compactAmount}>{totalEarnings.toLocaleString()}원</Text>
+              </View>
             </View>
             
-            <View style={styles.summaryCard}>
-              <Users size={24} color="#16a34a" />
-              <Text style={styles.summaryAmount}>{totalMatchBaseCost.toLocaleString()}원</Text>
-              <Text style={styles.summaryLabel}>매치 기본비용</Text>
-            </View>
-          </View>
-          
-          <View style={styles.summaryCards}>
-            <View style={styles.summaryCard}>
-              <TrendingUp size={24} color="#3b82f6" />
-              <Text style={styles.summaryAmount}>{totalMatchAdditionalRevenue.toLocaleString()}원</Text>
-              <Text style={styles.summaryLabel}>매치 추가수익</Text>
+            <View style={styles.compactSummaryCard}>
+              <View style={styles.compactIconWrapper}>
+                <Users size={16} color="#3b82f6" />
+              </View>
+              <View style={styles.compactTextWrapper}>
+                <Text style={styles.compactLabel}>매치 기본 수익</Text>
+                <Text style={styles.compactAmount}>{totalMatchBaseCost.toLocaleString()}원</Text>
+              </View>
             </View>
             
-            <View style={styles.summaryCard}>
-              <Eye size={24} color="#f59e0b" />
-              <Text style={styles.summaryAmount}>{totalAdRevenue.toLocaleString()}원</Text>
-              <Text style={styles.summaryLabel}>광고 수익</Text>
+            <View style={styles.compactSummaryCard}>
+              <View style={styles.compactIconWrapper}>
+                <TrendingUp size={16} color="#9333ea" />
+              </View>
+              <View style={styles.compactTextWrapper}>
+                <Text style={styles.compactLabel}>추가 수익</Text>
+                <Text style={styles.compactAmount}>{totalMatchAdditionalRevenue.toLocaleString()}원</Text>
+              </View>
             </View>
           </View>
         </View>
@@ -643,8 +647,46 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 8,
+    marginBottom: 12,
   },
+  // 🔥 컴팩트한 그리드 스타일
+  compactSummaryGrid: {
+    gap: 8,
+  },
+  compactSummaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 10,
+  },
+  compactIconWrapper: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  compactTextWrapper: {
+    flex: 1,
+  },
+  compactLabel: {
+    fontSize: 11,
+    color: '#6b7280',
+    marginBottom: 2,
+  },
+  compactAmount: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  // 기존 스타일 유지 (사용하지 않지만 혹시 모를 에러 방지)
   summaryCards: {
     flexDirection: 'row',
     gap: 8,

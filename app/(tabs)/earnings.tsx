@@ -164,18 +164,6 @@ export default function EarningsScreen() {
                   </View>
                 </View>
                 
-                <View style={styles.compactSettlementCard}>
-                  <View style={[styles.compactIconWrapper, { backgroundColor: '#f0fdf4' }]}>
-                    <DollarSign size={16} color="#16a34a" />
-                  </View>
-                  <View style={styles.compactTextWrapper}>
-                    <Text style={styles.compactLabel}>매치 판매 총수익</Text>
-                    <Text style={[styles.compactAmount, { color: '#16a34a' }]}>
-                      {currentMonthSettlement.total_revenue.toLocaleString()}원
-                    </Text>
-                  </View>
-                </View>
-                
                 <View style={[styles.compactSettlementCard, { backgroundColor: '#faf5ff' }]}>
                   <View style={[styles.compactIconWrapper, { backgroundColor: '#f3e8ff' }]}>
                     <TrendingUp size={16} color="#9333ea" />

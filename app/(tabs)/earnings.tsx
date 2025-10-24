@@ -10,16 +10,16 @@ import {
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle } from 'lucide-react-native';
-import { getCurrentUser } from '../../data/mockData';
+import { useAuth } from '../../contexts/AuthContext';
 import { AdminSettingsManager } from '../../utils/adminSettings';
 import { getMockEarnings, EarningsData } from '../../data/mockData';
 import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager, MonthlySettlement } from '../../utils/earningsManager';
 
 export default function EarningsScreen() {
-  const currentUser = getCurrentUser();
+  const { user: currentUser } = useAuth();
   const safeStyles = useSafeStyles();
   const [selectedPeriod, setSelectedPeriod] = useState<'week' | 'month' | 'all'>('month');
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -36,6 +36,16 @@ export default function EarningsScreen() {
   const [currentMonthSettlement, setCurrentMonthSettlement] = useState<MonthlySettlement | null>(null);
   const [unpaidSettlements, setUnpaidSettlements] = useState<MonthlySettlement[]>([]);
 
+  // 🔥 화면 포커스 시 데이터 새로고침
+  useFocusEffect(
+    React.useCallback(() => {
+      if (currentUser) {
+        loadEarnings();
+        loadMonthlySettlements();
+      }
+    }, [currentUser])
+  );
+
   // Supabase에서 수익 데이터 로드
   useEffect(() => {
     loadEarnings();
@@ -43,14 +53,20 @@ export default function EarningsScreen() {
   }, [currentUser]);
 
   const loadEarnings = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.log('⚠️ currentUser가 없습니다.');
+      return;
+    }
     
+    console.log('🔍 수익 데이터 로드 시작, seller_id:', currentUser.id);
     setIsLoading(true);
     try {
       const data = await EarningsManager.getEarningsBySeller(currentUser.id);
+      console.log('✅ 수익 데이터 로드 완료:', data.length, '건');
+      console.log('데이터:', data);
       setEarnings(data);
     } catch (error) {
-      console.error('수익 데이터 로드 실패:', error);
+      console.error('❌ 수익 데이터 로드 실패:', error);
       // 에러 시 mock 데이터 사용
       setEarnings(getMockEarnings());
     } finally {
@@ -59,16 +75,23 @@ export default function EarningsScreen() {
   };
 
   const loadMonthlySettlements = async () => {
-    if (!currentUser) return;
+    if (!currentUser) {
+      console.log('⚠️ currentUser가 없습니다 (월별 정산)');
+      return;
+    }
     
+    console.log('🔍 월별 정산 데이터 로드 시작, seller_id:', currentUser.id);
     try {
       const current = await EarningsManager.getCurrentMonthSettlement(currentUser.id);
       const unpaid = await EarningsManager.getUnpaidSettlements(currentUser.id);
       
+      console.log('✅ 당월 정산:', current);
+      console.log('✅ 미정산 내역:', unpaid);
+      
       setCurrentMonthSettlement(current);
       setUnpaidSettlements(unpaid);
     } catch (error) {
-      console.error('월별 정산 데이터 로드 실패:', error);
+      console.error('❌ 월별 정산 데이터 로드 실패:', error);
     }
   };
 

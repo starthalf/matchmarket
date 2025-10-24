@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { ChartBar as BarChart3, Users, CreditCard, Settings, TriangleAlert as AlertTriangle, Megaphone } from 'lucide-react-native';
+import { ChartBar as BarChart3, Users, CreditCard, Settings, TriangleAlert as AlertTriangle, Megaphone, DollarSign } from 'lucide-react-native';
 
 export default function AdminLayout() {
   return (
@@ -45,6 +45,15 @@ export default function AdminLayout() {
           title: '입금확인',
           tabBarIcon: ({ size, color }) => (
             <AlertTriangle size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="settlements"
+        options={{
+          title: '월별정산',
+          tabBarIcon: ({ size, color }) => (
+            <DollarSign size={size} color={color} />
           ),
         }}
       />

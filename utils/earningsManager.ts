@@ -40,11 +40,19 @@ export interface MonthlySettlement {
 export class EarningsManager {
   /**
    * 매치 완료 시 수익 데이터 생성 및 저장
+   * 🔥 중복 방지: 기존 데이터가 있으면 삭제 후 재생성
    */
   static async createEarningFromMatch(match: Match): Promise<boolean> {
     try {
       console.log('=== 수익 데이터 생성 시작 ===');
       console.log('매치 ID:', match.id);
+      
+      // 🔥 0. 기존 수익 데이터 확인 및 삭제
+      const existingEarning = await this.getEarningByMatchId(match.id);
+      if (existingEarning) {
+        console.log('⚠️ 기존 수익 데이터 발견, 삭제 후 재생성합니다.');
+        await this.deleteEarningById(existingEarning.id);
+      }
       
       // 1. 기본 데이터 계산
       const approvedApplications = (match.applications || []).filter(
@@ -128,7 +136,31 @@ export class EarningsManager {
   }
   
   /**
+   * 🔥 수익 데이터 삭제
+   */
+  static async deleteEarningById(earningId: string): Promise<boolean> {
+    try {
+      const { error } = await supabaseAdmin
+        .from('earnings')
+        .delete()
+        .eq('id', earningId);
+      
+      if (error) {
+        console.error('수익 데이터 삭제 오류:', error);
+        return false;
+      }
+      
+      console.log('✅ 기존 수익 데이터 삭제 완료:', earningId);
+      return true;
+    } catch (error) {
+      console.error('수익 데이터 삭제 중 오류:', error);
+      return false;
+    }
+  }
+  
+  /**
    * 월별 정산 데이터 업데이트
+   * 🔥 수정: 매치 삭제 시 차감 기능 추가 필요
    */
   static async updateMonthlySettlement(
     sellerId: string, 
@@ -286,12 +318,12 @@ export class EarningsManager {
         .eq('match_id', matchId)
         .single();
       
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('매치 수익 조회 오류:', error);
         return null;
       }
       
-      return data;
+      return data || null;
     } catch (error) {
       console.error('매치 수익 조회 중 오류:', error);
       return null;

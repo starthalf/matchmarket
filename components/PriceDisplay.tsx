@@ -15,10 +15,10 @@ interface PriceDisplayProps {
   onPriceChange?: (price: number) => void; // 추가된 부분
 }
 
-export function PriceDisplay({ 
-  currentPrice, 
-  basePrice, 
-  maxPrice, 
+export function PriceDisplay({
+  currentPrice,
+  basePrice,
+  maxPrice,
   hoursUntilMatch,
   viewCount,
   applicationsCount,
@@ -28,6 +28,7 @@ export function PriceDisplay({
 }: PriceDisplayProps) {
   const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
   const [isIncreasing, setIsIncreasing] = useState(false);
+  const [prevPrice, setPrevPrice] = useState(currentPrice);
 
   // 동적 가격 계산
   const calculateDynamicPrice = () => {
@@ -39,35 +40,45 @@ export function PriceDisplay({
       basePrice,
       maxPrice
     };
-    
+
     return PricingCalculator.calculateDynamicPrice(factors);
   };
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setAnimatedPrice(prevPrice => {
+      setAnimatedPrice(prevDisplayPrice => {
         const targetPrice = calculateDynamicPrice();
         const newPrice = targetPrice; // random variation 제거
-        
+
         // 최종 가격 제한
         const finalPrice = Math.min(
           maxPrice,
           Math.max(basePrice, newPrice)
         );
-        
+
+        // 3% 임계값 체크 - basePrice 대비 변동이 3% 미만이면 업데이트 스킵
+        const priceChange = Math.abs(finalPrice - prevPrice);
+        const changePercentage = priceChange / basePrice;
+
+        if (changePercentage < 0.03) {
+          return prevDisplayPrice; // 이전 가격 유지
+        }
+
+        // 3% 이상 변동 시에만 업데이트
+        setPrevPrice(finalPrice);
         setIsIncreasing(finalPrice > basePrice); // basePrice와 비교로 변경
-        
+
         // 부모 컴포넌트에 가격 변경 알림 (추가된 부분)
         if (onPriceChange) {
           onPriceChange(finalPrice);
         }
-        
+
         return finalPrice;
       });
-    }, 5000);
+    }, 120000); // 2분 (120000ms)
 
     return () => clearInterval(interval);
-  }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants]);
+  }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants, prevPrice]);
 
   const priceChangePercentage = Math.abs(((animatedPrice - basePrice) / basePrice * 100)).toFixed(0);
   const showChange = Math.abs(parseInt(priceChangePercentage)) > 0;

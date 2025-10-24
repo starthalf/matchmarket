@@ -49,7 +49,20 @@ const [myParticipation, setMyParticipation] = useState<any>();
 const [sellerInfo, setSellerInfo] = useState<any>(null);
 
 const match = matches.find(m => m.id === id);
-const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // ✅ match 정의 후에 사용
+const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);
+
+  const handlePriceChange = async (newPrice: number) => {
+    if (!match) return;
+
+    setDisplayPrice(newPrice);
+
+    const updatedMatch: Match = {
+      ...match,
+      currentPrice: newPrice
+    };
+
+    await updateMatch(updatedMatch);
+  };
 
   if (!match) {
     return (
@@ -511,7 +524,7 @@ const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // 
   applicationsCount={safeApplications.length}
   expectedParticipants={match.expectedParticipants?.total || 0}
   isClosed={match.isClosed}
-  onPriceChange={setDisplayPrice}
+  onPriceChange={handlePriceChange}
 />
           </View>
           <Text style={styles.priceNote}>

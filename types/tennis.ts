@@ -204,24 +204,24 @@ export class PricingCalculator {
    */
   static calculateDynamicPrice(factors: PricingFactors): number {
     let price = factors.basePrice;
-    
+
     // 1. 조회수 할증 (500회 이상부터, 최대 10%)
     if (factors.viewCount >= 500) {
       const viewMultiplier = Math.min(0.1, (factors.viewCount - 500) / 2000 * 0.1);
       price *= (1 + viewMultiplier);
     }
-    
+
     // 2. 참여신청자 할증 (모집인원 × 5배 이상부터, 최대 100%)
     if (factors.applicationsCount >= factors.expectedApplicants) {
       const applicationMultiplier = Math.min(1.0, (factors.applicationsCount - factors.expectedApplicants) / factors.expectedApplicants);
       price *= (1 + applicationMultiplier);
     }
-    
+
     // 3. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
     price = Math.max(factors.basePrice, price);
     price = Math.min(factors.maxPrice, price);
-    
-    return Math.round(price / 1000) * 1000; // 1000원 단위 반올림
+
+    return Math.round(price);
   }
 }
 

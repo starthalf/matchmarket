@@ -212,6 +212,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
       .update({
         is_closed: updatedMatch.isClosed,
         is_completed: updatedMatch.isCompleted,
+        current_price: updatedMatch.currentPrice,
         applications: updatedMatch.applications || [],
         participants: updatedMatch.participants || [],
         current_applicants_male: updatedMatch.currentApplicants?.male || 0,

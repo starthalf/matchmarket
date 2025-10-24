@@ -227,20 +227,24 @@ export class SettlementManager {
         updateData.admin_notes = adminNotes;
       }
 
-      const { error } = await supabaseAdmin
+      console.log('계정 정지 상태 변경 시도:', { settlementId, suspend, updateData });
+
+      const { data, error } = await supabaseAdmin
         .from('monthly_settlements')
         .update(updateData)
-        .eq('id', settlementId);
+        .eq('id', settlementId)
+        .select();
 
       if (error) {
         console.error('계정 정지 상태 변경 실패:', error);
-        return { success: false, error: '계정 정지 상태 변경에 실패했습니다.' };
+        return { success: false, error: `계정 정지 상태 변경에 실패했습니다: ${error.message}` };
       }
 
+      console.log('계정 정지 상태 변경 성공:', data);
       return { success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error('계정 정지 처리 중 오류:', error);
-      return { success: false, error: '시스템 오류가 발생했습니다.' };
+      return { success: false, error: `시스템 오류가 발생했습니다: ${error?.message || '알 수 없는 오류'}` };
     }
   }
 

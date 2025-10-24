@@ -34,6 +34,7 @@ export interface MonthlySettlement {
   confirmed_by?: string;
   confirmed_at?: string;
   is_blocked: boolean;
+  is_account_suspended: boolean;
   created_at: string;
 }
 
@@ -210,6 +211,7 @@ export class EarningsManager {
             commission_due: revenue.commissionDue,
             payment_status: 'pending',
             is_blocked: false,
+            is_account_suspended: false,
           });
       }
     } catch (error) {
@@ -277,7 +279,7 @@ export class EarningsManager {
   static async isSellerBlocked(sellerId: string): Promise<boolean> {
     try {
       const unpaid = await this.getUnpaidSettlements(sellerId);
-      return unpaid.some(settlement => settlement.is_blocked);
+      return unpaid.some(settlement => settlement.is_blocked || settlement.is_account_suspended);
     } catch (error) {
       console.error('판매자 차단 여부 확인 오류:', error);
       return false;

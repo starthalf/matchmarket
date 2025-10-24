@@ -169,11 +169,11 @@ export default function EarningsScreen() {
                     <TrendingUp size={16} color="#9333ea" />
                   </View>
                   <View style={styles.compactTextWrapper}>
-                    <Text style={styles.compactLabel}>추가 수익 (인기도)</Text>
+                    <Text style={styles.compactLabel}>매치 추가 수익</Text>
                     <Text style={[styles.compactAmount, { color: '#9333ea' }]}>
                       {currentMonthSettlement.additional_revenue.toLocaleString()}원
                     </Text>
-                    <Text style={styles.compactNote}>※ 이 중 15% 수수료 납부</Text>
+                    <Text style={styles.compactNote}>코트비+공 값을 제외하고 인기에 따라 추가로 얻은 수익</Text>
                   </View>
                 </View>
                 

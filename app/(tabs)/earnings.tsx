@@ -226,7 +226,10 @@ export default function EarningsScreen() {
         {unpaidSettlements.length > 0 && (
           <View style={styles.unpaidSection}>
             <Text style={styles.sectionTitle}>미정산 내역</Text>
-            
+            <Text style={styles.unpaidWarningText}>
+              매달 말일 까지 추가수익에 대한 수수료가 입금되지 않으면 사용이 중지됩니다.
+            </Text>
+
             {unpaidSettlements.map((settlement) => (
               <View 
                 key={settlement.id} 
@@ -535,6 +538,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 3,
+  },
+  unpaidWarningText: {
+    fontSize: 12,
+    color: '#4b5563',
+    fontWeight: '600',
+    marginTop: 4,
+    marginBottom: 8,
   },
   unpaidCard: {
     backgroundColor: '#f9fafb',

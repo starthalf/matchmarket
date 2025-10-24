@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { useMatches } from '../contexts/MatchContext';
 import {
   Clock,
   MapPin,
@@ -21,15 +22,22 @@ interface MatchCardProps {
 
 export function MatchCard({ match }: MatchCardProps) {
   const { user } = useAuth();
+  const { updateMatchPrice } = useMatches();
   const currentTime = new Date();
   const matchDateTime = new Date(`${match.date}T${match.time}`);
   const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
-  
+
   // 안전한 기본값 설정
   const applications = match.applications || [];
-  
+
   // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
   const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
+
+  const handlePriceChange = (newPrice: number) => {
+    if (newPrice !== match.currentPrice) {
+      updateMatchPrice(match.id, newPrice);
+    }
+  };
   
 const handlePress = () => {
   if (match.isClosed) {
@@ -162,6 +170,7 @@ const handlePress = () => {
             applicationsCount={applications.length}
             expectedParticipants={match.expectedParticipants.total}
             isClosed={match.isClosed}
+            onPriceChange={handlePriceChange}
           />
         </View>
       </View>

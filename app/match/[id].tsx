@@ -37,19 +37,18 @@ import { supabase } from '../../lib/supabase';  // 이 줄 추가
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
-  const { matches, updateMatch } = useMatches();
+  const { matches, updateMatch, updateMatchPrice } = useMatches();
   const safeStyles = useSafeStyles();
-  
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showApplicationModal, setShowApplicationModal] = useState(false);
   const [showPaymentTimer, setShowPaymentTimer] = useState(false);
-  const [paymentTimeLeft, setPaymentTimeLeft] = useState(300); // 5분 = 300초
+  const [paymentTimeLeft, setPaymentTimeLeft] = useState(300);
   const [myApplication, setMyApplication] = useState<MatchApplication | undefined>();
-const [myParticipation, setMyParticipation] = useState<any>();
-const [sellerInfo, setSellerInfo] = useState<any>(null);
+  const [myParticipation, setMyParticipation] = useState<any>();
+  const [sellerInfo, setSellerInfo] = useState<any>(null);
 
-const match = matches.find(m => m.id === id);
-const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // ✅ match 정의 후에 사용
+  const match = matches.find(m => m.id === id);
 
   if (!match) {
     return (
@@ -76,6 +75,12 @@ const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // 
   const currentTime = new Date();
   const matchDateTime = new Date(`${match.date}T${match.time}`);
   const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
+
+  const handlePriceChange = (newPrice: number) => {
+    if (match && newPrice !== match.currentPrice) {
+      updateMatchPrice(match.id, newPrice);
+    }
+  };
 
   // 결제 타이머 효과
   useEffect(() => {
@@ -503,16 +508,16 @@ const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // 
           <Text style={styles.priceCardTitle}>매치 가격</Text>
           <View style={styles.priceInfo}>
             <PriceDisplay
-  currentPrice={match.currentPrice}
-  basePrice={match.basePrice}
-  maxPrice={match.maxPrice || 200000}
-  hoursUntilMatch={hoursUntilMatch}
-  viewCount={match.seller?.viewCount || 0}
-  applicationsCount={safeApplications.length}
-  expectedParticipants={match.expectedParticipants?.total || 0}
-  isClosed={match.isClosed}
-  onPriceChange={setDisplayPrice}
-/>
+              currentPrice={match.currentPrice}
+              basePrice={match.basePrice}
+              maxPrice={match.maxPrice || 200000}
+              hoursUntilMatch={hoursUntilMatch}
+              viewCount={match.seller?.viewCount || 0}
+              applicationsCount={safeApplications.length}
+              expectedParticipants={match.expectedParticipants?.total || 0}
+              isClosed={match.isClosed}
+              onPriceChange={handlePriceChange}
+            />
           </View>
           <Text style={styles.priceNote}>
             * 가격은 인기가 높아지면 변동됩니다
@@ -524,10 +529,10 @@ const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);  // 
 
       {/* 하단 고정 영역 */}
       <View style={styles.bottomBar}>
-<View style={styles.priceDisplay}>
-  <Text style={styles.currentPrice}>
-    {displayPrice.toLocaleString()}원
-  </Text>
+        <View style={styles.priceDisplay}>
+          <Text style={styles.currentPrice}>
+            {match.currentPrice.toLocaleString()}원
+          </Text>
           {statusText && (
             <Text style={styles.statusText}>{statusText}</Text>
           )}

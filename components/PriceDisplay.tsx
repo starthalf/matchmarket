@@ -9,10 +9,10 @@ interface PriceDisplayProps {
   maxPrice: number;
   hoursUntilMatch: number;
   viewCount: number;
-  applicationsCount: number; // 참여신청자 수
-  expectedParticipants: number; // 모집인원 총합
+  applicationsCount: number;
+  expectedParticipants: number;
   isClosed?: boolean;
-  onPriceChange?: (price: number) => void; // 추가된 부분
+  onPriceChange: (price: number) => void;
 }
 
 export function PriceDisplay({
@@ -26,7 +26,6 @@ export function PriceDisplay({
   isClosed = false,
   onPriceChange
 }: PriceDisplayProps) {
-  const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
   const [isIncreasing, setIsIncreasing] = useState(false);
   const [lastSignificantPrice, setLastSignificantPrice] = useState(currentPrice);
 
@@ -52,13 +51,9 @@ export function PriceDisplay({
       const priceChangeRatio = Math.abs(newPrice - lastSignificantPrice) / basePrice;
 
       if (priceChangeRatio >= 0.03 || lastSignificantPrice === currentPrice) {
-        setAnimatedPrice(newPrice);
         setLastSignificantPrice(newPrice);
         setIsIncreasing(newPrice > basePrice);
-
-        if (onPriceChange) {
-          onPriceChange(newPrice);
-        }
+        onPriceChange(newPrice);
       }
     };
 
@@ -69,20 +64,20 @@ export function PriceDisplay({
     }, 120000);
 
     return () => clearInterval(interval);
-  }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants]);
+  }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants, currentPrice]);
 
-  const priceChangePercentage = Math.abs(((animatedPrice - basePrice) / basePrice * 100)).toFixed(0);
+  const priceChangePercentage = Math.abs(((currentPrice - basePrice) / basePrice * 100)).toFixed(0);
   const showChange = Math.abs(parseInt(priceChangePercentage)) > 0;
 
   return (
     <View style={styles.container}>
       <View style={styles.priceRow}>
         <Text style={[
-          styles.price, 
+          styles.price,
           isIncreasing && styles.increasing,
           isClosed && styles.closedPrice
         ]}>
-          {animatedPrice.toLocaleString()}원
+          {currentPrice.toLocaleString()}원
         </Text>
         {showChange && !isClosed && (
           <View style={[

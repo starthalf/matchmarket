@@ -12,7 +12,7 @@ interface PriceDisplayProps {
   applicationsCount: number; // 참여신청자 수
   expectedParticipants: number; // 모집인원 총합
   isClosed?: boolean;
-  onPriceChange?: (price: number) => void; // 추가된 부분
+  onPriceChange?: (price: number) => void;
 }
 
 export function PriceDisplay({
@@ -24,18 +24,14 @@ export function PriceDisplay({
   applicationsCount,
   expectedParticipants,
   isClosed = false,
-  onPriceChange // 추가된 부분
+  onPriceChange
 }: PriceDisplayProps) {
-  const [animatedPrice, setAnimatedPrice] = useState(currentPrice);
-  const [isIncreasing, setIsIncreasing] = useState(false);
-  const [prevPrice, setPrevPrice] = useState(currentPrice);
-
-  // 동적 가격 계산
+  // 동적 가격 계산 함수
   const calculateDynamicPrice = () => {
     const factors: PricingFactors = {
       viewCount,
       applicationsCount,
-      expectedApplicants: expectedParticipants * 5, // 모집인원의 5배로 변경
+      expectedApplicants: expectedParticipants * 5, // 모집인원의 5배
       hoursUntilMatch,
       basePrice,
       maxPrice
@@ -44,16 +40,28 @@ export function PriceDisplay({
     return PricingCalculator.calculateDynamicPrice(factors);
   };
 
+  // 🔥 초기 가격을 동적 계산된 가격으로 설정
+  const initialCalculatedPrice = calculateDynamicPrice();
+  const [animatedPrice, setAnimatedPrice] = useState(initialCalculatedPrice);
+  const [isIncreasing, setIsIncreasing] = useState(initialCalculatedPrice > basePrice);
+  const [prevPrice, setPrevPrice] = useState(initialCalculatedPrice);
+
+  // 🔥 초기 렌더링 시에도 부모에게 가격 알림
+  useEffect(() => {
+    if (onPriceChange) {
+      onPriceChange(initialCalculatedPrice);
+    }
+  }, []);
+
   useEffect(() => {
     const interval = setInterval(() => {
       setAnimatedPrice(prevDisplayPrice => {
         const targetPrice = calculateDynamicPrice();
-        const newPrice = targetPrice; // random variation 제거
-
+        
         // 최종 가격 제한
         const finalPrice = Math.min(
           maxPrice,
-          Math.max(basePrice, newPrice)
+          Math.max(basePrice, targetPrice)
         );
 
         // 3% 임계값 체크 - basePrice 대비 변동이 3% 미만이면 업데이트 스킵
@@ -66,9 +74,9 @@ export function PriceDisplay({
 
         // 3% 이상 변동 시에만 업데이트
         setPrevPrice(finalPrice);
-        setIsIncreasing(finalPrice > basePrice); // basePrice와 비교로 변경
+        setIsIncreasing(finalPrice > basePrice);
 
-        // 부모 컴포넌트에 가격 변경 알림 (추가된 부분)
+        // 부모 컴포넌트에 가격 변경 알림
         if (onPriceChange) {
           onPriceChange(finalPrice);
         }

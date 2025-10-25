@@ -49,7 +49,30 @@ const [myParticipation, setMyParticipation] = useState<any>();
 const [sellerInfo, setSellerInfo] = useState<any>(null);
 
 const match = matches.find(m => m.id === id);
-const [displayPrice, setDisplayPrice] = useState(match?.currentPrice || 0);
+
+// 🔥 초기 가격을 동적 계산
+const calculateInitialPrice = () => {
+  if (!match) return 0;
+  
+  const { PricingCalculator } = require('../../types/tennis');
+  const safeApplications = match.applications || [];
+  const currentTime = new Date();
+  const matchDateTime = new Date(`${match.date}T${match.time}`);
+  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
+  
+  const factors = {
+    viewCount: match.seller?.viewCount || 0,
+    applicationsCount: safeApplications.length,
+    expectedApplicants: (match.expectedParticipants?.total || 0) * 5,
+    hoursUntilMatch,
+    basePrice: match.basePrice,
+    maxPrice: match.maxPrice || 200000
+  };
+  
+  return PricingCalculator.calculateDynamicPrice(factors);
+};
+
+const [displayPrice, setDisplayPrice] = useState(calculateInitialPrice());
 
   const handlePriceChange = async (newPrice: number) => {
     if (!match) return;

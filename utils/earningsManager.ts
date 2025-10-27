@@ -189,7 +189,7 @@ static async updateMonthlySettlement(
     
     const { data: earningsData, error: earningsError } = await supabaseAdmin
       .from('earnings')
-      .select('match_total_paid, match_base_price')
+      .select('match_total_paid, match_base_cost')
       .eq('seller_id', sellerId)
       .gte('match_date', startDate)
       .lt('match_date', endDate);
@@ -211,7 +211,7 @@ static async updateMonthlySettlement(
     
     earningsData.forEach((earning) => {
       totalRevenue += earning.match_total_paid;
-      const additionalAmount = Math.max(0, earning.match_total_paid - earning.match_base_price);
+      const additionalAmount = Math.max(0, earning.match_total_paid - earning.match_base_cost);
       additionalRevenue += additionalAmount;
     });
     

@@ -173,8 +173,7 @@ export default function EarningsScreen() {
     switch (status) {
       case 'confirmed':
         return '정산 완료';
-      case 'paid':
-        return '관리자 확인 대기';
+
       case 'pending':
       default:
         return '입금 대기';

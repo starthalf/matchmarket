@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle, ClipboardList } from 'lucide-react-native';
+import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle, ClipboardList, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminSettingsManager } from '../../utils/adminSettings';
 import { getMockEarnings, EarningsData } from '../../data/mockData';
@@ -31,10 +31,21 @@ export default function EarningsScreen() {
   
   const [earnings, setEarnings] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // 월별 정산 데이터
   const [currentMonthSettlement, setCurrentMonthSettlement] = useState<MonthlySettlement | null>(null);
   const [unpaidSettlements, setUnpaidSettlements] = useState<MonthlySettlement[]>([]);
+
+  // 월 선택 상태
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+
+  // 미정산 내역 슬라이더 인덱스
+  const [unpaidIndex, setUnpaidIndex] = useState(0);
+
+  // 입금내역 확장/축소 상태
+  const [expandedPayments, setExpandedPayments] = useState<{[key: string]: boolean}>({});
+  const [paymentHistories, setPaymentHistories] = useState<{[key: string]: any[]}>({});
 
   // 🔥 화면 포커스 시 데이터 새로고침
   useFocusEffect(
@@ -52,23 +63,41 @@ export default function EarningsScreen() {
     loadMonthlySettlements();
   }, [currentUser]);
 
+  // 선택된 월이 변경될 때 데이터 필터링
+  useEffect(() => {
+    if (currentUser) {
+      loadEarnings();
+      loadMonthlySettlements();
+    }
+  }, [selectedYear, selectedMonth]);
+
   const loadEarnings = async () => {
     if (!currentUser) {
       console.log('⚠️ currentUser가 없습니다.');
       return;
     }
-    
+
     console.log('🔍 수익 데이터 로드 시작, seller_id:', currentUser.id);
     setIsLoading(true);
     try {
       const data = await EarningsManager.getEarningsBySeller(currentUser.id);
       console.log('✅ 수익 데이터 로드 완료:', data.length, '건');
       console.log('데이터:', data);
-      setEarnings(data);
+
+      // 선택된 월의 데이터만 필터링
+      const filteredData = data.filter((earning: any) => {
+        const earningDate = new Date(earning.match_date);
+        return (
+          earningDate.getFullYear() === selectedYear &&
+          earningDate.getMonth() + 1 === selectedMonth
+        );
+      });
+
+      console.log(`📅 ${selectedYear}년 ${selectedMonth}월 데이터:`, filteredData.length, '건');
+      setEarnings(filteredData);
     } catch (error) {
       console.error('❌ 수익 데이터 로드 실패:', error);
-      // 에러 시 mock 데이터 사용
-      setEarnings(getMockEarnings());
+      setEarnings([]);
     } finally {
       setIsLoading(false);
     }
@@ -79,19 +108,74 @@ export default function EarningsScreen() {
       console.log('⚠️ currentUser가 없습니다 (월별 정산)');
       return;
     }
-    
+
     console.log('🔍 월별 정산 데이터 로드 시작, seller_id:', currentUser.id);
     try {
-      const current = await EarningsManager.getCurrentMonthSettlement(currentUser.id);
+      // 선택된 월의 정산 데이터 조회
+      const selectedMonthSettlement = await EarningsManager.getSettlementByMonth(
+        currentUser.id,
+        selectedYear,
+        selectedMonth
+      );
       const unpaid = await EarningsManager.getUnpaidSettlements(currentUser.id);
-      
-      console.log('✅ 당월 정산:', current);
+
+      console.log('✅ 선택된 월 정산:', selectedMonthSettlement);
       console.log('✅ 미정산 내역:', unpaid);
-      
-      setCurrentMonthSettlement(current);
+
+      setCurrentMonthSettlement(selectedMonthSettlement);
       setUnpaidSettlements(unpaid);
+      setUnpaidIndex(0); // 인덱스 초기화
     } catch (error) {
       console.error('❌ 월별 정산 데이터 로드 실패:', error);
+    }
+  };
+
+  // 월 변경 함수
+  const changeMonth = (direction: 'prev' | 'next') => {
+    if (direction === 'prev') {
+      if (selectedMonth === 1) {
+        setSelectedYear(selectedYear - 1);
+        setSelectedMonth(12);
+      } else {
+        setSelectedMonth(selectedMonth - 1);
+      }
+    } else {
+      if (selectedMonth === 12) {
+        setSelectedYear(selectedYear + 1);
+        setSelectedMonth(1);
+      } else {
+        setSelectedMonth(selectedMonth + 1);
+      }
+    }
+  };
+
+  // 입금내역 토글
+  const togglePaymentHistory = async (settlementId: string) => {
+    setExpandedPayments(prev => ({
+      ...prev,
+      [settlementId]: !prev[settlementId]
+    }));
+
+    // 데이터가 없으면 로드
+    if (!paymentHistories[settlementId]) {
+      try {
+        const payments = await EarningsManager.getPaymentsBySettlementId(settlementId);
+        setPaymentHistories(prev => ({
+          ...prev,
+          [settlementId]: payments
+        }));
+      } catch (error) {
+        console.error('입금 내역 조회 실패:', error);
+      }
+    }
+  };
+
+  // 미정산 슬라이더 이동
+  const changeUnpaidIndex = (direction: 'prev' | 'next') => {
+    if (direction === 'prev' && unpaidIndex > 0) {
+      setUnpaidIndex(unpaidIndex - 1);
+    } else if (direction === 'next' && unpaidIndex < unpaidSettlements.length - 1) {
+      setUnpaidIndex(unpaidIndex + 1);
     }
   };
 
@@ -145,10 +229,30 @@ export default function EarningsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* 이번 달 월별 정산 */}
+        {/* 월 선택 네비게이션 */}
+        <View style={styles.monthNavigation}>
+          <TouchableOpacity
+            onPress={() => changeMonth('prev')}
+            style={styles.monthArrowButton}>
+            <ChevronLeft size={24} color="#374151" />
+          </TouchableOpacity>
+
+          <View style={styles.monthDisplay}>
+            <Text style={styles.monthText}>
+              {selectedYear}년 {selectedMonth}월
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            onPress={() => changeMonth('next')}
+            style={styles.monthArrowButton}>
+            <ChevronRight size={24} color="#374151" />
+          </TouchableOpacity>
+        </View>
+        {/* 선택된 월 정산 */}
         <View style={styles.monthlySettlementSection}>
           <Text style={styles.sectionTitle}>
-            이번 달 수익현황 ({new Date().getFullYear()}년 {new Date().getMonth() + 1}월)
+            {selectedYear}년 {selectedMonth}월 수익현황
           </Text>
           
           {currentMonthSettlement ? (
@@ -201,58 +305,128 @@ export default function EarningsScreen() {
         {/* 미정산 내역 */}
         {unpaidSettlements.length > 0 && (
           <View style={styles.unpaidSection}>
-            <Text style={styles.sectionTitle}>미정산 내역</Text>
+            <View style={styles.unpaidHeaderRow}>
+              <Text style={styles.sectionTitle}>미정산 내역</Text>
+              {unpaidSettlements.length > 1 && (
+                <Text style={styles.unpaidCounter}>
+                  {unpaidIndex + 1} / {unpaidSettlements.length}
+                </Text>
+              )}
+            </View>
             <Text style={styles.unpaidWarningText}>
               매달 말일 까지 추가수익에 대한 수수료가 입금되지 않으면 사용이 중지됩니다.
             </Text>
 
-            {unpaidSettlements.map((settlement) => (
-              <View 
-                key={settlement.id} 
-                style={[
-                  styles.unpaidCard,
-                  settlement.is_blocked && styles.blockedCard,
-                  settlement.payment_status === 'paid' && styles.paidCard
-                ]}
-              >
-                <View style={styles.unpaidHeader}>
-                  <View>
-                    <Text style={styles.unpaidMonth}>
-                      {getMonthName(settlement.year, settlement.month)}
-                    </Text>
-                    <Text style={styles.unpaidDetails}>
-                      매치 {settlement.match_count}건
-                    </Text>
-                    <Text style={styles.unpaidAdditional}>
-                      추가수익 {settlement.additional_revenue.toLocaleString()}원 → 수수료 15%
-                    </Text>
-                  </View>
-                  <View style={styles.unpaidRight}>
-                    <Text style={styles.unpaidLabel}>납부할 금액</Text>
-                    <Text style={styles.unpaidAmount}>
-                      {settlement.commission_due.toLocaleString()}원
-                    </Text>
-                    <View style={[
-                      styles.statusBadge,
-                      { backgroundColor: getPaymentStatusColor(settlement.payment_status, settlement.is_blocked) }
-                    ]}>
-                      {settlement.is_blocked ? (
-                        <Text style={styles.statusText}>⚠️ 계정 제한</Text>
-                      ) : settlement.payment_status === 'confirmed' ? (
-                        <View style={styles.statusRow}>
-                          <CheckCircle size={14} color="#ffffff" />
-                          <Text style={styles.statusText}>정산 완료</Text>
-                        </View>
-                      ) : (
-                        <Text style={styles.statusText}>
-                          {getPaymentStatusText(settlement.payment_status)}
+            {unpaidSettlements.length > 0 && (
+              <>
+                <View
+                  style={[
+                    styles.unpaidCard,
+                    unpaidSettlements[unpaidIndex].is_blocked && styles.blockedCard,
+                    unpaidSettlements[unpaidIndex].payment_status === 'paid' && styles.paidCard
+                  ]}
+                >
+                  <View style={styles.unpaidHeader}>
+                    <View>
+                      <Text style={styles.unpaidMonth}>
+                        {getMonthName(unpaidSettlements[unpaidIndex].year, unpaidSettlements[unpaidIndex].month)}
+                      </Text>
+                      <Text style={styles.unpaidDetails}>
+                        매치 {unpaidSettlements[unpaidIndex].match_count}건
+                      </Text>
+                      <Text style={styles.unpaidAdditional}>
+                        추가수익 {unpaidSettlements[unpaidIndex].additional_revenue.toLocaleString()}원 → 수수료 15%
+                      </Text>
+                    </View>
+
+                    {/* 납부할 금액 섹션 with 화살표 */}
+                    <View style={styles.unpaidAmountContainer}>
+                      {unpaidSettlements.length > 1 && unpaidIndex > 0 && (
+                        <TouchableOpacity
+                          onPress={() => changeUnpaidIndex('prev')}
+                          style={styles.unpaidArrowButton}>
+                          <ChevronLeft size={20} color="#6b7280" />
+                        </TouchableOpacity>
+                      )}
+
+                      <View style={styles.unpaidRight}>
+                        <Text style={styles.unpaidLabel}>납부할 금액</Text>
+                        <Text style={styles.unpaidAmount}>
+                          {unpaidSettlements[unpaidIndex].commission_due.toLocaleString()}원
                         </Text>
+                        <View style={[
+                          styles.statusBadge,
+                          { backgroundColor: getPaymentStatusColor(unpaidSettlements[unpaidIndex].payment_status, unpaidSettlements[unpaidIndex].is_blocked) }
+                        ]}>
+                          {unpaidSettlements[unpaidIndex].is_blocked ? (
+                            <Text style={styles.statusText}>⚠️ 계정 제한</Text>
+                          ) : unpaidSettlements[unpaidIndex].payment_status === 'confirmed' ? (
+                            <View style={styles.statusRow}>
+                              <CheckCircle size={14} color="#ffffff" />
+                              <Text style={styles.statusText}>정산 완료</Text>
+                            </View>
+                          ) : (
+                            <Text style={styles.statusText}>
+                              {getPaymentStatusText(unpaidSettlements[unpaidIndex].payment_status)}
+                            </Text>
+                          )}
+                        </View>
+                      </View>
+
+                      {unpaidSettlements.length > 1 && unpaidIndex < unpaidSettlements.length - 1 && (
+                        <TouchableOpacity
+                          onPress={() => changeUnpaidIndex('next')}
+                          style={styles.unpaidArrowButton}>
+                          <ChevronRight size={20} color="#6b7280" />
+                        </TouchableOpacity>
                       )}
                     </View>
                   </View>
                 </View>
-              </View>
-            ))}
+
+                {/* 입금내역 토글 버튼 */}
+                <TouchableOpacity
+                  onPress={() => togglePaymentHistory(unpaidSettlements[unpaidIndex].id)}
+                  style={styles.paymentHistoryToggle}>
+                  <Text style={styles.paymentHistoryToggleText}>입금 내역 보기</Text>
+                  {expandedPayments[unpaidSettlements[unpaidIndex].id] ? (
+                    <ChevronUp size={20} color="#374151" />
+                  ) : (
+                    <ChevronDown size={20} color="#374151" />
+                  )}
+                </TouchableOpacity>
+
+                {/* 입금내역 리스트 */}
+                {expandedPayments[unpaidSettlements[unpaidIndex].id] && (
+                  <View style={styles.paymentHistoryList}>
+                    {paymentHistories[unpaidSettlements[unpaidIndex].id]?.length > 0 ? (
+                      paymentHistories[unpaidSettlements[unpaidIndex].id].map((payment: any) => (
+                        <View key={payment.id} style={styles.paymentHistoryItem}>
+                          <View style={styles.paymentHistoryHeader}>
+                            <Text style={styles.paymentDate}>
+                              {new Date(payment.payment_date).toLocaleDateString('ko-KR')}
+                            </Text>
+                            <Text style={styles.paymentAmount}>
+                              {Number(payment.paid_amount).toLocaleString()}원
+                            </Text>
+                          </View>
+                          <Text style={styles.paymentMethod}>
+                            결제수단: {payment.payment_method}
+                          </Text>
+                          {payment.notes && (
+                            <Text style={styles.paymentNotes}>메모: {payment.notes}</Text>
+                          )}
+                        </View>
+                      ))
+                    ) : (
+                      <View style={styles.emptyPaymentHistory}>
+                        <Text style={styles.emptyPaymentText}>입금 내역이 없습니다.</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </>
+            )}
 
             <View style={styles.totalUnpaid}>
               <Text style={styles.totalUnpaidLabel}>총 미정산 금액</Text>
@@ -415,6 +589,39 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb',
   },
+  monthNavigation: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#ffffff',
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  monthArrowButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#f9fafb',
+  },
+  monthDisplay: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  monthText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+  },
   monthlySettlementSection: {
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
@@ -533,6 +740,95 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 4,
     elevation: 3,
+  },
+  unpaidHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  unpaidCounter: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  unpaidAmountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  unpaidArrowButton: {
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: '#f9fafb',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  paymentHistoryToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 12,
+    paddingVertical: 10,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  paymentHistoryToggleText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  paymentHistoryList: {
+    marginTop: 12,
+    gap: 8,
+  },
+  paymentHistoryItem: {
+    backgroundColor: '#f0fdf4',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  paymentHistoryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  paymentDate: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#166534',
+  },
+  paymentAmount: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#15803d',
+  },
+  paymentMethod: {
+    fontSize: 12,
+    color: '#16a34a',
+    marginBottom: 2,
+  },
+  paymentNotes: {
+    fontSize: 12,
+    color: '#059669',
+    fontStyle: 'italic',
+  },
+  emptyPaymentHistory: {
+    padding: 24,
+    alignItems: 'center',
+  },
+  emptyPaymentText: {
+    fontSize: 14,
+    color: '#6b7280',
   },
   unpaidWarningText: {
     fontSize: 12,

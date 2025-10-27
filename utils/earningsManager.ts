@@ -298,7 +298,7 @@ static async updateMonthlySettlement(
       const now = new Date();
       const year = now.getFullYear();
       const month = now.getMonth() + 1;
-      
+
       const { data, error } = await supabaseAdmin
         .from('monthly_settlements')
         .select('*')
@@ -306,15 +306,44 @@ static async updateMonthlySettlement(
         .eq('year', year)
         .eq('month', month)
         .single();
-      
+
       if (error && error.code !== 'PGRST116') {
         console.error('당월 정산 조회 오류:', error);
         return null;
       }
-      
+
       return data || null;
     } catch (error) {
       console.error('당월 정산 조회 중 오류:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 특정 판매자의 특정 월 정산 데이터 조회
+   */
+  static async getSettlementByMonth(
+    sellerId: string,
+    year: number,
+    month: number
+  ): Promise<MonthlySettlement | null> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('monthly_settlements')
+        .select('*')
+        .eq('seller_id', sellerId)
+        .eq('year', year)
+        .eq('month', month)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('월별 정산 조회 오류:', error);
+        return null;
+      }
+
+      return data || null;
+    } catch (error) {
+      console.error('월별 정산 조회 중 오류:', error);
       return null;
     }
   }
@@ -390,16 +419,39 @@ static async updateMonthlySettlement(
         .select('*')
         .eq('match_id', matchId)
         .single();
-      
+
       if (error && error.code !== 'PGRST116') {
         console.error('매치 수익 조회 오류:', error);
         return null;
       }
-      
+
       return data || null;
     } catch (error) {
       console.error('매치 수익 조회 중 오류:', error);
       return null;
+    }
+  }
+
+  /**
+   * 특정 정산 건의 입금 내역 조회
+   */
+  static async getPaymentsBySettlementId(settlementId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabaseAdmin
+        .from('settlement_payments')
+        .select('*')
+        .eq('settlement_id', settlementId)
+        .order('payment_date', { ascending: false });
+
+      if (error) {
+        console.error('입금 내역 조회 오류:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('입금 내역 조회 중 오류:', error);
+      return [];
     }
   }
 }

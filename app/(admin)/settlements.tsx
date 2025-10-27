@@ -150,7 +150,7 @@ export default function AdminSettlementsScreen() {
     const action = settlement.is_account_suspended ? '해제' : '정지';
     showConfirm(
       `계정 ${action}`,
-      `${settlement.seller_name || '판매자'}의 계정을 ${action}하시겠습니까?`,
+      `${settlement.seller_name || '판매자'} 판매자의 계정을 ${action}하시겠습니까?`,
       async () => {
         const result = await SettlementManager.suspendAccount(
           settlement.id,
@@ -182,7 +182,6 @@ export default function AdminSettlementsScreen() {
 
   const getStatusColor = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '#dc2626';
-    if ((settlement.commission_amount || 0) === 0) return '#9ca3af';
     if ((settlement.unpaid_amount || 0) === 0) return '#16a34a';
     if ((settlement.total_paid_amount || 0) > 0) return '#3b82f6';
     return '#f59e0b';
@@ -190,7 +189,6 @@ export default function AdminSettlementsScreen() {
 
   const getStatusText = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '계정 정지';
-    if ((settlement.commission_amount || 0) === 0) return '정산 불필요';
     if ((settlement.unpaid_amount || 0) === 0) return '정산 완료';
     if ((settlement.total_paid_amount || 0) > 0) return '부분 입금';
     return '미정산';
@@ -329,101 +327,97 @@ export default function AdminSettlementsScreen() {
 
                     <View style={styles.settlementDetails}>
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>판매 건수</Text>
-                        <Text style={styles.detailValue}>{settlement.total_matches || 0}건</Text>
+                        <Text style={styles.detailLabel}>매치 판매</Text>
+                        <Text style={styles.detailValue}>{settlement.match_count || 0}건</Text>
                       </View>
 
                       <View style={styles.detailRow}>
-                        <Text style={styles.detailLabel}>총 판매액</Text>
+                        <Text style={styles.detailLabel}>추가 수익</Text>
                         <Text style={styles.detailValue}>
-                          {(settlement.total_sales || 0).toLocaleString()}원
+                          {(settlement.additional_revenue || 0).toLocaleString()}원
                         </Text>
                       </View>
 
                       <View style={[styles.detailRow, styles.highlightRow]}>
-                        <Text style={styles.commissionLabel}>정산 수수료 (30%)</Text>
+                        <Text style={styles.commissionLabel}>납부할 수수료 (15%)</Text>
                         <Text style={styles.commissionValue}>
-                          {(settlement.commission_amount || 0).toLocaleString()}원
+                          {(settlement.commission_due || 0).toLocaleString()}원
                         </Text>
                       </View>
                     </View>
 
-                    {(settlement.commission_amount || 0) > 0 && (
-                      <View style={styles.paymentSummary}>
-                        <View style={styles.paymentRow}>
-                          <Text style={styles.paymentLabel}>입금 완료</Text>
-                          <Text style={[styles.paymentValue, { color: '#3b82f6' }]}>
-                            {(settlement.total_paid_amount || 0).toLocaleString()}원
-                          </Text>
-                        </View>
-                        <View style={styles.paymentRow}>
-                          <Text style={styles.paymentLabel}>미정산 금액</Text>
-                          <Text
-                            style={[
-                              styles.paymentValue,
-                              { color: (settlement.unpaid_amount || 0) > 0 ? '#dc2626' : '#16a34a' },
-                            ]}
-                          >
-                            {(settlement.unpaid_amount || 0).toLocaleString()}원
-                          </Text>
-                        </View>
-
-                        {settlement.payments && settlement.payments.length > 0 && (
-                          <TouchableOpacity
-                            onPress={() => openPaymentsListModal(settlement)}
-                            style={styles.viewPaymentsButton}
-                          >
-                            <FileText size={14} color="#3b82f6" />
-                            <Text style={styles.viewPaymentsText}>
-                              입금내역 보기 ({settlement.payments.length}건)
-                            </Text>
-                          </TouchableOpacity>
-                        )}
+                    <View style={styles.paymentSummary}>
+                      <View style={styles.paymentRow}>
+                        <Text style={styles.paymentLabel}>입금 완료</Text>
+                        <Text style={[styles.paymentValue, { color: '#3b82f6' }]}>
+                          {(settlement.total_paid_amount || 0).toLocaleString()}원
+                        </Text>
                       </View>
-                    )}
-
-                    {(settlement.commission_amount || 0) > 0 && (
-                      <View style={styles.actionButtons}>
-                        <TouchableOpacity
-                          onPress={() => handleSuspendAccount(settlement)}
+                      <View style={styles.paymentRow}>
+                        <Text style={styles.paymentLabel}>미정산 금액</Text>
+                        <Text
                           style={[
-                            styles.actionButton,
-                            settlement.is_account_suspended
-                              ? styles.unsuspendButton
-                              : styles.suspendButton,
+                            styles.paymentValue,
+                            { color: (settlement.unpaid_amount || 0) > 0 ? '#dc2626' : '#16a34a' },
                           ]}
                         >
-                          {settlement.is_account_suspended ? (
-                            <>
-                              <UnlockKeyhole
-                                size={16}
-                                color="#16a34a"
-                              />
-                              <Text style={[styles.actionButtonText, { color: '#16a34a' }]}>
-                                계정 정지 해제
-                              </Text>
-                            </>
-                          ) : (
-                            <>
-                              <Ban size={16} color="#dc2626" />
-                              <Text style={[styles.actionButtonText, { color: '#dc2626' }]}>
-                                계정 정지
-                              </Text>
-                            </>
-                          )}
-                        </TouchableOpacity>
+                          {(settlement.unpaid_amount || 0).toLocaleString()}원
+                        </Text>
+                      </View>
 
+                      {settlement.payments && settlement.payments.length > 0 && (
                         <TouchableOpacity
-                          onPress={() => openAddPaymentModal(settlement)}
-                          style={[styles.actionButton, styles.addPaymentButton]}
+                          onPress={() => openPaymentsListModal(settlement)}
+                          style={styles.viewPaymentsButton}
                         >
-                          <Plus size={16} color="#ffffff" />
-                          <Text style={[styles.actionButtonText, { color: '#ffffff' }]}>
-                            입금내역 추가
+                          <FileText size={14} color="#3b82f6" />
+                          <Text style={styles.viewPaymentsText}>
+                            입금내역 보기 ({settlement.payments.length}건)
                           </Text>
                         </TouchableOpacity>
-                      </View>
-                    )}
+                      )}
+                    </View>
+
+                    <View style={styles.actionButtons}>
+                      <TouchableOpacity
+                        onPress={() => handleSuspendAccount(settlement)}
+                        style={[
+                          styles.actionButton,
+                          settlement.is_account_suspended
+                            ? styles.unsuspendButton
+                            : styles.suspendButton,
+                        ]}
+                      >
+                        {settlement.is_account_suspended ? (
+                          <>
+                            <UnlockKeyhole
+                              size={16}
+                              color="#16a34a"
+                            />
+                            <Text style={[styles.actionButtonText, { color: '#16a34a' }]}>
+                              계정 정지 해제
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Ban size={16} color="#dc2626" />
+                            <Text style={[styles.actionButtonText, { color: '#dc2626' }]}>
+                              계정 정지
+                            </Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        onPress={() => openAddPaymentModal(settlement)}
+                        style={[styles.actionButton, styles.addPaymentButton]}
+                      >
+                        <Plus size={16} color="#ffffff" />
+                        <Text style={[styles.actionButtonText, { color: '#ffffff' }]}>
+                          입금내역 추가
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 ))
               )}
@@ -433,7 +427,7 @@ export default function AdminSettlementsScreen() {
               <Text style={styles.infoTitle}>💡 정산 관리 안내</Text>
               <View style={styles.infoContent}>
                 <Text style={styles.infoText}>
-                  • 매월 판매자별 수수료(30%)가 자동으로 계산됩니다
+                  • 매월 판매자별 수수료(15%)가 자동으로 계산됩니다
                 </Text>
                 <Text style={styles.infoText}>
                   • 입금내역 추가 시 자동으로 미정산 금액이 차감됩니다

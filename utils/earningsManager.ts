@@ -233,6 +233,10 @@ static async updateMonthlySettlement(
     
     if (existing) {
       // 업데이트 (재계산된 값으로 덮어쓰기)
+      // 기존 입금 금액을 유지하면서 unpaid_amount 재계산
+      const existingPaidAmount = existing.total_paid_amount || 0;
+      const newUnpaidAmount = commissionDue - existingPaidAmount;
+
       const { error: updateError } = await supabaseAdmin
         .from('monthly_settlements')
         .update({
@@ -240,13 +244,18 @@ static async updateMonthlySettlement(
           total_revenue: totalRevenue,
           additional_revenue: additionalRevenue,
           commission_due: commissionDue,
+          unpaid_amount: newUnpaidAmount,
         })
         .eq('id', existing.id);
-      
+
       if (updateError) {
         console.error('월별 정산 업데이트 오류:', updateError);
       } else {
-        console.log('✅ 월별 정산 재계산 완료 (업데이트)');
+        console.log('✅ 월별 정산 재계산 완료 (업데이트)', {
+          commissionDue,
+          existingPaidAmount,
+          newUnpaidAmount
+        });
       }
     } else {
       // 새로 생성
@@ -260,15 +269,20 @@ static async updateMonthlySettlement(
           total_revenue: totalRevenue,
           additional_revenue: additionalRevenue,
           commission_due: commissionDue,
+          total_paid_amount: 0,
+          unpaid_amount: commissionDue,
           payment_status: 'pending',
           is_blocked: false,
           is_account_suspended: false,
         });
-      
+
       if (insertError) {
         console.error('월별 정산 생성 오류:', insertError);
       } else {
-        console.log('✅ 월별 정산 신규 생성 완료');
+        console.log('✅ 월별 정산 신규 생성 완료', {
+          commissionDue,
+          unpaid_amount: commissionDue
+        });
       }
     }
   } catch (error) {

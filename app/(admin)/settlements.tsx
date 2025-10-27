@@ -5,7 +5,6 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert,
   Modal,
   TextInput,
   ActivityIndicator,
@@ -28,6 +27,7 @@ import {
 } from 'lucide-react-native';
 import { useSafeStyles } from '../../constants/Styles';
 import { SettlementManager, MonthlySettlementWithPayments, SettlementPayment } from '../../utils/settlementManager';
+import { CrossPlatformAlert } from '../../utils/crossPlatformAlert';
 
 export default function AdminSettlementsScreen() {
   const safeStyles = useSafeStyles();
@@ -57,7 +57,7 @@ export default function AdminSettlementsScreen() {
       setStats(statsData);
     } catch (error) {
       console.error('정산 데이터 로드 실패:', error);
-      Alert.alert('오류', '정산 데이터를 불러오는데 실패했습니다.');
+      CrossPlatformAlert.alert('오류', '정산 데이터를 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +83,7 @@ export default function AdminSettlementsScreen() {
 
   const handleAddPayment = async () => {
     if (!selectedSettlement || !paymentAmount || parseFloat(paymentAmount) <= 0) {
-      Alert.alert('오류', '입금액을 올바르게 입력해주세요.');
+      CrossPlatformAlert.alert('오류', '입금액을 올바르게 입력해주세요.');
       return;
     }
 
@@ -97,18 +97,18 @@ export default function AdminSettlementsScreen() {
     );
 
     if (result.success) {
-      Alert.alert('성공', '입금 내역이 추가되었습니다.');
+      CrossPlatformAlert.alert('성공', '입금 내역이 추가되었습니다.');
       setShowPaymentModal(false);
       setPaymentAmount('');
       setPaymentNotes('');
       loadSettlements();
     } else {
-      Alert.alert('오류', result.error || '입금 처리에 실패했습니다.');
+      CrossPlatformAlert.alert('오류', result.error || '입금 처리에 실패했습니다.');
     }
   };
 
   const handleDeletePayment = (payment: SettlementPayment) => {
-    Alert.alert(
+    CrossPlatformAlert.alert(
       '입금 내역 삭제',
       `${payment.paid_amount.toLocaleString()}원 입금 내역을 삭제하시겠습니까?`,
       [
@@ -119,10 +119,10 @@ export default function AdminSettlementsScreen() {
           onPress: async () => {
             const result = await SettlementManager.deletePayment(payment.id);
             if (result.success) {
-              Alert.alert('성공', '입금 내역이 삭제되었습니다.');
+              CrossPlatformAlert.alert('성공', '입금 내역이 삭제되었습니다.');
               loadSettlements();
             } else {
-              Alert.alert('오류', result.error || '삭제에 실패했습니다.');
+              CrossPlatformAlert.alert('오류', result.error || '삭제에 실패했습니다.');
             }
           }
         }
@@ -132,7 +132,7 @@ export default function AdminSettlementsScreen() {
 
   const handleSuspendAccount = (settlement: MonthlySettlementWithPayments) => {
     const action = settlement.is_account_suspended ? '해제' : '정지';
-    Alert.alert(
+    CrossPlatformAlert.alert(
       `계정 ${action}`,
       `${settlement.seller_name} 판매자의 계정을 ${action}하시겠습니까?`,
       [
@@ -147,10 +147,10 @@ export default function AdminSettlementsScreen() {
               settlement.is_account_suspended ? '계정 정지 해제' : '미정산으로 인한 계정 정지'
             );
             if (result.success) {
-              Alert.alert('성공', `계정이 ${action}되었습니다.`);
+              CrossPlatformAlert.alert('성공', `계정이 ${action}되었습니다.`);
               loadSettlements();
             } else {
-              Alert.alert('오류', result.error || `계정 ${action}에 실패했습니다.`);
+              CrossPlatformAlert.alert('오류', result.error || `계정 ${action}에 실패했습니다.`);
             }
           }
         }

@@ -456,4 +456,40 @@ static async updateMonthlySettlement(
       return [];
     }
   }
+
+  /**
+   * 판매자의 모든 정산 내역 조회 (confirmed 포함)
+   */
+  static async getAllSettlementsBySeller(
+    sellerId: string,
+    options?: {
+      includePayments?: boolean;
+      statusFilter?: 'pending' | 'paid' | 'confirmed' | 'all';
+    }
+  ): Promise<MonthlySettlement[]> {
+    try {
+      let query = supabaseAdmin
+        .from('monthly_settlements')
+        .select('*')
+        .eq('seller_id', sellerId);
+
+      if (options?.statusFilter && options.statusFilter !== 'all') {
+        query = query.eq('payment_status', options.statusFilter);
+      }
+
+      query = query.order('year', { ascending: false }).order('month', { ascending: false });
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('전체 정산 내역 조회 오류:', error);
+        return [];
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error('전체 정산 내역 조회 중 오류:', error);
+      return [];
+    }
+  }
 }

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router, useFocusEffect } from 'expo-router';
-import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle, ClipboardList, ChevronLeft, ChevronRight, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { DollarSign, TrendingUp, Calendar, Eye, Users, AlertCircle, CheckCircle, ClipboardList, ChevronLeft, ChevronRight, History } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { AdminSettingsManager } from '../../utils/adminSettings';
 import { getMockEarnings, EarningsData } from '../../data/mockData';
@@ -42,10 +42,6 @@ export default function EarningsScreen() {
 
   // 미정산 내역 슬라이더 인덱스
   const [unpaidIndex, setUnpaidIndex] = useState(0);
-
-  // 입금내역 확장/축소 상태
-  const [expandedPayments, setExpandedPayments] = useState<{[key: string]: boolean}>({});
-  const [paymentHistories, setPaymentHistories] = useState<{[key: string]: any[]}>({});
 
   // 🔥 화면 포커스 시 데이터 새로고침
   useFocusEffect(
@@ -145,27 +141,6 @@ export default function EarningsScreen() {
         setSelectedMonth(1);
       } else {
         setSelectedMonth(selectedMonth + 1);
-      }
-    }
-  };
-
-  // 입금내역 토글
-  const togglePaymentHistory = async (settlementId: string) => {
-    setExpandedPayments(prev => ({
-      ...prev,
-      [settlementId]: !prev[settlementId]
-    }));
-
-    // 데이터가 없으면 로드
-    if (!paymentHistories[settlementId]) {
-      try {
-        const payments = await EarningsManager.getPaymentsBySettlementId(settlementId);
-        setPaymentHistories(prev => ({
-          ...prev,
-          [settlementId]: payments
-        }));
-      } catch (error) {
-        console.error('입금 내역 조회 실패:', error);
       }
     }
   };
@@ -383,50 +358,15 @@ export default function EarningsScreen() {
                     </View>
                   </View>
                 </View>
-
-                {/* 입금내역 토글 버튼 */}
-                <TouchableOpacity
-                  onPress={() => togglePaymentHistory(unpaidSettlements[unpaidIndex].id)}
-                  style={styles.paymentHistoryToggle}>
-                  <Text style={styles.paymentHistoryToggleText}>입금 내역 보기</Text>
-                  {expandedPayments[unpaidSettlements[unpaidIndex].id] ? (
-                    <ChevronUp size={20} color="#374151" />
-                  ) : (
-                    <ChevronDown size={20} color="#374151" />
-                  )}
-                </TouchableOpacity>
-
-                {/* 입금내역 리스트 */}
-                {expandedPayments[unpaidSettlements[unpaidIndex].id] && (
-                  <View style={styles.paymentHistoryList}>
-                    {paymentHistories[unpaidSettlements[unpaidIndex].id]?.length > 0 ? (
-                      paymentHistories[unpaidSettlements[unpaidIndex].id].map((payment: any) => (
-                        <View key={payment.id} style={styles.paymentHistoryItem}>
-                          <View style={styles.paymentHistoryHeader}>
-                            <Text style={styles.paymentDate}>
-                              {new Date(payment.payment_date).toLocaleDateString('ko-KR')}
-                            </Text>
-                            <Text style={styles.paymentAmount}>
-                              {Number(payment.paid_amount).toLocaleString()}원
-                            </Text>
-                          </View>
-                          <Text style={styles.paymentMethod}>
-                            결제수단: {payment.payment_method}
-                          </Text>
-                          {payment.notes && (
-                            <Text style={styles.paymentNotes}>메모: {payment.notes}</Text>
-                          )}
-                        </View>
-                      ))
-                    ) : (
-                      <View style={styles.emptyPaymentHistory}>
-                        <Text style={styles.emptyPaymentText}>입금 내역이 없습니다.</Text>
-                      </View>
-                    )}
-                  </View>
-                )}
               </>
             )}
+
+            <TouchableOpacity
+              onPress={() => router.push('/settlement-history')}
+              style={styles.viewAllHistoryButton}>
+              <History size={20} color="#ffffff" />
+              <Text style={styles.viewAllHistoryButtonText}>전체 정산 내역 보기</Text>
+            </TouchableOpacity>
 
             <View style={styles.totalUnpaid}>
               <Text style={styles.totalUnpaidLabel}>총 미정산 금액</Text>
@@ -768,67 +708,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
-  paymentHistoryToggle: {
+  viewAllHistoryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 12,
-    paddingVertical: 10,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    marginTop: 16,
+    paddingVertical: 14,
+    backgroundColor: '#ec4899',
+    borderRadius: 10,
+    shadowColor: '#ec4899',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
   },
-  paymentHistoryToggleText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  paymentHistoryList: {
-    marginTop: 12,
-    gap: 8,
-  },
-  paymentHistoryItem: {
-    backgroundColor: '#f0fdf4',
-    padding: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#bbf7d0',
-  },
-  paymentHistoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  paymentDate: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#166534',
-  },
-  paymentAmount: {
-    fontSize: 16,
+  viewAllHistoryButtonText: {
+    fontSize: 15,
     fontWeight: '700',
-    color: '#15803d',
-  },
-  paymentMethod: {
-    fontSize: 12,
-    color: '#16a34a',
-    marginBottom: 2,
-  },
-  paymentNotes: {
-    fontSize: 12,
-    color: '#059669',
-    fontStyle: 'italic',
-  },
-  emptyPaymentHistory: {
-    padding: 24,
-    alignItems: 'center',
-  },
-  emptyPaymentText: {
-    fontSize: 14,
-    color: '#6b7280',
+    color: '#ffffff',
   },
   unpaidWarningText: {
     fontSize: 12,

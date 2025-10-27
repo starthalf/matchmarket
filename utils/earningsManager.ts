@@ -159,7 +159,7 @@ export class EarningsManager {
     }
   }
   
-  /**
+ /**
  * 월별 정산 데이터 업데이트 (재계산 방식)
  * 🔥 earnings 테이블에서 매번 다시 계산하여 정확성 보장
  */

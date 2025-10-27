@@ -313,9 +313,7 @@ export default function EarningsScreen() {
                       <Text style={styles.unpaidDetails}>
                         매치 {unpaidSettlements[unpaidIndex].match_count}건
                       </Text>
-                      <Text style={styles.unpaidAdditional}>
-                        추가수익 {unpaidSettlements[unpaidIndex].additional_revenue.toLocaleString()}원 → 수수료 15%
-                      </Text>
+
                     </View>
 
                     {/* 납부할 금액 섹션 with 화살표 */}

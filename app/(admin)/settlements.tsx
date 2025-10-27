@@ -133,7 +133,7 @@ export default function AdminSettlementsScreen() {
   const handleDeletePayment = (payment: SettlementPayment) => {
     showConfirm(
       '입금 내역 삭제',
-      `${payment.paid_amount.toLocaleString()}원 입금 내역을 삭제하시겠습니까?`,
+      `${(payment.paid_amount || 0).toLocaleString()}원 입금 내역을 삭제하시겠습니까?`,
       async () => {
         const result = await SettlementManager.deletePayment(payment.id);
         if (result.success) {
@@ -150,7 +150,7 @@ export default function AdminSettlementsScreen() {
     const action = settlement.is_account_suspended ? '해제' : '정지';
     showConfirm(
       `계정 ${action}`,
-      `${settlement.seller_name} 판매자의 계정을 ${action}하시겠습니까?`,
+      `${settlement.seller_name || '판매자'}의 계정을 ${action}하시겠습니까?`,
       async () => {
         const result = await SettlementManager.suspendAccount(
           settlement.id,
@@ -182,16 +182,16 @@ export default function AdminSettlementsScreen() {
 
   const getStatusColor = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '#dc2626';
-    if (settlement.commission_amount === 0) return '#9ca3af';
-    if (settlement.unpaid_amount === 0) return '#16a34a';
+    if ((settlement.commission_amount || 0) === 0) return '#9ca3af';
+    if ((settlement.unpaid_amount || 0) === 0) return '#16a34a';
     if ((settlement.total_paid_amount || 0) > 0) return '#3b82f6';
     return '#f59e0b';
   };
 
   const getStatusText = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '계정 정지';
-    if (settlement.commission_amount === 0) return '정산 불필요';
-    if (settlement.unpaid_amount === 0) return '정산 완료';
+    if ((settlement.commission_amount || 0) === 0) return '정산 불필요';
+    if ((settlement.unpaid_amount || 0) === 0) return '정산 완료';
     if ((settlement.total_paid_amount || 0) > 0) return '부분 입금';
     return '미정산';
   };
@@ -236,14 +236,14 @@ export default function AdminSettlementsScreen() {
                 <View style={styles.statsGrid}>
                   <View style={styles.statCard}>
                     <User size={20} color="#6b7280" />
-                    <Text style={styles.statValue}>{stats.totalSellers}명</Text>
+                    <Text style={styles.statValue}>{stats.totalSellers || 0}명</Text>
                     <Text style={styles.statLabel}>총 판매자</Text>
                   </View>
 
                   <View style={[styles.statCard, { backgroundColor: '#fef3c7' }]}>
                     <DollarSign size={20} color="#f59e0b" />
                     <Text style={[styles.statValue, { color: '#f59e0b' }]}>
-                      {stats.totalCommission.toLocaleString()}원
+                      {(stats.totalCommission || 0).toLocaleString()}원
                     </Text>
                     <Text style={styles.statLabel}>총 수수료</Text>
                   </View>
@@ -251,7 +251,7 @@ export default function AdminSettlementsScreen() {
                   <View style={[styles.statCard, { backgroundColor: '#dbeafe' }]}>
                     <CheckCircle size={20} color="#3b82f6" />
                     <Text style={[styles.statValue, { color: '#3b82f6' }]}>
-                      {stats.totalPaid.toLocaleString()}원
+                      {(stats.totalPaid || 0).toLocaleString()}원
                     </Text>
                     <Text style={styles.statLabel}>정산 완료</Text>
                   </View>
@@ -259,7 +259,7 @@ export default function AdminSettlementsScreen() {
                   <View style={[styles.statCard, { backgroundColor: '#fee2e2' }]}>
                     <AlertCircle size={20} color="#dc2626" />
                     <Text style={[styles.statValue, { color: '#dc2626' }]}>
-                      {stats.totalUnpaid.toLocaleString()}원
+                      {(stats.totalUnpaid || 0).toLocaleString()}원
                     </Text>
                     <Text style={styles.statLabel}>미정산</Text>
                   </View>
@@ -269,17 +269,17 @@ export default function AdminSettlementsScreen() {
                   <View style={styles.progressHeader}>
                     <Text style={styles.progressLabel}>정산 완료율</Text>
                     <Text style={styles.progressValue}>
-                      {stats.completedCount} / {stats.totalSellers} ({stats.completionRate.toFixed(1)}%)
+                      {stats.completedCount || 0} / {stats.totalSellers || 0} ({(stats.completionRate || 0).toFixed(1)}%)
                     </Text>
                   </View>
                   <View style={styles.progressBar}>
                     <View
-                      style={[styles.progressFill, { width: `${stats.completionRate}%` }]}
+                      style={[styles.progressFill, { width: `${stats.completionRate || 0}%` }]}
                     />
                   </View>
                 </View>
 
-                {stats.suspendedCount > 0 && (
+                {(stats.suspendedCount || 0) > 0 && (
                   <View style={styles.warningBanner}>
                     <Ban size={18} color="#dc2626" />
                     <Text style={styles.warningText}>
@@ -315,7 +315,7 @@ export default function AdminSettlementsScreen() {
                     <View style={styles.settlementHeader}>
                       <View style={styles.sellerInfo}>
                         <User size={20} color="#374151" />
-                        <Text style={styles.sellerName}>{settlement.seller_name}</Text>
+                        <Text style={styles.sellerName}>{settlement.seller_name || '판매자'}</Text>
                       </View>
                       <View
                         style={[
@@ -330,25 +330,25 @@ export default function AdminSettlementsScreen() {
                     <View style={styles.settlementDetails}>
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>판매 건수</Text>
-                        <Text style={styles.detailValue}>{settlement.total_matches}건</Text>
+                        <Text style={styles.detailValue}>{settlement.total_matches || 0}건</Text>
                       </View>
 
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>총 판매액</Text>
                         <Text style={styles.detailValue}>
-                          {settlement.total_sales.toLocaleString()}원
+                          {(settlement.total_sales || 0).toLocaleString()}원
                         </Text>
                       </View>
 
                       <View style={[styles.detailRow, styles.highlightRow]}>
                         <Text style={styles.commissionLabel}>정산 수수료 (30%)</Text>
                         <Text style={styles.commissionValue}>
-                          {settlement.commission_amount.toLocaleString()}원
+                          {(settlement.commission_amount || 0).toLocaleString()}원
                         </Text>
                       </View>
                     </View>
 
-                    {settlement.commission_amount > 0 && (
+                    {(settlement.commission_amount || 0) > 0 && (
                       <View style={styles.paymentSummary}>
                         <View style={styles.paymentRow}>
                           <Text style={styles.paymentLabel}>입금 완료</Text>
@@ -361,10 +361,10 @@ export default function AdminSettlementsScreen() {
                           <Text
                             style={[
                               styles.paymentValue,
-                              { color: settlement.unpaid_amount > 0 ? '#dc2626' : '#16a34a' },
+                              { color: (settlement.unpaid_amount || 0) > 0 ? '#dc2626' : '#16a34a' },
                             ]}
                           >
-                            {settlement.unpaid_amount.toLocaleString()}원
+                            {(settlement.unpaid_amount || 0).toLocaleString()}원
                           </Text>
                         </View>
 
@@ -382,7 +382,7 @@ export default function AdminSettlementsScreen() {
                       </View>
                     )}
 
-                    {settlement.commission_amount > 0 && (
+                    {(settlement.commission_amount || 0) > 0 && (
                       <View style={styles.actionButtons}>
                         <TouchableOpacity
                           onPress={() => handleSuspendAccount(settlement)}
@@ -466,10 +466,10 @@ export default function AdminSettlementsScreen() {
             {selectedSettlement && (
               <View style={styles.modalInfo}>
                 <Text style={styles.modalInfoText}>
-                  판매자: {selectedSettlement.seller_name}
+                  판매자: {selectedSettlement.seller_name || '판매자'}
                 </Text>
                 <Text style={styles.modalInfoText}>
-                  미정산 금액: {selectedSettlement.unpaid_amount.toLocaleString()}원
+                  미정산 금액: {(selectedSettlement.unpaid_amount || 0).toLocaleString()}원
                 </Text>
               </View>
             )}
@@ -540,13 +540,13 @@ export default function AdminSettlementsScreen() {
             {selectedSettlement && (
               <View style={styles.modalInfo}>
                 <Text style={styles.modalInfoText}>
-                  판매자: {selectedSettlement.seller_name}
+                  판매자: {selectedSettlement.seller_name || '판매자'}
                 </Text>
                 <Text style={styles.modalInfoText}>
                   총 입금액: {(selectedSettlement.total_paid_amount || 0).toLocaleString()}원
                 </Text>
                 <Text style={styles.modalInfoText}>
-                  미정산 금액: {selectedSettlement.unpaid_amount.toLocaleString()}원
+                  미정산 금액: {(selectedSettlement.unpaid_amount || 0).toLocaleString()}원
                 </Text>
               </View>
             )}
@@ -557,7 +557,7 @@ export default function AdminSettlementsScreen() {
                   <View key={payment.id} style={styles.paymentItem}>
                     <View style={styles.paymentItemHeader}>
                       <Text style={styles.paymentItemAmount}>
-                        {payment.paid_amount.toLocaleString()}원
+                        {(payment.paid_amount || 0).toLocaleString()}원
                       </Text>
                       <TouchableOpacity
                         onPress={() => handleDeletePayment(payment)}
@@ -567,7 +567,7 @@ export default function AdminSettlementsScreen() {
                       </TouchableOpacity>
                     </View>
                     <Text style={styles.paymentItemDate}>
-                      {new Date(payment.payment_date).toLocaleDateString('ko-KR')}
+                      {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('ko-KR') : '-'}
                     </Text>
                     {payment.notes && (
                       <Text style={styles.paymentItemNotes}>{payment.notes}</Text>

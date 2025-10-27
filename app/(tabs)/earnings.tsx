@@ -199,7 +199,11 @@ export default function EarningsScreen() {
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
           <Text style={safeStyles.headerTitle}>수익 관리</Text>
-          <View style={safeStyles.placeholder} />
+          <TouchableOpacity
+            onPress={() => router.push('/settlement-history')}
+            style={styles.headerHistoryButton}>
+            <History size={24} color="#ec4899" />
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -361,13 +365,6 @@ export default function EarningsScreen() {
               </>
             )}
 
-            <TouchableOpacity
-              onPress={() => router.push('/settlement-history')}
-              style={styles.viewAllHistoryButton}>
-              <History size={20} color="#ffffff" />
-              <Text style={styles.viewAllHistoryButtonText}>전체 정산 내역 보기</Text>
-            </TouchableOpacity>
-
             <View style={styles.totalUnpaid}>
               <Text style={styles.totalUnpaidLabel}>총 미정산 금액</Text>
               <Text style={styles.totalUnpaidAmount}>
@@ -528,6 +525,14 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     backgroundColor: '#f9fafb',
+  },
+  headerHistoryButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#fdf2f8',
   },
   monthNavigation: {
     flexDirection: 'row',
@@ -707,26 +712,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     borderWidth: 1,
     borderColor: '#e5e7eb',
-  },
-  viewAllHistoryButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    marginTop: 16,
-    paddingVertical: 14,
-    backgroundColor: '#ec4899',
-    borderRadius: 10,
-    shadowColor: '#ec4899',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  viewAllHistoryButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#ffffff',
   },
   unpaidWarningText: {
     fontSize: 12,

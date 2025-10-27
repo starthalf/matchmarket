@@ -160,64 +160,121 @@ export class EarningsManager {
   }
   
   /**
-   * 월별 정산 데이터 업데이트
-   * 🔥 수정: 매치 삭제 시 차감 기능 추가 필요
-   */
-  static async updateMonthlySettlement(
-    sellerId: string, 
-    matchDate: string,
-    revenue: {
-      totalRevenue: number;
-      additionalRevenue: number;
-      commissionDue: number;
-    }
-  ): Promise<void> {
-    try {
-      const date = new Date(matchDate);
-      const year = date.getFullYear();
-      const month = date.getMonth() + 1;
-      
-      // 기존 정산 데이터 조회
-      const { data: existing } = await supabaseAdmin
-        .from('monthly_settlements')
-        .select('*')
-        .eq('seller_id', sellerId)
-        .eq('year', year)
-        .eq('month', month)
-        .single();
-      
-      if (existing) {
-        // 업데이트
-        await supabaseAdmin
-          .from('monthly_settlements')
-          .update({
-            match_count: existing.match_count + 1,
-            total_revenue: existing.total_revenue + revenue.totalRevenue,
-            additional_revenue: existing.additional_revenue + revenue.additionalRevenue,
-            commission_due: existing.commission_due + revenue.commissionDue,
-          })
-          .eq('id', existing.id);
-      } else {
-        // 새로 생성
-        await supabaseAdmin
-          .from('monthly_settlements')
-          .insert({
-            seller_id: sellerId,
-            year,
-            month,
-            match_count: 1,
-            total_revenue: revenue.totalRevenue,
-            additional_revenue: revenue.additionalRevenue,
-            commission_due: revenue.commissionDue,
-            payment_status: 'pending',
-            is_blocked: false,
-            is_account_suspended: false,
-          });
-      }
-    } catch (error) {
-      console.error('월별 정산 업데이트 오류:', error);
-    }
+ * 월별 정산 데이터 업데이트 (재계산 방식)
+ * 🔥 earnings 테이블에서 매번 다시 계산하여 정확성 보장
+ */
+static async updateMonthlySettlement(
+  sellerId: string, 
+  matchDate: string,
+  revenue: {
+    totalRevenue: number;
+    additionalRevenue: number;
+    commissionDue: number;
   }
+): Promise<void> {
+  try {
+    const date = new Date(matchDate);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    
+    console.log(`🔄 월별 정산 재계산 시작: ${year}년 ${month}월`);
+    
+    // 🔥 해당 월의 모든 earnings 데이터를 다시 집계
+    const startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+    const endDate = month === 12 
+      ? `${year + 1}-01-01` 
+      : `${year}-${String(month + 1).padStart(2, '0')}-01`;
+    
+    const { data: earningsData, error: earningsError } = await supabaseAdmin
+      .from('earnings')
+      .select('match_total_paid, match_base_price')
+      .eq('seller_id', sellerId)
+      .gte('match_date', startDate)
+      .lt('match_date', endDate);
+    
+    if (earningsError) {
+      console.error('earnings 조회 오류:', earningsError);
+      return;
+    }
+    
+    if (!earningsData || earningsData.length === 0) {
+      console.log('⚠️ 해당 월에 수익 데이터가 없습니다.');
+      return;
+    }
+    
+    // 📊 재계산
+    const matchCount = earningsData.length;
+    let totalRevenue = 0;
+    let additionalRevenue = 0;
+    
+    earningsData.forEach((earning) => {
+      totalRevenue += earning.match_total_paid;
+      const additionalAmount = Math.max(0, earning.match_total_paid - earning.match_base_price);
+      additionalRevenue += additionalAmount;
+    });
+    
+    const commissionDue = additionalRevenue * 0.15;
+    
+    console.log('📊 재계산 결과:', {
+      matchCount,
+      totalRevenue,
+      additionalRevenue,
+      commissionDue
+    });
+    
+    // 기존 정산 데이터 조회
+    const { data: existing } = await supabaseAdmin
+      .from('monthly_settlements')
+      .select('*')
+      .eq('seller_id', sellerId)
+      .eq('year', year)
+      .eq('month', month)
+      .single();
+    
+    if (existing) {
+      // 업데이트 (재계산된 값으로 덮어쓰기)
+      const { error: updateError } = await supabaseAdmin
+        .from('monthly_settlements')
+        .update({
+          match_count: matchCount,
+          total_revenue: totalRevenue,
+          additional_revenue: additionalRevenue,
+          commission_due: commissionDue,
+        })
+        .eq('id', existing.id);
+      
+      if (updateError) {
+        console.error('월별 정산 업데이트 오류:', updateError);
+      } else {
+        console.log('✅ 월별 정산 재계산 완료 (업데이트)');
+      }
+    } else {
+      // 새로 생성
+      const { error: insertError } = await supabaseAdmin
+        .from('monthly_settlements')
+        .insert({
+          seller_id: sellerId,
+          year,
+          month,
+          match_count: matchCount,
+          total_revenue: totalRevenue,
+          additional_revenue: additionalRevenue,
+          commission_due: commissionDue,
+          payment_status: 'pending',
+          is_blocked: false,
+          is_account_suspended: false,
+        });
+      
+      if (insertError) {
+        console.error('월별 정산 생성 오류:', insertError);
+      } else {
+        console.log('✅ 월별 정산 신규 생성 완료');
+      }
+    }
+  } catch (error) {
+    console.error('월별 정산 업데이트 중 오류:', error);
+  }
+}
   
   /**
    * 특정 판매자의 당월 정산 데이터 조회

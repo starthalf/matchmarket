@@ -106,33 +106,43 @@ const pastMyApplications = myApplications.filter(match => {
     return () => clearInterval(interval);
   }, [myMatches, updateMatch]);
 
-   // 🔥 실시간 승인 감지 및 매치 상세 화면으로 자동 이동
-  useEffect(() => {
-    if (!user) return;
+// 🔥 판매자: 입금완료 실시간 알림 감지
+useEffect(() => {
+  if (!user) return;
 
-    const unsubscribe = subscribeToParticipantUpdates(user.id, (updatedParticipant) => {
-      // 승인된 매치 찾기
-      const approvedMatch = matches.find(m => m.id === updatedParticipant.match_id);
-      
-      if (approvedMatch) {
-        Alert.alert(
-          '🎾 매치 참가 승인!',
-          '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
-          [
-            { 
-              text: '입금하기', 
-              onPress: () => {
-                // 매치 상세 화면으로 자동 이동 (입금 모달이 자동으로 뜸)
-                router.push(`/match/${approvedMatch.id}`);
-              }
-            }
-          ]
-        );
+  const unsubscribe = subscribeToParticipantUpdates(user.id, (updatedParticipant) => {
+    // 판매자가 등록한 매치 찾기
+    const myMatch = myMatches.find(m => m.id === updatedParticipant.match_id);
+    
+    if (myMatch && updatedParticipant.status === 'payment_submitted') {
+      // 입금완료 알림
+      if (typeof window !== 'undefined' && window.alert) {
+        window.alert(`💰 입금완료!\n참여자가 입금을 완료했습니다.\n매치관리에서 입금을 확인해주세요.`);
       }
-    });
+    }
+  });
 
-    return () => unsubscribe();
-  }, [user, matches]);
+  return () => unsubscribe();
+}, [user, myMatches]);
+
+// 🔥 참여자: 승인 감지 및 매치 상세 화면으로 자동 이동
+useEffect(() => {
+  if (!user) return;
+
+  const unsubscribe = subscribeToParticipantUpdates(user.id, (updatedParticipant) => {
+    // 승인된 매치 찾기
+    const approvedMatch = matches.find(m => m.id === updatedParticipant.match_id);
+    
+    if (approvedMatch && updatedParticipant.status === 'approved') {
+      if (typeof window !== 'undefined' && window.alert) {
+        window.alert('🎾 매치 참가 승인!\n매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.');
+        router.push(`/match/${approvedMatch.id}`);
+      }
+    }
+  });
+
+  return () => unsubscribe();
+}, [user, matches]);
 
   const handleApproveApplication = (matchId: string, applicationId: string) => {
   const match = matches.find(m => m.id === matchId);

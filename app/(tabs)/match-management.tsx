@@ -9,7 +9,7 @@ import { Match, MatchApplication } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager } from '../../utils/earningsManager';
 import { router } from 'expo-router';
-import { subscribeToParticipantUpdates, createNotification, markNotificationsAsRead } from '../../lib/supabase';
+import { supabase, subscribeToParticipantUpdates, createNotification, markNotificationsAsRead } from '../../lib/supabase';
 
 export default function MatchManagementScreen() {
   const { user } = useAuth();
@@ -53,13 +53,36 @@ const pastMyApplications = myApplications.filter(match => {
   return matchDateTime < now;
 });
 
-// 페이지 진입 시 알림 읽음 처리
+// 🔥 승인 알림이 있으면 참여매치 탭을 먼저 보여주기
   useEffect(() => {
-    if (user) {
-      markNotificationsAsRead(user.id, 'new_application');
-      markNotificationsAsRead(user.id, 'rejected'); // 🔥 거절 알림도 읽음 처리
-      markNotificationsAsRead(user.id, 'payment_confirmed'); // 🔥 입금완료 알림도 읽음 처리
-    }
+    if (!user) return;
+
+    const checkAndMarkNotifications = async () => {
+      try {
+        // 먼저 승인 알림이 있는지 확인
+        const { data: approvedNotifications } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('type', 'approved')
+          .eq('read', false);
+
+        // 승인 알림이 있으면 참여매치 탭으로 전환
+        if (approvedNotifications && approvedNotifications.length > 0) {
+          setSelectedTab('applications');
+        }
+
+        // 모든 알림 읽음 처리
+        await markNotificationsAsRead(user.id, 'new_application');
+        await markNotificationsAsRead(user.id, 'rejected');
+        await markNotificationsAsRead(user.id, 'payment_confirmed');
+        await markNotificationsAsRead(user.id, 'approved'); // 승인 알림도 읽음 처리
+      } catch (error) {
+        console.error('알림 확인 실패:', error);
+      }
+    };
+
+    checkAndMarkNotifications();
   }, [user]);
 
   // 자동 마감 로직은 MatchContext에서 중앙 관리되므로 여기서는 제거
@@ -167,13 +190,13 @@ useEffect(() => {
       applications: updatedApplications
     });
 
-   // 🔥 참여자에게 채팅 알림 전송 (Supabase)
+    // 🔥 참여자에게 승인 알림 전송 (Supabase)
     await createNotification(
       application.userId,
-      'new_chat_room',
+      'approved',
       match.id,
       user?.id,
-      user?.name
+      match.title
     );
   };
 

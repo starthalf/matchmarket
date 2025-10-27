@@ -352,7 +352,7 @@ export default function EarningsScreen() {
                       <View style={styles.unpaidRight}>
                         <Text style={styles.unpaidLabel}>납부할 금액</Text>
                         <Text style={styles.unpaidAmount}>
-                          {unpaidSettlements[unpaidIndex].commission_due.toLocaleString()}원
+                          {(unpaidSettlements[unpaidIndex].unpaid_amount || unpaidSettlements[unpaidIndex].commission_due).toLocaleString()}원
                         </Text>
                         <View style={[
                           styles.statusBadge,
@@ -433,7 +433,7 @@ export default function EarningsScreen() {
               <Text style={styles.totalUnpaidAmount}>
                 {unpaidSettlements
                   .filter(s => s.payment_status !== 'confirmed')
-                  .reduce((sum, s) => sum + s.commission_due, 0)
+                  .reduce((sum, s) => sum + (s.unpaid_amount || s.commission_due), 0)
                   .toLocaleString()}원
               </Text>
             </View>

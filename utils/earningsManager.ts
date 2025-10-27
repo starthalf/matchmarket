@@ -29,6 +29,8 @@ export interface MonthlySettlement {
   total_revenue: number;
   additional_revenue: number;
   commission_due: number;
+  total_paid_amount?: number;
+  unpaid_amount?: number;
   payment_status: 'pending' | 'paid' | 'confirmed';
   payment_date?: string;
   confirmed_by?: string;

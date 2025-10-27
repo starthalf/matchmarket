@@ -282,7 +282,7 @@ export default function EarningsScreen() {
         </View>
 
         {/* 미정산 내역 */}
-        {unpaidSettlements.length > 0 && (
+        {
           <View style={styles.unpaidSection}>
             <View style={styles.unpaidHeaderRow}>
               <Text style={styles.sectionTitle}>미정산 내역</Text>
@@ -296,7 +296,7 @@ export default function EarningsScreen() {
               매달 말일 까지 추가수익에 대한 수수료가 입금되지 않으면 사용이 중지됩니다.
             </Text>
 
-            {unpaidSettlements.length > 0 && (
+            {unpaidSettlements.length > 0 ? (
               <>
                 <View
                   style={[
@@ -363,6 +363,14 @@ export default function EarningsScreen() {
                   </View>
                 </View>
               </>
+            ) : (
+              <View style={styles.settledSection}>
+                <View style={styles.settledIconWrapper}>
+                  <CheckCircle size={48} color="#16a34a" />
+                </View>
+                <Text style={styles.settledTitle}>정산 완료</Text>
+                <Text style={styles.settledSubtext}>모든 수수료가 정산 완료되었습니다</Text>
+              </View>
             )}
 
             <View style={styles.totalUnpaid}>
@@ -393,108 +401,7 @@ export default function EarningsScreen() {
               </View>
             </View>
           </View>
-        )}
-
-        {/* 기간 선택 */}
-        <View style={styles.periodSection}>
-          <View style={styles.periodButtons}>
-            {[
-              { key: 'week', label: '최근 1주' },
-              { key: 'month', label: '최근 1개월' },
-              { key: 'all', label: '전체' },
-            ].map((period) => (
-              <TouchableOpacity
-                key={period.key}
-                style={[
-                  styles.periodButton,
-                  selectedPeriod === period.key && styles.periodButtonActive
-                ]}
-                onPress={() => setSelectedPeriod(period.key as any)}
-              >
-                <Text style={[
-                  styles.periodText,
-                  selectedPeriod === period.key && styles.periodTextActive
-                ]}>
-                  {period.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-
-        {/* 수익 내역 */}
-        <View style={styles.earningsSection}>
-          <Text style={styles.sectionTitle}>수익 내역</Text>
-          
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>로딩 중...</Text>
-            </View>
-          ) : earnings.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>아직 정산된 수익이 없습니다</Text>
-              <Text style={styles.emptySubtext}>매치 완료 후 수익이 자동으로 정산됩니다</Text>
-            </View>
-          ) : (
-            earnings.map((earning) => (
-              <View key={earning.id} style={styles.earningCard}>
-                <View style={styles.earningHeader}>
-                  <Text style={styles.matchTitle} numberOfLines={1}>
-                    {earning.match_title}
-                  </Text>
-                </View>
-                
-                <View style={styles.earningDetails}>
-                  <View style={styles.detailRow}>
-                    <Calendar size={14} color="#6b7280" />
-                    <Text style={styles.detailText}>매치일: {earning.match_date}</Text>
-                  </View>
-                  
-                  {/* 광고 조회수/클릭 - 나중에 다시 살릴 예정 */}
-{/* <View style={styles.detailRow}>
-  <Eye size={14} color="#6b7280" />
-  <Text style={styles.detailText}>
-    광고 조회수: {earning.ad_views?.toLocaleString() || 0}회 / 
-    클릭: {earning.ad_clicks?.toLocaleString() || 0}회
-  </Text>
-</View> */}
-                  
-                  <View style={styles.revenueRow}>
-                    <View style={styles.revenueItem}>
-                      <Text style={styles.revenueLabel}>기본비용</Text>
-                      <Text style={styles.revenueAmount}>
-                        {Number(earning.match_base_cost || 0).toLocaleString()}원
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.revenueItem}>
-                      <Text style={styles.revenueLabel}>추가수익</Text>
-                      <Text style={styles.revenueAmount}>
-                        {Number(earning.match_additional_revenue || 0).toLocaleString()}원
-                      </Text>
-                    </View>
-                    
-                    <View style={styles.revenueItem}>
-                      <Text style={styles.revenueLabel}>광고수익</Text>
-                      <Text style={styles.revenueAmount}>
-                        {Number(earning.ad_share || 0).toLocaleString()}원
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  <View style={styles.totalRevenueRow}>
-                    <View style={styles.totalRevenueItem}>
-                      <Text style={styles.totalRevenueLabel}>총 수익</Text>
-                      <Text style={styles.myShareAmount}>
-                        {Number(earning.total_revenue || 0).toLocaleString()}원
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            ))
-          )}
-        </View>
+        }
 
         {/* 정산 안내 */}
         <View style={styles.infoSection}>
@@ -712,6 +619,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     borderWidth: 1,
     borderColor: '#e5e7eb',
+  },
+  settledSection: {
+    paddingVertical: 40,
+    alignItems: 'center',
+    gap: 12,
+  },
+  settledIconWrapper: {
+    marginBottom: 8,
+  },
+  settledTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#16a34a',
+  },
+  settledSubtext: {
+    fontSize: 14,
+    color: '#6b7280',
+    textAlign: 'center',
   },
   unpaidWarningText: {
     fontSize: 12,

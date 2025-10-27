@@ -9,7 +9,6 @@ import {
   Modal,
   TextInput,
   ActivityIndicator,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -29,28 +28,6 @@ import {
 } from 'lucide-react-native';
 import { useSafeStyles } from '../../constants/Styles';
 import { SettlementManager, MonthlySettlementWithPayments, SettlementPayment } from '../../utils/settlementManager';
-
-// 플랫폼별 Alert 함수
-const showAlert = (title: string, message?: string) => {
-  if (Platform.OS === 'web') {
-    window.alert(message || title);
-  } else {
-    Alert.alert(title, message);
-  }
-};
-
-const showConfirm = (title: string, message: string, onConfirm: () => void) => {
-  if (Platform.OS === 'web') {
-    if (window.confirm(`${title}\n${message}`)) {
-      onConfirm();
-    }
-  } else {
-    Alert.alert(title, message, [
-      { text: '취소', style: 'cancel' },
-      { text: '확인', onPress: onConfirm }
-    ]);
-  }
-};
 
 export default function AdminSettlementsScreen() {
   const safeStyles = useSafeStyles();
@@ -80,7 +57,7 @@ export default function AdminSettlementsScreen() {
       setStats(statsData);
     } catch (error) {
       console.error('정산 데이터 로드 실패:', error);
-      showAlert('오류', '정산 데이터를 불러오는데 실패했습니다.');
+      Alert.alert('오류', '정산 데이터를 불러오는데 실패했습니다.');
     } finally {
       setIsLoading(false);
     }
@@ -106,7 +83,7 @@ export default function AdminSettlementsScreen() {
 
   const handleAddPayment = async () => {
     if (!selectedSettlement || !paymentAmount || parseFloat(paymentAmount) <= 0) {
-      showAlert('오류', '입금액을 올바르게 입력해주세요.');
+      Alert.alert('오류', '입금액을 올바르게 입력해주세요.');
       return;
     }
 
@@ -120,50 +97,64 @@ export default function AdminSettlementsScreen() {
     );
 
     if (result.success) {
-      showAlert('성공', '입금 내역이 추가되었습니다.');
+      Alert.alert('성공', '입금 내역이 추가되었습니다.');
       setShowPaymentModal(false);
       setPaymentAmount('');
       setPaymentNotes('');
       loadSettlements();
     } else {
-      showAlert('오류', result.error || '입금 처리에 실패했습니다.');
+      Alert.alert('오류', result.error || '입금 처리에 실패했습니다.');
     }
   };
 
   const handleDeletePayment = (payment: SettlementPayment) => {
-    showConfirm(
+    Alert.alert(
       '입금 내역 삭제',
-      `${(payment.paid_amount || 0).toLocaleString()}원 입금 내역을 삭제하시겠습니까?`,
-      async () => {
-        const result = await SettlementManager.deletePayment(payment.id);
-        if (result.success) {
-          showAlert('성공', '입금 내역이 삭제되었습니다.');
-          loadSettlements();
-        } else {
-          showAlert('오류', result.error || '삭제에 실패했습니다.');
+      `${payment.paid_amount.toLocaleString()}원 입금 내역을 삭제하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: '삭제',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await SettlementManager.deletePayment(payment.id);
+            if (result.success) {
+              Alert.alert('성공', '입금 내역이 삭제되었습니다.');
+              loadSettlements();
+            } else {
+              Alert.alert('오류', result.error || '삭제에 실패했습니다.');
+            }
+          }
         }
-      }
+      ]
     );
   };
 
   const handleSuspendAccount = (settlement: MonthlySettlementWithPayments) => {
     const action = settlement.is_account_suspended ? '해제' : '정지';
-    showConfirm(
+    Alert.alert(
       `계정 ${action}`,
-      `${settlement.seller_name || '판매자'} 판매자의 계정을 ${action}하시겠습니까?`,
-      async () => {
-        const result = await SettlementManager.suspendAccount(
-          settlement.id,
-          !settlement.is_account_suspended,
-          settlement.is_account_suspended ? '계정 정지 해제' : '미정산으로 인한 계정 정지'
-        );
-        if (result.success) {
-          showAlert('성공', `계정이 ${action}되었습니다.`);
-          loadSettlements();
-        } else {
-          showAlert('오류', result.error || `계정 ${action}에 실패했습니다.`);
+      `${settlement.seller_name} 판매자의 계정을 ${action}하시겠습니까?`,
+      [
+        { text: '취소', style: 'cancel' },
+        {
+          text: action,
+          style: settlement.is_account_suspended ? 'default' : 'destructive',
+          onPress: async () => {
+            const result = await SettlementManager.suspendAccount(
+              settlement.id,
+              !settlement.is_account_suspended,
+              settlement.is_account_suspended ? '계정 정지 해제' : '미정산으로 인한 계정 정지'
+            );
+            if (result.success) {
+              Alert.alert('성공', `계정이 ${action}되었습니다.`);
+              loadSettlements();
+            } else {
+              Alert.alert('오류', result.error || `계정 ${action}에 실패했습니다.`);
+            }
+          }
         }
-      }
+      ]
     );
   };
 
@@ -182,14 +173,14 @@ export default function AdminSettlementsScreen() {
 
   const getStatusColor = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '#dc2626';
-    if ((settlement.unpaid_amount || 0) === 0) return '#16a34a';
+    if (settlement.unpaid_amount === 0) return '#16a34a';
     if ((settlement.total_paid_amount || 0) > 0) return '#3b82f6';
     return '#f59e0b';
   };
 
   const getStatusText = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '계정 정지';
-    if ((settlement.unpaid_amount || 0) === 0) return '정산 완료';
+    if (settlement.unpaid_amount === 0) return '정산 완료';
     if ((settlement.total_paid_amount || 0) > 0) return '부분 입금';
     return '미정산';
   };
@@ -234,14 +225,14 @@ export default function AdminSettlementsScreen() {
                 <View style={styles.statsGrid}>
                   <View style={styles.statCard}>
                     <User size={20} color="#6b7280" />
-                    <Text style={styles.statValue}>{stats.totalSellers || 0}명</Text>
+                    <Text style={styles.statValue}>{stats.totalSellers}명</Text>
                     <Text style={styles.statLabel}>총 판매자</Text>
                   </View>
 
                   <View style={[styles.statCard, { backgroundColor: '#fef3c7' }]}>
                     <DollarSign size={20} color="#f59e0b" />
                     <Text style={[styles.statValue, { color: '#f59e0b' }]}>
-                      {(stats.totalCommission || 0).toLocaleString()}원
+                      {stats.totalCommission.toLocaleString()}원
                     </Text>
                     <Text style={styles.statLabel}>총 수수료</Text>
                   </View>
@@ -249,7 +240,7 @@ export default function AdminSettlementsScreen() {
                   <View style={[styles.statCard, { backgroundColor: '#dbeafe' }]}>
                     <CheckCircle size={20} color="#3b82f6" />
                     <Text style={[styles.statValue, { color: '#3b82f6' }]}>
-                      {(stats.totalPaid || 0).toLocaleString()}원
+                      {stats.totalPaid.toLocaleString()}원
                     </Text>
                     <Text style={styles.statLabel}>정산 완료</Text>
                   </View>
@@ -257,7 +248,7 @@ export default function AdminSettlementsScreen() {
                   <View style={[styles.statCard, { backgroundColor: '#fee2e2' }]}>
                     <AlertCircle size={20} color="#dc2626" />
                     <Text style={[styles.statValue, { color: '#dc2626' }]}>
-                      {(stats.totalUnpaid || 0).toLocaleString()}원
+                      {stats.totalUnpaid.toLocaleString()}원
                     </Text>
                     <Text style={styles.statLabel}>미정산</Text>
                   </View>
@@ -267,17 +258,17 @@ export default function AdminSettlementsScreen() {
                   <View style={styles.progressHeader}>
                     <Text style={styles.progressLabel}>정산 완료율</Text>
                     <Text style={styles.progressValue}>
-                      {stats.completedCount || 0} / {stats.totalSellers || 0} ({(stats.completionRate || 0).toFixed(1)}%)
+                      {stats.completedCount} / {stats.totalSellers} ({stats.completionRate.toFixed(1)}%)
                     </Text>
                   </View>
                   <View style={styles.progressBar}>
                     <View
-                      style={[styles.progressFill, { width: `${stats.completionRate || 0}%` }]}
+                      style={[styles.progressFill, { width: `${stats.completionRate}%` }]}
                     />
                   </View>
                 </View>
 
-                {(stats.suspendedCount || 0) > 0 && (
+                {stats.suspendedCount > 0 && (
                   <View style={styles.warningBanner}>
                     <Ban size={18} color="#dc2626" />
                     <Text style={styles.warningText}>
@@ -307,18 +298,18 @@ export default function AdminSettlementsScreen() {
                     key={settlement.id}
                     style={[
                       styles.settlementCard,
-                      settlement.is_account_suspended && styles.suspendedCard,
+                      settlement.is_account_suspended && styles.suspendedCard
                     ]}
                   >
                     <View style={styles.settlementHeader}>
                       <View style={styles.sellerInfo}>
-                        <User size={20} color="#374151" />
-                        <Text style={styles.sellerName}>{settlement.seller_name || '판매자'}</Text>
+                        <User size={20} color="#ec4899" />
+                        <Text style={styles.sellerName}>{settlement.seller_name}</Text>
                       </View>
                       <View
                         style={[
                           styles.statusBadge,
-                          { backgroundColor: getStatusColor(settlement) },
+                          { backgroundColor: getStatusColor(settlement) }
                         ]}
                       >
                         <Text style={styles.statusText}>{getStatusText(settlement)}</Text>
@@ -328,51 +319,47 @@ export default function AdminSettlementsScreen() {
                     <View style={styles.settlementDetails}>
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>매치 판매</Text>
-                        <Text style={styles.detailValue}>{settlement.match_count || 0}건</Text>
+                        <Text style={styles.detailValue}>{settlement.match_count}건</Text>
                       </View>
 
                       <View style={styles.detailRow}>
                         <Text style={styles.detailLabel}>추가 수익</Text>
                         <Text style={styles.detailValue}>
-                          {(settlement.additional_revenue || 0).toLocaleString()}원
+                          {settlement.additional_revenue.toLocaleString()}원
                         </Text>
                       </View>
 
                       <View style={[styles.detailRow, styles.highlightRow]}>
                         <Text style={styles.commissionLabel}>납부할 수수료 (15%)</Text>
                         <Text style={styles.commissionValue}>
-                          {(settlement.commission_due || 0).toLocaleString()}원
+                          {settlement.commission_due.toLocaleString()}원
                         </Text>
                       </View>
-                    </View>
 
-                    <View style={styles.paymentSummary}>
-                      <View style={styles.paymentRow}>
-                        <Text style={styles.paymentLabel}>입금 완료</Text>
-                        <Text style={[styles.paymentValue, { color: '#3b82f6' }]}>
-                          {(settlement.total_paid_amount || 0).toLocaleString()}원
-                        </Text>
-                      </View>
-                      <View style={styles.paymentRow}>
-                        <Text style={styles.paymentLabel}>미정산 금액</Text>
-                        <Text
-                          style={[
-                            styles.paymentValue,
-                            { color: (settlement.unpaid_amount || 0) > 0 ? '#dc2626' : '#16a34a' },
-                          ]}
-                        >
-                          {(settlement.unpaid_amount || 0).toLocaleString()}원
-                        </Text>
+                      <View style={styles.paymentSummary}>
+                        <View style={styles.paymentRow}>
+                          <Text style={styles.paymentLabel}>정산 완료</Text>
+                          <Text style={[styles.paymentValue, { color: '#3b82f6' }]}>
+                            {(settlement.total_paid_amount || 0).toLocaleString()}원
+                          </Text>
+                        </View>
+
+                        <View style={styles.paymentRow}>
+                          <Text style={styles.paymentLabel}>미정산</Text>
+                          <Text style={[styles.paymentValue, { color: '#dc2626' }]}>
+                            {settlement.unpaid_amount.toLocaleString()}원
+                          </Text>
+                        </View>
                       </View>
 
                       {settlement.payments && settlement.payments.length > 0 && (
                         <TouchableOpacity
-                          onPress={() => openPaymentsListModal(settlement)}
                           style={styles.viewPaymentsButton}
+                          onPress={() => openPaymentsListModal(settlement)}
                         >
                           <FileText size={14} color="#3b82f6" />
                           <Text style={styles.viewPaymentsText}>
-                            입금내역 보기 ({settlement.payments.length}건)
+                            입금 내역 {settlement.payments.length}건 보기
                           </Text>
                         </TouchableOpacity>
                       )}
@@ -380,27 +367,24 @@ export default function AdminSettlementsScreen() {
 
                     <View style={styles.actionButtons}>
                       <TouchableOpacity
-                        onPress={() => handleSuspendAccount(settlement)}
                         style={[
                           styles.actionButton,
                           settlement.is_account_suspended
                             ? styles.unsuspendButton
-                            : styles.suspendButton,
+                            : styles.suspendButton
                         ]}
+                        onPress={() => handleSuspendAccount(settlement)}
                       >
                         {settlement.is_account_suspended ? (
                           <>
-                            <UnlockKeyhole
-                              size={16}
-                              color="#16a34a"
-                            />
+                            <UnlockKeyhole size={14} color="#16a34a" />
                             <Text style={[styles.actionButtonText, { color: '#16a34a' }]}>
-                              계정 정지 해제
+                              정지 해제
                             </Text>
                           </>
                         ) : (
                           <>
-                            <Ban size={16} color="#dc2626" />
+                            <Ban size={14} color="#dc2626" />
                             <Text style={[styles.actionButtonText, { color: '#dc2626' }]}>
                               계정 정지
                             </Text>
@@ -409,12 +393,12 @@ export default function AdminSettlementsScreen() {
                       </TouchableOpacity>
 
                       <TouchableOpacity
-                        onPress={() => openAddPaymentModal(settlement)}
                         style={[styles.actionButton, styles.addPaymentButton]}
+                        onPress={() => openAddPaymentModal(settlement)}
                       >
-                        <Plus size={16} color="#ffffff" />
+                        <Plus size={14} color="#ffffff" />
                         <Text style={[styles.actionButtonText, { color: '#ffffff' }]}>
-                          입금내역 추가
+                          입금 추가
                         </Text>
                       </TouchableOpacity>
                     </View>
@@ -427,65 +411,70 @@ export default function AdminSettlementsScreen() {
               <Text style={styles.infoTitle}>💡 정산 관리 안내</Text>
               <View style={styles.infoContent}>
                 <Text style={styles.infoText}>
-                  • 매월 판매자별 수수료(15%)가 자동으로 계산됩니다
+                  • 판매자의 추가 수익에 대해 15% 수수료를 징수합니다
                 </Text>
                 <Text style={styles.infoText}>
-                  • 입금내역 추가 시 자동으로 미정산 금액이 차감됩니다
+                  • 부분 입금을 여러 번 나눠서 받을 수 있습니다
                 </Text>
                 <Text style={styles.infoText}>
-                  • 미정산 금액이 있는 판매자는 계정 정지가 가능합니다
+                  • 미정산 시 계정을 정지할 수 있습니다
                 </Text>
                 <Text style={styles.infoText}>
-                  • 계정이 정지되면 판매자는 새로운 매치 등록이 불가능합니다
+                  • 입금 내역은 개별적으로 추가/삭제가 가능합니다
                 </Text>
               </View>
             </View>
-
-            <View style={styles.bottomPadding} />
           </>
         )}
+
+        <View style={styles.bottomPadding} />
       </ScrollView>
 
-      {/* 입금내역 추가 모달 */}
       <Modal
         visible={showPaymentModal}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowPaymentModal(false)}
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>입금내역 추가</Text>
+            <Text style={styles.modalTitle}>입금 내역 추가</Text>
 
             {selectedSettlement && (
               <View style={styles.modalInfo}>
                 <Text style={styles.modalInfoText}>
-                  판매자: {selectedSettlement.seller_name || '판매자'}
+                  판매자: {selectedSettlement.seller_name}
                 </Text>
                 <Text style={styles.modalInfoText}>
-                  미정산 금액: {(selectedSettlement.unpaid_amount || 0).toLocaleString()}원
+                  수수료: {selectedSettlement.commission_due.toLocaleString()}원
+                </Text>
+                <Text style={styles.modalInfoText}>
+                  정산 완료: {(selectedSettlement.total_paid_amount || 0).toLocaleString()}원
+                </Text>
+                <Text style={[styles.modalInfoText, { color: '#dc2626', fontWeight: '700' }]}>
+                  미정산: {selectedSettlement.unpaid_amount.toLocaleString()}원
                 </Text>
               </View>
             )}
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>입금액 *</Text>
+              <Text style={styles.inputLabel}>입금액 (원)</Text>
               <TextInput
                 style={styles.input}
-                placeholder="입금액을 입력하세요"
-                keyboardType="numeric"
                 value={paymentAmount}
                 onChangeText={setPaymentAmount}
+                placeholder="입금액을 입력하세요"
+                keyboardType="numeric"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>입금일자 *</Text>
+              <Text style={styles.inputLabel}>입금일</Text>
               <TextInput
                 style={styles.input}
-                placeholder="YYYY-MM-DD"
                 value={paymentDate}
                 onChangeText={setPaymentDate}
+                placeholder="YYYY-MM-DD"
               />
             </View>
 
@@ -493,25 +482,25 @@ export default function AdminSettlementsScreen() {
               <Text style={styles.inputLabel}>메모 (선택)</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="메모를 입력하세요"
-                multiline
-                numberOfLines={3}
                 value={paymentNotes}
                 onChangeText={setPaymentNotes}
+                placeholder="입금 관련 메모를 입력하세요"
+                multiline
+                numberOfLines={3}
               />
             </View>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                onPress={() => setShowPaymentModal(false)}
                 style={[styles.modalButton, styles.cancelButton]}
+                onPress={() => setShowPaymentModal(false)}
               >
                 <Text style={styles.cancelButtonText}>취소</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={handleAddPayment}
                 style={[styles.modalButton, styles.confirmButton]}
+                onPress={handleAddPayment}
               >
                 <Text style={styles.confirmButtonText}>추가</Text>
               </TouchableOpacity>
@@ -520,11 +509,10 @@ export default function AdminSettlementsScreen() {
         </View>
       </Modal>
 
-      {/* 입금내역 목록 모달 */}
       <Modal
         visible={showPaymentsListModal}
         transparent
-        animationType="fade"
+        animationType="slide"
         onRequestClose={() => setShowPaymentsListModal(false)}
       >
         <View style={styles.modalOverlay}>
@@ -532,50 +520,49 @@ export default function AdminSettlementsScreen() {
             <Text style={styles.modalTitle}>입금 내역</Text>
 
             {selectedSettlement && (
-              <View style={styles.modalInfo}>
-                <Text style={styles.modalInfoText}>
-                  판매자: {selectedSettlement.seller_name || '판매자'}
-                </Text>
-                <Text style={styles.modalInfoText}>
-                  총 입금액: {(selectedSettlement.total_paid_amount || 0).toLocaleString()}원
-                </Text>
-                <Text style={styles.modalInfoText}>
-                  미정산 금액: {(selectedSettlement.unpaid_amount || 0).toLocaleString()}원
-                </Text>
-              </View>
+              <>
+                <View style={styles.modalInfo}>
+                  <Text style={styles.modalInfoText}>
+                    판매자: {selectedSettlement.seller_name}
+                  </Text>
+                  <Text style={styles.modalInfoText}>
+                    총 수수료: {selectedSettlement.commission_due.toLocaleString()}원
+                  </Text>
+                </View>
+
+                <ScrollView style={styles.paymentsListScroll}>
+                  {selectedSettlement.payments && selectedSettlement.payments.length > 0 ? (
+                    selectedSettlement.payments.map((payment) => (
+                      <View key={payment.id} style={styles.paymentItem}>
+                        <View style={styles.paymentItemHeader}>
+                          <Text style={styles.paymentItemAmount}>
+                            {payment.paid_amount.toLocaleString()}원
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => handleDeletePayment(payment)}
+                            style={styles.deletePaymentButton}
+                          >
+                            <Trash2 size={16} color="#dc2626" />
+                          </TouchableOpacity>
+                        </View>
+                        <Text style={styles.paymentItemDate}>
+                          {new Date(payment.payment_date).toLocaleDateString('ko-KR')}
+                        </Text>
+                        {payment.notes && (
+                          <Text style={styles.paymentItemNotes}>{payment.notes}</Text>
+                        )}
+                      </View>
+                    ))
+                  ) : (
+                    <Text style={styles.emptyPaymentsText}>입금 내역이 없습니다</Text>
+                  )}
+                </ScrollView>
+              </>
             )}
 
-            <ScrollView style={styles.paymentsListScroll} showsVerticalScrollIndicator={false}>
-              {selectedSettlement?.payments && selectedSettlement.payments.length > 0 ? (
-                selectedSettlement.payments.map((payment) => (
-                  <View key={payment.id} style={styles.paymentItem}>
-                    <View style={styles.paymentItemHeader}>
-                      <Text style={styles.paymentItemAmount}>
-                        {(payment.paid_amount || 0).toLocaleString()}원
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => handleDeletePayment(payment)}
-                        style={styles.deletePaymentButton}
-                      >
-                        <Trash2 size={18} color="#dc2626" />
-                      </TouchableOpacity>
-                    </View>
-                    <Text style={styles.paymentItemDate}>
-                      {payment.payment_date ? new Date(payment.payment_date).toLocaleDateString('ko-KR') : '-'}
-                    </Text>
-                    {payment.notes && (
-                      <Text style={styles.paymentItemNotes}>{payment.notes}</Text>
-                    )}
-                  </View>
-                ))
-              ) : (
-                <Text style={styles.emptyPaymentsText}>입금 내역이 없습니다</Text>
-              )}
-            </ScrollView>
-
             <TouchableOpacity
+              style={[styles.modalButton, styles.confirmButton, { marginTop: 16 }]}
               onPress={() => setShowPaymentsListModal(false)}
-              style={[styles.modalButton, styles.confirmButton]}
             >
               <Text style={styles.confirmButtonText}>닫기</Text>
             </TouchableOpacity>
@@ -589,40 +576,38 @@ export default function AdminSettlementsScreen() {
 const styles = StyleSheet.create({
   content: {
     flex: 1,
+    backgroundColor: '#f9fafb',
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#111827',
+    color: '#dc2626',
+    marginBottom: 2,
   },
   subtitle: {
     fontSize: 14,
     color: '#6b7280',
-    marginTop: 4,
+    fontWeight: '500',
   },
   monthSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    justifyContent: 'space-between',
     backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   monthButton: {
     padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#f3f4f6',
   },
   monthDisplay: {
-    marginHorizontal: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#fdf2f8',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#ec4899',
+    flex: 1,
+    alignItems: 'center',
   },
   monthText: {
     fontSize: 18,
@@ -630,10 +615,9 @@ const styles = StyleSheet.create({
     color: '#111827',
   },
   loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
+    padding: 60,
     alignItems: 'center',
-    paddingVertical: 60,
+    justifyContent: 'center',
   },
   loadingText: {
     marginTop: 16,
@@ -643,45 +627,49 @@ const styles = StyleSheet.create({
   statsSection: {
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
-    marginTop: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '700',
     color: '#111827',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 20,
+    gap: 8,
   },
   statCard: {
     flex: 1,
-    minWidth: '45%',
+    minWidth: '48%',
     backgroundColor: '#f9fafb',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 12,
     alignItems: 'center',
-    gap: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   statValue: {
-    fontSize: 20,
+    fontSize: 16,
     fontWeight: '700',
     color: '#111827',
+    marginTop: 4,
   },
   statLabel: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#6b7280',
+    marginTop: 2,
   },
   progressSection: {
-    marginBottom: 16,
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
   },
   progressHeader: {
     flexDirection: 'row',
@@ -695,8 +683,9 @@ const styles = StyleSheet.create({
     color: '#374151',
   },
   progressValue: {
-    fontSize: 13,
-    color: '#6b7280',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#ec4899',
   },
   progressBar: {
     height: 8,
@@ -707,31 +696,35 @@ const styles = StyleSheet.create({
   progressFill: {
     height: '100%',
     backgroundColor: '#ec4899',
-    borderRadius: 4,
   },
   warningBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#fef2f2',
-    borderRadius: 8,
+    backgroundColor: '#fee2e2',
     padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: '#fca5a5',
   },
   warningText: {
-    fontSize: 13,
-    color: '#991b1b',
-    fontWeight: '600',
     flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#dc2626',
   },
   settlementsSection: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
   },
   emptyState: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    padding: 40,
     alignItems: 'center',
-    paddingVertical: 60,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   emptyTitle: {
     fontSize: 16,

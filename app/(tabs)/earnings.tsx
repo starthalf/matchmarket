@@ -374,7 +374,7 @@ export default function EarningsScreen() {
             )}
 
             <View style={styles.totalUnpaid}>
-              <Text style={styles.totalUnpaidLabel}>총 미정산 금액</Text>
+              <Text style={styles.totalUnpaidLabel}>총 미정산 금액(전체기간)</Text>
               <Text style={styles.totalUnpaidAmount}>
                 {unpaidSettlements
                   .filter(s => s.payment_status !== 'confirmed')

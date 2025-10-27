@@ -239,6 +239,16 @@ static async updateMonthlySettlement(
       const existingPaidAmount = existing.total_paid_amount || 0;
       const newUnpaidAmount = commissionDue - existingPaidAmount;
 
+      // 🔥 payment_status 재계산
+      let newPaymentStatus: 'pending' | 'paid' | 'confirmed';
+      if (newUnpaidAmount === 0) {
+        newPaymentStatus = 'confirmed';
+      } else if (existingPaidAmount > 0) {
+        newPaymentStatus = 'paid';
+      } else {
+        newPaymentStatus = 'pending';
+      }
+
       const { error: updateError } = await supabaseAdmin
         .from('monthly_settlements')
         .update({
@@ -247,6 +257,7 @@ static async updateMonthlySettlement(
           additional_revenue: additionalRevenue,
           commission_due: commissionDue,
           unpaid_amount: newUnpaidAmount,
+          payment_status: newPaymentStatus,
         })
         .eq('id', existing.id);
 
@@ -256,7 +267,8 @@ static async updateMonthlySettlement(
         console.log('✅ 월별 정산 재계산 완료 (업데이트)', {
           commissionDue,
           existingPaidAmount,
-          newUnpaidAmount
+          newUnpaidAmount,
+          newPaymentStatus
         });
       }
     } else {

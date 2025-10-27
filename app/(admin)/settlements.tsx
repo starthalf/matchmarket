@@ -173,16 +173,12 @@ export default function AdminSettlementsScreen() {
 
   const getStatusColor = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '#dc2626';
-    if (settlement.unpaid_amount === 0) return '#16a34a';
-    if ((settlement.total_paid_amount || 0) > 0) return '#3b82f6';
-    return '#f59e0b';
+    return settlement.unpaid_amount === 0 ? '#16a34a' : '#f59e0b';
   };
 
   const getStatusText = (settlement: MonthlySettlementWithPayments) => {
     if (settlement.is_account_suspended) return '계정 정지';
-    if (settlement.unpaid_amount === 0) return '정산 완료';
-    if ((settlement.total_paid_amount || 0) > 0) return '부분 입금';
-    return '미정산';
+    return settlement.unpaid_amount === 0 ? '정산완료' : '미입금';
   };
 
   return (

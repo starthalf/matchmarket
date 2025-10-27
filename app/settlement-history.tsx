@@ -73,74 +73,29 @@ export default function SettlementHistoryScreen() {
     }
   };
 
-  const getStatusIcon = (status: string, isBlocked: boolean) => {
+  const getStatusIcon = (unpaidAmount: number, isBlocked: boolean) => {
     if (isBlocked) return <AlertCircle size={20} color="#dc2626" />;
-
-    switch (status) {
-      case 'confirmed':
-        return <CheckCircle size={20} color="#16a34a" />;
-      case 'paid':
-        return <Clock size={20} color="#3b82f6" />;
-      case 'pending':
-      default:
-        return <AlertCircle size={20} color="#f59e0b" />;
-    }
+    return unpaidAmount === 0 ? <CheckCircle size={20} color="#16a34a" /> : <AlertCircle size={20} color="#f59e0b" />;
   };
 
-  const getStatusText = (status: string, isBlocked: boolean) => {
+  const getStatusText = (unpaidAmount: number, isBlocked: boolean) => {
     if (isBlocked) return '계정 제한';
-
-    switch (status) {
-      case 'confirmed':
-        return '정산 완료';
-      case 'paid':
-        return '관리자 확인 대기';
-      case 'pending':
-      default:
-        return '입금 대기';
-    }
+    return unpaidAmount === 0 ? '정산완료' : '미입금';
   };
 
-  const getStatusColor = (status: string, isBlocked: boolean) => {
+  const getStatusColor = (unpaidAmount: number, isBlocked: boolean) => {
     if (isBlocked) return '#dc2626';
-
-    switch (status) {
-      case 'confirmed':
-        return '#16a34a';
-      case 'paid':
-        return '#3b82f6';
-      case 'pending':
-      default:
-        return '#f59e0b';
-    }
+    return unpaidAmount === 0 ? '#16a34a' : '#f59e0b';
   };
 
-  const getCardBackgroundColor = (status: string, isBlocked: boolean) => {
+  const getCardBackgroundColor = (unpaidAmount: number, isBlocked: boolean) => {
     if (isBlocked) return '#fef2f2';
-
-    switch (status) {
-      case 'confirmed':
-        return '#f0fdf4';
-      case 'paid':
-        return '#eff6ff';
-      case 'pending':
-      default:
-        return '#fffbeb';
-    }
+    return unpaidAmount === 0 ? '#f0fdf4' : '#fffbeb';
   };
 
-  const getCardBorderColor = (status: string, isBlocked: boolean) => {
+  const getCardBorderColor = (unpaidAmount: number, isBlocked: boolean) => {
     if (isBlocked) return '#fca5a5';
-
-    switch (status) {
-      case 'confirmed':
-        return '#86efac';
-      case 'paid':
-        return '#93c5fd';
-      case 'pending':
-      default:
-        return '#fcd34d';
-    }
+    return unpaidAmount === 0 ? '#86efac' : '#fcd34d';
   };
 
   return (
@@ -174,8 +129,8 @@ export default function SettlementHistoryScreen() {
                 style={[
                   styles.settlementCard,
                   {
-                    backgroundColor: getCardBackgroundColor(settlement.payment_status, settlement.is_blocked),
-                    borderColor: getCardBorderColor(settlement.payment_status, settlement.is_blocked),
+                    backgroundColor: getCardBackgroundColor(settlement.unpaid_amount || 0, settlement.is_blocked),
+                    borderColor: getCardBorderColor(settlement.unpaid_amount || 0, settlement.is_blocked),
                   }
                 ]}
               >
@@ -185,14 +140,14 @@ export default function SettlementHistoryScreen() {
                       {settlement.year}년 {settlement.month}월
                     </Text>
                     <View style={styles.statusBadgeContainer}>
-                      {getStatusIcon(settlement.payment_status, settlement.is_blocked)}
+                      {getStatusIcon(settlement.unpaid_amount || 0, settlement.is_blocked)}
                       <Text
                         style={[
                           styles.statusBadgeText,
-                          { color: getStatusColor(settlement.payment_status, settlement.is_blocked) }
+                          { color: getStatusColor(settlement.unpaid_amount || 0, settlement.is_blocked) }
                         ]}
                       >
-                        {getStatusText(settlement.payment_status, settlement.is_blocked)}
+                        {getStatusText(settlement.unpaid_amount || 0, settlement.is_blocked)}
                       </Text>
                     </View>
                   </View>
@@ -233,7 +188,7 @@ export default function SettlementHistoryScreen() {
                     </View>
                   </View>
 
-                  {settlement.payment_status !== 'pending' && (
+                  {(settlement.total_paid_amount || 0) > 0 && (
                     <View style={styles.paidAmountRow}>
                       <View style={styles.detailIconWrapper}>
                         <CheckCircle size={16} color="#16a34a" />
@@ -247,11 +202,11 @@ export default function SettlementHistoryScreen() {
                     </View>
                   )}
 
-                  {settlement.payment_status !== 'confirmed' && (
+                  {(settlement.unpaid_amount || 0) > 0 && (
                     <View style={styles.unpaidAmountRow}>
                       <Text style={styles.unpaidLabel}>미정산 금액</Text>
                       <Text style={styles.unpaidAmount}>
-                        {(settlement.unpaid_amount || settlement.commission_due).toLocaleString()}원
+                        {(settlement.unpaid_amount || 0).toLocaleString()}원
                       </Text>
                     </View>
                   )}

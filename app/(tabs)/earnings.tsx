@@ -190,30 +190,6 @@ export default function EarningsScreen() {
                   </View>
                 </View>
               </View>
-
-              {currentMonthSettlement.commission_due > 0 && (
-                <View style={styles.paymentNotice}>
-                  <AlertCircle size={18} color="#f59e0b" />
-                  <View style={styles.noticeContent}>
-                    <Text style={styles.noticeTitle}>수수료 납부 안내</Text>
-                    <Text style={styles.noticeText}>
-                      • 추가 수익: {currentMonthSettlement.additional_revenue.toLocaleString()}원 중 15% 납부
-                    </Text>
-                    <Text style={styles.noticeText}>
-                      • 납부 기한: {getCurrentMonthDeadline()}까지
-                    </Text>
-                    <Text style={styles.noticeText}>
-                      • 입금 계좌: 매치마켓 000-0000
-                    </Text>
-                    <Text style={styles.noticeText}>
-                      • 입금자명: 판매자명 + {new Date().getMonth() + 1}월 수수료
-                    </Text>
-                    <Text style={[styles.noticeText, styles.warningText]}>
-                      ⚠️ 관리자 확인 전까지 매치 판매 및 참가가 제한됩니다.
-                    </Text>
-                  </View>
-                </View>
-              )}
             </>
           ) : (
             <View style={styles.emptySettlement}>

@@ -339,13 +339,14 @@ export default function EarningsScreen() {
                     <Text style={styles.detailText}>매치일: {earning.match_date}</Text>
                   </View>
                   
-                  <View style={styles.detailRow}>
-                    <Eye size={14} color="#6b7280" />
-                    <Text style={styles.detailText}>
-                      광고 조회수: {earning.ad_views?.toLocaleString() || 0}회 / 
-                      클릭: {earning.ad_clicks?.toLocaleString() || 0}회
-                    </Text>
-                  </View>
+                  {/* 광고 조회수/클릭 - 나중에 다시 살릴 예정 */}
+{/* <View style={styles.detailRow}>
+  <Eye size={14} color="#6b7280" />
+  <Text style={styles.detailText}>
+    광고 조회수: {earning.ad_views?.toLocaleString() || 0}회 / 
+    클릭: {earning.ad_clicks?.toLocaleString() || 0}회
+  </Text>
+</View> */}
                   
                   <View style={styles.revenueRow}>
                     <View style={styles.revenueItem}>

@@ -6,6 +6,7 @@ import { mockMatches } from '../data/mockData';
 import { DataGenerator } from '../utils/dataGenerator';
 import { WaitlistManager } from '../utils/waitlistManager';
 import { supabaseAdmin } from '../lib/supabase';
+import { isMatchExpired } from '../utils/dateHelper';
 
 interface MatchContextType {
   matches: Match[];
@@ -38,17 +39,17 @@ export function MatchProvider({ children }: { children: ReactNode }) {
   // 자동 마감 체크: 날짜가 지난 매치 자동 마감
   useEffect(() => {
     const checkAndCloseExpiredMatches = () => {
-      const now = new Date();
       let hasChanges = false;
 
       setMatches(prev => {
         const updated = prev.map(match => {
           if (!match.isClosed) {
-            const matchDateTime = new Date(`${match.date} ${match.time}`);
+            // 안전한 날짜 파싱 함수 사용
+            const isExpired = isMatchExpired(match.date, match.time);
 
-            if (now > matchDateTime) {
+            if (isExpired) {
               hasChanges = true;
-              console.log(`🔒 자동 마감: ${match.title}`);
+              console.log(`🔒 자동 마감: ${match.title} (날짜: ${match.date}, 시간: ${match.time})`);
 
               // Supabase에도 업데이트
               supabaseAdmin
@@ -58,6 +59,8 @@ export function MatchProvider({ children }: { children: ReactNode }) {
                 .then(({ error }) => {
                   if (error) {
                     console.error('Supabase 자동 마감 업데이트 실패:', error);
+                  } else {
+                    console.log(`✅ Supabase 자동 마감 완료: ${match.title}`);
                   }
                 });
 
@@ -67,15 +70,23 @@ export function MatchProvider({ children }: { children: ReactNode }) {
           return match;
         });
 
+        if (hasChanges) {
+          console.log('✅ 자동 마감 체크 완료: 일부 매치가 마감되었습니다.');
+        }
+
         return hasChanges ? updated : prev;
       });
     };
 
     // 컴포넌트 마운트 시 즉시 체크
+    console.log('🔍 MatchContext: 앱 시작 시 자동 마감 체크 실행');
     checkAndCloseExpiredMatches();
 
     // 1분마다 체크
-    const interval = setInterval(checkAndCloseExpiredMatches, 60000);
+    const interval = setInterval(() => {
+      console.log('🔍 MatchContext: 1분 주기 자동 마감 체크 실행');
+      checkAndCloseExpiredMatches();
+    }, 60000);
 
     return () => clearInterval(interval);
   }, []);

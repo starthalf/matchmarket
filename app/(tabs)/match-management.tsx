@@ -10,6 +10,7 @@ import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager } from '../../utils/earningsManager';
 import { router } from 'expo-router';
 import { supabase, subscribeToParticipantUpdates, createNotification, markNotificationsAsRead } from '../../lib/supabase';
+import { isMatchExpired } from '../../utils/dateHelper';
 
 export default function MatchManagementScreen() {
   const { user } = useAuth();
@@ -53,6 +54,20 @@ const pastMyApplications = myApplications.filter(match => {
   return matchDateTime < now;
 });
 
+// 🔥 매치관리 화면 로드 시 자동 마감 체크
+  useEffect(() => {
+    if (!user) return;
+
+    console.log('📋 매치관리 화면 로드: 자동 마감 체크 실행');
+
+    matches.forEach(async (match) => {
+      if (!match.isClosed && isMatchExpired(match.date, match.time)) {
+        console.log(`🔒 매치관리 화면: 자동 마감 실행 - ${match.title}`);
+        await updateMatch({ ...match, isClosed: true });
+      }
+    });
+  }, [user, matches.length]); // 매치 개수가 변경될 때만 체크
+
 // 🔥 승인 알림이 있으면 참여매치 탭을 먼저 보여주기
   useEffect(() => {
     if (!user) return;
@@ -84,8 +99,6 @@ const pastMyApplications = myApplications.filter(match => {
 
     checkAndMarkNotifications();
   }, [user]);
-
-  // 자동 마감 로직은 MatchContext에서 중앙 관리되므로 여기서는 제거
 
   // 🔥 입금 대기 시간 만료된 신청 자동 제거
   useEffect(() => {

@@ -21,6 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
+import { isMatchExpired, isToday as isTodayHelper } from '../../utils/dateHelper';
 
 type MatchTypeFilter = 'womens' | 'mixed' | null;
 type LevelFilter = 'pro' | null;
@@ -29,18 +30,18 @@ type TimeFilter = 'today' | null;
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
   const { isAdmin, adminLogin } = useAdmin();
-  const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
+  const { matches: displayMatches, isLoadingMatches, refreshMatches, updateMatch } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
-  
+
   // 그룹별로 필터 분리
   const [matchTypeFilter, setMatchTypeFilter] = useState<MatchTypeFilter>(null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
-  
+
   // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
@@ -53,6 +54,18 @@ export default function HomeScreen() {
       mounted.current = false;
     };
   }, []);
+
+  // 홈 화면 로드 시 자동 마감 체크
+  useEffect(() => {
+    console.log('🏠 홈 화면 로드: 자동 마감 체크 실행');
+
+    displayMatches.forEach(async (match) => {
+      if (!match.isClosed && isMatchExpired(match.date, match.time)) {
+        console.log(`🔒 홈 화면: 자동 마감 실행 - ${match.title}`);
+        await updateMatch({ ...match, isClosed: true });
+      }
+    });
+  }, [displayMatches.length]); // 매치 개수가 변경될 때만 체크
 
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
@@ -139,11 +152,9 @@ const toggleRecruitingFilter = () => {
   setRecruitingFilter(prev => !prev);
 };
   
-  // 오늘 날짜 확인
+  // 오늘 날짜 확인 (유틸리티 함수 사용)
   const isToday = (dateString: string) => {
-    const today = new Date();
-    const matchDate = new Date(dateString);
-    return today.toDateString() === matchDate.toDateString();
+    return isTodayHelper(dateString);
   };
 
   return (

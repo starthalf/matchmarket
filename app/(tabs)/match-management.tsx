@@ -687,8 +687,8 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
   </View>
 )}
 
-{/* 🆕 여기에 추가 */}
-{application.status === 'payment_submitted' && (
+// ✅ 수정된 코드 - 마감되지 않은 매치만 입금확인 가능
+{application.status === 'payment_submitted' && !match.isClosed && (
   <View style={styles.applicationActions}>
     <TouchableOpacity
       style={[styles.approveButton, { backgroundColor: '#10b981' }]}
@@ -698,6 +698,24 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
       <Check size={16} color="#ffffff" />
       <Text style={styles.approveButtonText}>입금 확인</Text>
     </TouchableOpacity>
+  </View>
+)}
+
+{/* 🆕 마감된 매치의 입금 대기 상태 안내 */}
+{application.status === 'payment_submitted' && match.isClosed && (
+  <View style={{ 
+    backgroundColor: '#fef3c7', 
+    padding: 8, 
+    borderRadius: 8,
+    marginTop: 8 
+  }}>
+    <Text style={{ 
+      fontSize: 13, 
+      color: '#92400e',
+      textAlign: 'center'
+    }}>
+      마감된 매치는 입금확인을 할 수 없습니다
+    </Text>
   </View>
 )}
                                 </View>

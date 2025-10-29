@@ -29,28 +29,29 @@ export default function MatchManagementScreen() {
 // 현재 시간
 const now = new Date();
 
+// ✅ 수정된 코드 - 종료 시간 기준으로 변경
 // 내 매치를 진행 예정 / 지난 매치로 분류
 const upcomingMyMatches = myMatches.filter(match => {
-  const matchDateTime = new Date(`${match.date} ${match.time}`);
-  // 날짜 지났어도 경기완료 안 했으면 진행 예정으로
-  return matchDateTime >= now || !match.isCompleted;
+  const matchEndDateTime = new Date(`${match.date} ${match.endTime}`);
+  // 종료 시간이 안 지났거나 경기완료 안 했으면 진행 예정으로
+  return matchEndDateTime >= now || !match.isCompleted;
 });
 
 const pastMyMatches = myMatches.filter(match => {
-  const matchDateTime = new Date(`${match.date} ${match.time}`);
-  // 날짜 지났고 경기완료 한 것만 지난 매치로
-  return matchDateTime < now && match.isCompleted;
+  const matchEndDateTime = new Date(`${match.date} ${match.endTime}`);
+  // 종료 시간 지났고 경기완료 한 것만 지난 매치로
+  return matchEndDateTime < now && match.isCompleted;
 });
 
 // 내 신청 매치도 분류
 const upcomingMyApplications = myApplications.filter(match => {
-  const matchDateTime = new Date(`${match.date} ${match.time}`);
-  return matchDateTime >= now;
+  const matchEndDateTime = new Date(`${match.date} ${match.endTime}`);
+  return matchEndDateTime >= now;
 });
 
 const pastMyApplications = myApplications.filter(match => {
-  const matchDateTime = new Date(`${match.date} ${match.time}`);
-  return matchDateTime < now;
+  const matchEndDateTime = new Date(`${match.date} ${match.endTime}`);
+  return matchEndDateTime < now;
 });
 
 

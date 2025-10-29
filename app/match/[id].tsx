@@ -1193,6 +1193,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
+  paymentCompleteButtonDisabled: {
+  backgroundColor: '#d1d5db',
+  opacity: 0.6,
+},
  paymentCompleteButtonText: {
     color: '#ffffff',
     fontSize: 16,

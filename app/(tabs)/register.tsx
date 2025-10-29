@@ -481,7 +481,7 @@ router.push(`/match/${newMatchId}`);
       </TouchableOpacity>
     )}
   </View>
-
+</View>
 
 {/* 매치 유형 */}
           <View style={styles.inputGroup}>

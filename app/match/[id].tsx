@@ -734,12 +734,19 @@ useEffect(() => {
               </View>
             </View>
 
-            <TouchableOpacity 
-              style={styles.paymentCompleteButton}
-              onPress={handlePaymentComplete}
-            >
-              <Text style={styles.paymentCompleteButtonText}>입금완료</Text>
-            </TouchableOpacity>
+            // ✅ 수정된 코드 - 마감된 매치는 입금완료 버튼 비활성화
+<TouchableOpacity 
+  style={[
+    styles.paymentCompleteButton,
+    match.isClosed && styles.paymentCompleteButtonDisabled
+  ]}
+  onPress={handlePaymentComplete}
+  disabled={match.isClosed}
+>
+  <Text style={styles.paymentCompleteButtonText}>
+    {match.isClosed ? '매치 마감됨' : '입금완료'}
+  </Text>
+</TouchableOpacity>
           </View>
         </SafeAreaView>
       </Modal>

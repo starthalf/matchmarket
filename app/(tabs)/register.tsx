@@ -693,34 +693,37 @@ router.push(`/match/${newMatchId}`);
       </ScrollView>
 
      {/* Date/Time Pickers - 네이티브에서만 표시 */}
-{Platform.OS !== 'web' && (
-  <>
-    {showDatePicker && (
-      <DateTimePicker
-        value={formData.date}
-        mode="date"
-        display="default"
-        onChange={onDateChange}
-      />
-    )}
-    {showTimePicker && (
-      <DateTimePicker
-        value={formData.time}
-        mode="time"
-        display="default"
-        onChange={onTimeChange}
-      />
-    )}
-    {showEndTimePicker && (
-      <DateTimePicker
-        value={formData.endTime}
-        mode="time"
-        display="default"
-        onChange={onEndTimeChange}
-      />
-    )}
-  </>
-)}
+      {Platform.OS !== 'web' && (
+        <>
+          {showDatePicker && (
+            <DateTimePicker
+              value={formData.date}
+              mode="date"
+              display="default"
+              onChange={onDateChange}
+            />
+          )}
+          {showTimePicker && (
+            <DateTimePicker
+              value={formData.time}
+              mode="time"
+              display="default"
+              onChange={onTimeChange}
+            />
+          )}
+          {showEndTimePicker && (
+            <DateTimePicker
+              value={formData.endTime}
+              mode="time"
+              display="default"
+              onChange={onEndTimeChange}
+            />
+          )}
+        </>
+      )}
+    </SafeAreaView>
+  );
+}
 
 const styles = StyleSheet.create({
   loadingContainer: {

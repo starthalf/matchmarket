@@ -60,7 +60,7 @@ export default function HomeScreen() {
     console.log('🏠 홈 화면 로드: 자동 마감 체크 실행');
 
     displayMatches.forEach(async (match) => {
-      if (!match.isClosed && isMatchExpired(match.date, match.time)) {
+   if (!match.isClosed && isMatchExpired(match.date, match.endTime)) {
         console.log(`🔒 홈 화면: 자동 마감 실행 - ${match.title}`);
         await updateMatch({ ...match, isClosed: true });
       }

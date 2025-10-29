@@ -25,30 +25,6 @@ import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 import { createNotification } from '../../lib/supabase';
 
-// 웹용 input 스타일
-if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    input[type="date"],
-    input[type="time"] {
-      flex: 1;
-      font-size: 16px;
-      font-family: system-ui, -apple-system, sans-serif;
-      color: #111827;
-      border: none;
-      outline: none;
-      background: transparent;
-      cursor: pointer;
-      padding: 4px;
-    }
-    input[type="date"]::-webkit-calendar-picker-indicator,
-    input[type="time"]::-webkit-calendar-picker-indicator {
-      cursor: pointer;
-    }
-  `;
-  document.head.appendChild(style);
-}
-
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();
   const { addMatch } = useMatches();
@@ -70,7 +46,7 @@ export default function RegisterScreen() {
   court: '',
   description: '',
   basePrice: '',
-matchType: ['혼복'] as Array<'단식' | '남복' | '여복' | '혼복'>,
+  matchType: '혼복' as '단식' | '남복' | '여복' | '혼복',
   maleCount: '2',
   femaleCount: '2',
   adEnabled: false,
@@ -249,7 +225,7 @@ setFormData({
   court: '',
   description: '',
   basePrice: '',
- matchType: ['혼복'],
+  matchType: '혼복',
   maleCount: '2',
   femaleCount: '2',
   adEnabled: false,
@@ -396,113 +372,56 @@ router.push(`/match/${newMatchId}`);
             </View>
           </View>
 
-         <View style={styles.dateTimeContainer}>
-  <View style={styles.dateTimeItem}>
-    <Text style={styles.inputLabel}>날짜 *</Text>
-    {Platform.OS === 'web' ? (
-      <View style={styles.webDateTimeWrapper}>
-        <Calendar size={16} color="#6b7280" />
-        <input
-          type="date"
-          value={formData.date.toISOString().split('T')[0]}
-          onChange={(e) => {
-            const newDate = new Date(e.target.value);
-            if (!isNaN(newDate.getTime())) {
-              setFormData({...formData, date: newDate});
-            }
-          }}
-        />
-      </View>
-    ) : (
-      <TouchableOpacity
-        style={styles.dateTimeInput}
-        onPress={() => setShowDatePicker(true)}
-      >
-        <Calendar size={16} color="#6b7280" />
-        <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-
-  <View style={styles.dateTimeItem}>
-    <Text style={styles.inputLabel}>시작 *</Text>
-    {Platform.OS === 'web' ? (
-      <View style={styles.webDateTimeWrapper}>
-        <Clock size={16} color="#6b7280" />
-        <input
-          type="time"
-          value={formatTime(formData.time)}
-          onChange={(e) => {
-            const [hours, minutes] = e.target.value.split(':');
-            const newTime = new Date(formData.time);
-            newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
-            if (!isNaN(newTime.getTime())) {
-              setFormData({...formData, time: newTime});
-            }
-          }}
-        />
-      </View>
-    ) : (
-      <TouchableOpacity
-        style={styles.dateTimeInput}
-        onPress={() => setShowTimePicker(true)}
-      >
-        <Clock size={16} color="#6b7280" />
-        <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-
-  <View style={styles.dateTimeItem}>
-    <Text style={styles.inputLabel}>종료 *</Text>
-    {Platform.OS === 'web' ? (
-      <View style={styles.webDateTimeWrapper}>
-        <Clock size={16} color="#6b7280" />
-        <input
-          type="time"
-          value={formatTime(formData.endTime)}
-          onChange={(e) => {
-            const [hours, minutes] = e.target.value.split(':');
-            const newTime = new Date(formData.endTime);
-            newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
-            if (!isNaN(newTime.getTime())) {
-              setFormData({...formData, endTime: newTime});
-            }
-          }}
-        />
-      </View>
-    ) : (
-      <TouchableOpacity
-        style={styles.dateTimeInput}
-        onPress={() => setShowEndTimePicker(true)}
-      >
-        <Clock size={16} color="#6b7280" />
-        <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
-      </TouchableOpacity>
-    )}
-  </View>
-</View>
+          <View style={styles.dateTimeContainer}>
+            <View style={styles.dateTimeItem}>
+              <Text style={styles.inputLabel}>날짜 *</Text>
+              <TouchableOpacity 
+                style={styles.dateTimeInput}
+                onPress={() => setShowDatePicker(true)}
+              >
+                <Calendar size={16} color="#6b7280" />
+                <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.dateTimeItem}>
+              <Text style={styles.inputLabel}>시작 *</Text>
+              <TouchableOpacity 
+                style={styles.dateTimeInput}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Clock size={16} color="#6b7280" />
+                <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.dateTimeItem}>
+              <Text style={styles.inputLabel}>종료 *</Text>
+              <TouchableOpacity 
+                style={styles.dateTimeInput}
+                onPress={() => setShowEndTimePicker(true)}
+              >
+                <Clock size={16} color="#6b7280" />
+                <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
 {/* 매치 유형 */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>매치 유형 * (복수 선택 가능)</Text>
+            <Text style={styles.inputLabel}>매치 유형 *</Text>
             <View style={styles.matchTypeGrid}>
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType.includes('단식') && styles.matchTypeButtonActive
+                  formData.matchType === '단식' && styles.matchTypeButtonActive
                 ]}
-                onPress={() => {
-                  const newTypes = formData.matchType.includes('단식')
-                    ? formData.matchType.filter(t => t !== '단식')
-                    : [...formData.matchType, '단식'];
-                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['단식']});
-                }}
+                onPress={() => setFormData({...formData, matchType: '단식'})}
               >
                 <Text style={styles.matchTypeEmoji}>🎾</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType.includes('단식') && styles.matchTypeTextActive
+                  formData.matchType === '단식' && styles.matchTypeTextActive
                 ]}>
                   단식
                 </Text>
@@ -511,19 +430,14 @@ router.push(`/match/${newMatchId}`);
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType.includes('남복') && styles.matchTypeButtonActive
+                  formData.matchType === '남복' && styles.matchTypeButtonActive
                 ]}
-                onPress={() => {
-                  const newTypes = formData.matchType.includes('남복')
-                    ? formData.matchType.filter(t => t !== '남복')
-                    : [...formData.matchType, '남복'];
-                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['남복']});
-                }}
+                onPress={() => setFormData({...formData, matchType: '남복'})}
               >
                 <Text style={styles.matchTypeEmoji}>👨‍🤝‍👨</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType.includes('남복') && styles.matchTypeTextActive
+                  formData.matchType === '남복' && styles.matchTypeTextActive
                 ]}>
                   남복
                 </Text>
@@ -532,19 +446,14 @@ router.push(`/match/${newMatchId}`);
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType.includes('여복') && styles.matchTypeButtonActive
+                  formData.matchType === '여복' && styles.matchTypeButtonActive
                 ]}
-                onPress={() => {
-                  const newTypes = formData.matchType.includes('여복')
-                    ? formData.matchType.filter(t => t !== '여복')
-                    : [...formData.matchType, '여복'];
-                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['여복']});
-                }}
+                onPress={() => setFormData({...formData, matchType: '여복'})}
               >
                 <Text style={styles.matchTypeEmoji}>👩‍🤝‍👩</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType.includes('여복') && styles.matchTypeTextActive
+                  formData.matchType === '여복' && styles.matchTypeTextActive
                 ]}>
                   여복
                 </Text>
@@ -553,19 +462,14 @@ router.push(`/match/${newMatchId}`);
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType.includes('혼복') && styles.matchTypeButtonActive
+                  formData.matchType === '혼복' && styles.matchTypeButtonActive
                 ]}
-                onPress={() => {
-                  const newTypes = formData.matchType.includes('혼복')
-                    ? formData.matchType.filter(t => t !== '혼복')
-                    : [...formData.matchType, '혼복'];
-                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['혼복']});
-                }}
+                onPress={() => setFormData({...formData, matchType: '혼복'})}
               >
                 <Text style={styles.matchTypeEmoji}>👫</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType.includes('혼복') && styles.matchTypeTextActive
+                  formData.matchType === '혼복' && styles.matchTypeTextActive
                 ]}>
                   혼복
                 </Text>
@@ -679,13 +583,13 @@ router.push(`/match/${newMatchId}`);
 
         {/* 광고 수익 배분 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>광고 수익 배분 (준비중)</Text>
+          <Text style={styles.sectionTitle}>광고 수익 배분</Text>
           
           <View style={styles.switchRow}>
             <View style={styles.switchInfo}>
               <Text style={styles.switchLabel}>광고 수익 배분 참여</Text>
               <Text style={styles.switchDescription}>
-                매치 페이지에 광고가 표시되고 수익의 50%를 받습니다
+                매치 페이지에 광고가 표시되고 수익의 50%를 받습니다 (준비중)
               </Text>
             </View>
             <Switch
@@ -877,22 +781,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateTimeText: {
-  fontSize: 14,
-  color: '#374151',
-  marginLeft: 6,
-  fontWeight: '500',
-},
-webDateTimeWrapper: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#d1d5db',
-  borderRadius: 12,
-  backgroundColor: '#ffffff',
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  minHeight: 42,
-},
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 6,
+    fontWeight: '500',
+  },
   matchTypeGrid: {
   flexDirection: 'row',
   gap: 8,

@@ -661,13 +661,13 @@ router.push(`/match/${newMatchId}`);
 
         {/* 광고 수익 배분 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>광고 수익 배분</Text>
+          <Text style={styles.sectionTitle}>광고 수익 배분 (준비중)</Text>
           
           <View style={styles.switchRow}>
             <View style={styles.switchInfo}>
               <Text style={styles.switchLabel}>광고 수익 배분 참여</Text>
               <Text style={styles.switchDescription}>
-                매치 페이지에 광고가 표시되고 수익의 50%를 받습니다 (준비중)
+                매치 페이지에 광고가 표시되고 수익의 50%를 받습니다
               </Text>
             </View>
             <Switch

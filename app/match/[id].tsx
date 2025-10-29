@@ -131,64 +131,72 @@ const [displayPrice, setDisplayPrice] = useState(calculateInitialPrice());
     return () => clearInterval(timer);
   }, [showPaymentTimer]);
 
-  // 승인 상태 감지 및 입금 모달 자동 띄우기
-  useEffect(() => {
-    if (!match || !user) return;
+ // ✅ 수정된 코드 - 매치 마감 시 입금 모달 자동 닫기
+// 승인 상태 감지 및 입금 모달 자동 띄우기
+useEffect(() => {
+  if (!match || !user) return;
+  
+  // 🆕 매치가 마감되면 입금 모달 강제 닫기
+  if (match.isClosed && showPaymentTimer) {
+    setShowPaymentTimer(false);
+    if (typeof window !== 'undefined' && window.alert) {
+      window.alert('매치가 마감되어 입금이 불가능합니다.');
+    }
+    return;
+  }
+  
+  const currentApp = safeApplications.find(app => app.userId === user.id);
+  const currentPart = safeParticipants.find(p => p.userId === user.id);
+  
+  // approved 상태인 경우에만 남은 시간 계산 (payment_pending은 제외)
+  if (currentApp?.status === 'approved' && currentApp.approvedAt) {
+    const approvedTime = new Date(currentApp.approvedAt).getTime();
+    const now = new Date().getTime();
+    const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
+    const remainingSeconds = Math.max(0, 300 - elapsedSeconds); // 5분 = 300초
     
-    const currentApp = safeApplications.find(app => app.userId === user.id);
-    const currentPart = safeParticipants.find(p => p.userId === user.id);
-    
-    // approved 상태인 경우에만 남은 시간 계산 (payment_pending은 제외)
-    if (currentApp?.status === 'approved' && currentApp.approvedAt) {
-      const approvedTime = new Date(currentApp.approvedAt).getTime();
-      const now = new Date().getTime();
-      const elapsedSeconds = Math.floor((now - approvedTime) / 1000);
-      const remainingSeconds = Math.max(0, 300 - elapsedSeconds); // 5분 = 300초
+    if (remainingSeconds > 0) {
+      // 남은 시간이 있으면 모달 표시
+      setPaymentTimeLeft(remainingSeconds);
+      setShowPaymentTimer(true);
       
-     if (remainingSeconds > 0) {
-        // 남은 시간이 있으면 모달 표시
-        setPaymentTimeLeft(remainingSeconds);
-        setShowPaymentTimer(true);
-        
-        // 처음 승인될 때만 알림 (상태 변화 감지)
-        if (myApplication?.status === 'pending') {
-          Alert.alert(
-            '🎾 매치 참가 승인!',
-            '매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.',
-            [{ text: '확인' }]
-          );
-        } else if (myApplication === undefined) {
-          // 로그인 시
-          Alert.alert(
-            '💰 입금 대기중',
-            `승인된 매치가 있습니다.\n${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초 내에 입금을 완료해주세요.`,
-            [{ text: '확인' }]
-          );
+      // 처음 승인될 때만 알림 (상태 변화 감지)
+      if (myApplication?.status === 'pending') {
+        if (typeof window !== 'undefined' && window.alert) {
+          window.alert('🎾 매치 참가 승인!\n매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.');
         }
-      } else {
-        // 시간 만료 - applications 배열에서 완전히 제거
-        if (myApplication?.status === 'approved') {
-          // applications 배열에서 제거
-          const updatedApplications = safeApplications.filter(
-            app => app.id !== currentApp.id
-          );
-          const updatedMatch: Match = {
-            ...match,
-            applications: updatedApplications
-          };
-          updateMatch(updatedMatch);
-          
-          // 모달 닫기
-          setShowPaymentTimer(false);
-          
-          Alert.alert('결제 시간 만료', '결제 시간이 만료되어 참여신청이 취소되었습니다.');
+      } else if (myApplication === undefined) {
+        // 로그인 시
+        if (typeof window !== 'undefined' && window.alert) {
+          window.alert(`💰 입금 대기중\n승인된 매치가 있습니다.\n${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초 내에 입금을 완료해주세요.`);
+        }
+      }
+    } else {
+      // 시간 만료 - applications 배열에서 완전히 제거
+      if (myApplication?.status === 'approved') {
+        // applications 배열에서 제거
+        const updatedApplications = safeApplications.filter(
+          app => app.id !== currentApp.id
+        );
+        const updatedMatch: Match = {
+          ...match,
+          applications: updatedApplications
+        };
+        updateMatch(updatedMatch);
+        
+        // 모달 닫기
+        setShowPaymentTimer(false);
+        
+        if (typeof window !== 'undefined' && window.alert) {
+          window.alert('결제 시간 만료\n결제 시간이 만료되어 참여신청이 취소되었습니다.');
         }
       }
     }
-    
-    setMyApplication(currentApp);
-    setMyParticipation(currentPart);
-  }, [match, user, safeApplications, safeParticipants, myApplication?.status]);
+  }
+  
+  setMyApplication(currentApp);
+  setMyParticipation(currentPart);
+}, [match, user, safeApplications, safeParticipants, myApplication?.status, match?.isClosed]);
 
   // 판매자 정보 가져오기
   useEffect(() => {

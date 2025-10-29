@@ -45,7 +45,7 @@ export function MatchProvider({ children }: { children: ReactNode }) {
         const updated = prev.map(match => {
           if (!match.isClosed) {
             // 안전한 날짜 파싱 함수 사용
-            const isExpired = isMatchExpired(match.date, match.time);
+            const isExpired = isMatchExpired(match.date, match.endTime);
 
             if (isExpired) {
               hasChanges = true;

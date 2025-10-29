@@ -378,17 +378,24 @@ router.push(`/match/${newMatchId}`);
               {Platform.OS === 'web' ? (
                 <View style={styles.inputWithIcon}>
                   <Calendar size={16} color="#6b7280" />
-                  <TextInput
-                    style={styles.textInputWithIcon}
+                  <input
+                    type="date"
+                    style={{
+                      flex: 1,
+                      fontSize: 16,
+                      color: '#111827',
+                      marginLeft: 12,
+                      border: 'none',
+                      outline: 'none',
+                      backgroundColor: 'transparent',
+                    }}
                     value={formData.date.toISOString().split('T')[0]}
-                    onChangeText={(text) => {
-                      const newDate = new Date(text);
+                    onChange={(e) => {
+                      const newDate = new Date(e.target.value);
                       if (!isNaN(newDate.getTime())) {
                         setFormData({...formData, date: newDate});
                       }
                     }}
-                    placeholder="YYYY-MM-DD"
-                    placeholderTextColor="#9ca3af"
                   />
                 </View>
               ) : (
@@ -407,19 +414,26 @@ router.push(`/match/${newMatchId}`);
               {Platform.OS === 'web' ? (
                 <View style={styles.inputWithIcon}>
                   <Clock size={16} color="#6b7280" />
-                  <TextInput
-                    style={styles.textInputWithIcon}
+                  <input
+                    type="time"
+                    style={{
+                      flex: 1,
+                      fontSize: 16,
+                      color: '#111827',
+                      marginLeft: 12,
+                      border: 'none',
+                      outline: 'none',
+                      backgroundColor: 'transparent',
+                    }}
                     value={formatTime(formData.time)}
-                    onChangeText={(text) => {
-                      const [hours, minutes] = text.split(':');
+                    onChange={(e) => {
+                      const [hours, minutes] = e.target.value.split(':');
                       const newTime = new Date(formData.time);
                       newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
                       if (!isNaN(newTime.getTime())) {
                         setFormData({...formData, time: newTime});
                       }
                     }}
-                    placeholder="HH:MM"
-                    placeholderTextColor="#9ca3af"
                   />
                 </View>
               ) : (
@@ -438,19 +452,26 @@ router.push(`/match/${newMatchId}`);
               {Platform.OS === 'web' ? (
                 <View style={styles.inputWithIcon}>
                   <Clock size={16} color="#6b7280" />
-                  <TextInput
-                    style={styles.textInputWithIcon}
+                  <input
+                    type="time"
+                    style={{
+                      flex: 1,
+                      fontSize: 16,
+                      color: '#111827',
+                      marginLeft: 12,
+                      border: 'none',
+                      outline: 'none',
+                      backgroundColor: 'transparent',
+                    }}
                     value={formatTime(formData.endTime)}
-                    onChangeText={(text) => {
-                      const [hours, minutes] = text.split(':');
+                    onChange={(e) => {
+                      const [hours, minutes] = e.target.value.split(':');
                       const newTime = new Date(formData.endTime);
                       newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
                       if (!isNaN(newTime.getTime())) {
                         setFormData({...formData, endTime: newTime});
                       }
                     }}
-                    placeholder="HH:MM"
-                    placeholderTextColor="#9ca3af"
                   />
                 </View>
               ) : (

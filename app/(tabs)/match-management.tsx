@@ -61,7 +61,7 @@ const pastMyApplications = myApplications.filter(match => {
     console.log('📋 매치관리 화면 로드: 자동 마감 체크 실행');
 
     matches.forEach(async (match) => {
-      if (!match.isClosed && isMatchExpired(match.date, match.time)) {
+if (!match.isClosed && isMatchExpired(match.date, match.endTime)) {
         console.log(`🔒 매치관리 화면: 자동 마감 실행 - ${match.title}`);
         await updateMatch({ ...match, isClosed: true });
       }

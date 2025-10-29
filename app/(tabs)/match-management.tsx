@@ -10,7 +10,6 @@ import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager } from '../../utils/earningsManager';
 import { router } from 'expo-router';
 import { supabase, subscribeToParticipantUpdates, createNotification, markNotificationsAsRead } from '../../lib/supabase';
-import { isMatchExpired } from '../../utils/dateHelper';
 
 export default function MatchManagementScreen() {
   const { user } = useAuth();

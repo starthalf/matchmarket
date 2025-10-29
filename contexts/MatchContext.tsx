@@ -37,59 +37,65 @@ export function MatchProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // 자동 마감 체크: 날짜가 지난 매치 자동 마감
-  useEffect(() => {
-    const checkAndCloseExpiredMatches = () => {
-      let hasChanges = false;
+ // ✅ 수정된 코드 (43번째 줄) - 로딩 완료 후에만 체크 시작
+useEffect(() => {
+  // 로딩 중이거나 매치가 없으면 스킵
+  if (isLoadingMatches || matches.length === 0) {
+    return;
+  }
 
-      setMatches(prev => {
-        const updated = prev.map(match => {
-          if (!match.isClosed) {
-            // 안전한 날짜 파싱 함수 사용
-            const isExpired = isMatchExpired(match.date, match.endTime);
+  const checkAndCloseExpiredMatches = () => {
+    let hasChanges = false;
 
-            if (isExpired) {
-              hasChanges = true;
-              console.log(`🔒 자동 마감: ${match.title} (날짜: ${match.date}, 시간: ${match.time})`);
+    setMatches(prev => {
+      const updated = prev.map(match => {
+        if (!match.isClosed) {
+          // 종료 시간 기준으로 체크
+          const isExpired = isMatchExpired(match.date, match.endTime);
 
-              // Supabase에도 업데이트
-              supabaseAdmin
-                .from('matches')
-                .update({ is_closed: true })
-                .eq('id', match.id)
-                .then(({ error }) => {
-                  if (error) {
-                    console.error('Supabase 자동 마감 업데이트 실패:', error);
-                  } else {
-                    console.log(`✅ Supabase 자동 마감 완료: ${match.title}`);
-                  }
-                });
+          if (isExpired) {
+            hasChanges = true;
+            console.log(`🔒 자동 마감: ${match.title} (날짜: ${match.date}, 종료: ${match.endTime})`);
 
-              return { ...match, isClosed: true };
-            }
+            // Supabase에도 업데이트
+            supabaseAdmin
+              .from('matches')
+              .update({ is_closed: true })
+              .eq('id', match.id)
+              .then(({ error }) => {
+                if (error) {
+                  console.error('Supabase 자동 마감 업데이트 실패:', error);
+                } else {
+                  console.log(`✅ Supabase 자동 마감 완료: ${match.title}`);
+                }
+              });
+
+            return { ...match, isClosed: true };
           }
-          return match;
-        });
-
-        if (hasChanges) {
-          console.log('✅ 자동 마감 체크 완료: 일부 매치가 마감되었습니다.');
         }
-
-        return hasChanges ? updated : prev;
+        return match;
       });
-    };
 
-    // 컴포넌트 마운트 시 즉시 체크
-    console.log('🔍 MatchContext: 앱 시작 시 자동 마감 체크 실행');
+      if (hasChanges) {
+        console.log('✅ 자동 마감 체크 완료: 일부 매치가 마감되었습니다.');
+      }
+
+      return hasChanges ? updated : prev;
+    });
+  };
+
+  // 로딩 완료 후 즉시 체크
+  console.log('🔍 MatchContext: 매치 로드 완료 - 자동 마감 체크 실행');
+  checkAndCloseExpiredMatches();
+
+  // 1분마다 체크
+  const interval = setInterval(() => {
+    console.log('🔍 MatchContext: 1분 주기 자동 마감 체크 실행');
     checkAndCloseExpiredMatches();
+  }, 60000);
 
-    // 1분마다 체크
-    const interval = setInterval(() => {
-      console.log('🔍 MatchContext: 1분 주기 자동 마감 체크 실행');
-      checkAndCloseExpiredMatches();
-    }, 60000);
-
-    return () => clearInterval(interval);
-  }, []);
+  return () => clearInterval(interval);
+}, [isLoadingMatches, matches.length]); // 로딩 완료 & 매치 개수 변경 시 실행
 
   // Supabase 실시간 구독: 다른 사용자의 매치 변경사항 실시간 반영
   useEffect(() => {

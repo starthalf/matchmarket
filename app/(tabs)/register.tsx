@@ -377,27 +377,15 @@ router.push(`/match/${newMatchId}`);
     <Text style={styles.inputLabel}>날짜 *</Text>
     {Platform.OS === 'web' ? (
       <View style={styles.webDateTimeWrapper}>
-        <Calendar size={16} color="#6b7280" style={styles.webIcon} />
+        <Calendar size={16} color="#6b7280" />
         <input
           type="date"
-          className="web-date-input"
           value={formData.date.toISOString().split('T')[0]}
           onChange={(e) => {
             const newDate = new Date(e.target.value);
             if (!isNaN(newDate.getTime())) {
               setFormData({...formData, date: newDate});
             }
-          }}
-          style={{
-            flex: 1,
-            fontSize: 16,
-            fontFamily: 'system-ui',
-            color: '#111827',
-            padding: '8px 12px',
-            border: 'none',
-            outline: 'none',
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
           }}
         />
       </View>
@@ -416,10 +404,9 @@ router.push(`/match/${newMatchId}`);
     <Text style={styles.inputLabel}>시작 *</Text>
     {Platform.OS === 'web' ? (
       <View style={styles.webDateTimeWrapper}>
-        <Clock size={16} color="#6b7280" style={styles.webIcon} />
+        <Clock size={16} color="#6b7280" />
         <input
           type="time"
-          className="web-time-input"
           value={formatTime(formData.time)}
           onChange={(e) => {
             const [hours, minutes] = e.target.value.split(':');
@@ -428,17 +415,6 @@ router.push(`/match/${newMatchId}`);
             if (!isNaN(newTime.getTime())) {
               setFormData({...formData, time: newTime});
             }
-          }}
-          style={{
-            flex: 1,
-            fontSize: 16,
-            fontFamily: 'system-ui',
-            color: '#111827',
-            padding: '8px 12px',
-            border: 'none',
-            outline: 'none',
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
           }}
         />
       </View>
@@ -457,10 +433,9 @@ router.push(`/match/${newMatchId}`);
     <Text style={styles.inputLabel}>종료 *</Text>
     {Platform.OS === 'web' ? (
       <View style={styles.webDateTimeWrapper}>
-        <Clock size={16} color="#6b7280" style={styles.webIcon} />
+        <Clock size={16} color="#6b7280" />
         <input
           type="time"
-          className="web-time-input"
           value={formatTime(formData.endTime)}
           onChange={(e) => {
             const [hours, minutes] = e.target.value.split(':');
@@ -469,17 +444,6 @@ router.push(`/match/${newMatchId}`);
             if (!isNaN(newTime.getTime())) {
               setFormData({...formData, endTime: newTime});
             }
-          }}
-          style={{
-            flex: 1,
-            fontSize: 16,
-            fontFamily: 'system-ui',
-            color: '#111827',
-            padding: '8px 12px',
-            border: 'none',
-            outline: 'none',
-            backgroundColor: 'transparent',
-            cursor: 'pointer',
           }}
         />
       </View>
@@ -494,15 +458,6 @@ router.push(`/match/${newMatchId}`);
     )}
   </View>
 </View>
-                    value={formData.date.toISOString().split('T')[0]}
-                    onChange={(e) => {
-                      const newDate = new Date(e.target.value);
-                      if (!isNaN(newDate.getTime())) {
-                        setFormData({...formData, date: newDate});
-                      }
-                    }}
-                  />
-                </View>
               ) : (
                 <TouchableOpacity
                   style={styles.dateTimeInput}
@@ -985,26 +940,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateTimeText: {
-  fontSize: 14,
-  color: '#374151',
-  marginLeft: 6,
-  fontWeight: '500',
-},
-// 여기에 추가 ↓
-webDateTimeWrapper: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  borderWidth: 1,
-  borderColor: '#d1d5db',
-  borderRadius: 12,
-  backgroundColor: '#ffffff',
-  paddingHorizontal: 12,
-  paddingVertical: 4,
-  minHeight: 42,
-},
-webIcon: {
-  marginRight: 8,
-},
+    fontSize: 14,
+    color: '#374151',
+    marginLeft: 6,
+    fontWeight: '500',
+  },
   matchTypeGrid: {
   flexDirection: 'row',
   gap: 8,

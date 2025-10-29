@@ -985,11 +985,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dateTimeText: {
-    fontSize: 14,
-    color: '#374151',
-    marginLeft: 6,
-    fontWeight: '500',
-  },
+  fontSize: 14,
+  color: '#374151',
+  marginLeft: 6,
+  fontWeight: '500',
+},
+// 여기에 추가 ↓
+webDateTimeWrapper: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#d1d5db',
+  borderRadius: 12,
+  backgroundColor: '#ffffff',
+  paddingHorizontal: 12,
+  paddingVertical: 4,
+  minHeight: 42,
+},
+webIcon: {
+  marginRight: 8,
+},
   matchTypeGrid: {
   flexDirection: 'row',
   gap: 8,

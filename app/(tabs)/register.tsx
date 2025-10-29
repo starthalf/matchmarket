@@ -46,7 +46,7 @@ export default function RegisterScreen() {
   court: '',
   description: '',
   basePrice: '',
-  matchType: '혼복' as '단식' | '남복' | '여복' | '혼복',
+matchType: ['혼복'] as Array<'단식' | '남복' | '여복' | '혼복'>,
   maleCount: '2',
   femaleCount: '2',
   adEnabled: false,

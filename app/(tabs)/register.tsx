@@ -375,35 +375,93 @@ router.push(`/match/${newMatchId}`);
           <View style={styles.dateTimeContainer}>
             <View style={styles.dateTimeItem}>
               <Text style={styles.inputLabel}>날짜 *</Text>
-              <TouchableOpacity 
-                style={styles.dateTimeInput}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Calendar size={16} color="#6b7280" />
-                <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
-              </TouchableOpacity>
+              {Platform.OS === 'web' ? (
+                <View style={styles.inputWithIcon}>
+                  <Calendar size={16} color="#6b7280" />
+                  <TextInput
+                    style={styles.textInputWithIcon}
+                    value={formData.date.toISOString().split('T')[0]}
+                    onChangeText={(text) => {
+                      const newDate = new Date(text);
+                      if (!isNaN(newDate.getTime())) {
+                        setFormData({...formData, date: newDate});
+                      }
+                    }}
+                    placeholder="YYYY-MM-DD"
+                    placeholderTextColor="#9ca3af"
+                  />
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.dateTimeInput}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Calendar size={16} color="#6b7280" />
+                  <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            
+
             <View style={styles.dateTimeItem}>
               <Text style={styles.inputLabel}>시작 *</Text>
-              <TouchableOpacity 
-                style={styles.dateTimeInput}
-                onPress={() => setShowTimePicker(true)}
-              >
-                <Clock size={16} color="#6b7280" />
-                <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
-              </TouchableOpacity>
+              {Platform.OS === 'web' ? (
+                <View style={styles.inputWithIcon}>
+                  <Clock size={16} color="#6b7280" />
+                  <TextInput
+                    style={styles.textInputWithIcon}
+                    value={formatTime(formData.time)}
+                    onChangeText={(text) => {
+                      const [hours, minutes] = text.split(':');
+                      const newTime = new Date(formData.time);
+                      newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+                      if (!isNaN(newTime.getTime())) {
+                        setFormData({...formData, time: newTime});
+                      }
+                    }}
+                    placeholder="HH:MM"
+                    placeholderTextColor="#9ca3af"
+                  />
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.dateTimeInput}
+                  onPress={() => setShowTimePicker(true)}
+                >
+                  <Clock size={16} color="#6b7280" />
+                  <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            
+
             <View style={styles.dateTimeItem}>
               <Text style={styles.inputLabel}>종료 *</Text>
-              <TouchableOpacity 
-                style={styles.dateTimeInput}
-                onPress={() => setShowEndTimePicker(true)}
-              >
-                <Clock size={16} color="#6b7280" />
-                <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
-              </TouchableOpacity>
+              {Platform.OS === 'web' ? (
+                <View style={styles.inputWithIcon}>
+                  <Clock size={16} color="#6b7280" />
+                  <TextInput
+                    style={styles.textInputWithIcon}
+                    value={formatTime(formData.endTime)}
+                    onChangeText={(text) => {
+                      const [hours, minutes] = text.split(':');
+                      const newTime = new Date(formData.endTime);
+                      newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+                      if (!isNaN(newTime.getTime())) {
+                        setFormData({...formData, endTime: newTime});
+                      }
+                    }}
+                    placeholder="HH:MM"
+                    placeholderTextColor="#9ca3af"
+                  />
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.dateTimeInput}
+                  onPress={() => setShowEndTimePicker(true)}
+                >
+                  <Clock size={16} color="#6b7280" />
+                  <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
 

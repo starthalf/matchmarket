@@ -372,23 +372,128 @@ router.push(`/match/${newMatchId}`);
             </View>
           </View>
 
-          <View style={styles.dateTimeContainer}>
-            <View style={styles.dateTimeItem}>
-              <Text style={styles.inputLabel}>날짜 *</Text>
-              {Platform.OS === 'web' ? (
-                <View style={styles.inputWithIcon}>
-                  <Calendar size={16} color="#6b7280" />
-                  <input
-                    type="date"
-                    style={{
-                      flex: 1,
-                      fontSize: 16,
-                      color: '#111827',
-                      marginLeft: 12,
-                      border: 'none',
-                      outline: 'none',
-                      backgroundColor: 'transparent',
-                    }}
+         <View style={styles.dateTimeContainer}>
+  <View style={styles.dateTimeItem}>
+    <Text style={styles.inputLabel}>날짜 *</Text>
+    {Platform.OS === 'web' ? (
+      <View style={styles.webDateTimeWrapper}>
+        <Calendar size={16} color="#6b7280" style={styles.webIcon} />
+        <input
+          type="date"
+          className="web-date-input"
+          value={formData.date.toISOString().split('T')[0]}
+          onChange={(e) => {
+            const newDate = new Date(e.target.value);
+            if (!isNaN(newDate.getTime())) {
+              setFormData({...formData, date: newDate});
+            }
+          }}
+          style={{
+            flex: 1,
+            fontSize: 16,
+            fontFamily: 'system-ui',
+            color: '#111827',
+            padding: '8px 12px',
+            border: 'none',
+            outline: 'none',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+          }}
+        />
+      </View>
+    ) : (
+      <TouchableOpacity
+        style={styles.dateTimeInput}
+        onPress={() => setShowDatePicker(true)}
+      >
+        <Calendar size={16} color="#6b7280" />
+        <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+
+  <View style={styles.dateTimeItem}>
+    <Text style={styles.inputLabel}>시작 *</Text>
+    {Platform.OS === 'web' ? (
+      <View style={styles.webDateTimeWrapper}>
+        <Clock size={16} color="#6b7280" style={styles.webIcon} />
+        <input
+          type="time"
+          className="web-time-input"
+          value={formatTime(formData.time)}
+          onChange={(e) => {
+            const [hours, minutes] = e.target.value.split(':');
+            const newTime = new Date(formData.time);
+            newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+            if (!isNaN(newTime.getTime())) {
+              setFormData({...formData, time: newTime});
+            }
+          }}
+          style={{
+            flex: 1,
+            fontSize: 16,
+            fontFamily: 'system-ui',
+            color: '#111827',
+            padding: '8px 12px',
+            border: 'none',
+            outline: 'none',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+          }}
+        />
+      </View>
+    ) : (
+      <TouchableOpacity
+        style={styles.dateTimeInput}
+        onPress={() => setShowTimePicker(true)}
+      >
+        <Clock size={16} color="#6b7280" />
+        <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+
+  <View style={styles.dateTimeItem}>
+    <Text style={styles.inputLabel}>종료 *</Text>
+    {Platform.OS === 'web' ? (
+      <View style={styles.webDateTimeWrapper}>
+        <Clock size={16} color="#6b7280" style={styles.webIcon} />
+        <input
+          type="time"
+          className="web-time-input"
+          value={formatTime(formData.endTime)}
+          onChange={(e) => {
+            const [hours, minutes] = e.target.value.split(':');
+            const newTime = new Date(formData.endTime);
+            newTime.setHours(parseInt(hours) || 0, parseInt(minutes) || 0, 0, 0);
+            if (!isNaN(newTime.getTime())) {
+              setFormData({...formData, endTime: newTime});
+            }
+          }}
+          style={{
+            flex: 1,
+            fontSize: 16,
+            fontFamily: 'system-ui',
+            color: '#111827',
+            padding: '8px 12px',
+            border: 'none',
+            outline: 'none',
+            backgroundColor: 'transparent',
+            cursor: 'pointer',
+          }}
+        />
+      </View>
+    ) : (
+      <TouchableOpacity
+        style={styles.dateTimeInput}
+        onPress={() => setShowEndTimePicker(true)}
+      >
+        <Clock size={16} color="#6b7280" />
+        <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+</View>
                     value={formData.date.toISOString().split('T')[0]}
                     onChange={(e) => {
                       const newDate = new Date(e.target.value);

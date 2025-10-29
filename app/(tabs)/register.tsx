@@ -372,40 +372,101 @@ router.push(`/match/${newMatchId}`);
             </View>
           </View>
 
-          <View style={styles.dateTimeContainer}>
-            <View style={styles.dateTimeItem}>
-              <Text style={styles.inputLabel}>날짜 *</Text>
-              <TouchableOpacity 
-                style={styles.dateTimeInput}
-                onPress={() => setShowDatePicker(true)}
-              >
-                <Calendar size={16} color="#6b7280" />
-                <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.dateTimeItem}>
-              <Text style={styles.inputLabel}>시작 *</Text>
-              <TouchableOpacity 
-                style={styles.dateTimeInput}
-                onPress={() => setShowTimePicker(true)}
-              >
-                <Clock size={16} color="#6b7280" />
-                <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
-              </TouchableOpacity>
-            </View>
-            
-            <View style={styles.dateTimeItem}>
-              <Text style={styles.inputLabel}>종료 *</Text>
-              <TouchableOpacity 
-                style={styles.dateTimeInput}
-                onPress={() => setShowEndTimePicker(true)}
-              >
-                <Clock size={16} color="#6b7280" />
-                <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+      <View style={styles.dateTimeContainer}>
+  <View style={styles.dateTimeItem}>
+    <Text style={styles.inputLabel}>날짜 *</Text>
+    {Platform.OS === 'web' ? (
+      <input
+        type="date"
+        value={formData.date.toISOString().split('T')[0]}
+        onChange={(e) => setFormData({...formData, date: new Date(e.target.value)})}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          fontSize: '14px',
+          borderRadius: '12px',
+          border: '1px solid #d1d5db',
+          backgroundColor: '#f9fafb',
+          fontFamily: 'inherit'
+        }}
+      />
+    ) : (
+      <TouchableOpacity 
+        style={styles.dateTimeInput}
+        onPress={() => setShowDatePicker(true)}
+      >
+        <Calendar size={16} color="#6b7280" />
+        <Text style={styles.dateTimeText}>{formatDate(formData.date)}</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+  
+  <View style={styles.dateTimeItem}>
+    <Text style={styles.inputLabel}>시작 *</Text>
+    {Platform.OS === 'web' ? (
+      <input
+        type="time"
+        value={formatTime(formData.time)}
+        onChange={(e) => {
+          const [hours, minutes] = e.target.value.split(':');
+          const newTime = new Date(formData.time);
+          newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          setFormData({...formData, time: newTime});
+        }}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          fontSize: '14px',
+          borderRadius: '12px',
+          border: '1px solid #d1d5db',
+          backgroundColor: '#f9fafb',
+          fontFamily: 'inherit'
+        }}
+      />
+    ) : (
+      <TouchableOpacity 
+        style={styles.dateTimeInput}
+        onPress={() => setShowTimePicker(true)}
+      >
+        <Clock size={16} color="#6b7280" />
+        <Text style={styles.dateTimeText}>{formatTime(formData.time)}</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+  
+  <View style={styles.dateTimeItem}>
+    <Text style={styles.inputLabel}>종료 *</Text>
+    {Platform.OS === 'web' ? (
+      <input
+        type="time"
+        value={formatTime(formData.endTime)}
+        onChange={(e) => {
+          const [hours, minutes] = e.target.value.split(':');
+          const newTime = new Date(formData.endTime);
+          newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          setFormData({...formData, endTime: newTime});
+        }}
+        style={{
+          width: '100%',
+          padding: '10px 12px',
+          fontSize: '14px',
+          borderRadius: '12px',
+          border: '1px solid #d1d5db',
+          backgroundColor: '#f9fafb',
+          fontFamily: 'inherit'
+        }}
+      />
+    ) : (
+      <TouchableOpacity 
+        style={styles.dateTimeInput}
+        onPress={() => setShowEndTimePicker(true)}
+      >
+        <Clock size={16} color="#6b7280" />
+        <Text style={styles.dateTimeText}>{formatTime(formData.endTime)}</Text>
+      </TouchableOpacity>
+    )}
+  </View>
+</View>
 
 {/* 매치 유형 */}
           <View style={styles.inputGroup}>

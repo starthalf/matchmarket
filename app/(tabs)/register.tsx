@@ -24,7 +24,6 @@ import { Match } from '../../types/tennis';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 import { createNotification } from '../../lib/supabase';
-import { createNotification } from '../../lib/supabase';
 
 // 웹용 input 스타일
 if (Platform.OS === 'web' && typeof document !== 'undefined') {

@@ -24,6 +24,31 @@ import { Match } from '../../types/tennis';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 import { createNotification } from '../../lib/supabase';
+import { createNotification } from '../../lib/supabase';
+
+// 웹용 input 스타일
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    input[type="date"],
+    input[type="time"] {
+      flex: 1;
+      font-size: 16px;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #111827;
+      border: none;
+      outline: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 4px;
+    }
+    input[type="date"]::-webkit-calendar-picker-indicator,
+    input[type="time"]::-webkit-calendar-picker-indicator {
+      cursor: pointer;
+    }
+  `;
+  document.head.appendChild(style);
+}
 
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();

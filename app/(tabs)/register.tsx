@@ -225,7 +225,7 @@ setFormData({
   court: '',
   description: '',
   basePrice: '',
-  matchType: '혼복',
+ matchType: ['혼복'],
   maleCount: '2',
   femaleCount: '2',
   adEnabled: false,

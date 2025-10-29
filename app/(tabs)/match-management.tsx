@@ -54,19 +54,7 @@ const pastMyApplications = myApplications.filter(match => {
   return matchDateTime < now;
 });
 
-// 🔥 매치관리 화면 로드 시 자동 마감 체크
-  useEffect(() => {
-    if (!user) return;
 
-    console.log('📋 매치관리 화면 로드: 자동 마감 체크 실행');
-
-    matches.forEach(async (match) => {
-if (!match.isClosed && isMatchExpired(match.date, match.endTime)) {
-        console.log(`🔒 매치관리 화면: 자동 마감 실행 - ${match.title}`);
-        await updateMatch({ ...match, isClosed: true });
-      }
-    });
-  }, [user, matches.length]); // 매치 개수가 변경될 때만 체크
 
 // 🔥 승인 알림이 있으면 참여매치 탭을 먼저 보여주기
   useEffect(() => {

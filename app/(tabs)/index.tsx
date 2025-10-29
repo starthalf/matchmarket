@@ -21,7 +21,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
-import { isMatchExpired, isToday as isTodayHelper } from '../../utils/dateHelper';
+import { isToday as isTodayHelper } from '../../utils/dateHelper';
 
 type MatchTypeFilter = 'womens' | 'mixed' | null;
 type LevelFilter = 'pro' | null;

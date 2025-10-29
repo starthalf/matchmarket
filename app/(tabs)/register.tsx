@@ -409,19 +409,24 @@ router.push(`/match/${newMatchId}`);
 
 {/* 매치 유형 */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>매치 유형 *</Text>
+            <Text style={styles.inputLabel}>매치 유형 * (복수 선택 가능)</Text>
             <View style={styles.matchTypeGrid}>
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType === '단식' && styles.matchTypeButtonActive
+                  formData.matchType.includes('단식') && styles.matchTypeButtonActive
                 ]}
-                onPress={() => setFormData({...formData, matchType: '단식'})}
+                onPress={() => {
+                  const newTypes = formData.matchType.includes('단식')
+                    ? formData.matchType.filter(t => t !== '단식')
+                    : [...formData.matchType, '단식'];
+                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['단식']});
+                }}
               >
                 <Text style={styles.matchTypeEmoji}>🎾</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType === '단식' && styles.matchTypeTextActive
+                  formData.matchType.includes('단식') && styles.matchTypeTextActive
                 ]}>
                   단식
                 </Text>
@@ -430,14 +435,19 @@ router.push(`/match/${newMatchId}`);
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType === '남복' && styles.matchTypeButtonActive
+                  formData.matchType.includes('남복') && styles.matchTypeButtonActive
                 ]}
-                onPress={() => setFormData({...formData, matchType: '남복'})}
+                onPress={() => {
+                  const newTypes = formData.matchType.includes('남복')
+                    ? formData.matchType.filter(t => t !== '남복')
+                    : [...formData.matchType, '남복'];
+                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['남복']});
+                }}
               >
                 <Text style={styles.matchTypeEmoji}>👨‍🤝‍👨</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType === '남복' && styles.matchTypeTextActive
+                  formData.matchType.includes('남복') && styles.matchTypeTextActive
                 ]}>
                   남복
                 </Text>
@@ -446,14 +456,19 @@ router.push(`/match/${newMatchId}`);
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType === '여복' && styles.matchTypeButtonActive
+                  formData.matchType.includes('여복') && styles.matchTypeButtonActive
                 ]}
-                onPress={() => setFormData({...formData, matchType: '여복'})}
+                onPress={() => {
+                  const newTypes = formData.matchType.includes('여복')
+                    ? formData.matchType.filter(t => t !== '여복')
+                    : [...formData.matchType, '여복'];
+                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['여복']});
+                }}
               >
                 <Text style={styles.matchTypeEmoji}>👩‍🤝‍👩</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType === '여복' && styles.matchTypeTextActive
+                  formData.matchType.includes('여복') && styles.matchTypeTextActive
                 ]}>
                   여복
                 </Text>
@@ -462,14 +477,19 @@ router.push(`/match/${newMatchId}`);
               <TouchableOpacity
                 style={[
                   styles.matchTypeButton,
-                  formData.matchType === '혼복' && styles.matchTypeButtonActive
+                  formData.matchType.includes('혼복') && styles.matchTypeButtonActive
                 ]}
-                onPress={() => setFormData({...formData, matchType: '혼복'})}
+                onPress={() => {
+                  const newTypes = formData.matchType.includes('혼복')
+                    ? formData.matchType.filter(t => t !== '혼복')
+                    : [...formData.matchType, '혼복'];
+                  setFormData({...formData, matchType: newTypes.length > 0 ? newTypes : ['혼복']});
+                }}
               >
                 <Text style={styles.matchTypeEmoji}>👫</Text>
                 <Text style={[
                   styles.matchTypeText,
-                  formData.matchType === '혼복' && styles.matchTypeTextActive
+                  formData.matchType.includes('혼복') && styles.matchTypeTextActive
                 ]}>
                   혼복
                 </Text>

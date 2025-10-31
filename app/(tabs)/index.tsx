@@ -363,28 +363,28 @@ const toggleRecruitingFilter = () => {
         </ScrollView>
       </View>
 
-      {/* ✅ 지역 필터 - 드롭다운 */}
+     {/* ✅ 지역 필터 - 세련된 드롭다운 */}
 <View style={styles.locationFilterSection}>
-  <View style={styles.locationFilterRow}>
-    <MapPin size={16} color="#6b7280" />
-    <Text style={styles.locationFilterLabel}>지역</Text>
-    {Platform.OS === 'web' ? (
+  {Platform.OS === 'web' ? (
+    <View style={styles.locationSelectWrapper}>
+      <MapPin size={16} color="#6b7280" />
       <select
         value={locationFilter}
         onChange={(e) => setLocationFilter(e.target.value)}
         style={{
           flex: 1,
-          padding: '8px 12px',
+          padding: '0 4px',
           fontSize: '14px',
-          borderRadius: '8px',
-          border: '1px solid #d1d5db',
-          backgroundColor: '#ffffff',
+          border: 'none',
+          backgroundColor: 'transparent',
           color: '#374151',
           fontFamily: 'inherit',
-          cursor: 'pointer'
+          cursor: 'pointer',
+          outline: 'none',
+          fontWeight: '500'
         }}
       >
-        <option value="">전체</option>
+        <option value="">전체 지역</option>
         <option value="서울시">서울시</option>
         <option value="경기북부">경기북부</option>
         <option value="경기남부">경기남부</option>
@@ -406,17 +406,18 @@ const toggleRecruitingFilter = () => {
         <option value="전남">전남</option>
         <option value="제주도">제주도</option>
       </select>
-    ) : (
-      <TouchableOpacity 
-        style={styles.locationDropdown}
-        onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
-      >
-        <Text style={styles.locationDropdownText}>
-          {locationFilter || '전체'}
-        </Text>
-      </TouchableOpacity>
-    )}
-  </View>
+    </View>
+  ) : (
+    <TouchableOpacity 
+      style={styles.locationSelectWrapper}
+      onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
+    >
+      <MapPin size={16} color="#6b7280" />
+      <Text style={styles.locationSelectText}>
+        {locationFilter || '전체 지역'}
+      </Text>
+    </TouchableOpacity>
+  )}
 </View>
 
       {/* Sort 모달 */}

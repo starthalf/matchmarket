@@ -363,52 +363,61 @@ const toggleRecruitingFilter = () => {
         </ScrollView>
       </View>
 
-      {/* ✅ 지역 필터 섹션 */}
-      <View style={styles.locationFilterSection}>
-        <Text style={styles.locationFilterLabel}>지역</Text>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          style={styles.locationFilterScroll}
-        >
-          <TouchableOpacity
-            style={[
-              styles.locationFilterChip,
-              locationFilter === '' && styles.locationFilterChipActive
-            ]}
-            onPress={() => setLocationFilter('')}
-          >
-            <Text style={[
-              styles.locationFilterText,
-              locationFilter === '' && styles.locationFilterTextActive
-            ]}>
-              전체
-            </Text>
-          </TouchableOpacity>
-         {[
-  '서울시', '경기북부', '경기남부', '경기서부', '경기동부',
-  '인천시', '대전시', '대구시', '부산시', '울산시',
-  '광주시', '세종시', '강원도', '충북', '충남',
-  '경북', '경남', '전북', '전남', '제주도'
-].map((location) => (
-            <TouchableOpacity
-              key={location}
-              style={[
-                styles.locationFilterChip,
-                locationFilter === location && styles.locationFilterChipActive
-              ]}
-              onPress={() => setLocationFilter(location)}
-            >
-              <Text style={[
-                styles.locationFilterText,
-                locationFilter === location && styles.locationFilterTextActive
-              ]}>
-                {location}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+      {/* ✅ 지역 필터 - 드롭다운 */}
+<View style={styles.locationFilterSection}>
+  <View style={styles.locationFilterRow}>
+    <MapPin size={16} color="#6b7280" />
+    <Text style={styles.locationFilterLabel}>지역</Text>
+    {Platform.OS === 'web' ? (
+      <select
+        value={locationFilter}
+        onChange={(e) => setLocationFilter(e.target.value)}
+        style={{
+          flex: 1,
+          padding: '8px 12px',
+          fontSize: '14px',
+          borderRadius: '8px',
+          border: '1px solid #d1d5db',
+          backgroundColor: '#ffffff',
+          color: '#374151',
+          fontFamily: 'inherit',
+          cursor: 'pointer'
+        }}
+      >
+        <option value="">전체</option>
+        <option value="서울시">서울시</option>
+        <option value="경기북부">경기북부</option>
+        <option value="경기남부">경기남부</option>
+        <option value="경기서부">경기서부</option>
+        <option value="경기동부">경기동부</option>
+        <option value="인천시">인천시</option>
+        <option value="대전시">대전시</option>
+        <option value="대구시">대구시</option>
+        <option value="부산시">부산시</option>
+        <option value="울산시">울산시</option>
+        <option value="광주시">광주시</option>
+        <option value="세종시">세종시</option>
+        <option value="강원도">강원도</option>
+        <option value="충북">충북</option>
+        <option value="충남">충남</option>
+        <option value="경북">경북</option>
+        <option value="경남">경남</option>
+        <option value="전북">전북</option>
+        <option value="전남">전남</option>
+        <option value="제주도">제주도</option>
+      </select>
+    ) : (
+      <TouchableOpacity 
+        style={styles.locationDropdown}
+        onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
+      >
+        <Text style={styles.locationDropdownText}>
+          {locationFilter || '전체'}
+        </Text>
+      </TouchableOpacity>
+    )}
+  </View>
+</View>
 
       {/* Sort 모달 */}
       <Modal

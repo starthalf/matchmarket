@@ -37,7 +37,7 @@
         "android.permission.ACCESS_NETWORK_STATE"
       ]
     },
-"web": {
+    "web": {
       "bundler": "metro",
       "output": "static",
       "favicon": "./assets/favicon.png",
@@ -49,6 +49,7 @@
       "display": "standalone",
       "orientation": "portrait",
       "startUrl": "/"
+    },
     "plugins": [
       "expo-router",
       "expo-font",

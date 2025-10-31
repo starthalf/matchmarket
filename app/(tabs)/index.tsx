@@ -761,35 +761,20 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: '#ffffff',
   },
-  // 기존 locationFilterSection 관련 스타일 전체 삭제하고:
-// ✅ 지역 필터 스타일 (드롭다운)
+ // ✅ 지역 필터 스타일 (세련된 드롭다운)
 locationFilterSection: {
   backgroundColor: '#ffffff',
   paddingHorizontal: 16,
-  paddingVertical: 10,
+  paddingVertical: 12,
   borderBottomWidth: 1,
   borderBottomColor: '#e5e7eb',
 },
-locationFilterRow: {
+locationSelectWrapper: {
   flexDirection: 'row',
   alignItems: 'center',
-  gap: 8,
+  gap: 6,
 },
-locationFilterLabel: {
-  fontSize: 13,
-  fontWeight: '600',
-  color: '#374151',
-},
-locationDropdown: {
-  flex: 1,
-  paddingHorizontal: 12,
-  paddingVertical: 8,
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: '#d1d5db',
-  backgroundColor: '#ffffff',
-},
-locationDropdownText: {
+locationSelectText: {
   fontSize: 14,
   color: '#374151',
   fontWeight: '500',

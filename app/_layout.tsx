@@ -8,6 +8,7 @@ import { AuthProvider } from '@/contexts/AuthContext';
 import { MatchProvider } from '@/contexts/MatchContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { ChatProvider } from '@/contexts/ChatContext';
+import { InstallPrompt } from '../components/InstallPrompt';
 
 export default function RootLayout() {
   useFrameworkReady();
@@ -57,5 +58,9 @@ export default function RootLayout() {
         </AdminProvider>
       </AuthProvider>
     </SafeAreaProvider>
+    <InstallPrompt />
+    </>
+  );
+}
   );
 }

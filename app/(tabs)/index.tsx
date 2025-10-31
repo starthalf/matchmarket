@@ -13,7 +13,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell, ArrowUpDown, X, Check } from 'lucide-react-native';
+import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';

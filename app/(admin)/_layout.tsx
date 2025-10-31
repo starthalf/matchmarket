@@ -21,7 +21,7 @@ export default function AdminLayout() {
           fontWeight: '600',
         },
       }}>
-      <Tabs.Screen
+      {/* <Tabs.Screen
         name="dashboard"
         options={{
           title: '대시보드',
@@ -47,7 +47,7 @@ export default function AdminLayout() {
             <AlertTriangle size={size} color={color} />
           ),
         }}
-      />
+      /> */}
       <Tabs.Screen
         name="settlements"
         options={{

@@ -900,31 +900,23 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6b7280',
   },
-  locationScrollContainer: {
-    marginTop: 8,
-  },
-  locationChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#f9fafb',
-    marginRight: 8,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  locationChipActive: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#16a34a',
-  },
-  locationChipText: {
-    fontSize: 14,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  locationChipTextActive: {
-    color: '#16a34a',
-    fontWeight: '600',
-  },
+  // 기존 locationScrollContainer, locationChip 관련 스타일 삭제하고:
+locationDropdownButton: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 12,
+  borderWidth: 1,
+  borderColor: '#d1d5db',
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  paddingVertical: 12,
+  backgroundColor: '#ffffff',
+},
+locationDropdownButtonText: {
+  flex: 1,
+  fontSize: 16,
+  color: '#111827',
+},
   dateTimeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',

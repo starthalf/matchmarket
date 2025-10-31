@@ -1,4 +1,4 @@
-// app/(tabs)/register.tsx - v2 기준 완전한 버전 (null 에러 해결)
+// app/(tabs)/register.tsx - v2 기준 완전한 버전 (시/군 단위 지역)
 
 import React, { useState } from 'react';
 import { useEffect } from 'react';
@@ -46,12 +46,13 @@ export default function RegisterScreen() {
   court: '',
   description: '',
   basePrice: '',
- matchType: ['혼복'] as Array<'단식' | '남복' | '여복' | '혼복'>,
+  matchType: ['혼복'] as Array<'단식' | '남복' | '여복' | '혼복'>,
   maleCount: '2',
   femaleCount: '2',
   adEnabled: false,
   ntrpMin: '3.0',
   ntrpMax: '4.5',
+  location: '서울시', // ✅ 기본값 서울시
 });
   
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -157,7 +158,7 @@ export default function RegisterScreen() {
   try {
     // 새로운 매치 객체 생성
     const newMatchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    console.log('새 매치 ID 생성:', newMatchId); // 디버깅용
+    console.log('새 매치 ID 생성:', newMatchId);
     
    const newMatch: Match = {
   id: newMatchId,
@@ -195,13 +196,13 @@ export default function RegisterScreen() {
         max: ntrpMaxNum,
       },
       weather: '맑음',
-      location: '서울',
+      location: formData.location, // ✅ 선택한 지역 사용
       createdAt: new Date().toISOString(),
   isClosed: false,
-  isDummy: false, // 🔥 추가: 실제 사용자가 등록한 매치는 더미가 아님
+  isDummy: false,
 };
 
-    console.log('매치 객체 생성 완료:', newMatch); // 디버깅용
+    console.log('매치 객체 생성 완료:', newMatch);
 
     // MatchContext에 매치 추가
 console.log('새 매치 추가 중:', newMatchId);
@@ -225,12 +226,13 @@ setFormData({
   court: '',
   description: '',
   basePrice: '',
-   matchType: ['혼복'],
+  matchType: ['혼복'],
   maleCount: '2',
   femaleCount: '2',
   adEnabled: false,
   ntrpMin: '3.0',
   ntrpMax: '4.5',
+  location: '서울시', // ✅ 기본값으로 초기화
 });
 
 // 매치 상세페이지로 즉시 이동
@@ -370,6 +372,40 @@ router.push(`/match/${newMatchId}`);
                 placeholderTextColor="#9ca3af"
               />
             </View>
+          </View>
+
+          {/* ✅ 지역 선택 */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>지역 선택 *</Text>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.locationScrollContainer}
+            >
+              {[
+                '서울시', '성남시', '수원시', '용인시', '고양시',
+                '부천시', '안산시', '남양주시', '화성시', '평택시',
+                '안양시', '의정부시', '시흥시', '파주시', '김포시',
+                '광명시', '광주시', '군포시', '오산시', '이천시',
+                '양주시', '인천시', '구리시', '안성시', '포천시'
+              ].map((location) => (
+                <TouchableOpacity
+                  key={location}
+                  style={[
+                    styles.locationChip,
+                    formData.location === location && styles.locationChipActive
+                  ]}
+                  onPress={() => setFormData({...formData, location})}
+                >
+                  <Text style={[
+                    styles.locationChipText,
+                    formData.location === location && styles.locationChipTextActive
+                  ]}>
+                    {location}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
 
       <View style={styles.dateTimeContainer}>
@@ -844,6 +880,31 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#6b7280',
+  },
+  locationScrollContainer: {
+    marginTop: 8,
+  },
+  locationChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: '#f9fafb',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  locationChipActive: {
+    backgroundColor: '#dcfce7',
+    borderColor: '#16a34a',
+  },
+  locationChipText: {
+    fontSize: 14,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  locationChipTextActive: {
+    color: '#16a34a',
+    fontWeight: '600',
   },
   dateTimeContainer: {
     flexDirection: 'row',

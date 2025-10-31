@@ -21,9 +21,10 @@ export default function AdminLayout() {
           fontWeight: '600',
         },
       }}>
-   {/* <Tabs.Screen
+   <Tabs.Screen
         name="dashboard"
         options={{
+          href: null,
           title: '대시보드',
           tabBarIcon: ({ size, color }) => (
             <BarChart3 size={size} color={color} />
@@ -33,6 +34,7 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="withdrawals"
         options={{
+          href: null,
           title: '출금',
           tabBarIcon: ({ size, color }) => (
             <CreditCard size={size} color={color} />
@@ -42,12 +44,13 @@ export default function AdminLayout() {
       <Tabs.Screen
         name="payments"
         options={{
+          href: null,
           title: '입금확인',
           tabBarIcon: ({ size, color }) => (
             <AlertTriangle size={size} color={color} />
           ),
         }}
-      /> */}
+      />
       <Tabs.Screen
         name="settlements"
         options={{

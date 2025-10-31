@@ -21,7 +21,7 @@ export default function AdminLayout() {
           fontWeight: '600',
         },
       }}>
-      {/* <Tabs.Screen
+{/* <Tabs.Screen
         name="dashboard"
         options={{
           title: '대시보드',
@@ -48,15 +48,6 @@ export default function AdminLayout() {
           ),
         }}
       /> */}
-      <Tabs.Screen
-        name="settlements"
-        options={{
-          title: '월별정산',
-          tabBarIcon: ({ size, color }) => (
-            <DollarSign size={size} color={color} />
-          ),
-        }}
-      />
       <Tabs.Screen
         name="ads"
         options={{

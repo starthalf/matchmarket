@@ -1,4 +1,4 @@
-// app/(tabs)/index.tsx - 시/군 단위 지역 필터
+// app/(tabs)/index.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -283,72 +283,146 @@ const toggleRecruitingFilter = () => {
       {/* 필터 칩들 (그룹별 로직) */}
       <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {/* 레벨 필터 */}
           <TouchableOpacity
-            style={[styles.chip, levelFilter === 'pro' && styles.chipActive]}
+            style={[
+              styles.chip,
+              levelFilter === 'pro' && styles.chipActive
+            ]}
             onPress={toggleLevelFilter}
           >
-            <Text style={[styles.chipText, levelFilter === 'pro' && styles.chipTextActive]}>선출</Text>
+            <Text style={[
+              styles.chipText,
+              levelFilter === 'pro' && styles.chipTextActive
+            ]}>
+              선출
+            </Text>
           </TouchableOpacity>
 
+          {/* 매치 유형 필터 */}
           <TouchableOpacity
-            style={[styles.chip, matchTypeFilter === 'womens' && styles.chipActive]}
+            style={[
+              styles.chip,
+              matchTypeFilter === 'womens' && styles.chipActive
+            ]}
             onPress={() => toggleMatchTypeFilter('womens')}
           >
-            <Text style={[styles.chipText, matchTypeFilter === 'womens' && styles.chipTextActive]}>여복</Text>
+            <Text style={[
+              styles.chipText,
+              matchTypeFilter === 'womens' && styles.chipTextActive
+            ]}>
+              여복
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[styles.chip, matchTypeFilter === 'mixed' && styles.chipActive]}
+            style={[
+              styles.chip,
+              matchTypeFilter === 'mixed' && styles.chipActive
+            ]}
             onPress={() => toggleMatchTypeFilter('mixed')}
           >
-            <Text style={[styles.chipText, matchTypeFilter === 'mixed' && styles.chipTextActive]}>혼복</Text>
+            <Text style={[
+              styles.chipText,
+              matchTypeFilter === 'mixed' && styles.chipTextActive
+            ]}>
+              혼복
+            </Text>
           </TouchableOpacity>
 
+          {/* 시간 필터 */}
           <TouchableOpacity
-            style={[styles.chip, timeFilter === 'today' && styles.chipActive]}
+            style={[
+              styles.chip,
+              timeFilter === 'today' && styles.chipActive
+            ]}
             onPress={toggleTimeFilter}
           >
-            <Text style={[styles.chipText, timeFilter === 'today' && styles.chipTextActive]}>오늘</Text>
+            <Text style={[
+              styles.chipText,
+              timeFilter === 'today' && styles.chipTextActive
+            ]}>
+              오늘
+            </Text>
           </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.chip, recruitingFilter && styles.chipActive]}
-            onPress={toggleRecruitingFilter}
-          >
-            <Text style={[styles.chipText, recruitingFilter && styles.chipTextActive]}>모집중</Text>
-          </TouchableOpacity>
+          {/* 모집중 필터 */}
+<TouchableOpacity
+  style={[
+    styles.chip,
+    recruitingFilter && styles.chipActive
+  ]}
+  onPress={toggleRecruitingFilter}
+>
+  <Text style={[
+    styles.chipText,
+    recruitingFilter && styles.chipTextActive
+  ]}>
+    모집중
+  </Text>
+</TouchableOpacity>
         </ScrollView>
       </View>
 
       {/* ✅ 지역 필터 섹션 */}
       <View style={styles.locationFilterSection}>
         <Text style={styles.locationFilterLabel}>지역</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.locationFilterScroll}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.locationFilterScroll}
+        >
           <TouchableOpacity
-            style={[styles.locationFilterChip, locationFilter === '' && styles.locationFilterChipActive]}
+            style={[
+              styles.locationFilterChip,
+              locationFilter === '' && styles.locationFilterChipActive
+            ]}
             onPress={() => setLocationFilter('')}
           >
-            <Text style={[styles.locationFilterText, locationFilter === '' && styles.locationFilterTextActive]}>전체</Text>
+            <Text style={[
+              styles.locationFilterText,
+              locationFilter === '' && styles.locationFilterTextActive
+            ]}>
+              전체
+            </Text>
           </TouchableOpacity>
           {[
-            '서울시', '성남시', '수원시', '용인시', '고양시', '부천시', '안산시', '남양주시', '화성시', '평택시',
-            '안양시', '의정부시', '시흥시', '파주시', '김포시', '광명시', '광주시', '군포시', '오산시', '이천시',
+            '서울시', '성남시', '수원시', '용인시', '고양시',
+            '부천시', '안산시', '남양주시', '화성시', '평택시',
+            '안양시', '의정부시', '시흥시', '파주시', '김포시',
+            '광명시', '광주시', '군포시', '오산시', '이천시',
             '양주시', '인천시', '구리시', '안성시', '포천시'
           ].map((location) => (
             <TouchableOpacity
               key={location}
-              style={[styles.locationFilterChip, locationFilter === location && styles.locationFilterChipActive]}
+              style={[
+                styles.locationFilterChip,
+                locationFilter === location && styles.locationFilterChipActive
+              ]}
               onPress={() => setLocationFilter(location)}
             >
-              <Text style={[styles.locationFilterText, locationFilter === location && styles.locationFilterTextActive]}>{location}</Text>
+              <Text style={[
+                styles.locationFilterText,
+                locationFilter === location && styles.locationFilterTextActive
+              ]}>
+                {location}
+              </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
       {/* Sort 모달 */}
-      <Modal visible={showSortModal} transparent={true} animationType="fade" onRequestClose={() => setShowSortModal(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowSortModal(false)}>
+      <Modal
+        visible={showSortModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <TouchableOpacity 
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowSortModal(false)}
+        >
           <View style={styles.sortModalContainer}>
             <View style={styles.sortModalHeader}>
               <Text style={styles.sortModalTitle}>정렬</Text>
@@ -356,18 +430,51 @@ const toggleRecruitingFilter = () => {
                 <X size={24} color="#6b7280" />
               </TouchableOpacity>
             </View>
+            
             <View style={styles.sortOptions}>
-              <TouchableOpacity style={styles.sortOption} onPress={() => handleSortSelect('popular')}>
-                <Text style={[styles.sortOptionText, sortBy === 'popular' && styles.sortOptionTextActive]}>인기순</Text>
-                {sortBy === 'popular' && <Check size={20} color="#ea4c89" />}
+              <TouchableOpacity
+                style={styles.sortOption}
+                onPress={() => handleSortSelect('popular')}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === 'popular' && styles.sortOptionTextActive
+                ]}>
+                  인기순
+                </Text>
+                {sortBy === 'popular' && (
+                  <Check size={20} color="#ea4c89" />
+                )}
               </TouchableOpacity>
-              <TouchableOpacity style={styles.sortOption} onPress={() => handleSortSelect('time')}>
-                <Text style={[styles.sortOptionText, sortBy === 'time' && styles.sortOptionTextActive]}>시간순</Text>
-                {sortBy === 'time' && <Check size={20} color="#ea4c89" />}
+
+              <TouchableOpacity
+                style={styles.sortOption}
+                onPress={() => handleSortSelect('time')}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === 'time' && styles.sortOptionTextActive
+                ]}>
+                  시간순
+                </Text>
+                {sortBy === 'time' && (
+                  <Check size={20} color="#ea4c89" />
+                )}
               </TouchableOpacity>
-              <TouchableOpacity style={styles.sortOption} onPress={() => handleSortSelect('ntrp')}>
-                <Text style={[styles.sortOptionText, sortBy === 'ntrp' && styles.sortOptionTextActive]}>NTRP순</Text>
-                {sortBy === 'ntrp' && <Check size={20} color="#ea4c89" />}
+
+              <TouchableOpacity
+                style={styles.sortOption}
+                onPress={() => handleSortSelect('ntrp')}
+              >
+                <Text style={[
+                  styles.sortOptionText,
+                  sortBy === 'ntrp' && styles.sortOptionTextActive
+                ]}>
+                  NTRP순
+                </Text>
+                {sortBy === 'ntrp' && (
+                  <Check size={20} color="#ea4c89" />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -375,33 +482,83 @@ const toggleRecruitingFilter = () => {
       </Modal>
 
       {/* 매치 목록 */}
-      <ScrollView style={styles.matchList} showsVerticalScrollIndicator={false} onScroll={handleScroll} scrollEventThrottle={16}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ea4c89" colors={['#ea4c89']} />}>
+      <ScrollView
+        style={styles.matchList}
+        showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor="#ea4c89"
+            colors={['#ea4c89']}
+          />
+        }
+      >
         {isLoadingMatches ? (
-          <View style={styles.loadingContainer}><Text style={styles.loadingText}>매치를 불러오는 중...</Text></View>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>매치를 불러오는 중...</Text>
+          </View>
         ) : (
           displayMatches
+            // 검색 필터 (location으로 수정)
             .filter(match => 
-              searchQuery === '' || match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              searchQuery === '' ||
+              match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               (match.location && match.location.toLowerCase().includes(searchQuery.toLowerCase()))
             )
-            .filter(match => {
-              let passes = true;
-              if (levelFilter === 'pro') passes = passes && match.seller.careerType === '선수';
-              if (matchTypeFilter === 'womens') passes = passes && match.matchType === '여복';
-              else if (matchTypeFilter === 'mixed') passes = passes && match.matchType === '혼복';
-              if (timeFilter === 'today') passes = passes && isToday(match.date);
-              if (recruitingFilter) passes = passes && !match.isClosed;
-              if (locationFilter) passes = passes && match.location.includes(locationFilter);
-              return passes;
-            })
-            .sort((a, b) => {
-              if (sortBy === 'popular') return b.applicationsCount - a.applicationsCount;
-              else if (sortBy === 'time') return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
-              else if (sortBy === 'ntrp') return b.ntrpRequirement.max - a.ntrpRequirement.max;
-              return 0;
-            })
-            .map((match) => <MatchCard key={match.id} match={match} onPress={() => router.push(`/match/${match.id}`)} />)
+            // 그룹별 필터 로직 (AND 조건)
+.filter(match => {
+  let passes = true;
+  
+  // 레벨 필터 - 판매자가 선수인 매치만
+  if (levelFilter === 'pro') {
+    passes = passes && match.seller.careerType === '선수';
+  }
+  
+  // 매치 유형 필터
+  if (matchTypeFilter === 'womens') {
+    passes = passes && match.matchType === '여복';
+  } else if (matchTypeFilter === 'mixed') {
+    passes = passes && match.matchType === '혼복';
+  }
+  
+  // 시간 필터
+  if (timeFilter === 'today') {
+    passes = passes && isToday(match.date);
+  }
+  
+  // 모집중 필터 - 마감되지 않은 매치만
+  if (recruitingFilter) {
+    passes = passes && !match.isClosed;
+  }
+  
+  // ✅ 지역 필터 추가
+  if (locationFilter) {
+    passes = passes && match.location.includes(locationFilter);
+  }
+  
+  return passes;
+})
+            // 정렬
+           .sort((a, b) => {
+  if (sortBy === 'popular') {
+    return b.applicationsCount - a.applicationsCount;
+  } else if (sortBy === 'time') {
+    return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
+  } else if (sortBy === 'ntrp') {
+    return b.ntrpRequirement.max - a.ntrpRequirement.max;
+  }
+  return 0;
+})
+            .map((match) => (
+              <MatchCard 
+                key={match.id} 
+                match={match}
+                onPress={() => router.push(`/match/${match.id}`)}
+              />
+            ))
         )}
         <View style={styles.bottomPadding} />
       </ScrollView>
@@ -410,51 +567,296 @@ const toggleRecruitingFilter = () => {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '700', color: '#ea4c89' },
-  subtitle: { fontSize: 14, color: '#6b7280', marginTop: 2 },
-  headerIcons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  headerLoginIcon: { padding: 8, borderRadius: 20, backgroundColor: '#ffffff', borderWidth: 1, borderColor: '#e5e7eb' },
-  supabaseTestIcon: { padding: 8, borderRadius: 8, backgroundColor: '#eff6ff' },
-  adminButton: { padding: 8, borderRadius: 8, backgroundColor: '#fef2f2' },
-  previewAdminSection: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  previewAdminButton: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fef2f2', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start' },
-  previewAdminText: { fontSize: 12, fontWeight: '600', color: '#dc2626' },
-  demoControls: { backgroundColor: '#f3f4f6', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  demoTitle: { fontSize: 12, fontWeight: '600', color: '#374151', marginBottom: 8 },
-  demoButtons: { flexDirection: 'row' },
-  demoButton: { backgroundColor: '#ffffff', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, marginRight: 8, borderWidth: 1, borderColor: '#e5e7eb' },
-  demoButtonText: { fontSize: 12, fontWeight: '500', color: '#374151' },
-  adminDemoButton: { backgroundColor: '#fef2f2', borderColor: '#dc2626' },
-  adminDemoButtonText: { color: '#dc2626', fontWeight: '600' },
-  logoutButton: { backgroundColor: '#fee2e2', borderColor: '#ef4444' },
-  logoutButtonText: { color: '#ef4444', fontWeight: '600' },
-  searchContainer: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 9, backgroundColor: '#f8f7f4', gap: 12 },
-  searchInputContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#ffffff', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 10, gap: 8, borderWidth: 0, shadowColor: '#0d0c22', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
-  searchInput: { flex: 1, fontSize: 16, color: '#0d0c22' },
-  filterIconButton: { padding: 10, borderRadius: 10, backgroundColor: '#ffffff', shadowColor: '#0d0c22', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
-  sortIconButton: { padding: 10, borderRadius: 10, backgroundColor: '#0d0c22' },
-  chipsContainer: { backgroundColor: '#f8f7f4', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 0 },
-  chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 24, backgroundColor: '#ffffff', marginRight: 8, borderWidth: 0, shadowColor: '#0d0c22', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
-  chipActive: { backgroundColor: '#0d0c22', shadowColor: '#0d0c22', shadowOpacity: 0.3 },
-  chipText: { fontSize: 13, fontWeight: '600', color: '#6e6d7a' },
-  chipTextActive: { color: '#ffffff' },
-  locationFilterSection: { backgroundColor: '#ffffff', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
-  locationFilterLabel: { fontSize: 13, fontWeight: '600', color: '#374151', marginBottom: 10 },
-  locationFilterScroll: { marginHorizontal: -4 },
-  locationFilterChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16, backgroundColor: '#f9fafb', marginHorizontal: 4, borderWidth: 1, borderColor: '#e5e7eb' },
-  locationFilterChipActive: { backgroundColor: '#dcfce7', borderColor: '#16a34a' },
-  locationFilterText: { fontSize: 13, color: '#6b7280', fontWeight: '500' },
-  locationFilterTextActive: { color: '#16a34a', fontWeight: '600' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.5)', justifyContent: 'center', alignItems: 'center' },
-  sortModalContainer: { backgroundColor: '#ffffff', borderRadius: 20, width: '80%', maxWidth: 400, padding: 24, shadowColor: '#0d0c22', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 20, elevation: 10 },
-  sortModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  sortModalTitle: { fontSize: 18, fontWeight: '700', color: '#0d0c22' },
-  sortOptions: { gap: 4 },
-  sortOption: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 12, borderRadius: 8 },
-  sortOptionText: { fontSize: 16, color: '#6e6d7a', fontWeight: '500' },
-  sortOptionTextActive: { color: '#ea4c89', fontWeight: '600' },
-  matchList: { flex: 1, backgroundColor: '#f8f7f4' },
-  loadingContainer: { padding: 32, alignItems: 'center' },
-  loadingText: { fontSize: 16, color: '#6b7280' },
-  bottomPadding: { height: 20 },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ea4c89',
+  },
+  subtitle: {
+    fontSize: 14,
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  headerIcons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerLoginIcon: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  supabaseTestIcon: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#eff6ff',
+  },
+  adminButton: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#fef2f2',
+  },
+  previewAdminSection: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  previewAdminButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#fef2f2',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  previewAdminText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#dc2626',
+  },
+  demoControls: {
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  demoTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  demoButtons: {
+    flexDirection: 'row',
+  },
+  demoButton: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  demoButtonText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#374151',
+  },
+  adminDemoButton: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#dc2626',
+  },
+  adminDemoButtonText: {
+    color: '#dc2626',
+    fontWeight: '600',
+  },
+  logoutButton: {
+    backgroundColor: '#fee2e2',
+    borderColor: '#ef4444',
+  },
+  logoutButtonText: {
+    color: '#ef4444',
+    fontWeight: '600',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    backgroundColor: '#f8f7f4',
+    gap: 12,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    gap: 8,
+    borderWidth: 0,
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#0d0c22',
+  },
+  filterIconButton: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#ffffff',
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  sortIconButton: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#0d0c22',
+  },
+  chipsContainer: {
+    backgroundColor: '#f8f7f4',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 0,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 24,
+    backgroundColor: '#ffffff',
+    marginRight: 8,
+    borderWidth: 0,
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  chipActive: {
+    backgroundColor: '#0d0c22',
+    shadowColor: '#0d0c22',
+    shadowOpacity: 0.3,
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6e6d7a',
+  },
+  chipTextActive: {
+    color: '#ffffff',
+  },
+  // ✅ 지역 필터 스타일
+  locationFilterSection: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  locationFilterLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 10,
+  },
+  locationFilterScroll: {
+    marginHorizontal: -4,
+  },
+  locationFilterChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 16,
+    backgroundColor: '#f9fafb',
+    marginHorizontal: 4,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  locationFilterChipActive: {
+    backgroundColor: '#dcfce7',
+    borderColor: '#16a34a',
+  },
+  locationFilterText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  locationFilterTextActive: {
+    color: '#16a34a',
+    fontWeight: '600',
+  },
+  // Sort 모달 스타일
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sortModalContainer: {
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    width: '80%',
+    maxWidth: 400,
+    padding: 24,
+    shadowColor: '#0d0c22',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  sortModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  sortModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0d0c22',
+  },
+  sortOptions: {
+    gap: 4,
+  },
+  sortOption: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+  },
+  sortOptionText: {
+    fontSize: 16,
+    color: '#6e6d7a',
+    fontWeight: '500',
+  },
+  sortOptionTextActive: {
+    color: '#ea4c89',
+    fontWeight: '600',
+  },
+  matchList: {
+    flex: 1,
+    backgroundColor: '#f8f7f4',
+  },
+  loadingContainer: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#6b7280',
+  },
+  bottomPadding: {
+    height: 20,
+  },
 });

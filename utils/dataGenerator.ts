@@ -552,6 +552,72 @@ export class DataGenerator {
   }
 
   /**
+   * 모든 매치 삭제 (더미 + 실제 사용자 매치 전부)
+   */
+  static async deleteAllMatches(): Promise<{
+    success: boolean;
+    deletedCount: number;
+    error?: string;
+  }> {
+    try {
+      if (!supabaseAdmin) {
+        console.log('Supabase Admin 클라이언트가 설정되지 않음.');
+        return {
+          success: false,
+          deletedCount: 0,
+          error: 'Supabase Admin 연결이 설정되지 않았습니다.'
+        };
+      }
+
+      // 삭제할 전체 매치 개수 조회
+      const { count, error: countError } = await supabaseAdmin
+        .from('matches')
+        .select('*', { count: 'exact', head: true });
+
+      if (countError) {
+        return {
+          success: false,
+          deletedCount: 0,
+          error: countError.message
+        };
+      }
+
+      const currentCount = count || 0;
+      console.log(`삭제할 전체 매치: ${currentCount}개`);
+
+      // ⚠️ 모든 매치 삭제 (is_dummy 조건 없음)
+      const { error } = await supabaseAdmin
+        .from('matches')
+        .delete()
+        .neq('id', ''); // 모든 행 선택
+
+      if (error) {
+        console.log('모든 매치 삭제 실패:', error.message);
+        return {
+          success: false,
+          deletedCount: 0,
+          error: error.message
+        };
+      }
+
+      console.log(`${currentCount}개의 모든 매치가 성공적으로 삭제되었습니다.`);
+      
+      return {
+        success: true,
+        deletedCount: currentCount,
+      };
+
+    } catch (error: any) {
+      console.log('모든 매치 삭제 중 오류:', error?.message);
+      return {
+        success: false,
+        deletedCount: 0,
+        error: error?.message || '알 수 없는 오류'
+      };
+    }
+  }
+  
+  /**
    * 현재 더미 매치 개수 조회
    */
   static async getDummyMatchCount(): Promise<number> {

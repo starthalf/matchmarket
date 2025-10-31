@@ -147,6 +147,40 @@ export default function SupabaseTestScreen() {
     }
   };
 
+  const handleDeleteAllMatches = async () => {
+    console.log('🔧 모든 매치 삭제 시작...');
+    
+    const confirmed = window.confirm('⚠️ 정말로 모든 매치를 삭제하시겠습니까?\n\n(더미 + 실제 사용자 매치 전부 삭제됩니다)\n\n이 작업은 되돌릴 수 없습니다!');
+    
+    if (!confirmed) {
+      console.log('사용자가 삭제를 취소했습니다.');
+      return;
+    }
+    
+    setIsDeletingDummy(true);
+    
+    try {
+      const result = await DataGenerator.deleteAllMatches();
+      console.log('삭제 결과:', result);
+      
+      if (result.success) {
+        console.log(`✅ ${result.deletedCount}개 모든 매치 삭제 완료`);
+        const shouldRefresh = window.confirm?.(`${result.deletedCount}개의 모든 매치가 삭제되었습니다.\n\n화면을 새로고침하시겠습니까?`) ?? true;
+        
+        if (shouldRefresh) {
+          runConnectionTest();
+        }
+      } else {
+        console.log('❌ 삭제 실패:', result.error);
+        window.alert?.(`삭제 실패: ${result.error || '모든 매치 삭제에 실패했습니다.'}`);
+      }
+    } catch (error) {
+      console.log('💥 오류:', error);
+      window.alert?.('모든 매치 삭제 중 오류가 발생했습니다.');
+    } finally {
+      setIsDeletingDummy(false);
+    }
+  };
   const getStatusIcon = (status: boolean) => {
     return status ? (
       <CheckCircle size={20} color="#16a34a" />

@@ -267,17 +267,81 @@ export class DataGenerator {
   ];
 
   /**
-   * 닉네임 생성기
+   * 닉네임 생성기 - 다양한 패턴
    */
   private static generateNickname(): string {
-    const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
-    const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
-    const separator = Math.random() > 0.5 ? '.' : '_';
+    const patterns = [
+      // 패턴 1: prefix.suffix123 (기존 방식)
+      () => {
+        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
+        const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
+        const separator = Math.random() > 0.5 ? '.' : '_';
+        const number = Math.random() < 0.4 ? Math.floor(Math.random() * 999) + 1 : '';
+        return `${prefix}${separator}${suffix}${number}`;
+      },
+      
+      // 패턴 2: 한글 닉네임
+      () => {
+        const korean = ['테니스왕', '랠리킹', '서브고수', '발리마스터', '스매시', '에이스메이커', 
+                       '코트지배자', '백핸드킹', '포핸드', '탑스핀장인', '슬라이스', '볼리의달인',
+                       '테니스러버', '라켓마법사', '코트의별', '게임메이커', '파워플레이어', '스피드스타'];
+        const suffix = ['', '님', Math.floor(Math.random() * 99) + 1, '✨', '🎾'];
+        return korean[Math.floor(Math.random() * korean.length)] + 
+               suffix[Math.floor(Math.random() * suffix.length)];
+      },
+      
+      // 패턴 3: prefix만 + 숫자
+      () => {
+        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
+        const number = Math.floor(Math.random() * 9999) + 1;
+        return `${prefix}${number}`;
+      },
+      
+      // 패턴 4: 이모지 조합
+      () => {
+        const emojis = ['🎾', '🏆', '⚡', '🔥', '💪', '⭐', '🌟', '👑', '🎯', '💯'];
+        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
+        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+        const position = Math.random() > 0.5 ? 'before' : 'after';
+        return position === 'before' ? `${emoji}${prefix}` : `${prefix}${emoji}`;
+      },
+      
+      // 패턴 5: 대문자 스타일
+      () => {
+        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
+        const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
+        const number = Math.random() < 0.3 ? Math.floor(Math.random() * 99) + 1 : '';
+        return `${prefix.toUpperCase()}${suffix.charAt(0).toUpperCase()}${suffix.slice(1)}${number}`;
+      },
+      
+      // 패턴 6: 짧은 닉네임
+      () => {
+        const short = ['ace', 'net', 'pro', 'top', 'max', 'win', 'god', 'king', 'boss', 'star'];
+        const number = Math.floor(Math.random() * 999) + 1;
+        return short[Math.floor(Math.random() * short.length)] + number;
+      },
+      
+      // 패턴 7: 세 단어 조합
+      () => {
+        const adjectives = ['super', 'mega', 'ultra', 'hyper', 'crazy', 'wild', 'smart', 'quick'];
+        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
+        const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
+        const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
+        return `${adj}_${prefix}_${suffix}`;
+      },
+      
+      // 패턴 8: 연도 포함
+      () => {
+        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
+        const years = [2020, 2021, 2022, 2023, 2024, 2025];
+        const year = years[Math.floor(Math.random() * years.length)];
+        return `${prefix}${year}`;
+      }
+    ];
     
-    const addNumber = Math.random() < 0.3;
-    const number = addNumber ? Math.floor(Math.random() * 999) + 1 : '';
-    
-    return `${prefix}${separator}${suffix}${number}`;
+    // 랜덤하게 패턴 선택
+    const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
+    return selectedPattern();
   }
 
   /**

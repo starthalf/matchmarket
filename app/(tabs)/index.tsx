@@ -760,45 +760,39 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: '#ffffff',
   },
-  // ✅ 지역 필터 스타일
-  locationFilterSection: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  locationFilterLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 10,
-  },
-  locationFilterScroll: {
-    marginHorizontal: -4,
-  },
-  locationFilterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 16,
-    backgroundColor: '#f9fafb',
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  locationFilterChipActive: {
-    backgroundColor: '#dcfce7',
-    borderColor: '#16a34a',
-  },
-  locationFilterText: {
-    fontSize: 13,
-    color: '#6b7280',
-    fontWeight: '500',
-  },
-  locationFilterTextActive: {
-    color: '#16a34a',
-    fontWeight: '600',
-  },
+  // 기존 locationFilterSection 관련 스타일 전체 삭제하고:
+// ✅ 지역 필터 스타일 (드롭다운)
+locationFilterSection: {
+  backgroundColor: '#ffffff',
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  borderBottomWidth: 1,
+  borderBottomColor: '#e5e7eb',
+},
+locationFilterRow: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+},
+locationFilterLabel: {
+  fontSize: 13,
+  fontWeight: '600',
+  color: '#374151',
+},
+locationDropdown: {
+  flex: 1,
+  paddingHorizontal: 12,
+  paddingVertical: 8,
+  borderRadius: 8,
+  borderWidth: 1,
+  borderColor: '#d1d5db',
+  backgroundColor: '#ffffff',
+},
+locationDropdownText: {
+  fontSize: 14,
+  color: '#374151',
+  fontWeight: '500',
+},
   // Sort 모달 스타일
   modalOverlay: {
     flex: 1,

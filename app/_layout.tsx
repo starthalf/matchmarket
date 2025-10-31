@@ -60,7 +60,6 @@ export default function RootLayout() {
         </AuthProvider>
       </SafeAreaProvider>
       <InstallPrompt />
-    </> {/* <-- 1. 프래그먼트 닫기 */}
+    </>
   );
 }
-// <-- 2. 불필요한 ); 와 } 삭제

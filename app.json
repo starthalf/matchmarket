@@ -37,11 +37,18 @@
         "android.permission.ACCESS_NETWORK_STATE"
       ]
     },
-    "web": {
+"web": {
       "bundler": "metro",
-      "output": "single",
-      "favicon": "./assets/images/favicon.png"
-    },
+      "output": "static",
+      "favicon": "./assets/favicon.png",
+      "name": "테니스 매칭 앱",
+      "shortName": "테니스",
+      "description": "프리미엄 테니스 매칭 플랫폼",
+      "themeColor": "#10b981",
+      "backgroundColor": "#ffffff",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/"
     "plugins": [
       "expo-router",
       "expo-font",

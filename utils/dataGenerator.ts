@@ -409,7 +409,7 @@ export class DataGenerator {
         break;
     }
 
-    const shouldBeClosed = Math.random() < 0.75;
+    const shouldBeClosed = Math.random() < 1;
     
     let currentMale = 0;
     let currentFemale = 0;

@@ -374,6 +374,18 @@ export default function SupabaseTestScreen() {
                   🚀 직접 삭제 (확인 없이)
                 </Text>
               </TouchableOpacity>
+
+              {/* ⚠️ 모든 매치 삭제 버튼 */}
+              <TouchableOpacity 
+                style={[styles.deleteDummyButton, { backgroundColor: '#7c2d12', marginTop: 16, borderWidth: 2, borderColor: '#dc2626' }, isDeletingDummy && styles.deleteDummyButtonDisabled]}
+                onPress={handleDeleteAllMatches}
+                disabled={isDeletingDummy}
+              >
+                <Trash2 size={16} color="#ffffff" />
+                <Text style={styles.deleteDummyButtonText}>
+                  ⚠️ 모든 매치 삭제 (더미+실제)
+                </Text>
+              </TouchableOpacity>
               
               {/* 생성 버튼 */}
               <TouchableOpacity

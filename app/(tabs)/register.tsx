@@ -1,6 +1,6 @@
 // app/(tabs)/register.tsx - v2 기준 완전한 버전 (시/군 단위 지역)
 
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import { useEffect } from 'react';
 import {
   View,

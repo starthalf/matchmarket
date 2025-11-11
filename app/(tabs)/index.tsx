@@ -33,6 +33,7 @@ export default function HomeScreen() {
   const { matches: displayMatches, isLoadingMatches, refreshMatches, updateMatch } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
+  const isDevelopment = process.env.NODE_ENV === 'development';
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
 
@@ -194,9 +195,9 @@ const toggleRecruitingFilter = () => {
         </View>
       </View>
     
-      {/* 개발 모드 데모 컨트롤 */}
-      {__DEV__ && (
-        <View style={styles.demoControls}>
+{/* 개발 모드 데모 컨트롤 */}
+{isDevelopment && (
+  <View style={styles.demoControls}>
           <Text style={styles.demoTitle}>
             🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
           </Text>
@@ -240,8 +241,8 @@ const toggleRecruitingFilter = () => {
         </View>
       )}
 
-      {!__DEV__ && !isAdmin && (
-        <View style={styles.previewAdminSection}>
+{!isDevelopment && !isAdmin && (
+  <View style={styles.previewAdminSection}>
           <TouchableOpacity 
             style={styles.previewAdminButton}
             onPress={handleAdminLogin}

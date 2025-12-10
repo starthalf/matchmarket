@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -39,6 +40,88 @@ export default function SignupScreen() {
     privacy: false,
     age: false,
   });
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+
+  // 약관 내용
+  const termsContent = `매치마켓 서비스 이용약관
+
+제1조 (목적)
+본 약관은 매치마켓(이하 "회사")이 제공하는 테니스 매치 중개 서비스의 이용과 관련하여 회사와 회원 간의 권리, 의무 및 책임사항을 규정함을 목적으로 합니다.
+
+제2조 (정의)
+1. "서비스"란 회사가 제공하는 테니스 매치 생성, 참여, 결제 등의 모든 서비스를 의미합니다.
+2. "회원"이란 본 약관에 동의하고 회사와 서비스 이용계약을 체결한 자를 말합니다.
+3. "판매자"란 테니스 매치를 생성하여 판매하는 회원을 말합니다.
+4. "구매자"란 테니스 매치에 참여 신청을 하는 회원을 말합니다.
+
+제3조 (약관의 효력 및 변경)
+1. 본 약관은 회원가입 시 동의함으로써 효력이 발생합니다.
+2. 회사는 필요한 경우 약관을 변경할 수 있으며, 변경 시 최소 7일 전 공지합니다.
+
+제4조 (서비스의 제공)
+1. 회사는 다음과 같은 서비스를 제공합니다:
+   - 테니스 매치 생성 및 관리
+   - 매치 참여 신청 및 승인
+   - 결제 및 정산 서비스
+   - 채팅 서비스
+   - 회원 평가 시스템
+
+제5조 (회원의 의무)
+1. 회원은 다음 행위를 하여서는 안 됩니다:
+   - 허위 정보 등록
+   - 타인의 정보 도용
+   - 불법적인 목적의 서비스 이용
+   - 매치 약속 불이행
+
+제6조 (환불 정책)
+1. 매치 시작 24시간 전까지 취소 시 전액 환불
+2. 24시간 이내 취소 시 환불 불가
+3. 판매자의 귀책사유로 매치 취소 시 전액 환불
+
+제7조 (면책조항)
+1. 회사는 천재지변 등 불가항력으로 인한 서비스 중단에 대해 책임지지 않습니다.
+2. 회사는 회원 간의 거래에서 발생한 분쟁에 대해 책임지지 않습니다.
+
+본 약관은 2024년 1월 1일부터 시행됩니다.`;
+
+  const privacyContent = `매치마켓 개인정보 처리방침
+
+1. 수집하는 개인정보 항목
+회사는 회원가입, 서비스 제공을 위해 다음의 개인정보를 수집합니다:
+- 필수항목: 이메일, 닉네임, 비밀번호, 성별, 나이대
+- 선택항목: NTRP 등급, 테니스 경력, 플레이 스타일
+
+2. 개인정보의 수집 및 이용목적
+- 회원 식별 및 본인 확인
+- 서비스 제공 및 운영
+- 매치 매칭 및 중개
+- 결제 및 정산 처리
+- 고객 문의 응대
+
+3. 개인정보의 보유 및 이용기간
+- 회원 탈퇴 시까지 보유
+- 관계 법령에 따라 일정 기간 보관이 필요한 경우 해당 기간 동안 보관
+
+4. 개인정보의 제3자 제공
+회사는 원칙적으로 회원의 개인정보를 제3자에게 제공하지 않습니다.
+단, 다음의 경우 예외로 합니다:
+- 회원이 사전에 동의한 경우
+- 법령의 규정에 따른 경우
+
+5. 개인정보의 파기
+회원 탈퇴 시 지체없이 개인정보를 파기합니다.
+단, 관계 법령에 따라 보관이 필요한 경우 일정 기간 보관 후 파기합니다.
+
+6. 이용자의 권리
+회원은 언제든지 자신의 개인정보를 조회하거나 수정할 수 있으며,
+회원 탈퇴를 통해 개인정보의 삭제를 요청할 수 있습니다.
+
+7. 개인정보 보호책임자
+- 성명: 매치마켓 개인정보보호팀
+- 이메일: privacy@matchmarket.com
+
+본 방침은 2024년 1월 1일부터 시행됩니다.`;
 
   const handleSignup = async () => {
     // 약관 동의 검사
@@ -364,29 +447,39 @@ export default function SignupScreen() {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>약관 동의</Text>
               
-              <TouchableOpacity 
-                style={styles.agreementRow}
-                onPress={() => setAgreements({...agreements, terms: !agreements.terms})}
-              >
-                <View style={[styles.checkbox, agreements.terms && styles.checkboxActive]}>
-                  {agreements.terms && <Check size={16} color="#ffffff" />}
-                </View>
-                <Text style={styles.agreementText}>
-                  [필수] 서비스 이용약관 동의
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.agreementContainer}>
+                <TouchableOpacity 
+                  style={styles.agreementRow}
+                  onPress={() => setAgreements({...agreements, terms: !agreements.terms})}
+                >
+                  <View style={[styles.checkbox, agreements.terms && styles.checkboxActive]}>
+                    {agreements.terms && <Check size={16} color="#ffffff" />}
+                  </View>
+                  <Text style={styles.agreementText}>
+                    [필수] 서비스 이용약관 동의
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowTermsModal(true)}>
+                  <Text style={styles.viewLink}>보기</Text>
+                </TouchableOpacity>
+              </View>
 
-              <TouchableOpacity 
-                style={styles.agreementRow}
-                onPress={() => setAgreements({...agreements, privacy: !agreements.privacy})}
-              >
-                <View style={[styles.checkbox, agreements.privacy && styles.checkboxActive]}>
-                  {agreements.privacy && <Check size={16} color="#ffffff" />}
-                </View>
-                <Text style={styles.agreementText}>
-                  [필수] 개인정보 수집 및 이용 동의
-                </Text>
-              </TouchableOpacity>
+              <View style={styles.agreementContainer}>
+                <TouchableOpacity 
+                  style={styles.agreementRow}
+                  onPress={() => setAgreements({...agreements, privacy: !agreements.privacy})}
+                >
+                  <View style={[styles.checkbox, agreements.privacy && styles.checkboxActive]}>
+                    {agreements.privacy && <Check size={16} color="#ffffff" />}
+                  </View>
+                  <Text style={styles.agreementText}>
+                    [필수] 개인정보 수집 및 이용 동의
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => setShowPrivacyModal(true)}>
+                  <Text style={styles.viewLink}>보기</Text>
+                </TouchableOpacity>
+              </View>
 
               <TouchableOpacity 
                 style={styles.agreementRow}
@@ -439,6 +532,68 @@ export default function SignupScreen() {
           <View style={styles.bottomPadding} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      {/* 이용약관 모달 */}
+      <Modal
+        visible={showTermsModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowTermsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>서비스 이용약관</Text>
+              <TouchableOpacity onPress={() => setShowTermsModal(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              <Text style={styles.modalText}>{termsContent}</Text>
+            </ScrollView>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => {
+                setAgreements({...agreements, terms: true});
+                setShowTermsModal(false);
+              }}
+            >
+              <Text style={styles.modalButtonText}>동의하고 닫기</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* 개인정보 처리방침 모달 */}
+      <Modal
+        visible={showPrivacyModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowPrivacyModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>개인정보 처리방침</Text>
+              <TouchableOpacity onPress={() => setShowPrivacyModal(false)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody}>
+              <Text style={styles.modalText}>{privacyContent}</Text>
+            </ScrollView>
+            <TouchableOpacity 
+              style={styles.modalButton}
+              onPress={() => {
+                setAgreements({...agreements, privacy: true});
+                setShowPrivacyModal(false);
+              }}
+            >
+              <Text style={styles.modalButtonText}>동의하고 닫기</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -560,10 +715,16 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 40,
   },
+  agreementContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
   agreementRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    flex: 1,
     gap: 12,
   },
   checkbox: {
@@ -585,6 +746,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#374151',
   },
+  viewLink: {
+    fontSize: 14,
+    color: '#ea4c89',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+    marginLeft: 8,
+  },
   allAgreeButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -597,5 +765,58 @@ const styles = StyleSheet.create({
   allAgreeText: {
     fontWeight: '700',
     color: '#111827',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    width: '90%',
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  modalClose: {
+    fontSize: 24,
+    color: '#6b7280',
+    fontWeight: '700',
+  },
+  modalBody: {
+    padding: 20,
+    maxHeight: 400,
+  },
+  modalText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#374151',
+  },
+  modalButton: {
+    backgroundColor: '#ea4c89',
+    paddingVertical: 16,
+    margin: 20,
+    marginTop: 0,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
   },
 });

@@ -244,7 +244,7 @@ const toggleRecruitingFilter = () => {
         </View>
       )}
 
-      {!isDevelopment && !isAdmin && (
+     {isDevelopment && !isAdmin && (
         <View style={styles.previewAdminSection}>
           <TouchableOpacity 
             style={styles.previewAdminButton}

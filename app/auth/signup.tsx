@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, User, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { ArrowLeft, User, Mail, Lock, Eye, EyeOff, Check } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSafeStyles } from '../../constants/Styles';
 
@@ -34,31 +34,66 @@ export default function SignupScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [agreements, setAgreements] = useState({
+    terms: false,
+    privacy: false,
+    age: false,
+  });
 
   const handleSignup = async () => {
+    // 약관 동의 검사
+    if (!agreements.terms || !agreements.privacy || !agreements.age) {
+      if (Platform.OS === 'web') {
+        window.alert('필수 약관에 모두 동의해주세요.');
+      } else {
+        Alert.alert('약관 동의 필요', '필수 약관에 모두 동의해주세요.');
+      }
+      return;
+    }
+
     // 유효성 검사
     if (!formData.name || !formData.email || !formData.password) {
-      Alert.alert('입력 오류', '필수 항목을 모두 입력해주세요.');
+      if (Platform.OS === 'web') {
+        window.alert('필수 항목을 모두 입력해주세요.');
+      } else {
+        Alert.alert('입력 오류', '필수 항목을 모두 입력해주세요.');
+      }
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      Alert.alert('입력 오류', '비밀번호가 일치하지 않습니다.');
+      if (Platform.OS === 'web') {
+        window.alert('비밀번호가 일치하지 않습니다.');
+      } else {
+        Alert.alert('입력 오류', '비밀번호가 일치하지 않습니다.');
+      }
       return;
     }
 
     if (formData.password.length < 4) {
-      Alert.alert('입력 오류', '비밀번호는 4자 이상이어야 합니다.');
+      if (Platform.OS === 'web') {
+        window.alert('비밀번호는 4자 이상이어야 합니다.');
+      } else {
+        Alert.alert('입력 오류', '비밀번호는 4자 이상이어야 합니다.');
+      }
       return;
     }
 
     if (!formData.ntrp || isNaN(Number(formData.ntrp))) {
-      Alert.alert('입력 오류', 'NTRP 등급을 올바르게 입력해주세요.');
+      if (Platform.OS === 'web') {
+        window.alert('NTRP 등급을 올바르게 입력해주세요.');
+      } else {
+        Alert.alert('입력 오류', 'NTRP 등급을 올바르게 입력해주세요.');
+      }
       return;
     }
 
     if (!formData.experience || isNaN(Number(formData.experience))) {
-      Alert.alert('입력 오류', '테니스 경력을 올바르게 입력해주세요.');
+      if (Platform.OS === 'web') {
+        window.alert('테니스 경력을 올바르게 입력해주세요.');
+      } else {
+        Alert.alert('입력 오류', '테니스 경력을 올바르게 입력해주세요.');
+      }
       return;
     }
 
@@ -74,11 +109,19 @@ export default function SignupScreen() {
       if (result.success) {
         router.replace('/(tabs)');
       } else {
-        Alert.alert('회원가입 실패', result.error || '회원가입에 실패했습니다.');
+        if (Platform.OS === 'web') {
+          window.alert(result.error || '회원가입에 실패했습니다.');
+        } else {
+          Alert.alert('회원가입 실패', result.error || '회원가입에 실패했습니다.');
+        }
       }
     } catch (error) {
       console.error('회원가입 예외:', error);
-      Alert.alert('오류', '회원가입 중 예상치 못한 오류가 발생했습니다.');
+      if (Platform.OS === 'web') {
+        window.alert('회원가입 중 예상치 못한 오류가 발생했습니다.');
+      } else {
+        Alert.alert('오류', '회원가입 중 예상치 못한 오류가 발생했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -91,12 +134,12 @@ export default function SignupScreen() {
           <TouchableOpacity 
             style={safeStyles.backButton} 
             onPress={() => {
-  if (router.canGoBack()) {
-    router.back();
-  } else {
-    router.replace('/(tabs)');
-  }
-}}
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/(tabs)');
+              }
+            }}
           >
             <ArrowLeft size={24} color="#374151" />
           </TouchableOpacity>
@@ -317,6 +360,71 @@ export default function SignupScreen() {
               </View>
             </View>
 
+            {/* 약관 동의 */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>약관 동의</Text>
+              
+              <TouchableOpacity 
+                style={styles.agreementRow}
+                onPress={() => setAgreements({...agreements, terms: !agreements.terms})}
+              >
+                <View style={[styles.checkbox, agreements.terms && styles.checkboxActive]}>
+                  {agreements.terms && <Check size={16} color="#ffffff" />}
+                </View>
+                <Text style={styles.agreementText}>
+                  [필수] 서비스 이용약관 동의
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.agreementRow}
+                onPress={() => setAgreements({...agreements, privacy: !agreements.privacy})}
+              >
+                <View style={[styles.checkbox, agreements.privacy && styles.checkboxActive]}>
+                  {agreements.privacy && <Check size={16} color="#ffffff" />}
+                </View>
+                <Text style={styles.agreementText}>
+                  [필수] 개인정보 수집 및 이용 동의
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.agreementRow}
+                onPress={() => setAgreements({...agreements, age: !agreements.age})}
+              >
+                <View style={[styles.checkbox, agreements.age && styles.checkboxActive]}>
+                  {agreements.age && <Check size={16} color="#ffffff" />}
+                </View>
+                <Text style={styles.agreementText}>
+                  [필수] 만 14세 이상입니다
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.allAgreeButton}
+                onPress={() => {
+                  const allChecked = agreements.terms && agreements.privacy && agreements.age;
+                  setAgreements({
+                    terms: !allChecked,
+                    privacy: !allChecked,
+                    age: !allChecked,
+                  });
+                }}
+              >
+                <View style={[
+                  styles.checkbox, 
+                  (agreements.terms && agreements.privacy && agreements.age) && styles.checkboxActive
+                ]}>
+                  {(agreements.terms && agreements.privacy && agreements.age) && 
+                    <Check size={16} color="#ffffff" />
+                  }
+                </View>
+                <Text style={[styles.agreementText, styles.allAgreeText]}>
+                  모두 동의합니다
+                </Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity 
               style={[styles.signupButton, isLoading && styles.signupButtonDisabled]}
               onPress={handleSignup}
@@ -451,5 +559,43 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 40,
+  },
+  agreementRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: '#d1d5db',
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  checkboxActive: {
+    backgroundColor: '#ea4c89',
+    borderColor: '#ea4c89',
+  },
+  agreementText: {
+    flex: 1,
+    fontSize: 14,
+    color: '#374151',
+  },
+  allAgreeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+    gap: 12,
+  },
+  allAgreeText: {
+    fontWeight: '700',
+    color: '#111827',
   },
 });

@@ -39,7 +39,7 @@ export default function Index() {
     };
   }, []);
 
-  const handleAndroidInstall = async () => {
+const handleAndroidInstall = async () => {
   if (deferredPrompt) {
     // deferredPrompt가 있으면 설치 프롬프트 표시
     await deferredPrompt.prompt();

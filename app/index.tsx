@@ -40,21 +40,31 @@ export default function Index() {
   }, []);
 
   const handleAndroidInstall = async () => {
-    // Android에서 설치 프롬프트가 있으면 표시
-    if (deferredPrompt) {
-      await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      
-      if (outcome === 'accepted') {
-        console.log('✅ PWA 설치 완료!');
-      }
-      
-      setDeferredPrompt(null);
-    } else {
-      // 설치 프롬프트가 없으면 (이미 설치됨 등) 로그인으로
-      router.push('/auth/login');
+  if (deferredPrompt) {
+    // deferredPrompt가 있으면 설치 프롬프트 표시
+    await deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      console.log('✅ PWA 설치 완료!');
     }
-  };
+    setDeferredPrompt(null);
+  } else {
+    // deferredPrompt가 없으면 안내 메시지 표시
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      alert('브라우저 주소창 옆 아이콘(⊕)을 클릭하거나,\n브라우저 메뉴(⋮)에서 "앱 설치" 또는 "홈 화면에 추가"를 선택해주세요!');
+    }
+  }
+};
+
+const handleIOSInstall = () => {
+  // iOS는 항상 모달 표시
+  setShowIOSModal(true);
+};
+
+const handleWebView = () => {
+  // 모바일웹으로 볼게요만 로그인으로
+  router.push('/auth/login');
+};
 
   const handleIOSInstall = () => {
     // iOS는 설치 안내 모달 표시

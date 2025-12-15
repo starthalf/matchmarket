@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Star, MapPin, Clock, Users, TrendingUp, CheckCircle, Smartphone, Share2, Chrome } from 'lucide-react-native';
+import { Star, MapPin, Clock, Users, TrendingUp, CheckCircle, Smartphone, Share2, Chrome, X } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function Index() {
   const { user } = useAuth();
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSModal, setShowIOSModal] = useState(false);
 
   // 이미 로그인되어 있으면 메인으로
   useEffect(() => {
@@ -15,7 +18,51 @@ export default function Index() {
     }
   }, [user]);
 
-  const handleStart = () => {
+  // PWA 프롬프트 캐치 (웹 환경에서만)
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+
+    // iOS 체크
+    const ios = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    setIsIOS(ios);
+
+    // Android Chrome 프롬프트 캐치
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleAndroidInstall = async () => {
+    // Android에서 설치 프롬프트가 있으면 표시
+    if (deferredPrompt) {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        console.log('✅ PWA 설치 완료!');
+      }
+      
+      setDeferredPrompt(null);
+    } else {
+      // 설치 프롬프트가 없으면 (이미 설치됨 등) 로그인으로
+      router.push('/auth/login');
+    }
+  };
+
+  const handleIOSInstall = () => {
+    // iOS는 설치 안내 모달 표시
+    setShowIOSModal(true);
+  };
+
+  const handleWebView = () => {
+    // 모바일웹으로 볼게요 → 로그인으로
     router.push('/auth/login');
   };
 
@@ -131,17 +178,17 @@ export default function Index() {
 
             {/* 버튼들 */}
             <View style={styles.buttonContainer}>
-              <TouchableOpacity style={styles.androidButton} onPress={handleStart}>
+              <TouchableOpacity style={styles.androidButton} onPress={handleAndroidInstall}>
                 <Chrome size={20} color="white" />
                 <Text style={styles.buttonText}>설치할게요 (Android 버전)</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.iosButton} onPress={handleStart}>
+              <TouchableOpacity style={styles.iosButton} onPress={handleIOSInstall}>
                 <Share2 size={20} color="white" />
                 <Text style={styles.buttonText}>설치할게요 (iOS 버전)</Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.webButton} onPress={handleStart}>
+              <TouchableOpacity style={styles.webButton} onPress={handleWebView}>
                 <Smartphone size={20} color="#374151" />
                 <Text style={styles.webButtonText}>모바일웹으로 볼게요</Text>
               </TouchableOpacity>
@@ -324,6 +371,61 @@ export default function Index() {
             </View>
           </View>
         </View>
+
+        {/* iOS 설치 안내 모달 */}
+        {showIOSModal && (
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <TouchableOpacity 
+                style={styles.modalClose}
+                onPress={() => setShowIOSModal(false)}
+              >
+                <X size={24} color="#6b7280" />
+              </TouchableOpacity>
+
+              <Text style={styles.modalTitle}>iOS 설치 방법</Text>
+              
+              <View style={styles.modalSteps}>
+                <View style={styles.modalStep}>
+                  <View style={styles.modalStepNumber}>
+                    <Text style={styles.modalStepNumberText}>1</Text>
+                  </View>
+                  <Text style={styles.modalStepText}>
+                    Safari 하단의 공유 버튼 탭
+                  </Text>
+                </View>
+
+                <View style={styles.modalStep}>
+                  <View style={styles.modalStepNumber}>
+                    <Text style={styles.modalStepNumberText}>2</Text>
+                  </View>
+                  <Text style={styles.modalStepText}>
+                    "홈 화면에 추가" 선택
+                  </Text>
+                </View>
+
+                <View style={styles.modalStep}>
+                  <View style={styles.modalStepNumber}>
+                    <Text style={styles.modalStepNumberText}>3</Text>
+                  </View>
+                  <Text style={styles.modalStepText}>
+                    "추가" 버튼 탭하여 완료!
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity 
+                style={styles.modalButton}
+                onPress={() => {
+                  setShowIOSModal(false);
+                  router.push('/auth/login');
+                }}
+              >
+                <Text style={styles.modalButtonText}>웹으로 계속하기</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* 푸터 */}
         <View style={styles.footer}>
@@ -784,5 +886,83 @@ const styles = StyleSheet.create({
   footerText: {
     color: '#9ca3af',
     fontSize: 14,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    zIndex: 1000,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 24,
+    width: '100%',
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalClose: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    padding: 8,
+    zIndex: 10,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  modalSteps: {
+    gap: 16,
+    marginBottom: 24,
+  },
+  modalStep: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  modalStepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#3b82f6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalStepNumberText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  modalStepText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#374151',
+    lineHeight: 24,
+    paddingTop: 4,
+  },
+  modalButton: {
+    backgroundColor: '#3b82f6',
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });

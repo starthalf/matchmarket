@@ -129,7 +129,7 @@ export default function Index() {
 />
                 <View style={styles.sellerInfo}>
                   <View style={styles.sellerNameRow}>
-                    <Text style={styles.sellerName}>Lovely_ssoo</Text>
+                    <Text style={styles.sellerName}>Luvly_ssoo</Text>
                     <View style={styles.badges}>
                       <CheckCircle size={12} color="#10b981" fill="#10b981" />
                       <CheckCircle size={12} color="#3b82f6" fill="#3b82f6" />

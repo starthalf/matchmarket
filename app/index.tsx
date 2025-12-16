@@ -934,7 +934,7 @@ const styles = StyleSheet.create({
   modalStep: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 12, 
+    gap: 12,
   },
   modalStepNumber: {
     width: 32,

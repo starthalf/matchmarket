@@ -123,9 +123,10 @@ export default function Index() {
             {/* 메인 카드 */}
             <View style={styles.mainCard}>
               <View style={styles.sellerSection}>
-                <View style={styles.profileImage}>
-                  <Text style={styles.profileInitial}>A</Text>
-                </View>
+                <Image
+  source={{ uri: 'https://gpepbpazzcoiwqgvkmov.supabase.co/storage/v1/object/public/avatars/aesthetic-vibes.png' }}
+  style={styles.profileImage}
+/>
                 <View style={styles.sellerInfo}>
                   <View style={styles.sellerNameRow}>
                     <Text style={styles.sellerName}>aesthetic.vibes</Text>

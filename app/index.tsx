@@ -78,9 +78,10 @@ export default function Index() {
             <View style={styles.blurCard}>
               <View style={styles.cardContent}>
                 <View style={styles.sellerSection}>
-                  <View style={styles.profileImageBg}>
-                    <Text style={styles.profileInitial}>A</Text>
-                  </View>
+              <Image
+  source={{ uri: 'https://gpepbpazzcoiwqgvkmov.supabase.co/storage/v1/object/public/avatars/aesthetic-vibes.png' }}
+  style={styles.profileImageBg}
+/>
                   <View style={styles.sellerInfo}>
                     <View style={styles.sellerNameRow}>
                       <Text style={styles.sellerNameBg}>aesthetic.vibes</Text>

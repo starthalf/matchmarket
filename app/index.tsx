@@ -416,15 +416,15 @@ export default function Index() {
                 </View>
               </View>
 
-              <TouchableOpacity 
-                style={styles.modalButton}
-                onPress={() => {
-                  setShowIOSModal(false);
-                  router.push('/auth/login');
-                }}
-              >
-                <Text style={styles.modalButtonText}>웹으로 계속하기</Text>
-              </TouchableOpacity>
+             <TouchableOpacity 
+  style={styles.modalButton}
+  onPress={() => {
+    setShowIOSModal(false);
+    router.push('/(tabs)');
+  }}
+>
+  <Text style={styles.modalButtonText}>웹으로 계속하기</Text>
+</TouchableOpacity>
             </View>
           </View>
         )}

@@ -64,9 +64,9 @@ export default function Index() {
   };
 
   const handleWebView = () => {
-    // 모바일웹으로 볼게요 → 로그인으로
-    router.push('/auth/login');
-  };
+  // 모바일웹으로 볼게요 → 매치 탭으로
+  router.push('/(tabs)');
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>

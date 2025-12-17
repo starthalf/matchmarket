@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
   },
-  modalButtonText: { 
+  modalButtonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: '600',

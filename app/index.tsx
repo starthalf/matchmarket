@@ -86,7 +86,7 @@ export default function Index() {
               <Text style={styles.brandLogo}>MATCH MARKET</Text>
               <View style={styles.copyContainer}>
                 <Text style={styles.mainCopy}>
-                  VALUE YOUR{'\n'}TENNIS
+                  당신의 테니스를{'\n'}판매하세요
                 </Text>
                 <Text style={styles.subCopy}>
                   고수, 선출, 인플루언서와 치고 싶은 사람들이 기다려요

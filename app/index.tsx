@@ -94,7 +94,7 @@ export default function Index() {
               </View>
             </View>
 
-            {/* [중간] 통계 섹션 (수정됨) */}
+            {/* [중간] 통계 섹션 (수정됨: 위치 내림 + 좌우 여백 확보) */}
             <View style={styles.centerSection}>
               <View style={styles.statsRow}>
                 
@@ -103,9 +103,6 @@ export default function Index() {
                   <Text style={styles.statLabel}>참가신청</Text>
                   <Text style={styles.statValue}>{applicantCount}</Text>
                 </View>
-
-                {/* 구분선 (필요 없으면 삭제 가능, 간격을 위해 투명 공간 역할) */}
-                <View style={{ width: 40 }} /> 
 
                 {/* 오른쪽: 나의 매치 가격 */}
                 <View style={styles.statItem}>
@@ -116,7 +113,7 @@ export default function Index() {
                     </Text>
                     <TrendingUp 
                       color={PRIMARY_COLOR} 
-                      size={28} // 아이콘 크기도 폰트에 맞춰 살짝 조정
+                      size={28} 
                       strokeWidth={3}
                       style={styles.icon} 
                     />
@@ -219,32 +216,33 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // [Center Section] - 정렬 및 간격 수정
+  // [Center Section] - 위치 및 여백 수정
   centerSection: { 
     width: '100%',
-    marginBottom: 30, // 하단 여백 확보
+    marginTop: 100, // ★ 수정됨: 위에서 더 아래로 내림 (기존 padding/margin보다 더 확실하게)
+    marginBottom: 40,
   },
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // 양쪽 끝으로 배치하되
-    alignItems: 'center',            // 수직 중앙 정렬
-    paddingHorizontal: 30,           // 양옆 여백을 넉넉히 주어 서로 떨어뜨림
+    justifyContent: 'space-between', 
+    alignItems: 'center',            
+    paddingHorizontal: 40, // ★ 수정됨: 좌우 여백을 30 -> 40으로 늘려 화면 끝에서 더 떨어뜨림
   },
   statItem: {
-    alignItems: 'center', // ★ 중요: 라벨과 숫자가 서로 가운데 정렬됨
-    minWidth: 100,        // 최소 너비 확보
+    alignItems: 'center', 
+    minWidth: 100,        
   },
   statLabel: {
     color: '#fff',
-    fontSize: 16,        // 라벨 크기 미세 조정
+    fontSize: 16,        
     fontWeight: '500',
-    marginBottom: 8,     // 숫자와의 간격
+    marginBottom: 8,     
     opacity: 0.9,
     textAlign: 'center',
   },
   statValue: {
     color: '#fff',
-    fontSize: 36,        // ★ 중요: 폰트 사이즈 42 -> 36으로 축소
+    fontSize: 36,        
     fontWeight: '900',
     fontVariant: ['tabular-nums'], 
     letterSpacing: -0.5,

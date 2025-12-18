@@ -94,7 +94,7 @@ export default function Index() {
               </View>
             </View>
 
-            {/* [중간] 통계 섹션 (수정됨: 위치 내림 + 좌우 여백 확보) */}
+            {/* [중간] 통계 섹션 */}
             <View style={styles.centerSection}>
               <View style={styles.statsRow}>
                 
@@ -123,21 +123,24 @@ export default function Index() {
               </View>
             </View>
 
-            {/* [하단] 버튼 그룹 */}
+            {/* [하단] 버튼 그룹 (한글 멘트로 수정됨) */}
             <View style={styles.bottomSection}>
+              {/* Android */}
               <TouchableOpacity style={styles.glassButton} onPress={handleAndroidInstall}>
                 <Chrome size={20} color="white" />
-                <Text style={styles.buttonText}>App Install (Android)</Text>
+                <Text style={styles.buttonText}>안드로이드 설치할게요</Text>
               </TouchableOpacity>
 
+              {/* iOS */}
               <TouchableOpacity style={styles.glassButton} onPress={handleIOSInstall}>
                 <Share2 size={20} color="white" />
-                <Text style={styles.buttonText}>App Install (iOS)</Text>
+                <Text style={styles.buttonText}>iOS 설치할게요</Text>
               </TouchableOpacity>
 
+              {/* Web */}
               <TouchableOpacity style={styles.outlineButton} onPress={handleWebView}>
                 <Smartphone size={20} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.outlineButtonText}>Just Look Around</Text>
+                <Text style={styles.outlineButtonText}>모바일 웹으로 볼래요</Text>
               </TouchableOpacity>
             </View>
 
@@ -216,17 +219,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // [Center Section] - 위치 및 여백 수정
+  // [Center Section]
   centerSection: { 
     width: '100%',
-    marginTop: 100, // ★ 수정됨: 위에서 더 아래로 내림 (기존 padding/margin보다 더 확실하게)
+    marginTop: 100, // 위에서 아래로 위치 내림
     marginBottom: 40,
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between', 
     alignItems: 'center',            
-    paddingHorizontal: 40, // ★ 수정됨: 좌우 여백을 30 -> 40으로 늘려 화면 끝에서 더 떨어뜨림
+    paddingHorizontal: 40, // 좌우 여백 확보
   },
   statItem: {
     alignItems: 'center', 

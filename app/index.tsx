@@ -89,7 +89,7 @@ export default function Index() {
                   VALUE YOUR{'\n'}TENNIS
                 </Text>
                 <Text style={styles.subCopy}>
-                  고수, 우승자, 인플루언서와 치고 싶은 사람들이 기다리고 있어요
+                  고수, 선출, 인플루언서와 치고 싶은 사람들이 기다려요
                 </Text>
               </View>
             </View>

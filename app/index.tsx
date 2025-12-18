@@ -123,7 +123,7 @@ export default function Index() {
               </View>
             </View>
 
-            {/* [하단] 버튼 그룹 (한글 멘트로 수정됨) */}
+            {/* [하단] 버튼 그룹 (3개 모두 동일 디자인) */}
             <View style={styles.bottomSection}>
               {/* Android */}
               <TouchableOpacity style={styles.glassButton} onPress={handleAndroidInstall}>
@@ -137,10 +137,10 @@ export default function Index() {
                 <Text style={styles.buttonText}>iOS 설치할게요</Text>
               </TouchableOpacity>
 
-              {/* Web */}
-              <TouchableOpacity style={styles.outlineButton} onPress={handleWebView}>
-                <Smartphone size={20} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.outlineButtonText}>모바일 웹으로 볼래요</Text>
+              {/* Web (스타일 동일하게 변경됨) */}
+              <TouchableOpacity style={styles.glassButton} onPress={handleWebView}>
+                <Smartphone size={20} color="white" />
+                <Text style={styles.buttonText}>모바일 웹으로 볼래요</Text>
               </TouchableOpacity>
             </View>
 
@@ -281,21 +281,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  outlineButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 8,
-    gap: 10,
-  },
-  outlineButtonText: {
-    color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 14,
-    fontWeight: '500',
-    textDecorationLine: 'underline',
-  },
-
+  
   // Modal
   modalOverlay: {
     position: 'absolute',

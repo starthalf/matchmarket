@@ -13,10 +13,8 @@ export default function Index() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
-  // ✅ 수정된 애니메이션 설정값
-  // 1. 인원: 5명 시작
+  // 애니메이션 설정값
   const [applicantCount, setApplicantCount] = useState(5);
-  // 2. 가격: 10,000원 시작
   const [price, setPrice] = useState(10000);
   
   const [isAnimating, setIsAnimating] = useState(true);
@@ -31,19 +29,15 @@ export default function Index() {
     if (!isAnimating) return;
     const interval = setInterval(() => {
       
-      // 인원 증가 로직
+      // 인원 증가 로직 (5 -> 130)
       setApplicantCount((prev) => {
-        // 130명이 되면 5명으로 리셋
         if (prev >= 130) return 5; 
         return prev + 1;
       });
 
-      // 가격 상승 로직
+      // 가격 상승 로직 (10,000 -> 200,000)
       setPrice((prev) => {
-        // 200,000원이 되면 10,000원으로 리셋
         if (prev >= 200000) return 10000; 
-        
-        // 랜덤하게 500원 ~ 2000원씩 상승 (상승폭을 조금 키웠습니다)
         return prev + Math.floor(Math.random() * 4 + 1) * 500;
       });
 
@@ -87,7 +81,7 @@ export default function Index() {
         <View style={styles.darkOverlay}>
           <SafeAreaView style={styles.safeArea}>
             
-            {/* [상단] */}
+            {/* [상단] 카피 영역 */}
             <View style={styles.topSection}>
               <Text style={styles.brandLogo}>MATCH MARKET</Text>
               <View style={styles.copyContainer}>
@@ -100,17 +94,20 @@ export default function Index() {
               </View>
             </View>
 
-            {/* [중간] 통계 섹션 */}
+            {/* [중간] 통계 섹션 (수정됨) */}
             <View style={styles.centerSection}>
               <View style={styles.statsRow}>
                 
-                {/* 참가신청 */}
+                {/* 왼쪽: 참가신청 */}
                 <View style={styles.statItem}>
                   <Text style={styles.statLabel}>참가신청</Text>
                   <Text style={styles.statValue}>{applicantCount}</Text>
                 </View>
 
-                {/* 나의 매치 가격 */}
+                {/* 구분선 (필요 없으면 삭제 가능, 간격을 위해 투명 공간 역할) */}
+                <View style={{ width: 40 }} /> 
+
+                {/* 오른쪽: 나의 매치 가격 */}
                 <View style={styles.statItem}>
                   <Text style={styles.statLabel}>나의 매치</Text>
                   <View style={styles.priceRow}>
@@ -119,7 +116,7 @@ export default function Index() {
                     </Text>
                     <TrendingUp 
                       color={PRIMARY_COLOR} 
-                      size={32} 
+                      size={28} // 아이콘 크기도 폰트에 맞춰 살짝 조정
                       strokeWidth={3}
                       style={styles.icon} 
                     />
@@ -181,7 +178,7 @@ const styles = StyleSheet.create({
   darkOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
   },
   safeArea: {
     flex: 1,
@@ -222,39 +219,40 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // [Center Section]
+  // [Center Section] - 정렬 및 간격 수정
   centerSection: { 
     width: '100%',
-    paddingHorizontal: 10,
+    marginBottom: 30, // 하단 여백 확보
   },
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between', 
-    alignItems: 'flex-end',
-    paddingHorizontal: 10,
+    justifyContent: 'space-between', // 양쪽 끝으로 배치하되
+    alignItems: 'center',            // 수직 중앙 정렬
+    paddingHorizontal: 30,           // 양옆 여백을 넉넉히 주어 서로 떨어뜨림
   },
   statItem: {
-    alignItems: 'center', 
-    minWidth: 100,
+    alignItems: 'center', // ★ 중요: 라벨과 숫자가 서로 가운데 정렬됨
+    minWidth: 100,        // 최소 너비 확보
   },
   statLabel: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,        // 라벨 크기 미세 조정
     fontWeight: '500',
-    marginBottom: 12, 
+    marginBottom: 8,     // 숫자와의 간격
     opacity: 0.9,
+    textAlign: 'center',
   },
   statValue: {
     color: '#fff',
-    fontSize: 42,
+    fontSize: 36,        // ★ 중요: 폰트 사이즈 42 -> 36으로 축소
     fontWeight: '900',
     fontVariant: ['tabular-nums'], 
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8, 
+    gap: 6, 
   },
   icon: {
     marginBottom: 4, 

@@ -6,15 +6,19 @@ import { Chrome, Share2, Smartphone, X, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
 const { width } = Dimensions.get('window');
+const PRIMARY_COLOR = '#ea4c89'; // 핫핑크 포인트 컬러
 
 export default function Index() {
   const { user } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
-  // 애니메이션 상태값
-  const [applicantCount, setApplicantCount] = useState(1);
-  const [price, setPrice] = useState(25000);
+  // ✅ 수정된 애니메이션 설정값
+  // 1. 인원: 5명 시작
+  const [applicantCount, setApplicantCount] = useState(5);
+  // 2. 가격: 10,000원 시작
+  const [price, setPrice] = useState(10000);
+  
   const [isAnimating, setIsAnimating] = useState(true);
 
   // 1. 로그인 체크
@@ -22,24 +26,33 @@ export default function Index() {
     if (user) router.replace('/(tabs)');
   }, [user]);
 
-  // 2. 가격/인원 상승 애니메이션 (호스트 유입용 연출)
+  // 2. 가격/인원 상승 애니메이션 로직
   useEffect(() => {
     if (!isAnimating) return;
     const interval = setInterval(() => {
+      
+      // 인원 증가 로직
       setApplicantCount((prev) => {
-        if (prev >= 150) return 1; // 150명까지 차오르면 리셋
+        // 130명이 되면 5명으로 리셋
+        if (prev >= 130) return 5; 
         return prev + 1;
       });
+
+      // 가격 상승 로직
       setPrice((prev) => {
-        if (prev >= 120000) return 25000; // 12만원까지 오르면 리셋
-        return prev + Math.floor(Math.random() * 800) + 200;
+        // 200,000원이 되면 10,000원으로 리셋
+        if (prev >= 200000) return 10000; 
+        
+        // 랜덤하게 500원 ~ 2000원씩 상승 (상승폭을 조금 키웠습니다)
+        return prev + Math.floor(Math.random() * 4 + 1) * 500;
       });
-    }, 50); // 속도 (ms)
+
+    }, 80); // 0.08초마다 갱신
 
     return () => clearInterval(interval);
   }, [isAnimating]);
 
-  // 3. PWA 설치 프롬프트 (Android/Web)
+  // 3. PWA 설치 프롬프트
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -53,8 +66,6 @@ export default function Index() {
   const handleAndroidInstall = async () => {
     if (deferredPrompt) {
       await deferredPrompt.prompt();
-      const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') console.log('✅ 설치 완료');
       setDeferredPrompt(null);
     } else {
       if (Platform.OS === 'web') alert('브라우저 메뉴(⋮)에서 "앱 설치"를 선택해주세요.');
@@ -68,76 +79,68 @@ export default function Index() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* 배경 이미지: 전달해주신 Supabase URL 적용 */}
       <ImageBackground
         source={{ uri: 'https://xroiblqjsxxoewfyrzjy.supabase.co/storage/v1/object/public/images/influence3.jpg.png' }} 
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* 다크 오버레이: 텍스트 가독성을 위해 반투명 검정막 추가 */}
-        {/* 만약 배경 사진을 더 밝게 보고 싶으면 0.5를 0.3 정도로 낮추세요 */}
         <View style={styles.darkOverlay}>
           <SafeAreaView style={styles.safeArea}>
             
-            {/* [상단] 브랜드 & 카피라이트 */}
+            {/* [상단] */}
             <View style={styles.topSection}>
               <Text style={styles.brandLogo}>MATCH MARKET</Text>
               <View style={styles.copyContainer}>
                 <Text style={styles.mainCopy}>
-                  DON'T JUST PLAY,{'\n'}
-                  <Text style={styles.highlight}>PROVE YOUR VALUE.</Text>
+                  VALUE YOUR{'\n'}TENNIS
                 </Text>
                 <Text style={styles.subCopy}>
-                  당신과 치고 싶은 사람들이 기다리고 있습니다.{'\n'}
-                  실력이 곧 수익이 되는 순간.
+                  당신과 치고 싶은 사람들이 기다리고 있어요
                 </Text>
               </View>
             </View>
 
-            {/* [중간] 실시간 가치 상승 애니메이션 */}
+            {/* [중간] 통계 섹션 */}
             <View style={styles.centerSection}>
-              <View style={styles.tickerContainer}>
-                {/* 대기자 수 */}
-                <View style={styles.tickerItem}>
-                  <Text style={styles.tickerLabel}>WAITING</Text>
-                  <Text style={styles.tickerValue}>{applicantCount}</Text>
+              <View style={styles.statsRow}>
+                
+                {/* 참가신청 */}
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>참가신청</Text>
+                  <Text style={styles.statValue}>{applicantCount}</Text>
                 </View>
-                
-                <View style={styles.divider} />
-                
-                {/* 현재 가치 (가격) */}
-                <View style={styles.tickerItem}>
-                  <Text style={styles.tickerLabel}>CURRENT VALUE</Text>
+
+                {/* 나의 매치 가격 */}
+                <View style={styles.statItem}>
+                  <Text style={styles.statLabel}>나의 매치</Text>
                   <View style={styles.priceRow}>
-                    <Text style={styles.tickerPrice}>
+                    <Text style={styles.statValue}>
                       ₩ {price.toLocaleString()}
                     </Text>
-                    <TrendingUp color="#E8F836" size={24} style={styles.icon} />
+                    <TrendingUp 
+                      color={PRIMARY_COLOR} 
+                      size={32} 
+                      strokeWidth={3}
+                      style={styles.icon} 
+                    />
                   </View>
                 </View>
-              </View>
-              
-              {/* 게이지 바 */}
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${(applicantCount / 150) * 100}%` }]} />
+
               </View>
             </View>
 
-            {/* [하단] 설치 및 입장 버튼 */}
+            {/* [하단] 버튼 그룹 */}
             <View style={styles.bottomSection}>
-              {/* Android */}
               <TouchableOpacity style={styles.glassButton} onPress={handleAndroidInstall}>
                 <Chrome size={20} color="white" />
                 <Text style={styles.buttonText}>App Install (Android)</Text>
               </TouchableOpacity>
 
-              {/* iOS */}
               <TouchableOpacity style={styles.glassButton} onPress={handleIOSInstall}>
                 <Share2 size={20} color="white" />
                 <Text style={styles.buttonText}>App Install (iOS)</Text>
               </TouchableOpacity>
 
-              {/* Web */}
               <TouchableOpacity style={styles.outlineButton} onPress={handleWebView}>
                 <Smartphone size={20} color="rgba(255,255,255,0.8)" />
                 <Text style={styles.outlineButtonText}>Just Look Around</Text>
@@ -148,7 +151,7 @@ export default function Index() {
         </View>
       </ImageBackground>
 
-      {/* iOS 설치 안내 모달 */}
+      {/* iOS 모달 */}
       {showIOSModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -175,10 +178,9 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   backgroundImage: { flex: 1, width: '100%', height: '100%' },
   
-  // 전체 오버레이: 이미지 톤 다운 & 텍스트 가독성 확보
   darkOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', // 숫자가 높을수록 어두워짐 (0.0 ~ 1.0)
+    backgroundColor: 'rgba(0,0,0,0.4)',
     paddingHorizontal: 24,
   },
   safeArea: {
@@ -187,98 +189,91 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
 
-  // [Top]
-  topSection: { marginTop: 40 },
+  // [Top Section]
+  topSection: { 
+    marginTop: 60,
+    alignItems: 'center', 
+  },
   brandLogo: {
     color: '#fff',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 2,
-    marginBottom: 30,
-    opacity: 0.8,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 3,
+    marginBottom: 24,
+    opacity: 0.7,
   },
-  copyContainer: { gap: 16 },
+  copyContainer: { 
+    alignItems: 'center', 
+    gap: 16 
+  },
   mainCopy: {
-    fontSize: 42,
+    fontSize: 48,
     fontWeight: '900',
     color: '#fff',
-    lineHeight: 46,
+    lineHeight: 54,
+    textAlign: 'center', 
     fontStyle: 'italic',
   },
-  highlight: {
-    color: '#E8F836', // 테니스공 색상 (형광 라임)
-  },
   subCopy: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.85)',
-    fontWeight: '400',
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.9)',
+    fontWeight: '500',
     lineHeight: 24,
-    marginTop: 8,
+    textAlign: 'center',
   },
 
-  // [Center]
-  centerSection: { width: '100%' },
-  tickerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    marginBottom: 16,
-  },
-  tickerItem: { gap: 4 },
-  divider: {
-    width: 1,
-    height: 40,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    marginBottom: 6,
-  },
-  tickerLabel: {
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  tickerValue: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
-  },
-  priceRow: { flexDirection: 'row', alignItems: 'center' },
-  tickerPrice: {
-    color: '#fff',
-    fontSize: 36,
-    fontWeight: '900',
-    fontVariant: ['tabular-nums'],
-  },
-  icon: { marginLeft: 8, marginBottom: 4 },
-  
-  // Progress Bar
-  progressBarBg: {
+  // [Center Section]
+  centerSection: { 
     width: '100%',
-    height: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 2,
+    paddingHorizontal: 10,
   },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#E8F836',
-    borderRadius: 2,
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', 
+    alignItems: 'flex-end',
+    paddingHorizontal: 10,
+  },
+  statItem: {
+    alignItems: 'center', 
+    minWidth: 100,
+  },
+  statLabel: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: '500',
+    marginBottom: 12, 
+    opacity: 0.9,
+  },
+  statValue: {
+    color: '#fff',
+    fontSize: 42,
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'], 
+    letterSpacing: -1,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8, 
+  },
+  icon: {
+    marginBottom: 4, 
   },
 
-  // [Bottom]
+  // [Bottom Section]
   bottomSection: {
     gap: 12,
-    marginBottom: 30,
+    marginBottom: 40,
   },
   glassButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)', // Glassmorphism
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingVertical: 16,
-    borderRadius: 4,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 255, 255, 0.3)',
     gap: 10,
   },
   buttonText: {
@@ -292,7 +287,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 16,
-    borderRadius: 4,
+    borderRadius: 8,
     gap: 10,
   },
   outlineButtonText: {
@@ -302,7 +297,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-  // Modal Style (Dark Theme)
+  // Modal
   modalOverlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -326,10 +321,10 @@ const styles = StyleSheet.create({
   modalText: { fontSize: 15, color: '#d1d5db', lineHeight: 22 },
   modalConfirmBtn: {
     marginTop: 24,
-    backgroundColor: '#fff',
+    backgroundColor: PRIMARY_COLOR, 
     paddingVertical: 14,
     paddingHorizontal: 40,
-    borderRadius: 4,
+    borderRadius: 8,
   },
-  modalConfirmText: { color: '#000', fontWeight: 'bold', fontSize: 15 },
+  modalConfirmText: { color: '#fff', fontWeight: 'bold', fontSize: 15 },
 });

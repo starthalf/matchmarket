@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   subCopy: {
-    fontSize: 16,
+    fontSize: 14,
     color: 'rgba(255,255,255,0.9)',
     fontWeight: '500',
     lineHeight: 24,

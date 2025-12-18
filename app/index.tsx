@@ -4,16 +4,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Chrome, Share2, Smartphone, X, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-// import { LinearGradient } from 'expo-linear-gradient'; // 그라데이션 필요시 설치, 없으면 아래 View overlay로 충분
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function Index() {
   const { user } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
-  // 애니메이션 상태
+  // 애니메이션 상태값
   const [applicantCount, setApplicantCount] = useState(1);
   const [price, setPrice] = useState(25000);
   const [isAnimating, setIsAnimating] = useState(true);
@@ -23,7 +22,7 @@ export default function Index() {
     if (user) router.replace('/(tabs)');
   }, [user]);
 
-  // 2. 가격/인원 상승 애니메이션
+  // 2. 가격/인원 상승 애니메이션 (호스트 유입용 연출)
   useEffect(() => {
     if (!isAnimating) return;
     const interval = setInterval(() => {
@@ -35,16 +34,14 @@ export default function Index() {
         if (prev >= 120000) return 25000; // 12만원까지 오르면 리셋
         return prev + Math.floor(Math.random() * 800) + 200;
       });
-    }, 50); // 속도감 있게
+    }, 50); // 속도 (ms)
 
     return () => clearInterval(interval);
   }, [isAnimating]);
 
-  // 3. PWA 설치 로직 (기존 코드 유지)
+  // 3. PWA 설치 프롬프트 (Android/Web)
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -65,24 +62,24 @@ export default function Index() {
   };
 
   const handleIOSInstall = () => setShowIOSModal(true);
-  
   const handleWebView = () => router.push('/(tabs)');
 
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
-      {/* 배경: 나이키 스타일의 흑백/고대비 느낌 */}
+      {/* 배경 이미지: 전달해주신 Supabase URL 적용 */}
       <ImageBackground
-        source={{ uri: 'https://images.unsplash.com/photo-1622163642998-1ea36b1dde3b?q=80&w=2662&auto=format&fit=crop' }} 
+        source={{ uri: 'https://xroiblqjsxxoewfyrzjy.supabase.co/storage/v1/object/public/images/influence3.jpg.png' }} 
         style={styles.backgroundImage}
         resizeMode="cover"
       >
-        {/* 전체 반투명 오버레이 (무게감) */}
+        {/* 다크 오버레이: 텍스트 가독성을 위해 반투명 검정막 추가 */}
+        {/* 만약 배경 사진을 더 밝게 보고 싶으면 0.5를 0.3 정도로 낮추세요 */}
         <View style={styles.darkOverlay}>
           <SafeAreaView style={styles.safeArea}>
             
-            {/* 상단: 카피라이트 */}
+            {/* [상단] 브랜드 & 카피라이트 */}
             <View style={styles.topSection}>
               <Text style={styles.brandLogo}>MATCH MARKET</Text>
               <View style={styles.copyContainer}>
@@ -97,45 +94,50 @@ export default function Index() {
               </View>
             </View>
 
-            {/* 중간: 가격 변동 애니메이션 (핵심) */}
+            {/* [중간] 실시간 가치 상승 애니메이션 */}
             <View style={styles.centerSection}>
               <View style={styles.tickerContainer}>
+                {/* 대기자 수 */}
                 <View style={styles.tickerItem}>
                   <Text style={styles.tickerLabel}>WAITING</Text>
                   <Text style={styles.tickerValue}>{applicantCount}</Text>
                 </View>
+                
                 <View style={styles.divider} />
+                
+                {/* 현재 가치 (가격) */}
                 <View style={styles.tickerItem}>
-                  <Text style={styles.tickerLabel}>CURRENT PRICE</Text>
+                  <Text style={styles.tickerLabel}>CURRENT VALUE</Text>
                   <View style={styles.priceRow}>
                     <Text style={styles.tickerPrice}>
                       ₩ {price.toLocaleString()}
                     </Text>
-                    <TrendingUp color="#ff3b30" size={24} style={styles.icon} />
+                    <TrendingUp color="#E8F836" size={24} style={styles.icon} />
                   </View>
                 </View>
               </View>
-              {/* 심플한 게이지 바 */}
+              
+              {/* 게이지 바 */}
               <View style={styles.progressBarBg}>
                 <View style={[styles.progressBarFill, { width: `${(applicantCount / 150) * 100}%` }]} />
               </View>
             </View>
 
-            {/* 하단: 버튼 그룹 (원래 기능 유지 + 반투명 스타일 적용) */}
+            {/* [하단] 설치 및 입장 버튼 */}
             <View style={styles.bottomSection}>
               {/* Android */}
               <TouchableOpacity style={styles.glassButton} onPress={handleAndroidInstall}>
                 <Chrome size={20} color="white" />
-                <Text style={styles.buttonText}>Android App Install</Text>
+                <Text style={styles.buttonText}>App Install (Android)</Text>
               </TouchableOpacity>
 
               {/* iOS */}
               <TouchableOpacity style={styles.glassButton} onPress={handleIOSInstall}>
                 <Share2 size={20} color="white" />
-                <Text style={styles.buttonText}>iOS App Install</Text>
+                <Text style={styles.buttonText}>App Install (iOS)</Text>
               </TouchableOpacity>
 
-              {/* Web View */}
+              {/* Web */}
               <TouchableOpacity style={styles.outlineButton} onPress={handleWebView}>
                 <Smartphone size={20} color="rgba(255,255,255,0.8)" />
                 <Text style={styles.outlineButtonText}>Just Look Around</Text>
@@ -146,7 +148,7 @@ export default function Index() {
         </View>
       </ImageBackground>
 
-      {/* iOS 모달 (스타일 다크 모드 적용) */}
+      {/* iOS 설치 안내 모달 */}
       {showIOSModal && (
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
@@ -157,6 +159,7 @@ export default function Index() {
             <View style={styles.modalStep}>
               <Text style={styles.modalText}>1. Safari 하단 <Share2 size={16} color="#fff"/> 공유 버튼 터치</Text>
               <Text style={styles.modalText}>2. '홈 화면에 추가' 선택</Text>
+              <Text style={styles.modalText}>3. 홈 화면의 아이콘으로 접속</Text>
             </View>
             <TouchableOpacity style={styles.modalConfirmBtn} onPress={() => setShowIOSModal(false)}>
               <Text style={styles.modalConfirmText}>확인했습니다</Text>
@@ -172,10 +175,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   backgroundImage: { flex: 1, width: '100%', height: '100%' },
   
-  // 나이키 스타일: 짙은 오버레이로 텍스트 가독성 + 분위기 확보
+  // 전체 오버레이: 이미지 톤 다운 & 텍스트 가독성 확보
   darkOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)', // 이미지 밝기에 따라 0.4~0.7 조절
+    backgroundColor: 'rgba(0,0,0,0.5)', // 숫자가 높을수록 어두워짐 (0.0 ~ 1.0)
     paddingHorizontal: 24,
   },
   safeArea: {
@@ -184,39 +187,37 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
 
-  // 상단부
-  topSection: { marginTop: 20 },
+  // [Top]
+  topSection: { marginTop: 40 },
   brandLogo: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '900',
     letterSpacing: 2,
-    marginBottom: 40,
+    marginBottom: 30,
     opacity: 0.8,
   },
   copyContainer: { gap: 16 },
   mainCopy: {
-    fontSize: 48,
-    fontWeight: '900', // Heavy Font
+    fontSize: 42,
+    fontWeight: '900',
     color: '#fff',
-    lineHeight: 52,
-    fontStyle: 'italic', // 스포티한 느낌
+    lineHeight: 46,
+    fontStyle: 'italic',
   },
   highlight: {
-    color: '#E8F836', // 테니스 공 색상 or 화이트
+    color: '#E8F836', // 테니스공 색상 (형광 라임)
   },
   subCopy: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
     fontWeight: '400',
     lineHeight: 24,
-    marginTop: 10,
+    marginTop: 8,
   },
 
-  // 중앙부 (애니메이션)
-  centerSection: {
-    width: '100%',
-  },
+  // [Center]
+  centerSection: { width: '100%' },
   tickerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -228,30 +229,30 @@ const styles = StyleSheet.create({
     width: 1,
     height: 40,
     backgroundColor: 'rgba(255,255,255,0.3)',
-    marginBottom: 5,
+    marginBottom: 6,
   },
   tickerLabel: {
     color: 'rgba(255,255,255,0.6)',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     letterSpacing: 1,
   },
   tickerValue: {
     color: '#fff',
-    fontSize: 32,
-    fontWeight: '900', // Futura 느낌
-    fontVariant: ['tabular-nums'], // 숫자 너비 고정
+    fontSize: 36,
+    fontWeight: '900',
+    fontVariant: ['tabular-nums'],
   },
   priceRow: { flexDirection: 'row', alignItems: 'center' },
   tickerPrice: {
     color: '#fff',
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '900',
     fontVariant: ['tabular-nums'],
   },
   icon: { marginLeft: 8, marginBottom: 4 },
   
-  // 게이지 바
+  // Progress Bar
   progressBarBg: {
     width: '100%',
     height: 4,
@@ -260,29 +261,29 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#E8F836', // 형광 라임 (테니스공)
+    backgroundColor: '#E8F836',
     borderRadius: 2,
   },
 
-  // 하단부 (버튼)
+  // [Bottom]
   bottomSection: {
     gap: 12,
-    marginBottom: 20,
+    marginBottom: 30,
   },
   glassButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)', // 반투명 유리
-    paddingVertical: 18,
-    borderRadius: 4, // 나이키는 둥근 것보다 각진 게 어울림 (취향따라 조절)
+    backgroundColor: 'rgba(255, 255, 255, 0.15)', // Glassmorphism
+    paddingVertical: 16,
+    borderRadius: 4,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
     gap: 10,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     letterSpacing: 0.5,
   },
@@ -290,18 +291,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 18,
+    paddingVertical: 16,
     borderRadius: 4,
     gap: 10,
   },
   outlineButtonText: {
     color: 'rgba(255, 255, 255, 0.7)',
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
 
-  // 모달 스타일 (Dark Theme)
+  // Modal Style (Dark Theme)
   modalOverlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,
@@ -313,22 +314,22 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '100%',
     backgroundColor: '#1c1c1e',
-    padding: 30,
+    padding: 24,
     borderRadius: 16,
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#333',
   },
-  modalClose: { position: 'absolute', top: 20, right: 20 },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: '#fff', marginBottom: 20 },
+  modalClose: { position: 'absolute', top: 16, right: 16 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: '#fff', marginBottom: 20 },
   modalStep: { alignItems: 'flex-start', gap: 12, width: '100%', paddingHorizontal: 10 },
-  modalText: { fontSize: 16, color: '#d1d5db', lineHeight: 24 },
+  modalText: { fontSize: 15, color: '#d1d5db', lineHeight: 22 },
   modalConfirmBtn: {
-    marginTop: 30,
+    marginTop: 24,
     backgroundColor: '#fff',
     paddingVertical: 14,
     paddingHorizontal: 40,
     borderRadius: 4,
   },
-  modalConfirmText: { color: '#000', fontWeight: 'bold', fontSize: 16 },
+  modalConfirmText: { color: '#000', fontWeight: 'bold', fontSize: 15 },
 });

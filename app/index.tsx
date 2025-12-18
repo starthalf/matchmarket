@@ -13,10 +13,8 @@ export default function Index() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
-  // ✅ 수정된 애니메이션 설정값
-  // 1. 인원: 5명 시작
+  // 애니메이션 설정값
   const [applicantCount, setApplicantCount] = useState(5);
-  // 2. 가격: 10,000원 시작
   const [price, setPrice] = useState(10000);
   
   const [isAnimating, setIsAnimating] = useState(true);
@@ -33,17 +31,13 @@ export default function Index() {
       
       // 인원 증가 로직
       setApplicantCount((prev) => {
-        // 130명이 되면 5명으로 리셋
         if (prev >= 130) return 5; 
         return prev + 1;
       });
 
       // 가격 상승 로직
       setPrice((prev) => {
-        // 200,000원이 되면 10,000원으로 리셋
         if (prev >= 200000) return 10000; 
-        
-        // 랜덤하게 500원 ~ 2000원씩 상승 (상승폭을 조금 키웠습니다)
         return prev + Math.floor(Math.random() * 4 + 1) * 500;
       });
 
@@ -105,13 +99,13 @@ export default function Index() {
               <View style={styles.statsRow}>
                 
                 {/* 참가신청 */}
-                <View style={styles.statItem}>
+                <View style={styles.statItemLeft}>
                   <Text style={styles.statLabel}>참가신청</Text>
                   <Text style={styles.statValue}>{applicantCount}</Text>
                 </View>
 
                 {/* 나의 매치 가격 */}
-                <View style={styles.statItem}>
+                <View style={styles.statItemRight}>
                   <Text style={styles.statLabel}>나의 매치</Text>
                   <View style={styles.priceRow}>
                     <Text style={styles.statValue}>
@@ -181,7 +175,7 @@ const styles = StyleSheet.create({
   darkOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',
-    paddingHorizontal: 24,
+    paddingHorizontal: 20, // 전체 패딩 24->20으로 줄여 가용 너비 확보
   },
   safeArea: {
     flex: 1,
@@ -222,27 +216,38 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // [Center Section]
+  // [Center Section] - 간격 넓힘 수정
   centerSection: { 
     width: '100%',
-    paddingHorizontal: 10,
+    paddingHorizontal: 0, // 내부 패딩 제거하여 양끝으로 더 밀착
+    marginBottom: 20,
   },
   statsRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between', 
+    justifyContent: 'space-between', // 양 끝 정렬
     alignItems: 'flex-end',
-    paddingHorizontal: 10,
+    width: '100%',
+    paddingHorizontal: 10, // 최소한의 여백만 남김
   },
-  statItem: {
-    alignItems: 'center', 
+  statItemLeft: {
+    alignItems: 'center', // 왼쪽 아이템 가운데 정렬
     minWidth: 100,
+    // 왼쪽으로 치우치지 않게 정렬
+    alignItems: 'flex-start', 
+    paddingLeft: 10,
+  },
+  statItemRight: {
+    alignItems: 'flex-end', // 오른쪽 아이템 우측 정렬
+    minWidth: 100,
+    paddingRight: 10,
   },
   statLabel: {
     color: '#fff',
     fontSize: 18,
     fontWeight: '500',
-    marginBottom: 12, 
+    marginBottom: 16, // 라벨과 숫자 사이 간격도 살짝 넓힘 (12->16)
     opacity: 0.9,
+    textAlign: 'center',
   },
   statValue: {
     color: '#fff',
@@ -257,7 +262,7 @@ const styles = StyleSheet.create({
     gap: 8, 
   },
   icon: {
-    marginBottom: 4, 
+    marginBottom: 6, // 아이콘 위치 미세 조정
   },
 
   // [Bottom Section]

@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, ImageBackground, StatusBar, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ImageBackground, StatusBar, Dimensions, ScrollView } from 'react-native'; // 1. ScrollView 추가
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Chrome, Share2, Smartphone, X, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
-const { width } = Dimensions.get('window');
-const PRIMARY_COLOR = '#ea4c89'; // 핫핑크 포인트 컬러
+const { width, height } = Dimensions.get('window'); // height 추가
+const PRIMARY_COLOR = '#ea4c89';
 
 export default function Index() {
   const { user } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
-  // 애니메이션 설정값
   const [applicantCount, setApplicantCount] = useState(5);
   const [price, setPrice] = useState(10000);
-  
   const [isAnimating, setIsAnimating] = useState(true);
 
   // 1. 로그인 체크
@@ -24,29 +22,17 @@ export default function Index() {
     if (user) router.replace('/(tabs)');
   }, [user]);
 
-  // 2. 가격/인원 상승 애니메이션 로직
+  // 2. 애니메이션 로직
   useEffect(() => {
     if (!isAnimating) return;
     const interval = setInterval(() => {
-      
-      // 인원 증가 로직 (5 -> 130)
-      setApplicantCount((prev) => {
-        if (prev >= 130) return 5; 
-        return prev + 1;
-      });
-
-      // 가격 상승 로직 (10,000 -> 200,000)
-      setPrice((prev) => {
-        if (prev >= 200000) return 10000; 
-        return prev + Math.floor(Math.random() * 4 + 1) * 500;
-      });
-
-    }, 80); // 0.08초마다 갱신
-
+      setApplicantCount((prev) => (prev >= 130 ? 5 : prev + 1));
+      setPrice((prev) => (prev >= 200000 ? 10000 : prev + Math.floor(Math.random() * 4 + 1) * 500));
+    }, 80);
     return () => clearInterval(interval);
   }, [isAnimating]);
 
-  // 3. PWA 설치 프롬프트
+  // 3. PWA 설치
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -81,69 +67,71 @@ export default function Index() {
         <View style={styles.darkOverlay}>
           <SafeAreaView style={styles.safeArea}>
             
-            {/* [상단] 카피 영역 */}
-            <View style={styles.topSection}>
-              <Text style={styles.brandLogo}>MATCH MARKET</Text>
-              <View style={styles.copyContainer}>
-                <Text style={styles.mainCopy}>
-                  Sell Your{'\n'}Tennis
-                </Text>
-                <Text style={styles.subCopy}>
-                  고수, 선출, 인플루언서와 치고 싶은 사람들이 기다려요
-                </Text>
-              </View>
-            </View>
-
-            {/* [중간] 통계 섹션 */}
-            <View style={styles.centerSection}>
-              <View style={styles.statsRow}>
-                
-                {/* 왼쪽: 참가신청 */}
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>참가신청</Text>
-                  <Text style={styles.statValue}>{applicantCount}</Text>
+            {/* [중요 변경] ScrollView 추가 
+              contentContainerStyle에 flexGrow: 1과 justifyContent: 'space-between'을 줍니다.
+              이렇게 하면 내용이 적을 땐 화면 꽉 차게 벌어지고, 많을 땐 스크롤이 됩니다.
+            */}
+            <ScrollView 
+              contentContainerStyle={styles.scrollContent}
+              showsVerticalScrollIndicator={false}
+            >
+            
+              {/* [상단] 카피 영역 */}
+              <View style={styles.topSection}>
+                <Text style={styles.brandLogo}>MATCH MARKET</Text>
+                <View style={styles.copyContainer}>
+                  <Text style={styles.mainCopy}>
+                    Sell Your{'\n'}Tennis
+                  </Text>
+                  <Text style={styles.subCopy}>
+                    고수, 선출, 인플루언서와 치고 싶은 사람들이 기다려요
+                  </Text>
                 </View>
+              </View>
 
-                {/* 오른쪽: 나의 매치 가격 */}
-                <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>나의 매치</Text>
-                  <View style={styles.priceRow}>
-                    <Text style={styles.statValue}>
-                      ₩ {price.toLocaleString()}
-                    </Text>
-                    <TrendingUp 
-                      color={PRIMARY_COLOR} 
-                      size={28} 
-                      strokeWidth={3}
-                      style={styles.icon} 
-                    />
+              {/* [중간] 통계 섹션 */}
+              <View style={styles.centerSection}>
+                <View style={styles.statsRow}>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>참가신청</Text>
+                    <Text style={styles.statValue}>{applicantCount}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text style={styles.statLabel}>나의 매치</Text>
+                    <View style={styles.priceRow}>
+                      <Text style={styles.statValue}>
+                        ₩ {price.toLocaleString()}
+                      </Text>
+                      <TrendingUp 
+                        color={PRIMARY_COLOR} 
+                        size={28} 
+                        strokeWidth={3}
+                        style={styles.icon} 
+                      />
+                    </View>
                   </View>
                 </View>
-
               </View>
-            </View>
 
-            {/* [하단] 버튼 그룹 (3개 모두 동일 디자인) */}
-            <View style={styles.bottomSection}>
-              {/* Android */}
-              <TouchableOpacity style={styles.glassButton} onPress={handleAndroidInstall}>
-                <Chrome size={20} color="white" />
-                <Text style={styles.buttonText}>안드로이드 설치할게요</Text>
-              </TouchableOpacity>
+              {/* [하단] 버튼 그룹 */}
+              <View style={styles.bottomSection}>
+                <TouchableOpacity style={styles.glassButton} onPress={handleAndroidInstall}>
+                  <Chrome size={20} color="white" />
+                  <Text style={styles.buttonText}>안드로이드 설치할게요</Text>
+                </TouchableOpacity>
 
-              {/* iOS */}
-              <TouchableOpacity style={styles.glassButton} onPress={handleIOSInstall}>
-                <Share2 size={20} color="white" />
-                <Text style={styles.buttonText}>iOS 설치할게요</Text>
-              </TouchableOpacity>
+                <TouchableOpacity style={styles.glassButton} onPress={handleIOSInstall}>
+                  <Share2 size={20} color="white" />
+                  <Text style={styles.buttonText}>iOS 설치할게요</Text>
+                </TouchableOpacity>
 
-              {/* Web (스타일 동일하게 변경됨) */}
-              <TouchableOpacity style={styles.glassButton} onPress={handleWebView}>
-                <Smartphone size={20} color="white" />
-                <Text style={styles.buttonText}>모바일 웹으로 볼래요</Text>
-              </TouchableOpacity>
-            </View>
+                <TouchableOpacity style={styles.glassButton} onPress={handleWebView}>
+                  <Smartphone size={20} color="white" />
+                  <Text style={styles.buttonText}>모바일 웹으로 볼래요</Text>
+                </TouchableOpacity>
+              </View>
 
+            </ScrollView>
           </SafeAreaView>
         </View>
       </ImageBackground>
@@ -182,13 +170,20 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    justifyContent: 'space-between',
-    paddingVertical: 20,
+    // justifyContent: 'space-between', // -> 삭제 (ScrollView가 담당)
+    // paddingVertical: 20, // -> 삭제 (필요 시 scrollContent padding으로 이동하거나 유지)
+  },
+
+  // [새로 추가된 스타일]
+  scrollContent: {
+    flexGrow: 1, // 화면이 길면 꽉 채우고, 내용이 많으면 늘어남
+    justifyContent: 'space-between', // 상단-중단-하단 배치 유지
+    paddingVertical: 40, // 상하 여백
   },
 
   // [Top Section]
   topSection: { 
-    marginTop: 60,
+    marginTop: 20, // marginTop 조절 (ScrollView 내부라서)
     alignItems: 'center', 
   },
   brandLogo: {
@@ -222,14 +217,13 @@ const styles = StyleSheet.create({
   // [Center Section]
   centerSection: { 
     width: '100%',
-    marginTop: 100, // 위에서 아래로 위치 내림
-    marginBottom: 40,
+    marginVertical: 40, // marginTop 고정값 대신 상하 여백으로 유연하게
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between', 
     alignItems: 'center',            
-    paddingHorizontal: 40, // 좌우 여백 확보
+    paddingHorizontal: 40, 
   },
   statItem: {
     alignItems: 'center', 
@@ -262,7 +256,7 @@ const styles = StyleSheet.create({
   // [Bottom Section]
   bottomSection: {
     gap: 12,
-    marginBottom: 40,
+    marginBottom: 20, // 하단 여백 확보
   },
   glassButton: {
     flexDirection: 'row',
@@ -282,7 +276,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   
-  // Modal
+  // Modal (그대로 유지)
   modalOverlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,

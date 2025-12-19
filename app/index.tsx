@@ -74,7 +74,7 @@ export default function Index() {
       <StatusBar barStyle="light-content" />
       
       <ImageBackground
-        source={{ uri: 'https://xroiblqjsxxoewfyrzjy.supabase.co/storage/v1/object/public/images/influence7.png' }} 
+        source={{ uri: 'https://xroiblqjsxxoewfyrzjy.supabase.co/storage/v1/object/public/images/influence6.png' }} 
         style={styles.backgroundImage}
         resizeMode="cover"
       >

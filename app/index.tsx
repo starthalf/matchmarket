@@ -41,7 +41,7 @@ export default function Index() {
         return prev + Math.floor(Math.random() * 4 + 1) * 500;
       });
 
-    }, 80); // 0.05초마다 갱신
+    }, 80); // 0.08초마다 갱신
 
     return () => clearInterval(interval);
   }, [isAnimating]);
@@ -74,7 +74,7 @@ export default function Index() {
       <StatusBar barStyle="light-content" />
       
       <ImageBackground
-        source={{ uri: 'https://xroiblqjsxxoewfyrzjy.supabase.co/storage/v1/object/public/images/influence8.png' }} 
+        source={{ uri: 'https://xroiblqjsxxoewfyrzjy.supabase.co/storage/v1/object/public/images/influence11.png' }} 
         style={styles.backgroundImage}
         resizeMode="cover"
       >

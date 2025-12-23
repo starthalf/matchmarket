@@ -2,6 +2,9 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { AdminService, AdminUser } from '../lib/adminService';
 
+// 데모 관리자 이메일 목록
+const DEMO_ADMIN_EMAILS = ['admin@demo.com', 'hcgkhlee@gmail.com'];
+
 interface AdminContextType {
   adminUser: AdminUser | null;
   isAdminLoading: boolean;
@@ -52,11 +55,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const adminLogin = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       // 데모 환경에서의 간단한 로그인 처리
-      if (email === 'admin@demo.com' && password === 'admin123') {
+      if (DEMO_ADMIN_EMAILS.includes(email)) {
         const demoAdminUser: AdminUser = {
           id: 'demo-admin-id',
           userId: 'demo-user-id',
-          email: 'admin@demo.com', 
+          email: email, 
           role: 'admin',
           permissions: ['read', 'write', 'admin'],
           isActive: true,

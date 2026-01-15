@@ -518,7 +518,7 @@ export class DataGenerator {
       expectedMale = 2; expectedFemale = 2;
     }
 
-    const shouldClose = forceClose || Math.random() < 0.4;
+    const shouldClose = forceClose || Math.random() < 0.35;
     
     let currentMale: number;
     let currentFemale: number;

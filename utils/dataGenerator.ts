@@ -98,28 +98,60 @@ export class DataGenerator {
     ]
   };
 
-  // 닉네임 생성용 데이터셋
+  // ==========================================
+  // 2. 닉네임 생성용 데이터셋 (대폭 확장)
+  // ==========================================
+
+  // [영어] 감성/일상/기록용 단어 (인스타 아이디용) - 대폭 추가
+  private static readonly EN_VIBE_WORDS = [
+    'daily', 'mood', 'vibes', 'archive', 'log', 'record', 'official', 'studio', 
+    'planet', 'space', 'moment', 'day', 'night', 'blue', 'sunset', 'slow',
+    'calm', 'urban', 'city', 'summer', 'winter', 'spring', 'autumn', 'picnic',
+    'lover', 'holic', 'dreamer', 'traveler', 'runner', 'player', 'maker',
+    'project', 'life', 'style', 'pure', 'snow', 'rain', 'cloud', 'star',
+    'moon', 'flower', 'ocean', 'wave', 'forest', 'wood', 'film', 'photo',
+    'focus', 'view', 'scene', 'page', 'note', 'draw', 'art', 'design',
+    'gray', 'black', 'white', 'deep', 'soft', 'cozy', 'home', 'stay',
+    'youth', 'glow', 'flow', 'surf', 'camp', 'hike', 'swim', 'walk',
+    'coffee', 'brew', 'cafe', 'cake', 'bread', 'cook', 'eat', 'yummy'
+  ];
+
+  // [영어] 이름/별명 파트 (한국 이름 로마자 + 영어 이름) - 대폭 추가
+  private static readonly EN_NAMES_PART = [
+    'min', 'jun', 'seoul', 'kate', 'james', 'lucy', 'jay', 'won', 'ho', 'jin',
+    'soo', 'young', 'lee', 'park', 'kim', 'choi', 'han', 'song', 'moon', 'sky',
+    'coco', 'leo', 'max', 'ruby', 'luna', 'chloe', 'bella', 'chris', 'alex',
+    'sam', 'tomy', 'kelly', 'anna', 'sophie', 'david', 'mike', 'daniel',
+    'ji', 'hyun', 'woo', 'chan', 'kyung', 'hye', 'yoon', 'sub', 'chul',
+    'minji', 'jiwon', 'minsu', 'dohyun', 'seojin', 'yujin', 'siyoon'
+  ];
+
+  // [한글] 상태/감성 수식어
   private static readonly KR_ADJECTIVES = [
-    '배고픈', '졸린', '힘든', '신난', '우아한', '강력한', '소심한', '대범한', 
-    '왼손잡이', '양손잡이', '발이빠른', '서브만좋은', '네트앞', '베이스라인', 
-    '전위', '후위', '땀많은', '매너있는', '즐겜러', '빡겜러', '돌아온', '지친', 
-    '새벽형', '저녁형', '주말', '평일', '행복한', '열정적인', '느긋한', '부지런한'
+    '소소한', '행복한', '자유로운', '바쁜', '즐거운', '멍때리는', '퇴근한', 
+    '배고픈', '신난', '졸린', '성실한', '게으른', '용감한', '소심한', 
+    '지친', '활기찬', '돌아온', '떠나는', '꿈꾸는', '노래하는', '춤추는',
+    '센치한', '우아한', '수상한', '평범한', '이상한', '귀여운', '시크한',
+    '따뜻한', '시원한', '달콤한', '매콤한', '심심한', '복잡한'
   ];
 
+  // [한글] 명사 (일상, 자연, 역할, 사물)
   private static readonly KR_NOUNS = [
-    '테린이', '나달', '페더러', '조코비치', '라켓', '공', '스매싱', '발리', 
-    '요정', '깎는노인', '장인', '몬스터', '형', '누나', '동생', '아재', 
-    '직장인', '백수', '개발자', '디자이너', '의사', '변호사', '선생님', '학생',
-    '코치', '감독', '캡틴', '대장', '쫄보', '고수', '중수', '하수', '회원',
-    '러버', '매니아', '덕후', '초보', '왕초보', '만렙', '뉴비'
+    '일상', '기록', '공간', '하루', '생각', '여행자', '직장인', '개발자', 
+    '백수', '사장님', '대장', '꿈나무', '매니아', '집사', '주민', '나그네',
+    '고양이', '강아지', '구름', '바람', '나무', '바다', '하늘', '별', '달',
+    '커피', '라떼', '아아', '맥주', '소주', '와인', '빵', '떡볶이', '감자',
+    '고구마', '두부', '만두', '호떡', '치킨', '피자', '햄버거', '마카롱'
   ];
 
-  private static readonly EN_WORDS = [
-    'Tennis', 'Racket', 'Ace', 'Smash', 'Volley', 'Net', 'Court', 'Ball',
-    'Spin', 'Slice', 'Top', 'Pro', 'Master', 'King', 'Queen', 'Prince',
-    'Winner', 'Lover', 'Player', 'Coach', 'Captain',
-    'Sky', 'Moon', 'Sun', 'Star', 'Fire', 'Water', 'Wind', 'Storm',
-    'Happy', 'Lucky', 'Cool', 'Nice', 'Good', 'Best', 'Super', 'Ultra'
+  // [한글] 커뮤니티 스타일 (유행어, 줄임말, 합성어)
+  private static readonly KR_COMMUNITY_STYLE = [
+    '월급루팡', '칼퇴기원', '다이어터', '아가리어터', '헬린이', '등린이', 
+    '커피수혈', '빵순이', '빵돌이', '면치기', '먹깨비', '쩝쩝박사',
+    '소확행', '욜로인생', '갓생살기', '새벽감성', '한강러버', '민초단',
+    '반민초', '얼죽아', '뜨죽따', '퇴사꿈나무', '로또1등', '건물주',
+    '집순이', '집돌이', '프로자취러', '서울상경', '제주살이', '맛점',
+    '치킨에진심', '떡볶이킬러', '여행중독', '캠핑러', '차박러'
   ];
 
   private static readonly PLAY_STYLES = ['공격형', '수비형', '올라운드'];
@@ -127,32 +159,28 @@ export class DataGenerator {
   private static readonly MATCH_TYPES = ['단식', '남복', '여복', '혼복'];
 
   // ==========================================
-  // 제목 생성용 풍부한 데이터셋
+  // 제목 생성용 데이터셋
   // ==========================================
 
-  // 접두사 카테고리
   private static readonly PREFIXES = {
     bracket: ['[모집]', '[구함]', '[급구]', '[벙개]', '[번개]', '[정모]', '[게스트]', '[용병]', '[대타]', '[양도]'],
     emoji: ['🎾', '🏸', '💪', '☀️', '🌙', '⭐', '🔥', '✨', '🙌', '👋', '🤝'],
     time: ['오전', '오후', '저녁', '아침', '점심', '밤', '새벽', '주말', '평일', '퇴근후'],
-    casual: ['', '', '', ''], // 빈 접두사도 자연스러움
+    casual: ['', '', '', ''],
   };
 
-  // 동사/액션 풀
   private static readonly ACTIONS = {
     formal: ['모집합니다', '구합니다', '찾습니다', '모십니다', '초대합니다'],
     casual: ['구해요', '찾아요', '모셔요', '와주세요', '함께해요', '같이쳐요'],
     short: ['구함', '모집', '환영', 'ㄱㄱ', '고고', 'ㄱ?', '가즈아', '달려요'],
   };
 
-  // 대상/인원 표현
   private static readonly TARGETS = {
     count: ['한 분', '1명', '한명', '두 분', '2명', '몇 분'],
     role: ['파트너', '게스트', '용병', '멤버', '동료', '메이트'],
     gender: ['남성분', '여성분', '남1', '여1', '남2', '여2', '성별무관'],
   };
 
-  // 조건/특징 표현
   private static readonly CONDITIONS = {
     cost: ['코트비 무료', '코트비X', '무료', '비용없음', '게임비만'],
     facility: ['주차가능', '샤워실有', '조명有', '실내', '야외'],
@@ -160,14 +188,12 @@ export class DataGenerator {
     vibe: ['매너게임', '즐겜', '빡겜', '편하게', '가볍게', '진지하게'],
   };
 
-  // 실력 표현
   private static readonly SKILL_EXPR = {
     range: (n: number) => [`${n}~${(n+1).toFixed(1)}`, `${n}+`, `${n} 이상`, `${n} 전후`],
     level: ['초보환영', '테린이환영', '구력무관', '실력무관', '중수이상', '고수만'],
     ntrp: (n: number) => [`NTRP ${n}`, `NTRP ${n}+`, `${n}레벨`],
   };
 
-  // 시간 표현
   private static readonly TIME_EXPR = {
     specific: (t: string) => [`${t}시`, `${t}:00`, `${parseInt(t)}시`],
     range: (t: string) => {
@@ -177,7 +203,6 @@ export class DataGenerator {
     casual: ['오늘', '내일', '이번주', '주말', '평일'],
   };
 
-  // 어미/종결 표현
   private static readonly ENDINGS = {
     polite: ['하실 분', '치실 분', '오실 분', '가능하신 분', '계신가요', '있으신가요'],
     casual: ['하실분', '칠분', '올분', '가능한분', '있나요', '없나요'],
@@ -185,7 +210,6 @@ export class DataGenerator {
     exclaim: ['오세요!', '환영해요!', '기다려요!', '연락주세요!', '신청주세요!'],
   };
 
-  // 접미사
   private static readonly SUFFIXES = {
     emoji: ['🎾', '💪', '😊', '👍', '🙏', '✨', ''],
     punct: ['!', '~', '!!', '^^', 'ㅎㅎ', ':)', ''],
@@ -193,83 +217,72 @@ export class DataGenerator {
   };
 
   // ==========================================
-  // 2. 생성 로직 (닉네임, 제목, 설명)
+  // 3. 로직 구현 (닉네임, 제목, 설명)
   // ==========================================
 
+  /**
+   * 자연스럽고 다양한 닉네임 생성 (영어 비중 높임)
+   */
   private static generateNaturalNickname(): string {
+    // 패턴 리스트: 영어 패턴을 많이 추가하여 확률적으로 영어 닉네임이 더 많이 나오게 함
     const patterns = [
-      // 1. 한국어 형용사 + 명사 (예: 배고픈테린이)
+      // --- 영어 패턴 (인스타 ID 스타일) [비중 높음] ---
+      // 1. 영어_영어 (예: daily_mood)
+      () => `${this.pick(this.EN_VIBE_WORDS)}_${this.pick(this.EN_VIBE_WORDS)}`,
+      // 2. 이름.영어 (예: min.official)
+      () => `${this.pick(this.EN_NAMES_PART)}.${this.pick(this.EN_VIBE_WORDS)}`,
+      // 3. 영어_이름 (예: urban_jun)
+      () => `${this.pick(this.EN_VIBE_WORDS)}_${this.pick(this.EN_NAMES_PART)}`,
+      // 4. 영어 + 숫자 (예: sky0214)
       () => {
-        const adj = this.pick(this.KR_ADJECTIVES);
-        const noun = this.pick(this.KR_NOUNS);
-        return `${adj}${noun}`;
-      },
-      // 2. 실명 스타일 (예: 김테니스, 박프로)
-      () => {
-        const lastNames = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황', '안', '송', '류', '홍'];
-        const nickParts = ['프로', '코치', '회원', '총무', '선수', '에이스', '짱', '매니아', '러버', '덕후'];
-        return `${this.pick(lastNames)}${this.pick(nickParts)}`;
-      },
-      // 3. 순수 영어 (예: Ace_Maker, TennisLover)
-      () => {
-        const word1 = this.pick(this.EN_WORDS);
-        const word2 = this.pick(this.EN_WORDS);
-        const separator = Math.random() > 0.5 ? '_' : '';
-        return `${word1}${separator}${word2}`;
-      },
-      // 4. 한영 혼합 (예: Tennis왕, Ace고수)
-      () => {
-        const en = this.pick(this.EN_WORDS);
-        const kr = this.pick(this.KR_NOUNS);
-        return Math.random() > 0.5 ? `${en}${kr}` : `${kr}${en}`;
-      },
-      // 5. 짧은 영어 + 숫자 (예: ACE88, Pro99)
-      () => {
-        const word = this.pick(this.EN_WORDS);
-        const num = Math.floor(Math.random() * 99) + 1;
+        const word = Math.random() > 0.5 ? this.pick(this.EN_NAMES_PART) : this.pick(this.EN_VIBE_WORDS);
+        const num = Math.random() > 0.5 ? Math.floor(Math.random() * 90) + 10 : Math.floor(Math.random() * 2000) + 1000;
         return `${word}${num}`;
       },
-      // 6. 한글 명사 + 숫자 (예: 테린이99, 고수123)
+      // 5. 밑줄 감성 (예: _mood, _jun_)
+      () => Math.random() > 0.5 ? `_${this.pick(this.EN_VIBE_WORDS)}` : `_${this.pick(this.EN_NAMES_PART)}_`,
+      // 6. 감성 기록형 (예: jun.log, min.record)
+      () => `${this.pick(this.EN_NAMES_PART)}.${this.pick(['log', 'record', 'archive', 'page'])}`,
+      // 7. 반복형 (예: min_min, daily_daily)
       () => {
-        const noun = this.pick(this.KR_NOUNS);
-        const num = Math.floor(Math.random() * 999) + 1;
-        return `${noun}${num}`;
+        const word = Math.random() > 0.5 ? this.pick(this.EN_NAMES_PART) : this.pick(this.EN_VIBE_WORDS);
+        return `${word}_${word}`;
       },
-      // 7. 테니스 용어 조합 (예: 서브왕, 발리장인)
+
+      // --- 혼합 패턴 ---
+      // 8. 영어 + 한글접미사 (예: Coffee수혈, Travel러버)
       () => {
-        const terms = ['서브', '리턴', '발리', '스매시', '백핸드', '포핸드', '드롭샷', '로브'];
-        const titles = ['왕', '장인', '고수', '매니아', '러버', '마스터'];
-        return `${this.pick(terms)}${this.pick(titles)}`;
+        const rawEn = this.pick(this.EN_VIBE_WORDS);
+        const en = rawEn.charAt(0).toUpperCase() + rawEn.slice(1);
+        const krSuffixes = ['러버', '홀릭', '매니아', '살인마', '장인', '수혈', '집사', '덕후', '요정'];
+        return `${en}${this.pick(krSuffixes)}`;
       },
-      // 8. 직업/취미 + 테니스 (예: 개발자테니스, 의사라켓)
+      // 9. 한글 + 영어 (예: 제주Vibes, 한강Runner)
       () => {
-        const jobs = ['개발자', '디자이너', '직장인', '대학생', '프리랜서', '사업가', '회사원'];
-        const tennis = ['테니스', '라켓', '코트', '볼'];
-        return `${this.pick(jobs)}${this.pick(tennis)}`;
+        const nouns = ['제주', '서울', '부산', '한강', '캠핑', '독서', '운동', '맛집', '새벽', '퇴근'];
+        const rawEn = this.pick(this.EN_VIBE_WORDS);
+        const en = rawEn.charAt(0).toUpperCase() + rawEn.slice(1);
+        return `${this.pick(nouns)}${en}`;
       },
+
+      // --- 한국어 패턴 (포털/커뮤니티 스타일) [비중 낮음] ---
+      // 10. 한글 형용사 + 명사 (예: 행복한고양이)
+      () => `${this.pick(this.KR_ADJECTIVES)}${this.pick(this.KR_NOUNS)}`,
+      // 11. 커뮤니티 스타일 (예: 월급루팡)
+      () => this.pick(this.KR_COMMUNITY_STYLE),
+      // 12. 한글 명사 + 숫자 (예: 주민1, 나그네82)
+      () => `${this.pick(this.KR_NOUNS)}${Math.floor(Math.random() * 100) + 1}`,
     ];
 
-    const selectedPattern = this.pick(patterns);
-    let nickname = selectedPattern();
-
-    // 20% 확률로 숫자 추가
-    if (Math.random() < 0.2 && !/\d/.test(nickname)) {
-      nickname += Math.floor(Math.random() * 100);
-    }
-
-    return nickname;
+    return this.pick(patterns)();
   }
 
   private static pick<T>(arr: T[]): T {
     return arr[Math.floor(Math.random() * arr.length)];
   }
 
-  private static maybe<T>(arr: T[], probability: number = 0.5): T | string {
-    return Math.random() < probability ? this.pick(arr) : '';
-  }
-
   /**
-   * 자연스러운 제목 생성 (조합 기반)
+   * 자연스러운 제목 생성
    */
   private static generateContextualTitle(
     location: string, 
@@ -282,7 +295,6 @@ export class DataGenerator {
     const shortCourt = courtName.split(' ')[0].replace('시', '').replace('군', '');
     const shortLoc = location.substring(0, 2);
 
-    // 시간대 판별
     let timePeriod = '오후';
     if (hour >= 5 && hour < 9) timePeriod = '아침';
     else if (hour >= 9 && hour < 12) timePeriod = '오전';
@@ -291,82 +303,81 @@ export class DataGenerator {
     else if (hour >= 18 && hour < 21) timePeriod = '저녁';
     else timePeriod = '밤';
 
-    // 40가지 이상의 자연스러운 제목 패턴
     const patterns: (() => string)[] = [
-      // === 기본 정보 전달형 ===
+      // 기본 정보 전달형
       () => `${shortCourt} ${matchType} ${this.pick(this.ACTIONS.formal)}`,
       () => `${shortCourt} ${matchType} ${this.pick(this.TARGETS.count)} ${this.pick(this.ACTIONS.casual)}`,
       () => `${time}시 ${shortCourt} ${matchType}`,
       () => `${shortCourt}에서 ${matchType} 치실 분`,
       () => `${matchType} ${this.pick(this.TARGETS.role)} ${this.pick(this.ACTIONS.formal)}`,
       
-      // === 브래킷 접두사형 ===
+      // 브래킷 접두사형
       () => `${this.pick(this.PREFIXES.bracket)} ${shortCourt} ${matchType}`,
       () => `${this.pick(this.PREFIXES.bracket)} ${time}시 ${matchType} ${this.pick(this.TARGETS.count)}`,
       () => `${this.pick(this.PREFIXES.bracket)} ${matchType} ${this.pick(this.ACTIONS.short)}`,
       () => `[${shortLoc}] ${shortCourt} ${matchType} ${this.pick(this.ACTIONS.casual)}`,
       () => `[${time}시] ${shortCourt} ${matchType}`,
       
-      // === 이모지 활용형 ===
+      // 이모지 활용형
       () => `${this.pick(this.PREFIXES.emoji)} ${shortCourt} ${matchType}`,
       () => `${matchType} ${this.pick(this.ENDINGS.question)} ${this.pick(this.SUFFIXES.emoji)}`,
       () => `${timePeriod} 테니스 ${this.pick(this.ENDINGS.question)} ${this.pick(this.SUFFIXES.emoji)}`,
       () => `${this.pick(this.PREFIXES.emoji)} ${time}시 ${matchType} ${this.pick(this.ACTIONS.short)}`,
       
-      // === 시간 강조형 ===
+      // 시간 강조형
       () => `${timePeriod} ${matchType} ${this.pick(this.ENDINGS.polite)}`,
       () => `오늘 ${time}시 ${matchType} ${this.pick(this.ACTIONS.casual)}`,
       () => `${time}시 ${matchType} ${this.pick(this.ENDINGS.question)}`,
       () => `${timePeriod}에 ${shortCourt}에서 ${matchType}`,
       () => `퇴근후 ${matchType} 한판 ${this.pick(this.ENDINGS.question)}`,
       
-      // === 실력/조건 명시형 ===
+      // 실력/조건 명시형
       () => `${this.pick(this.SKILL_EXPR.range(ntrp))} ${matchType} ${this.pick(this.ACTIONS.formal)}`,
       () => `${this.pick(this.SKILL_EXPR.level)} ${matchType} ${this.pick(this.ACTIONS.casual)}`,
       () => `NTRP ${ntrp} ${matchType} ${this.pick(this.TARGETS.role)} ${this.pick(this.ACTIONS.short)}`,
       () => `${matchType} ${this.pick(this.SKILL_EXPR.level)} (${shortCourt})`,
       
-      // === 분위기/성향형 ===
+      // 분위기/성향형
       () => `${this.pick(this.CONDITIONS.vibe)} ${matchType} ${this.pick(this.ACTIONS.casual)}`,
       () => `${this.pick(this.CONDITIONS.vibe)}으로 ${matchType} 치실 분`,
       () => `스트레스 해소 ${matchType} ${this.pick(this.ENDINGS.question)}`,
       () => `재밌게 ${matchType} ${this.pick(this.ENDINGS.polite)}`,
       
-      // === 조건 강조형 ===
+      // 조건 강조형
       () => `${shortCourt} ${matchType} (${this.pick(this.CONDITIONS.cost)})`,
       () => `${matchType} ${this.pick(this.ACTIONS.formal)} (${this.pick(this.CONDITIONS.ball)})`,
       () => `${this.pick(this.CONDITIONS.facility)} ${shortCourt} ${matchType}`,
       
-      // === 인원 특정형 ===
+      // 인원 특정형
       () => `${matchType} ${this.pick(this.TARGETS.gender)} ${this.pick(this.ACTIONS.casual)}`,
       () => `${this.pick(this.TARGETS.count)} ${this.pick(this.ACTIONS.short)} - ${shortCourt} ${matchType}`,
       () => `${matchType} ${this.pick(this.TARGETS.role)} ${this.pick(this.TARGETS.count)} 모집`,
       
-      // === 질문형 ===
+      // 질문형
       () => `${shortCourt} ${matchType} ${this.pick(this.ENDINGS.question)}`,
       () => `${time}시 ${matchType} 가능하신 분 ${this.pick(this.SUFFIXES.emoji)}`,
       () => `오늘 ${matchType} 치실 분 있나요?`,
       () => `${timePeriod}에 테니스 ${this.pick(this.ENDINGS.polite)}`,
       
-      // === 상황 묘사형 ===
+      // 상황 묘사형
       () => `한 분 빠져서 ${matchType} ${this.pick(this.TARGETS.count)} ${this.pick(this.ACTIONS.short)}`,
       () => `급하게 ${matchType} ${this.pick(this.TARGETS.role)} ${this.pick(this.ACTIONS.casual)}`,
       () => `자리 났어요! ${shortCourt} ${matchType}`,
       () => `${matchType} 인원 부족 - ${this.pick(this.TARGETS.count)} ${this.pick(this.ACTIONS.short)}`,
       
-      // === 캐주얼/짧은형 ===
+      // 캐주얼/짧은형
       () => `${shortCourt} ${matchType} ㄱㄱ`,
       () => `${time}시 ${matchType} 고고`,
       () => `${matchType} 달려요 ${this.pick(this.SUFFIXES.emoji)}`,
       () => `${shortCourt} ${matchType} 가즈아`,
       
-      // === 감성형 ===
+      // 감성형
       () => `${timePeriod} 테니스로 하루 시작해요`,
       () => `오늘 하루 마무리는 ${matchType}으로`,
       () => `주말 ${matchType} 함께해요`,
       () => `테니스 치면서 힐링해요 (${shortCourt})`,
       
-      // === 복합 조합형 ===
+      // 복합 조합형
       () => `${this.pick(this.PREFIXES.bracket)} ${shortCourt} ${matchType} ${this.pick(this.CONDITIONS.cost)} ${this.pick(this.SUFFIXES.emoji)}`,
       () => `${timePeriod} ${shortCourt} ${matchType} ${this.pick(this.TARGETS.count)} ${this.pick(this.ACTIONS.casual)}`,
       () => `${this.pick(this.SKILL_EXPR.level)} ${shortCourt} ${matchType} ${this.pick(this.ENDINGS.exclaim)}`,
@@ -422,7 +433,6 @@ export class DataGenerator {
     const intro = this.pick(intros);
     const closing = this.pick(closings);
 
-    // 10% 확률로만 [진행 방식 및 정보] 섹션 포함
     const includeDetails = Math.random() < 0.1;
     
     if (includeDetails) {
@@ -438,7 +448,7 @@ export class DataGenerator {
   }
 
   // ==========================================
-  // 3. 메인 매치 생성 함수
+  // 4. 메인 매치 생성 함수
   // ==========================================
 
   static generateNewMatch(forceClose: boolean = false): Match {
@@ -469,15 +479,12 @@ export class DataGenerator {
       avgRating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
     };
 
- const regions = Object.keys(this.COURTS_BY_REGION);
+    const regions = Object.keys(this.COURTS_BY_REGION);
     let selectedRegion: string;
     
-    // 70% 확률로 서울/경기, 30% 확률로 기타 지역
     if (Math.random() < 0.7) {
-      // 서울 40%, 경기 30% (총 70%)
       selectedRegion = Math.random() < 0.57 ? '서울시' : '경기도';
     } else {
-      // 나머지 30%는 기타 지역에서 랜덤
       const otherRegions = regions.filter(r => r !== '서울시' && r !== '경기도');
       selectedRegion = otherRegions[Math.floor(Math.random() * otherRegions.length)];
     }
@@ -558,7 +565,7 @@ export class DataGenerator {
   }
 
   // ==========================================
-  // 4. Supabase 연동 및 유틸리티
+  // 5. Supabase 연동 및 유틸리티
   // ==========================================
 
   private static convertSupabaseToMatch(supabaseMatch: SupabaseMatch): Match {

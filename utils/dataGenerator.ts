@@ -56,7 +56,6 @@ export class DataGenerator {
   // 1. 기초 데이터셋 (지역별 코트 매핑)
   // ==========================================
 
-  // 지역과 코트를 맵핑하여 지역 불일치 문제 해결
   private static readonly COURTS_BY_REGION: { [key: string]: string[] } = {
     '서울시': [
       '장충 테니스장', '목동 테니스장', '올림픽공원 테니스장', '반얀트리 클럽', '서울숲 테니스장',
@@ -81,16 +80,16 @@ export class DataGenerator {
     '강원도': [
       '춘천시 드림실내테니스', '속초시 시립테니스코트', '강릉 올림픽파크', '원주 종합운동장'
     ],
-    '충청도': [ // 대전, 세종, 충북, 충남 통합
+    '충청도': [
       '대전 시립', '세종 중앙공원', '천안 종합운동장', '아산 이순신테니스코트', '청주 국제테니스장',
       '정부대전청사', '대전 관저테니스장', '대전 충남대'
     ],
-    '경상도': [ // 부산, 대구, 울산, 경북, 경남 통합
+    '경상도': [
       '부산 사직실내테니스장', '부산 금정체육공원', '대구 두류공원', '대구 유니버시아드',
       '울산 문수테니스장', '김천 종합스포츠타운', '경주 시민운동장', '포항 종합운동장',
       '창원 시립테니스장', '진주 테니스장', '부산대 테니스장', '영남대 테니스장'
     ],
-    '전라도': [ // 광주, 전북, 전남 통합
+    '전라도': [
       '광주 진월국제테니스장', '광주 염주체육관', '전주 완산체육공원', '여수 진남시립',
       '순천 팔마체육관', '목포 국제축구센터 내 테니스장', '순창 공설운동장'
     ],
@@ -126,40 +125,79 @@ export class DataGenerator {
   private static readonly MATCH_TYPES = ['단식', '남복', '여복', '혼복'];
 
   // ==========================================
+  // 제목 생성용 조합 데이터셋
+  // ==========================================
+
+  // 접두사 풀
+  private static readonly TITLE_PREFIXES = {
+    urgent: ['[급구]', '[긴급]', '[오늘]', '[당일]', '[마감임박]', '⚡', '🔥', '[ASAP]', '[지금]'],
+    normal: ['[모집]', '[구함]', '[참가자]', '[멤버]', '[게스트]', ''],
+    region: (loc: string) => [`[${loc}]`, `${loc}`, ''],
+    time: (time: string) => [`[${time}]`, `${time}시`, ''],
+    type: (type: string) => [`[${type}]`, `${type}`, ''],
+    emoji: ['🎾', '🏸', '💪', '☀️', '🌙', '⭐', ''],
+  };
+
+  // 본문 구조 풀
+  private static readonly TITLE_BODIES = {
+    court: (court: string) => [court, court.split(' ')[0], ''],
+    action: ['구합니다', '모집', '찾습니다', '구해요', '모셔요', '찾아요', '환영', 'ㄱㄱ', '고고'],
+    count: ['한 분', '1명', '한명', '파트너', '게스트', '용병', '멤버', ''],
+    skill: (ntrp: number) => [`${ntrp}+`, `NTRP ${ntrp}`, `${ntrp} 이상`, `${ntrp}~${ntrp + 1}`, ''],
+  };
+
+  // 접미사 풀
+  private static readonly TITLE_SUFFIXES = {
+    courtesy: ['부탁드려요', '감사합니다', '환영합니다', '오세요', '와주세요', ''],
+    condition: ['(코트비X)', '(코트비 무료)', '(신구)', '(주차가능)', '(샤워실有)', ''],
+    urgency: ['급해요!', '!!', '~', '요', '^^', 'ㅠㅠ', ''],
+    emotion: ['🙏', '😊', '💯', '👍', ''],
+  };
+
+  // 시간대별 표현
+  private static readonly TIME_EXPRESSIONS = {
+    morning: ['모닝', '아침', '새벽', '오전', '기상'],
+    lunch: ['점심', '낮', '런치타임'],
+    afternoon: ['오후', '낮', '애프터눈'],
+    evening: ['저녁', '퇴근후', '이브닝', '야간'],
+    night: ['심야', '밤', '올빼미', '야식타임'],
+  };
+
+  // 어미/종결 표현
+  private static readonly ENDINGS = [
+    '하실 분', '치실 분', '가능하신 분', '오실 분', '같이 치실 분',
+    '함께 해요', '같이 쳐요', '모여요', '달려요', '뛰어요',
+    '구합니다', '찾습니다', '모집합니다', '구해요', '찾아요',
+    'ㄱㄱ', '고고', '렛츠고', 'Let\'s go',
+  ];
+
+  // ==========================================
   // 2. 생성 로직 (닉네임, 제목, 설명)
   // ==========================================
 
-  /**
-   * 다양하고 자연스러운 닉네임 생성
-   */
   private static generateNaturalNickname(): string {
     const patterns = [
-      // 1. 한국어 형용사 + 명사 (예: 배고픈테린이)
       () => {
         const adj = this.KR_ADJECTIVES[Math.floor(Math.random() * this.KR_ADJECTIVES.length)];
         const noun = this.KR_NOUNS[Math.floor(Math.random() * this.KR_NOUNS.length)];
         return `${adj}${noun}`;
       },
-      // 2. 지역명 + 특징 (예: 강남구왕발, 마포불주먹)
       () => {
         const regions = ['강남', '서초', '송파', '마포', '용산', '분당', '판교', '수원', '일산', '목동', '잠실'];
         const nicknames = ['왕발', '핵서브', '통곡의벽', '보라매', '지킴이', '보안관', '주민', '토박이', '에이스'];
         return `${regions[Math.floor(Math.random() * regions.length)]}${nicknames[Math.floor(Math.random() * nicknames.length)]}`;
       },
-      // 3. 실명 스타일 (예: 김테니스, 박프로)
       () => {
         const lastNames = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오'];
         const positions = ['프로', '코치', '회원', '총무', '부장', '대리', '사원', '선수', '감독'];
         return `${lastNames[Math.floor(Math.random() * lastNames.length)]}${positions[Math.floor(Math.random() * positions.length)]}`;
       },
-      // 4. 순수 영어 (예: Ace_Maker, TennisLover)
       () => {
         const word1 = this.EN_WORDS[Math.floor(Math.random() * this.EN_WORDS.length)];
         const word2 = this.EN_WORDS[Math.floor(Math.random() * this.EN_WORDS.length)];
         const separator = Math.random() > 0.5 ? '_' : '';
         return `${word1}${separator}${word2}`;
       },
-      // 5. 한영 혼합 (예: 송파Federer, Tennis왕)
       () => {
         if (Math.random() > 0.5) {
           const kr = this.KR_NOUNS[Math.floor(Math.random() * this.KR_NOUNS.length)];
@@ -171,7 +209,6 @@ export class DataGenerator {
           return `${region[Math.floor(Math.random() * region.length)]}_${kr}`; 
         }
       },
-      // 6. 짧은 영어 + 숫자 (예: ACE88, min99)
       () => {
         const word = this.EN_WORDS[Math.floor(Math.random() * this.EN_WORDS.length)];
         const num = Math.floor(Math.random() * 99) + 1;
@@ -190,7 +227,14 @@ export class DataGenerator {
   }
 
   /**
-   * 컨텍스트(시간, 장소, 타입)에 맞는 현실적이고 다양한 매치 제목 생성
+   * 랜덤 요소 선택 헬퍼
+   */
+  private static pick<T>(arr: T[]): T {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  /**
+   * 조합 기반 제목 생성 (다양성 극대화)
    */
   private static generateContextualTitle(
     location: string, 
@@ -200,82 +244,171 @@ export class DataGenerator {
     ntrp: number
   ): string {
     const hour = parseInt(time.split(':')[0]);
-    const isMorning = hour >= 5 && hour < 11;
-    const isLunch = hour >= 11 && hour < 14;
-    const isAfternoon = hour >= 14 && hour < 18;
-    const isNight = hour >= 18;
-    const isLateNight = hour >= 21;
-    
-    // 코트 이름 줄이기 (장충 테니스장 -> 장충)
-    const shortCourt = courtName.split(' ')[0].replace('시', '').replace('군', ''); 
-    // 지역명 줄이기 (서울시 -> 서울, 경기도 -> 경기)
+    const shortCourt = courtName.split(' ')[0].replace('시', '').replace('군', '');
     const shortLoc = location.substring(0, 2);
 
-    const templates: string[] = [];
+    // 시간대 판별
+    let timeCategory: 'morning' | 'lunch' | 'afternoon' | 'evening' | 'night' = 'afternoon';
+    if (hour >= 5 && hour < 11) timeCategory = 'morning';
+    else if (hour >= 11 && hour < 14) timeCategory = 'lunch';
+    else if (hour >= 14 && hour < 18) timeCategory = 'afternoon';
+    else if (hour >= 18 && hour < 21) timeCategory = 'evening';
+    else timeCategory = 'night';
 
-    // 1. [기본] 정보 전달형 (가장 무난함)
-    templates.push(`[${shortLoc}] ${shortCourt} ${matchType} 구합니다 (${time}~)`);
-    templates.push(`${courtName} ${matchType} 한 분 모셔요`);
-    templates.push(`${time}시 ${shortCourt} ${matchType} 벙개`);
-    templates.push(`${shortLoc} ${shortCourt} ${matchType} 멤버 모집`);
-    templates.push(`[${matchType}] ${courtName} / ${time} 시작`);
+    const timeExpr = this.pick(this.TIME_EXPRESSIONS[timeCategory]);
 
-    // 2. [시간] 시간대 강조형
-    if (isMorning) {
-      templates.push(`아침 운동 상쾌하게 하실 분! ☀️ (${shortCourt})`);
-      templates.push(`모닝 테니스 한 게임 하실 분? (${time})`);
-      templates.push(`주말 아침 ${matchType} 빡겜 하실 분`);
-    }
-    if (isLunch) {
-      templates.push(`점심시간 짬내서 ${matchType} 하실분`);
-      templates.push(`점심 테니스 한판! (${shortCourt})`);
-    }
-    if (isNight) {
-      templates.push(`퇴근 후 가볍게 ${matchType} 한 게임 🎾`);
-      templates.push(`저녁 ${time}시 ${courtName} 용병 구함`);
-      templates.push(`오늘 하루 마무리는 테니스! (${shortLoc})`);
-    }
-    if (isLateNight) {
-      templates.push(`심야 테니스! 올빼미족 구해요 🦉`);
-      templates.push(`야간 ${matchType} 벙개 (${shortCourt})`);
-    }
+    // 제목 생성 패턴 (20가지 이상)
+    const patterns: (() => string)[] = [
+      // 패턴 1: [지역] 코트 타입 액션 (접미사)
+      () => {
+        const prefix = this.pick(this.TITLE_PREFIXES.region(shortLoc));
+        const body = `${shortCourt} ${matchType} ${this.pick(this.TITLE_BODIES.action)}`;
+        const suffix = this.pick(this.TITLE_SUFFIXES.condition);
+        return `${prefix} ${body} ${suffix}`.trim();
+      },
+      // 패턴 2: [급구] 시간 코트 액션
+      () => {
+        const prefix = this.pick(this.TITLE_PREFIXES.urgent);
+        const body = `${time}시 ${shortCourt} ${this.pick(this.TITLE_BODIES.count)} ${this.pick(this.TITLE_BODIES.action)}`;
+        return `${prefix} ${body}`.trim();
+      },
+      // 패턴 3: 시간대표현 타입 어미
+      () => {
+        const emoji = this.pick(this.TITLE_PREFIXES.emoji);
+        const body = `${timeExpr} ${matchType} ${this.pick(this.ENDINGS)}`;
+        return `${emoji} ${body}`.trim();
+      },
+      // 패턴 4: 코트 타입 인원 액션 감정
+      () => {
+        const body = `${courtName} ${matchType} ${this.pick(this.TITLE_BODIES.count)} ${this.pick(this.TITLE_BODIES.action)}`;
+        const emotion = this.pick(this.TITLE_SUFFIXES.emotion);
+        return `${body} ${emotion}`.trim();
+      },
+      // 패턴 5: [타입] 코트 / 시간
+      () => {
+        const prefix = this.pick(this.TITLE_PREFIXES.type(matchType));
+        return `${prefix} ${courtName} / ${time} 시작`;
+      },
+      // 패턴 6: 실력 타입 어미 (지역)
+      () => {
+        const skill = this.pick(this.TITLE_BODIES.skill(ntrp));
+        const ending = this.pick(this.ENDINGS);
+        return `${skill} ${matchType} ${ending} (${shortLoc})`;
+      },
+      // 패턴 7: 짧은 캐주얼
+      () => {
+        return `${shortCourt} ${matchType} ${this.pick(['ㄱㄱ', '고고', 'ㄱ?', '가즈아'])}`;
+      },
+      // 패턴 8: 이모지 + 시간 + 코트 + 타입
+      () => {
+        const emoji = this.pick(['🎾', '🏸', '💪', '⭐', '🔥']);
+        return `${emoji} ${time}시 ${shortCourt} ${matchType}`;
+      },
+      // 패턴 9: 긴급 상황 묘사
+      () => {
+        const situations = [
+          `갑자기 펑크! ${matchType} ${this.pick(this.TITLE_BODIES.count)} 급구`,
+          `한 분 빠지셔서 급하게 ${this.pick(this.TITLE_BODIES.action)}`,
+          `오늘 ${time}시 대타 필요해요 (${shortCourt})`,
+          `${matchType} 자리 하나 났어요 (${shortLoc})`,
+        ];
+        return this.pick(situations);
+      },
+      // 패턴 10: 인원 특정
+      () => {
+        const genderNeeds = ['남1', '여1', '남2', '여2', '남1여1'];
+        return `${matchType} ${this.pick(genderNeeds)} ${this.pick(this.TITLE_BODIES.action)} (${time}시)`;
+      },
+      // 패턴 11: 조건 강조
+      () => {
+        const conditions = ['코트비 무료', '신구 깔아요', '주차 가능', '샤워실 있음', '음료 제공'];
+        return `${shortCourt} ${matchType} (${this.pick(conditions)})`;
+      },
+      // 패턴 12: 게임 성향
+      () => {
+        const styles = ['빡겜', '즐겜', '랠리', '게임 위주', '연습'];
+        return `${this.pick(styles)} ${this.pick(this.ENDINGS)} - ${shortCourt} ${matchType}`;
+      },
+      // 패턴 13: 실력 범위 명시
+      () => {
+        return `NTRP ${ntrp}~${(ntrp + 1).toFixed(1)} ${matchType} ${this.pick(this.TITLE_BODIES.action)}`;
+      },
+      // 패턴 14: 모임/클럽 스타일
+      () => {
+        const clubStyles = ['월례회', '정기모임', '번개', '벙개', '게스트'];
+        return `${shortCourt} ${this.pick(clubStyles)} ${this.pick(this.TITLE_BODIES.count)} 모셔요`;
+      },
+      // 패턴 15: 질문형
+      () => {
+        const questions = [
+          `${time}시 ${matchType} 같이 치실 분?`,
+          `${shortCourt}에서 ${matchType} 한 게임 하실 분?`,
+          `오늘 ${matchType} 가능하신 분 계신가요?`,
+          `${timeExpr} 테니스 치실 분 있나요?`,
+        ];
+        return this.pick(questions);
+      },
+      // 패턴 16: 감성/분위기
+      () => {
+        const moods = [
+          `${timeExpr} 테니스로 하루 시작해요 ☀️`,
+          `퇴근 후 스트레스 해소 ${matchType} 🎾`,
+          `주말 ${matchType} 함께해요 💪`,
+          `오늘 하루 마무리는 테니스로! 🌙`,
+        ];
+        return this.pick(moods);
+      },
+      // 패턴 17: 초보 환영
+      () => {
+        const beginnerFriendly = [
+          `테린이 환영! ${shortCourt} ${matchType}`,
+          `초보도 OK! ${matchType} 편하게 쳐요`,
+          `구력 무관 ${matchType} ${this.pick(this.TITLE_BODIES.action)}`,
+          `실력 상관없이 즐겁게! (${shortLoc})`,
+        ];
+        return this.pick(beginnerFriendly);
+      },
+      // 패턴 18: 고수 모집
+      () => {
+        const proLevel = [
+          `${ntrp}+ 고수님들 ${matchType} 빡겜 🔥`,
+          `실력자 ${this.pick(this.TITLE_BODIES.action)} - ${matchType}`,
+          `${matchType} 강한 랠리 원합니다 (${shortCourt})`,
+        ];
+        return this.pick(proLevel);
+      },
+      // 패턴 19: 날씨/계절
+      () => {
+        const weatherMoods = [
+          `날씨 좋은 날 ${matchType} 한판!`,
+          `시원한 ${timeExpr} 테니스 🎾`,
+          `야외에서 상쾌하게! ${shortCourt}`,
+        ];
+        return this.pick(weatherMoods);
+      },
+      // 패턴 20: 단순 정보
+      () => {
+        return `${location} ${courtName} ${matchType} ${time}시`;
+      },
+      // 패턴 21: 파트너 구함
+      () => {
+        return `${matchType} 파트너 ${this.pick(this.TITLE_BODIES.action)} (${shortLoc} ${time}시)`;
+      },
+      // 패턴 22: 양도/대타
+      () => {
+        const transfers = [
+          `${courtName} 코트 양도 (${time}시 ${matchType})`,
+          `급 양도! ${shortCourt} ${matchType}`,
+          `대타 급구 - ${time}시 ${shortLoc}`,
+        ];
+        return this.pick(transfers);
+      },
+    ];
 
-    // 3. [상황] 긴급/대타/양도 (현실감 부여)
-    if (Math.random() < 0.2) {
-      templates.push(`[급구] 오늘 ${time}시 대타 구합니다! (코트비X)`);
-      templates.push(`갑자기 펑크나서 한 분 모십니다 ㅠㅠ (${matchType})`);
-      templates.push(`[긴급] ${time}시 ${shortCourt} 오실 수 있는 분!!`);
-      templates.push(`${courtName} 양도합니다 (${time})`);
-      templates.push(`한 분이 다치셔서 급하게 구해요 (${matchType})`);
-    }
-
-    // 4. [실력/목적] 게임 성향 강조
-    templates.push(`NTRP ${ntrp} 전후 ${matchType} 게임하실 분`);
-    templates.push(`랠리 좀 하다가 게임 하실 분 (${ntrp}+)`);
-    templates.push(`빡겜 원합니다. ${matchType} 고수님들 오세요 🔥`);
-    templates.push(`즐겁게 치실 분~ (초보환영, 구력 무관)`);
-    templates.push(`테린이들끼리 편하게 쳐요! (${ntrp} 이하)`);
-    templates.push(`게임 위주로 돌릴 예정입니다 (${shortCourt})`);
-
-    // 5. [사람] 용병/게스트/파트너
-    templates.push(`${matchType} 게스트 모집합니다 (${shortLoc})`);
-    templates.push(`${shortCourt} 월례회 게스트 한 분 모셔요`);
-    templates.push(`고정 파트너 구하기 전 1회 게스트 (${matchType})`);
-    templates.push(`${matchType} 남1 여1 구합니다 (${time})`);
-
-    // 6. [단순/쿨] 짧은 제목
-    templates.push(`${shortCourt} ${matchType} ㄱㄱ`);
-    templates.push(`몸만 오시면 됩니다 (${time}시 ${matchType})`);
-    templates.push(`${location} 테니스 메이트 구함`);
-    templates.push(`${time}시 ${matchType} (코트비 무료)`);
-
-    // 랜덤 선택
-    return templates[Math.floor(Math.random() * templates.length)];
+    // 랜덤 패턴 선택 및 실행
+    return this.pick(patterns)();
   }
 
-  /**
-   * 제목과 분위기에 맞는 상세 설명 생성
-   */
   private static generateContextualDescription(matchType: string, ntrp: number): string {
     const greetings = [
       '안녕하세요!', 
@@ -324,7 +457,7 @@ export class DataGenerator {
     
     const selectedDetails = details
       .sort(() => 0.5 - Math.random())
-      .slice(0, Math.floor(Math.random() * 3) + 1) // 1~3개 선택
+      .slice(0, Math.floor(Math.random() * 3) + 1)
       .join('\n');
     
     const closing = closings[Math.floor(Math.random() * closings.length)];
@@ -336,11 +469,10 @@ export class DataGenerator {
   // 3. 메인 매치 생성 함수
   // ==========================================
 
-  static generateNewMatch(): Match {
+  static generateNewMatch(forceClose: boolean = false): Match {
     const sellerId = `seller_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const matchId = `match_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     
-    // 1. 닉네임 생성
     const sellerName = this.generateNaturalNickname();
     const sellerGender = Math.random() > 0.3 ? '남성' : '여성';
 
@@ -365,9 +497,7 @@ export class DataGenerator {
       avgRating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
     };
 
-    // 2. 지역 및 코트 선택 (동기화 로직)
     const regions = Object.keys(this.COURTS_BY_REGION);
-    // 서울/경기 비중을 높임 (현실 반영)
     let selectedRegion = regions[Math.floor(Math.random() * regions.length)];
     if (Math.random() < 0.6) {
       selectedRegion = Math.random() > 0.5 ? '서울시' : '경기도';
@@ -378,23 +508,19 @@ export class DataGenerator {
 
     const matchType = (['단식', '남복', '여복', '혼복'] as const)[Math.floor(Math.random() * 4)];
     
-    // 3. 시간 및 날짜 설정
-    const startHour = 6 + Math.floor(Math.random() * 16); // 06~21시
+    const startHour = 6 + Math.floor(Math.random() * 16);
     const startTime = `${startHour.toString().padStart(2, '0')}:00`;
     const endTime = `${(startHour + 2).toString().padStart(2, '0')}:00`;
     
-    // 날짜: 당일 ~ 5일 이내
     const randomDayOffset = Math.floor(Math.random() * 6);
     const matchDate = new Date();
     matchDate.setDate(matchDate.getDate() + randomDayOffset);
 
     const ntrpMin = 2.0 + Math.floor(Math.random() * 3) * 0.5;
 
-    // 4. 타이틀 및 설명 생성
     const title = this.generateContextualTitle(selectedRegion, startTime, matchType, court, ntrpMin);
     const description = this.generateContextualDescription(matchType, ntrpMin);
 
-    // 5. 인원 및 가격 계산
     let expectedMale = 0, expectedFemale = 0;
     if (matchType === '단식') {
       if (sellerGender === '남성') expectedMale = 2; else expectedFemale = 2;
@@ -406,8 +532,21 @@ export class DataGenerator {
       expectedMale = 2; expectedFemale = 2;
     }
 
-    const currentMale = Math.floor(expectedMale * (0.2 + Math.random() * 0.5));
-    const currentFemale = Math.floor(expectedFemale * (0.2 + Math.random() * 0.5));
+    // 마감 여부 결정: forceClose가 true이거나, 40% 확률로 마감
+    const shouldClose = forceClose || Math.random() < 0.4;
+    
+    let currentMale: number;
+    let currentFemale: number;
+    
+    if (shouldClose) {
+      // 마감된 매치: 정원이 다 찼거나 초과
+      currentMale = expectedMale;
+      currentFemale = expectedFemale;
+    } else {
+      // 진행 중인 매치: 50~90% 채워짐
+      currentMale = Math.floor(expectedMale * (0.5 + Math.random() * 0.4));
+      currentFemale = Math.floor(expectedFemale * (0.5 + Math.random() * 0.4));
+    }
 
     const basePrice = [10000, 15000, 20000, 25000, 30000][Math.floor(Math.random() * 5)];
 
@@ -430,15 +569,15 @@ export class DataGenerator {
       expectedParticipants: { male: expectedMale, female: expectedFemale, total: expectedMale + expectedFemale },
       currentApplicants: { male: currentMale, female: currentFemale, total: currentMale + currentFemale },
       matchType: matchType,
-      waitingApplicants: 0,
+      waitingApplicants: shouldClose ? Math.floor(Math.random() * 3) : 0, // 마감된 매치는 대기자 있을 수 있음
       waitingList: [],
       participants: [],
       adEnabled: Math.random() > 0.8,
       ntrpRequirement: { min: ntrpMin, max: ntrpMin + 1.5 },
       weather: Math.random() > 0.8 ? '흐림' : '맑음',
-      location: selectedRegion, // 선택된 지역 사용
+      location: selectedRegion,
       createdAt: new Date().toISOString(),
-      isClosed: false,
+      isClosed: shouldClose,
     } as any;
   }
 
@@ -500,8 +639,8 @@ export class DataGenerator {
       matchType: supabaseMatch.match_type as '단식' | '남복' | '여복' | '혼복',
       waitingApplicants: supabaseMatch.waiting_applicants,
       waitingList: [],
-      participants: supabaseMatch.participants || [],
-      applications: supabaseMatch.applications || [],
+      participants: (supabaseMatch as any).participants || [],
+      applications: (supabaseMatch as any).applications || [],
       adEnabled: supabaseMatch.ad_enabled,
       ntrpRequirement: {
         min: supabaseMatch.ntrp_min,
@@ -569,8 +708,8 @@ export class DataGenerator {
         is_dummy: isDummyMatch,
         created_at: match.createdAt,
         is_closed: match.isClosed || false,
-        applications: match.applications || [],
-        participants: match.participants || [],
+        applications: (match as any).applications || [],
+        participants: (match as any).participants || [],
       };
 
       const { error } = await supabaseAdmin.from('matches').insert([supabaseData]);
@@ -599,9 +738,21 @@ export class DataGenerator {
 
   static async generateOneTimeDummyMatches(count: number = 10): Promise<Match[]> {
     const matches: Match[] = [];
+    
+    // 40%는 마감, 60%는 진행 중
+    const closedCount = Math.floor(count * 0.4);
+    
     for (let i = 0; i < count; i++) {
-      matches.push(this.generateNewMatch());
+      const shouldClose = i < closedCount;
+      matches.push(this.generateNewMatch(shouldClose));
     }
+    
+    // 셔플해서 마감/진행중이 섞이도록
+    for (let i = matches.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [matches[i], matches[j]] = [matches[j], matches[i]];
+    }
+    
     const promises = matches.map(m => this.saveMatchToSupabase(m));
     await Promise.all(promises);
     return matches;
@@ -618,7 +769,7 @@ export class DataGenerator {
   static async deleteAllMatches(): Promise<{ success: boolean; deletedCount: number }> {
      if (!supabaseAdmin) return { success: false, deletedCount: 0 };
      const { count } = await supabaseAdmin.from('matches').select('*', { count: 'exact', head: true });
-     const { error } = await supabaseAdmin.from('matches').delete().neq('id', '0'); // 모두 삭제
+     const { error } = await supabaseAdmin.from('matches').delete().neq('id', '0');
      if (error) return { success: false, deletedCount: 0 };
      return { success: true, deletedCount: count || 0 };
   }

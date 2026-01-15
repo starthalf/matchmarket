@@ -482,7 +482,7 @@ export class DataGenerator {
     const regions = Object.keys(this.COURTS_BY_REGION);
     let selectedRegion: string;
     
-    if (Math.random() < 0.7) {
+    if (Math.random() < 0.85) {
       selectedRegion = Math.random() < 0.57 ? '서울시' : '경기도';
     } else {
       const otherRegions = regions.filter(r => r !== '서울시' && r !== '경기도');

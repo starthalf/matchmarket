@@ -1,4 +1,4 @@
-// utils/dataGenerator.ts - 정리된 버전
+// utils/dataGenerator.ts
 
 import { Match, User } from '../types/tennis';
 import { supabase, supabaseAdmin } from '../lib/supabase';
@@ -52,6 +52,10 @@ interface SupabaseMatch {
 }
 
 export class DataGenerator {
+  // ==========================================
+  // 1. 기초 데이터셋 (원본 데이터 유지)
+  // ==========================================
+
   private static readonly LOCATIONS = [
     '서울시', '경기북부', '경기남부', '경기서부', '경기동부',
     '인천시', '대전시', '대구시', '부산시', '울산시',
@@ -59,6 +63,7 @@ export class DataGenerator {
     '경북', '경남', '전북', '전남', '제주도'
   ];
 
+  // 원본의 방대한 코트 리스트 복구
   private static readonly SEOUL_COURTS = [
     '춘천시 드림실내테니스코트', '김천종합스포츠타운테니스장', '여수시 진남시립테니스장',
     '예천군 공설운동장테니스장', '아산시 이순신테니스코트', '속초시 시립테니스코트',
@@ -129,250 +134,230 @@ export class DataGenerator {
     '성남 영어마을 테니스장', '정현중보들테니스센터', '만석공원 내 실내 테니스장'
   ];
 
-  private static readonly NICKNAME_PREFIXES = [
-    'tennis', 'racket', 'serve', 'smash', 'ace', 'net', 'court', 'match', 
-    'game', 'volley', 'spin', 'power', 'speed', 'pro', 'master', 'legend',
-    'moon', 'star', 'sun', 'ocean', 'fire', 'ice', 'wind', 'storm',
-    'gold', 'silver', 'diamond', 'ruby', 'pearl', 'crystal'
+  // 닉네임 생성용 데이터셋
+  private static readonly KR_ADJECTIVES = [
+    '배고픈', '졸린', '힘든', '신난', '우아한', '강력한', '소심한', '대범한', 
+    '왼손잡이', '양손잡이', '발이빠른', '서브만좋은', '네트앞', '베이스라인', 
+    '전위', '후위', '땀많은', '매너있는', '즐겜러', '빡겜러', '돌아온', '지친', 
+    '새벽형', '저녁형', '주말', '평일', '가난한', '부유한', '행복한', '슬픈'
   ];
-  
-  private static readonly NICKNAME_SUFFIXES = [
-    'player', 'king', 'queen', 'ace', 'pro', 'master', 'hero', 'star',
-    'hunter', 'warrior', 'knight', 'ranger', 'wizard', 'ninja', 'samurai',
-    'phoenix', 'dragon', 'tiger', 'eagle', 'lion', 'wolf', 'bear',
-    'vibes', 'dreams', 'soul', 'heart', 'spirit', 'magic', 'power'
+
+  private static readonly KR_NOUNS = [
+    '테린이', '나달', '페더러', '조코비치', '라켓', '공', '스매싱', '발리', 
+    '요정', '깎는노인', '장인', '몬스터', '형', '누나', '동생', '아재', 
+    '직장인', '백수', '개발자', '디자이너', '의사', '변호사', '선생님', '학생',
+    '코치', '감독', '캡틴', '대장', '쫄보', '고수', '중수', '하수'
+  ];
+
+  private static readonly EN_WORDS = [
+    'Tennis', 'Racket', 'Ace', 'Smash', 'Volley', 'Net', 'Court', 'Ball',
+    'Spin', 'Slice', 'Top', 'Pro', 'Master', 'King', 'Queen', 'Prince',
+    'Winner', 'Loser', 'Lover', 'Hater', 'Player', 'Coach', 'Captain',
+    'Sky', 'Moon', 'Sun', 'Star', 'Fire', 'Water', 'Wind', 'Storm'
   ];
 
   private static readonly PLAY_STYLES = ['공격형', '수비형', '올라운드'];
   private static readonly CAREER_TYPES = ['동호인', '선수'];
+  private static readonly MATCH_TYPES = ['단식', '남복', '여복', '혼복'];
 
-  private static readonly MATCH_TITLES = [
-    // 강남/서초/송파 (강남권)
-    '강남에서 같이 치실 분~', '서초 주말에 한게임 어때요?', '송파 실력자들 모여라!',
-    '강남 테니스 메이트 구해요', '서초 복식 같이 하실분', '송파에서 친목 테니스!',
-    '강남 퇴근길에 한판', '서초 주말 아침 테니스', '송파 저녁 가볍게 치실 분',
-    '강남 실력향상 같이해요', '서초에서 테니스 한게임', '송파 단식 파트너 구함',
-    
-    // 마포/용산/성동 (서북권)
-    '마포 친목 테니스 하실 분', '용산에서 레벨업 같이해요', '성동 테니스 메이트 구함',
-    '마포 주말 테니스 ㄱㄱ', '용산 평일 저녁 치실분', '성동구 같이 치실 분~',
-    '마포 복식 한게임 어때요', '용산 단식 파트너 구해요', '성동 테니스 같이 쳐요',
-    
-    // 홍대/신촌/건대 (대학가)
-    '홍대 근처 테니스 치실 분', '신촌에서 복식 한 게임!', '건대 근처 같이 치실 분',
-    '홍대 주말 테니스 ㄱㄱ', '신촌 평일 저녁에 한판', '건대 테니스 모임 오세요',
-    '홍대 테린이 환영합니다', '신촌 실력자 모십니다', '건대 친목 위주 테니스',
-    
-    // 잠실/압구정/여의도 (프리미엄)
-    '잠실 주말 복식 하실분~', '압구정 테니스 같이 쳐요', '여의도 저녁 테니스 어때요?',
-    '잠실 테니스 한게임!', '압구정에서 복식 구합니다', '여의도 주말 아침 테니스',
-    '잠실 평일 저녁 치실 분', '압구정 단식 파트너 구함', '여의도 퇴근하고 한판',
-    
-    // 일반적인 표현들
-    '주말에 테니스 한판 어때요?', '퇴근하고 가볍게 한게임', '이번주 테니스 치실 분 구해요',
-    '같이 실력 늘려봐요!', '테린이 환영 친목 매치', '고수분들 모십니다ㅎㅎ',
-    '주말 오전 테니스 ㄱㄱ', '평일 저녁 가볍게 치실 분', '이번 주말 복식 하실분',
-    '테니스 메이트 찾아요~', '같이 운동하실 분!', '실력 상관없이 환영해요',
-    
-    // 시간대별
-    '아침 일찍 치실 분 구해요', '점심시간 짧게 한게임', '저녁 7시 테니스 어때요',
-    '주말 오전 9시 테니스', '평일 저녁 복식 구합니다', '토요일 오후 치실 분~',
-    '일요일 아침 테니스!', '퇴근 후 한게임 ㄱㄱ', '새벽 테니스 하실 분',
-    
-    // 실력/레벨 관련
-    '초보 환영합니다!', '중급 이상 모십니다', '고수분들과 한게임',
-    '실력 비슷한 분 구해요', '테린이도 괜찮아요~', 'NTRP 4.0 이상만',
-    '레벨업 같이 하실 분', '실전 경험 쌓고 싶어요', '랠리 길게 치실 분',
-    
-    // 매치 유형별
-    '단식 파트너 구합니다', '복식 한팀 모집해요', '남복 하실 분~',
-    '여복 같이 치실 분', '혼복 팀 구성합니다', '단식 연습 하실분',
-    '복식 게임 하실 분', '파트너 구해요!', '2:2 복식 구합니다',
-    
-    // 친목/분위기 강조
-    '친목 위주로 치실 분', '재밌게 운동해요~', '분위기 좋은 모임',
-    '매너 좋은 분만 ㅎㅎ', '즐겁게 운동하실 분', '편하게 치실 분 구해요',
-    '같이 땀 흘려요!', '운동 후 식사도 ㄱㄱ', '정기모임 멤버 모집',
-    
-    // 목적 중심
-    '다이어트 같이해요', '실력 늘리고 싶어요', '체력 기르실 분',
-    '스트레스 풀러 가요', '건강 챙기실 분~', '취미로 즐기실 분',
-    '운동 습관 만들어요', '건강한 주말 보내요', '활기찬 아침 시작!',
-    
-    // 지역별 추가
-    '노원 테니스 치실 분', '구로 주말 한게임', '영등포 저녁 테니스',
-    '강북 복식 하실분', '관악 테니스 구합니다', '동작구에서 치실 분',
-    '성북 주말 테니스', '중랑 평일 저녁 ㄱㄱ', '강서 테니스 메이트',
-    
-    // 감성/유머
-    '날씨 좋을 때 치자!', '운동이 최고야', '테니스 중독자 모여라',
-    '공 좀 치고 싶다...', '이번주는 꼭 치자!', '테니스가 하고파~',
-    '라켓 먼지 털러 가요', '운동 안하면 안됨', '같이 땀 빼요!',
-    
-    // 요일별
-    '월요일 저녁 테니스', '화요일 아침 운동', '수요일 점심 한게임',
-    '목요일 저녁 치실분', '금요일 퇴근 후 ㄱㄱ', '토요일 테니스 모임',
-    '일요일 오전 복식', '주중 저녁 치실 분', '주말 아침 테니스',
-    
-    // 계절/날씨
-    '날씨 좋은데 치러가요', '봄 테니스 시즌 오픈', '여름 새벽 테니스',
-    '가을 테니스 최고!', '겨울에도 치실 분', '따뜻한 날 한게임',
-    
-    // 특별한 경우
-    '오늘 갑자기 시간 나서', '내일 급하게 구합니다', '이따 저녁 치실분',
-    '한 시간 후 치실 분', '지금 바로 가능하신분', '당일 매칭 구해요',
-    
-    // 인원 모집
-    '1명만 더 구해요!', '2명 더 모집합니다', '한 분만 오시면 돼요',
-    '3명 모였어요 1명만!', '거의 다 찼어요~', '막차 탑승 ㄱㄱ',
-    
-    // 정기 모임
-    '정기 멤버 찾아요', '매주 모이실 분', '고정 파트너 구합니다',
-    '꾸준히 하실 분만', '장기 모임 멤버 모집', '레귤러 멤버 환영',
-    
-    // 실내/실외
-    '실내 코트에서 치실 분', '야외 테니스 어때요', '실내라 날씨 걱정없어요',
-    '실외 코트 예약했어요', '돔구장에서 치실분', '야외라 상쾌해요!',
-    
-    // 추가 다양한 표현
-    '테니스 좋아하시는 분', '운동 파트너 구해요', '같이 성장하실 분',
-    '테니스로 친구 만들어요', '새로운 사람 만나요', '동네 테니스 모임',
-    '회사 근처에서 치실분', '집 근처 테니스장', '가까운 분 구해요',
-    '초보 탈출 같이해요', '중수 레벨 환영', '상수 레벨 모집',
-    '랠리 재밌게 치실 분', '게임 위주로 하실분', '연습 위주 테니스',
-    '서브 연습하실 분', '발리 연습 같이해요', '스매싱 배우고 싶어요',
-    '주말 테니스 루틴', '평일 저녁 취미', '아침 운동 습관',
-    '테니스 하면서 수다도', '운동하고 커피 ㄱㄱ', '친해지실 분~',
-    '매너 플레이어 환영', '즐테 하실 분', '진지하게 하실분',
-    '가볍게 즐기실 분', '열심히 하실 분', '배우면서 치실분',
-    '코칭 받으면서 게임', '실전 경험 쌓아요', '대회 준비하실분',
-    '테니스 시작하신 분', '오랜만에 치시는 분', '복귀하시는 분 환영',
-    '20대 테니스 모임', '30대 직장인 모임', '40대 동호인 환영',
-    '또래끼리 치실 분', '나이 상관없어요~', '다양한 연령대 환영'
-  ];
-
-  private static readonly DESCRIPTIONS = [
-    '실력 향상을 위한 진지한 매치입니다. 매너있는 분들만 참여 부탁드립니다.',
-    '즐거운 테니스를 위한 친선 경기입니다. 초보자도 환영합니다!',
-    '레벨 높은 매치를 원하시는 분들을 위한 특별 경기입니다.',
-    '주말 오후 여유로운 테니스 매치입니다. 편안한 분위기에서 즐겨요.',
-    '실전 감각을 기르고 싶은 분들을 위한 실력향상 매치입니다.',
-    '새로운 사람들과 함께하는 소셜 테니스 모임입니다.',
-    '정기적으로 만날 테니스 메이트를 찾고 있어요.',
-    '운동도 하고 친목도 다지는 즐거운 시간이 되길 바라요.'
-  ];
-
-  private static readonly MATCH_TYPES: Array<'단식' | '남복' | '여복' | '혼복'> = [
-    '단식', '남복', '여복', '혼복'
-  ];
+  // ==========================================
+  // 2. 생성 로직 (닉네임, 제목, 설명) - 개선됨
+  // ==========================================
 
   /**
-   * 닉네임 생성기 - 다양한 패턴
+   * 매우 다양하고 자연스러운 닉네임 생성
    */
-  private static generateNickname(): string {
+  private static generateNaturalNickname(): string {
     const patterns = [
-      // 패턴 1: prefix.suffix123 (기존 방식)
+      // 1. 한국어 형용사 + 명사 (예: 배고픈테린이)
       () => {
-        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
-        const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
-        const separator = Math.random() > 0.5 ? '.' : '_';
-        const number = Math.random() < 0.4 ? Math.floor(Math.random() * 999) + 1 : '';
-        return `${prefix}${separator}${suffix}${number}`;
+        const adj = this.KR_ADJECTIVES[Math.floor(Math.random() * this.KR_ADJECTIVES.length)];
+        const noun = this.KR_NOUNS[Math.floor(Math.random() * this.KR_NOUNS.length)];
+        return `${adj}${noun}`;
       },
-      
-      // 패턴 2: 한글 닉네임
+      // 2. 지역명 + 특징 (예: 강남구왕발, 마포불주먹)
       () => {
-        const korean = ['테니스왕', '랠리킹', '서브고수', '발리마스터', '스매시', '에이스메이커', 
-                       '코트지배자', '백핸드킹', '포핸드', '탑스핀장인', '슬라이스', '볼리의달인',
-                       '테니스러버', '라켓마법사', '코트의별', '게임메이커', '파워플레이어', '스피드스타'];
-        const suffix = ['', '님', Math.floor(Math.random() * 99) + 1, '✨', '🎾'];
-        return korean[Math.floor(Math.random() * korean.length)] + 
-               suffix[Math.floor(Math.random() * suffix.length)];
+        const regions = ['강남', '서초', '송파', '마포', '용산', '분당', '판교', '수원', '일산', '목동'];
+        const nicknames = ['왕발', '핵서브', '통곡의벽', '보라매', '지킴이', '보안관', '주민', '토박이'];
+        return `${regions[Math.floor(Math.random() * regions.length)]}${nicknames[Math.floor(Math.random() * nicknames.length)]}`;
       },
-      
-      // 패턴 3: prefix만 + 숫자
+      // 3. 실명 스타일 (예: 김테니스, 박프로)
       () => {
-        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
-        const number = Math.floor(Math.random() * 9999) + 1;
-        return `${prefix}${number}`;
+        const lastNames = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오'];
+        const positions = ['프로', '코치', '회원', '총무', '부장', '대리', '사원', '선수', '감독'];
+        return `${lastNames[Math.floor(Math.random() * lastNames.length)]}${positions[Math.floor(Math.random() * positions.length)]}`;
       },
-      
-      // 패턴 4: 이모지 조합
+      // 4. 순수 영어 (예: Ace_Maker, TennisLover)
       () => {
-        const emojis = ['🎾', '🏆', '⚡', '🔥', '💪', '⭐', '🌟', '👑', '🎯', '💯'];
-        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
-        const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-        const position = Math.random() > 0.5 ? 'before' : 'after';
-        return position === 'before' ? `${emoji}${prefix}` : `${prefix}${emoji}`;
+        const word1 = this.EN_WORDS[Math.floor(Math.random() * this.EN_WORDS.length)];
+        const word2 = this.EN_WORDS[Math.floor(Math.random() * this.EN_WORDS.length)];
+        const separator = Math.random() > 0.5 ? '_' : '';
+        return `${word1}${separator}${word2}`;
       },
-      
-      // 패턴 5: 대문자 스타일
+      // 5. 한영 혼합 (예: 송파Federer, Tennis왕)
       () => {
-        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
-        const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
-        const number = Math.random() < 0.3 ? Math.floor(Math.random() * 99) + 1 : '';
-        return `${prefix.toUpperCase()}${suffix.charAt(0).toUpperCase()}${suffix.slice(1)}${number}`;
+        if (Math.random() > 0.5) {
+          const kr = this.KR_NOUNS[Math.floor(Math.random() * this.KR_NOUNS.length)];
+          const en = this.EN_WORDS[Math.floor(Math.random() * this.EN_WORDS.length)];
+          return `${en}${kr}`; // Tennis왕
+        } else {
+          const region = ['Seoul', 'Korea', 'Gangnam', 'Busan', 'Jeju'];
+          const kr = this.KR_NOUNS[Math.floor(Math.random() * this.KR_NOUNS.length)];
+          return `${region[Math.floor(Math.random() * region.length)]}_${kr}`; // Seoul_테린이
+        }
       },
-      
-      // 패턴 6: 짧은 닉네임
+      // 6. 짧은 영어 + 숫자 (예: ACE88, min99)
       () => {
-        const short = ['ace', 'net', 'pro', 'top', 'max', 'win', 'god', 'king', 'boss', 'star'];
-        const number = Math.floor(Math.random() * 999) + 1;
-        return short[Math.floor(Math.random() * short.length)] + number;
-      },
-      
-      // 패턴 7: 세 단어 조합
-      () => {
-        const adjectives = ['super', 'mega', 'ultra', 'hyper', 'crazy', 'wild', 'smart', 'quick'];
-        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
-        const suffix = this.NICKNAME_SUFFIXES[Math.floor(Math.random() * this.NICKNAME_SUFFIXES.length)];
-        const adj = adjectives[Math.floor(Math.random() * adjectives.length)];
-        return `${adj}_${prefix}_${suffix}`;
-      },
-      
-      // 패턴 8: 연도 포함
-      () => {
-        const prefix = this.NICKNAME_PREFIXES[Math.floor(Math.random() * this.NICKNAME_PREFIXES.length)];
-        const years = [2020, 2021, 2022, 2023, 2024, 2025];
-        const year = years[Math.floor(Math.random() * years.length)];
-        return `${prefix}${year}`;
+        const word = this.EN_WORDS[Math.floor(Math.random() * this.EN_WORDS.length)];
+        const num = Math.floor(Math.random() * 99) + 1;
+        return `${word}${num}`;
       }
     ];
-    
-    // 랜덤하게 패턴 선택
+
     const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
-    return selectedPattern();
+    let nickname = selectedPattern();
+
+    // 20% 확률로 뒤에 숫자 추가 (더 유니크하게)
+    if (Math.random() < 0.2) {
+      nickname += Math.floor(Math.random() * 1000);
+    }
+
+    return nickname;
   }
 
   /**
-   * 새로운 더미 매치 생성
+   * 컨텍스트(시간, 장소, 타입)에 맞는 현실적인 매치 제목 생성
+   * (기존의 긴 MATCH_TITLES 배열을 대체함)
    */
+  private static generateContextualTitle(
+    location: string, 
+    time: string, 
+    matchType: string, 
+    courtName: string,
+    ntrp: number
+  ): string {
+    const hour = parseInt(time.split(':')[0]);
+    const isMorning = hour >= 5 && hour < 10;
+    const isLunch = hour >= 11 && hour < 14;
+    const isNight = hour >= 18;
+    const isLateNight = hour >= 21;
+    
+    // 코트 이름 줄이기 (장충 테니스장 -> 장충)
+    const shortCourt = courtName.split(' ')[0];
+    const shortLoc = location.substring(0, 2); // 서울, 경기 등
+
+    const templates = [
+      // 1. 일반적인 모집 (정보 중심)
+      `[${shortLoc}] ${shortCourt} ${matchType} 구합니다 (${time}~)`,
+      `${courtName} ${matchType} 한 분 모셔요`,
+      `${time}시 ${shortCourt} ${matchType} 벙개`,
+      
+      // 2. 시간대 강조
+      isMorning ? `아침 운동 상쾌하게 하실 분! ☀️ (${shortCourt})` : null,
+      isNight ? `퇴근 후 가볍게 ${matchType} 한 게임 🎾` : null,
+      isLateNight ? `심야 테니스! 올빼미족 구해요` : null,
+      isLunch ? `점심시간 짬내서 ${matchType} 하실분` : null,
+      
+      // 3. 긴급/대타 (랜덤 확률)
+      Math.random() < 0.15 ? `[급구] 오늘 ${time}시 대타 구합니다! (코트비X)` : null,
+      Math.random() < 0.1 ? `갑자기 펑크나서 한 분 모십니다 ㅠㅠ (${matchType})` : null,
+
+      // 4. 실력/목적 강조
+      `NTRP ${ntrp} 전후 ${matchType} 게임하실 분`,
+      `랠리 좀 하다가 게임 하실 분 (${ntrp}+)`,
+      `빡겜 원합니다. ${matchType} 고수님들 오세요 🔥`,
+      `즐겁게 치실 분~ (초보환영, 구력 무관)`,
+      `테린이들끼리 편하게 쳐요! (${ntrp} 이하)`,
+
+      // 5. 단순/쿨한 스타일
+      `${shortCourt} ${matchType} ㄱㄱ`,
+      `오늘 ${time}시 접대 테니스 아닙니다`,
+      `${location} 테니스 메이트 구함`
+    ];
+
+    const validTemplates = templates.filter(t => t !== null) as string[];
+    return validTemplates[Math.floor(Math.random() * validTemplates.length)];
+  }
+
+  /**
+   * 제목과 분위기에 맞는 상세 설명 생성
+   */
+  private static generateContextualDescription(matchType: string, ntrp: number): string {
+    const greetings = [
+      '안녕하세요!', 
+      '반갑습니다.', 
+      '즐거운 테니스 하실 분!', 
+      '안녕하세요, 테니스 좋아하시는 분 찾습니다.',
+      ''
+    ];
+    
+    const intros = [
+      `급하게 ${matchType} 빈자리가 생겨서 글 올립니다.`,
+      `저희 실력은 ${ntrp} 정도 되구요, 비슷하신 분이면 좋겠습니다.`,
+      `매너 게임 하실 분 찾고 있어요. 승패보다는 즐겁게 치고 싶습니다.`,
+      `꾸준히 같이 치실 파트너 찾고 있습니다.`,
+      `코트 예약은 어렵게 성공했는데 사람이 없네요 ㅠ`,
+      `가볍게 몸 풀고 게임 진행하려고 합니다.`
+    ];
+    
+    const details = [
+      '- 주차 가능합니다 (유료).',
+      '- 주차 무료입니다.',
+      '- 샤워실 이용 가능해요.',
+      '- 신구(New Ball) 깝니다.',
+      '- 연습구 많이 있습니다.',
+      '- 코트비는 1/N 입니다.',
+      '- 끝나고 음료수 한 잔 해요.',
+      '- 칼퇴근 보장해드립니다.'
+    ];
+
+    const closings = [
+      '편하게 신청 주세요!', 
+      '채팅 주시면 바로 답장 드릴게요.', 
+      '기다리겠습니다.', 
+      '감사합니다.', 
+      '매너 좋으신 분 환영합니다 ^^'
+    ];
+
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+    const intro = intros[Math.floor(Math.random() * intros.length)];
+    
+    const selectedDetails = details
+      .sort(() => 0.5 - Math.random())
+      .slice(0, Math.floor(Math.random() * 2) + 2)
+      .join('\n');
+    
+    const closing = closings[Math.floor(Math.random() * closings.length)];
+
+    return `${greeting}\n\n${intro}\n\n[특이사항]\n${selectedDetails}\n\n${closing}`;
+  }
+
+  // ==========================================
+  // 3. 메인 매치 생성 함수
+  // ==========================================
+
   static generateNewMatch(): Match {
     const sellerId = `seller_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const matchId = `match_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     
+    // 닉네임 생성 (개선된 로직 적용)
+    const sellerName = this.generateNaturalNickname();
     const sellerGender = Math.random() > 0.3 ? '남성' : '여성';
-    const sellerName = this.generateNickname();
-
-    const hasNtrpCert = Math.random() < 0.3;
-    const hasCareerCert = Math.random() < 0.2;
-    const hasYoutubeCert = Math.random() < 0.1;
-    const hasInstagramCert = Math.random() < 0.15;
 
     const seller: User = {
       id: sellerId,
       name: sellerName,
       gender: sellerGender,
-      ageGroup: ['20대', '30대', '40대'][Math.floor(Math.random() * 3)] as any,
-      ntrp: Math.round((3.0 + Math.random() * 2.5) * 10) / 10,
-      experience: 12 + Math.floor(Math.random() * 120),
+      ageGroup: ['20대', '30대', '40대', '50대'][Math.floor(Math.random() * 4)] as any,
+      ntrp: Math.round((2.0 + Math.random() * 3.0) * 10) / 10,
+      experience: 6 + Math.floor(Math.random() * 120),
       playStyle: this.PLAY_STYLES[Math.floor(Math.random() * this.PLAY_STYLES.length)] as any,
-      careerType: this.CAREER_TYPES[Math.floor(Math.random() * this.CAREER_TYPES.length)] as any,
+      careerType: Math.random() < 0.9 ? '동호인' : '선수',
       certification: {
-        ntrp: hasNtrpCert ? 'verified' : 'none',
-        career: hasCareerCert ? 'verified' : 'none',
-        youtube: hasYoutubeCert ? 'verified' : 'none',
-        instagram: hasInstagramCert ? 'verified' : 'none',
+        ntrp: Math.random() < 0.3 ? 'verified' : 'none',
+        career: Math.random() < 0.2 ? 'verified' : 'none',
+        youtube: Math.random() < 0.1 ? 'verified' : 'none',
+        instagram: Math.random() < 0.15 ? 'verified' : 'none',
       },
       profileImage: Math.random() > 0.5 ? `https://picsum.photos/seed/${sellerId}/200/200` : undefined,
       viewCount: Math.floor(Math.random() * 1000),
@@ -380,107 +365,72 @@ export class DataGenerator {
       avgRating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
     };
 
-    const matchType = this.MATCH_TYPES[Math.floor(Math.random() * this.MATCH_TYPES.length)];
+    const matchType = (['단식', '남복', '여복', '혼복'] as const)[Math.floor(Math.random() * 4)];
+    const location = this.LOCATIONS[Math.floor(Math.random() * this.LOCATIONS.length)];
+    const court = this.SEOUL_COURTS[Math.floor(Math.random() * this.SEOUL_COURTS.length)];
     
-    let expectedMale = 0;
-    let expectedFemale = 0;
-    
-    switch (matchType) {
-      case '단식':
-        if (sellerGender === '남성') {
-          expectedMale = 2;
-          expectedFemale = 0;
-        } else {
-          expectedMale = 0;
-          expectedFemale = 2;
-        }
-        break;
-      case '남복':
-        expectedMale = 4;
-        expectedFemale = 0;
-        break;
-      case '여복':
-        expectedMale = 0;
-        expectedFemale = 4;
-        break;
-      case '혼복':
-        expectedMale = 2;
-        expectedFemale = 2;
-        break;
-    }
-
-    const shouldBeClosed = Math.random() < 1;
-    
-    let currentMale = 0;
-    let currentFemale = 0;
-    
-    if (shouldBeClosed) {
-      currentMale = expectedMale;
-      currentFemale = expectedFemale;
-    } else {
-      const fillRate = 0.2 + Math.random() * 0.6;
-      currentMale = Math.floor(expectedMale * fillRate);
-      currentFemale = Math.floor(expectedFemale * fillRate);
-    }
-
-    const basePrice = [15000, 20000, 25000, 30000, 35000][Math.floor(Math.random() * 5)];
-    const initialPrice = basePrice;
-    const currentPrice = basePrice;
-    const maxPrice = basePrice * 3;
-
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + Math.floor(Math.random() * 14) + 1);
-    
-    const startHour = 9 + Math.floor(Math.random() * 12);
+    // 시간 설정 (06시 ~ 22시)
+    const startHour = 6 + Math.floor(Math.random() * 16);
     const startTime = `${startHour.toString().padStart(2, '0')}:00`;
     const endTime = `${(startHour + 2).toString().padStart(2, '0')}:00`;
+    
+    const ntrpMin = 2.0 + Math.floor(Math.random() * 3) * 0.5;
+
+    // 타이틀 및 설명 생성 (개선된 로직 적용)
+    const title = this.generateContextualTitle(location, startTime, matchType, court, ntrpMin);
+    const description = this.generateContextualDescription(matchType, ntrpMin);
+
+    let expectedMale = 0, expectedFemale = 0;
+    if (matchType === '단식') {
+      if (sellerGender === '남성') expectedMale = 2; else expectedFemale = 2;
+    } else if (matchType === '남복') {
+      expectedMale = 4;
+    } else if (matchType === '여복') {
+      expectedFemale = 4;
+    } else { 
+      expectedMale = 2; expectedFemale = 2;
+    }
+
+    const currentMale = Math.floor(expectedMale * (0.2 + Math.random() * 0.5));
+    const currentFemale = Math.floor(expectedFemale * (0.2 + Math.random() * 0.5));
+
+    const basePrice = [10000, 15000, 20000, 25000, 30000][Math.floor(Math.random() * 5)];
 
     return {
       id: matchId,
       sellerId: sellerId,
       seller: seller,
-      title: this.generateMatchTitle(matchType),
-      date: futureDate.toISOString().split('T')[0],
+      title: title,
+      date: new Date(Date.now() + Math.random() * 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       time: startTime,
       endTime: endTime,
-      court: this.SEOUL_COURTS[Math.floor(Math.random() * this.SEOUL_COURTS.length)],
-      description: this.generateMatchDescription(matchType),
+      court: court,
+      description: description,
       basePrice: basePrice,
-      initialPrice: initialPrice,
-      currentPrice: currentPrice,
-      maxPrice: maxPrice,
-      expectedViews: Math.floor(Math.random() * 500) + 200,
-      expectedWaitingApplicants: Math.floor(Math.random() * 10) + 1,
-      expectedParticipants: {
-        male: expectedMale,
-        female: expectedFemale,
-        total: expectedMale + expectedFemale,
-      },
-      currentApplicants: {
-        male: currentMale,
-        female: currentFemale,
-        total: currentMale + currentFemale,
-      },
+      initialPrice: basePrice,
+      currentPrice: basePrice,
+      maxPrice: basePrice * 3,
+      expectedViews: Math.floor(Math.random() * 300),
+      expectedWaitingApplicants: Math.floor(Math.random() * 5),
+      expectedParticipants: { male: expectedMale, female: expectedFemale, total: expectedMale + expectedFemale },
+      currentApplicants: { male: currentMale, female: currentFemale, total: currentMale + currentFemale },
       matchType: matchType,
-      waitingApplicants: shouldBeClosed ? Math.floor(Math.random() * 5) : 0,
+      waitingApplicants: 0,
       waitingList: [],
       participants: [],
-      adEnabled: Math.random() > 0.7,
-      ntrpRequirement: {
-        min: 3.0 + Math.floor(Math.random() * 2),
-        max: 4.0 + Math.floor(Math.random() * 2),
-      },
-      weather: Math.random() > 0.8 ? 
-        (Math.random() > 0.5 ? '흐림' : '비') : '맑음',
-      location: this.LOCATIONS[Math.floor(Math.random() * this.LOCATIONS.length)],
+      adEnabled: Math.random() > 0.8,
+      ntrpRequirement: { min: ntrpMin, max: ntrpMin + 1.5 },
+      weather: Math.random() > 0.8 ? '흐림' : '맑음',
+      location: location,
       createdAt: new Date().toISOString(),
-      isClosed: shouldBeClosed,
-    };
+      isClosed: false,
+    } as any;
   }
 
-  /**
-   * Supabase 데이터를 Match 객체로 변환
-   */
+  // ==========================================
+  // 4. Supabase 연동 및 유틸리티 (기존 로직 유지)
+  // ==========================================
+
   private static convertSupabaseToMatch(supabaseMatch: SupabaseMatch): Match {
     const basePrice = supabaseMatch.base_price || 0;
     const initialPrice = supabaseMatch.initial_price || basePrice;
@@ -549,23 +499,14 @@ export class DataGenerator {
     };
   }
 
-  /**
-   * 매치를 Supabase에 저장 (실제 사용자 매치 + 더미 매치 모두 처리)
-   */
   static async saveMatchToSupabase(match: Match): Promise<boolean> {
     try {
       if (!supabaseAdmin) {
-        console.log('Supabase Admin이 설정되지 않아 매치 저장을 건너뜁니다.');
+        console.log('Supabase Admin 미설정으로 저장 건너뜀');
         return false;
       }
-
-      const safeBasePrice = Number(match.basePrice) || 0;
-      const safeInitialPrice = Number(match.initialPrice) || safeBasePrice;
-      const safeCurrentPrice = Number(match.currentPrice) || safeBasePrice;
-      const safeMaxPrice = Number(match.maxPrice) || (safeBasePrice * 3);
-
-      // 실제 사용자 매치는 isDummy: false, 더미 생성 매치는 isDummy가 없으므로 true로 처리
-      const isDummyMatch = (match as any).isDummy ?? true; // 기본값은 true (더미)
+      
+      const isDummyMatch = (match as any).isDummy ?? true;
 
       const supabaseData = {
         id: match.id,
@@ -591,10 +532,10 @@ export class DataGenerator {
         end_time: match.endTime,
         court: match.court,
         description: match.description,
-        base_price: safeBasePrice,
-        initial_price: safeInitialPrice,
-        current_price: safeCurrentPrice,
-        max_price: safeMaxPrice,
+        base_price: match.basePrice,
+        initial_price: match.initialPrice,
+        current_price: match.currentPrice,
+        max_price: match.maxPrice,
         expected_views: match.expectedViews,
         expected_waiting_applicants: match.expectedWaitingApplicants,
         expected_participants_male: match.expectedParticipants.male,
@@ -610,285 +551,66 @@ export class DataGenerator {
         ntrp_max: match.ntrpRequirement.max,
         weather: match.weather,
         location: match.location,
-        is_dummy: isDummyMatch, // 실제 사용자: false, 더미: true
+        is_dummy: isDummyMatch,
         created_at: match.createdAt,
         is_closed: match.isClosed || false,
         applications: match.applications || [],
         participants: match.participants || [],
       };
 
-      const { error } = await supabaseAdmin
-        .from('matches')
-        .insert([supabaseData]);
+      const { error } = await supabaseAdmin.from('matches').insert([supabaseData]);
 
       if (error) {
-        console.error('Supabase 매치 저장 오류:', error);
+        console.error('매치 저장 실패:', error);
         return false;
       }
-
-      console.log(`매치 ${match.id} Supabase 저장 완료`);
       return true;
     } catch (error) {
-      console.error('saveMatchToSupabase 오류:', error);
+      console.error('saveMatchToSupabase 에러:', error);
       return false;
     }
   }
 
-  /**
-   * Supabase에서 모든 매치 가져오기
-   */
   static async getAllMatches(fallbackMatches: Match[]): Promise<Match[]> {
     try {
-      console.log('Supabase에서 매치 데이터 가져오는 중...');
-      
-      if (!supabase) {
-        console.log('Supabase가 설정되지 않아 로컬 데이터만 사용합니다.');
-        return fallbackMatches;
-      }
-
-      const { data: supabaseMatches, error } = await supabase
-        .from('matches')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        console.warn('Supabase 조회 오류:', error.message);
-        return fallbackMatches;
-      }
-
-      if (!supabaseMatches || supabaseMatches.length === 0) {
-        console.log('Supabase에 저장된 매치가 없습니다. 로컬 데이터만 사용합니다.');
-        return fallbackMatches;
-      }
-
-      const convertedMatches = supabaseMatches.map(this.convertSupabaseToMatch);
-      console.log(`Supabase에서 ${convertedMatches.length}개 매치 로드 완료`);
-      
-      return convertedMatches;
-    } catch (error) {
-      console.error('getAllMatches 오류:', error);
+      if (!supabase) return fallbackMatches;
+      const { data, error } = await supabase.from('matches').select('*').order('created_at', { ascending: false });
+      if (error || !data) return fallbackMatches;
+      return data.map(this.convertSupabaseToMatch);
+    } catch {
       return fallbackMatches;
     }
   }
 
-  /**
-   * 일회성 더미 매치 생성
-   */
   static async generateOneTimeDummyMatches(count: number = 10): Promise<Match[]> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('Supabase Admin 클라이언트가 설정되지 않음.');
-        return [];
-      }
-
-      const newMatches: Match[] = [];
-      
-      console.log(`일회성 더미 매치 ${count}개 생성 시작...`);
-      
-      for (let i = 0; i < count; i++) {
-        newMatches.push(this.generateNewMatch());
-      }
-      
-      const savePromises = newMatches.map(match => this.saveMatchToSupabase(match));
-      const results = await Promise.all(savePromises);
-      
-      const successCount = results.filter(result => result).length;
-      
-      if (successCount === 0) {
-        console.log('모든 매치 저장 실패');
-        return [];
-      }
-      
-      console.log(`${successCount}개의 일회성 더미 매치가 Supabase에 저장되었습니다.`);
-      return newMatches.slice(0, successCount);
-        
-    } catch (error: any) {
-      console.log('일회성 더미 매치 생성 중 오류:', error?.message);
-      return [];
+    const matches: Match[] = [];
+    for (let i = 0; i < count; i++) {
+      matches.push(this.generateNewMatch());
     }
+    const promises = matches.map(m => this.saveMatchToSupabase(m));
+    await Promise.all(promises);
+    return matches;
   }
 
-  /**
-   * 모든 더미 매치 삭제
-   */
-  static async deleteAllDummyMatches(): Promise<{
-    success: boolean;
-    deletedCount: number;
-    error?: string;
-  }> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('Supabase Admin 클라이언트가 설정되지 않음.');
-        return {
-          success: false,
-          deletedCount: 0,
-          error: 'Supabase Admin 연결이 설정되지 않았습니다.'
-        };
-      }
-
-      const currentCount = await this.getDummyMatchCount();
-      console.log(`삭제할 더미 매치: ${currentCount}개`);
-
-      const { error } = await supabaseAdmin
-        .from('matches')
-        .delete()
-        .eq('is_dummy', true);
-
-      if (error) {
-        console.log('더미 매치 삭제 실패:', error.message);
-        return {
-          success: false,
-          deletedCount: 0,
-          error: error.message
-        };
-      }
-
-      console.log(`${currentCount}개의 더미 매치가 성공적으로 삭제되었습니다.`);
-      
-      return {
-        success: true,
-        deletedCount: currentCount,
-      };
-
-    } catch (error: any) {
-      console.log('더미 매치 삭제 중 오류:', error?.message);
-      return {
-        success: false,
-        deletedCount: 0,
-        error: error?.message || '알 수 없는 오류'
-      };
-    }
+  static async deleteAllDummyMatches(): Promise<{ success: boolean; deletedCount: number }> {
+    if (!supabaseAdmin) return { success: false, deletedCount: 0 };
+    const { count } = await supabaseAdmin.from('matches').select('*', { count: 'exact', head: true }).eq('is_dummy', true);
+    const { error } = await supabaseAdmin.from('matches').delete().eq('is_dummy', true);
+    if (error) return { success: false, deletedCount: 0 };
+    return { success: true, deletedCount: count || 0 };
   }
 
-  /**
-   * 모든 매치 삭제 (더미 + 실제 사용자 매치 전부)
-   */
-  static async deleteAllMatches(): Promise<{
-    success: boolean;
-    deletedCount: number;
-    error?: string;
-  }> {
-    try {
-      if (!supabaseAdmin) {
-        console.log('Supabase Admin 클라이언트가 설정되지 않음.');
-        return {
-          success: false,
-          deletedCount: 0,
-          error: 'Supabase Admin 연결이 설정되지 않았습니다.'
-        };
-      }
-
-      // 삭제할 전체 매치 개수 조회
-      const { count, error: countError } = await supabaseAdmin
-        .from('matches')
-        .select('*', { count: 'exact', head: true });
-
-      if (countError) {
-        return {
-          success: false,
-          deletedCount: 0,
-          error: countError.message
-        };
-      }
-
-      const currentCount = count || 0;
-      console.log(`삭제할 전체 매치: ${currentCount}개`);
-
-      // ⚠️ 모든 매치 삭제 (is_dummy 조건 없음)
-      const { error } = await supabaseAdmin
-        .from('matches')
-        .delete()
-        .neq('id', ''); // 모든 행 선택
-
-      if (error) {
-        console.log('모든 매치 삭제 실패:', error.message);
-        return {
-          success: false,
-          deletedCount: 0,
-          error: error.message
-        };
-      }
-
-      console.log(`${currentCount}개의 모든 매치가 성공적으로 삭제되었습니다.`);
-      
-      return {
-        success: true,
-        deletedCount: currentCount,
-      };
-
-    } catch (error: any) {
-      console.log('모든 매치 삭제 중 오류:', error?.message);
-      return {
-        success: false,
-        deletedCount: 0,
-        error: error?.message || '알 수 없는 오류'
-      };
-    }
+  static async deleteAllMatches(): Promise<{ success: boolean; deletedCount: number }> {
+     if (!supabaseAdmin) return { success: false, deletedCount: 0 };
+     const { count } = await supabaseAdmin.from('matches').select('*', { count: 'exact', head: true });
+     const { error } = await supabaseAdmin.from('matches').delete().neq('id', '0'); // 모두 삭제
+     if (error) return { success: false, deletedCount: 0 };
+     return { success: true, deletedCount: count || 0 };
   }
-  
-  /**
-   * 현재 더미 매치 개수 조회
-   */
+
   static async getDummyMatchCount(): Promise<number> {
-    try {
-      if (!supabase) {
-        return 0;
-      }
-
-      const { count, error } = await supabase
-        .from('matches')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_dummy', true);
-
-      if (error) {
-        console.log('더미 매치 개수 조회 실패:', error.message);
-        return 0;
-      }
-
-      return count || 0;
-    } catch (error: any) {
-      console.log('더미 매치 개수 조회 중 오류:', error?.message);
-      return 0;
-    }
-  }
-
-  // 헬퍼 메소드들
-  private static generateMatchTitle(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.MATCH_TITLES[Math.floor(Math.random() * this.MATCH_TITLES.length)];
-  }
-
-  private static generateMatchDescription(matchType: '단식' | '남복' | '여복' | '혼복'): string {
-    return this.DESCRIPTIONS[Math.floor(Math.random() * this.DESCRIPTIONS.length)];
-  }
-
-  /**
-   * 매치 통계 생성
-   */
-  static generateMatchStats(matches: Match[]) {
-    const stats = {
-      total: matches.length,
-      closed: matches.filter(m => m.isClosed).length,
-      active: matches.filter(m => !m.isClosed).length,
-      byType: {
-        '단식': 0,
-        '남복': 0,
-        '여복': 0,
-        '혼복': 0,
-      },
-      avgPrice: 0,
-      avgParticipants: 0,
-      totalNicknames: new Set(matches.map(m => m.seller.name)).size,
-    };
-
-    matches.forEach(match => {
-      stats.byType[match.matchType]++;
-      stats.avgPrice += match.currentPrice;
-      stats.avgParticipants += match.expectedParticipants.total;
-    });
-
-    stats.avgPrice = Math.round(stats.avgPrice / matches.length);
-    stats.avgParticipants = Math.round((stats.avgParticipants / matches.length) * 10) / 10;
-
-    return stats;
+    if (!supabase) return 0;
+    const { count } = await supabase.from('matches').select('*', { count: 'exact', head: true }).eq('is_dummy', true);
+    return count || 0;
   }
 }

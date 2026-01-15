@@ -469,10 +469,17 @@ export class DataGenerator {
       avgRating: Math.round((3.5 + Math.random() * 1.5) * 10) / 10,
     };
 
-    const regions = Object.keys(this.COURTS_BY_REGION);
-    let selectedRegion = regions[Math.floor(Math.random() * regions.length)];
-    if (Math.random() < 0.6) {
-      selectedRegion = Math.random() > 0.5 ? '서울시' : '경기도';
+ const regions = Object.keys(this.COURTS_BY_REGION);
+    let selectedRegion: string;
+    
+    // 70% 확률로 서울/경기, 30% 확률로 기타 지역
+    if (Math.random() < 0.7) {
+      // 서울 40%, 경기 30% (총 70%)
+      selectedRegion = Math.random() < 0.57 ? '서울시' : '경기도';
+    } else {
+      // 나머지 30%는 기타 지역에서 랜덤
+      const otherRegions = regions.filter(r => r !== '서울시' && r !== '경기도');
+      selectedRegion = otherRegions[Math.floor(Math.random() * otherRegions.length)];
     }
 
     const courtsInRegion = this.COURTS_BY_REGION[selectedRegion];

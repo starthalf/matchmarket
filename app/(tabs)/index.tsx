@@ -13,11 +13,10 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, TrendingUp, Shield, Database, User, LogIn, Bell, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
+import { Search, Filter, Shield, Database, User, LogIn, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
@@ -29,12 +28,12 @@ type TimeFilter = 'today' | null;
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
-  const { isAdmin, adminLogin } = useAdmin();
-  const { matches: displayMatches, isLoadingMatches, refreshMatches, updateMatch } = useMatches();
+  const { isAdmin } = useAdmin(); // adminLogin 제거
+  const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   
-  // ✅ 개발/프로덕션 환경 구분
+  // ✅ 개발 환경 확인 (데모 컨트롤용 - 필요 없다면 false로 고정하거나 삭제 가능)
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,14 +44,13 @@ export default function HomeScreen() {
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
-  const [locationFilter, setLocationFilter] = useState<string>(''); // ✅ 지역 필터 추가
+  const [locationFilter, setLocationFilter] = useState<string>('');
 
   // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Track component mount status
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -60,7 +58,6 @@ export default function HomeScreen() {
     };
   }, []);
 
- 
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
       const { mockUsers } = await import('../../data/mockData');
@@ -98,15 +95,6 @@ export default function HomeScreen() {
     }
   };
 
-  const handleAdminLogin = async () => {
-    const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
-    if (result.success) {
-      Alert.alert('관리자 로그인 성공', '관리자 권한이 활성화되었습니다.');
-    } else {
-      Alert.alert('로그인 실패', result.error || '관리자 로그인에 실패했습니다.');
-    }
-  };
-
   // 스크롤 핸들러
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -126,27 +114,22 @@ export default function HomeScreen() {
     setRefreshing(false);
   };
 
-  // 매치 유형 필터 토글 (하나만 선택)
   const toggleMatchTypeFilter = (type: 'womens' | 'mixed') => {
     setMatchTypeFilter(prev => prev === type ? null : type);
   };
 
-  // 레벨 필터 토글
   const toggleLevelFilter = () => {
     setLevelFilter(prev => prev === 'pro' ? null : 'pro');
   };
 
-  // 시간 필터 토글
   const toggleTimeFilter = () => {
     setTimeFilter(prev => prev === 'today' ? null : 'today');
   };
 
-  // 모집중 필터 토글
-const toggleRecruitingFilter = () => {
-  setRecruitingFilter(prev => !prev);
-};
+  const toggleRecruitingFilter = () => {
+    setRecruitingFilter(prev => !prev);
+  };
   
-  // 오늘 날짜 확인 (유틸리티 함수 사용)
   const isToday = (dateString: string) => {
     return isTodayHelper(dateString);
   };
@@ -198,7 +181,7 @@ const toggleRecruitingFilter = () => {
         </View>
       </View>
     
-      {/* 개발 모드 데모 컨트롤 */}
+      {/* 개발 모드 데모 컨트롤 (관리자 로그인 버튼 삭제됨) */}
       {isDevelopment && (
         <View style={styles.demoControls}>
           <Text style={styles.demoTitle}>
@@ -225,12 +208,7 @@ const toggleRecruitingFilter = () => {
                 >
                   <Text style={styles.demoButtonText}>midnight.rider</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
-                  style={[styles.demoButton, styles.adminDemoButton]}
-                  onPress={handleAdminLogin}
-                >
-                  <Text style={styles.adminDemoButtonText}>관리자 로그인</Text>
-                </TouchableOpacity>
+                {/* 🔥 삭제됨: 관리자 로그인 버튼 */}
               </>
             ) : (
               <TouchableOpacity 
@@ -244,17 +222,7 @@ const toggleRecruitingFilter = () => {
         </View>
       )}
 
-     {isDevelopment && !isAdmin && (
-        <View style={styles.previewAdminSection}>
-          <TouchableOpacity 
-            style={styles.previewAdminButton}
-            onPress={handleAdminLogin}
-          >
-            <Shield size={16} color="#dc2626" />
-            <Text style={styles.previewAdminText}>관리자 로그인</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+     {/* 🔥 삭제됨: previewAdminSection (쉴드 아이콘과 관리자 로그인 텍스트가 있던 영역) */}
 
       {/* 검색창 + Sort 버튼 */}
       <View style={styles.searchContainer}>
@@ -269,7 +237,6 @@ const toggleRecruitingFilter = () => {
           />
         </View>
         
-        {/* 스크롤하면 나타나는 Sort 버튼 */}
         {showSortButton ? (
           <TouchableOpacity 
             style={styles.sortIconButton}
@@ -284,10 +251,9 @@ const toggleRecruitingFilter = () => {
         )}
       </View>
 
-      {/* 필터 칩들 (그룹별 로직) */}
+      {/* 필터 칩들 */}
       <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {/* 레벨 필터 */}
           <TouchableOpacity
             style={[
               styles.chip,
@@ -303,7 +269,6 @@ const toggleRecruitingFilter = () => {
             </Text>
           </TouchableOpacity>
 
-          {/* 매치 유형 필터 */}
           <TouchableOpacity
             style={[
               styles.chip,
@@ -334,7 +299,6 @@ const toggleRecruitingFilter = () => {
             </Text>
           </TouchableOpacity>
 
-          {/* 시간 필터 */}
           <TouchableOpacity
             style={[
               styles.chip,
@@ -349,80 +313,80 @@ const toggleRecruitingFilter = () => {
               오늘
             </Text>
           </TouchableOpacity>
-          {/* 모집중 필터 */}
-<TouchableOpacity
-  style={[
-    styles.chip,
-    recruitingFilter && styles.chipActive
-  ]}
-  onPress={toggleRecruitingFilter}
->
-  <Text style={[
-    styles.chipText,
-    recruitingFilter && styles.chipTextActive
-  ]}>
-    모집중
-  </Text>
-</TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.chip,
+              recruitingFilter && styles.chipActive
+            ]}
+            onPress={toggleRecruitingFilter}
+          >
+            <Text style={[
+              styles.chipText,
+              recruitingFilter && styles.chipTextActive
+            ]}>
+              모집중
+            </Text>
+          </TouchableOpacity>
         </ScrollView>
       </View>
 
-     {/* ✅ 지역 필터 - 세련된 드롭다운 */}
-<View style={styles.locationFilterSection}>
-  {Platform.OS === 'web' ? (
-    <View style={styles.locationSelectWrapper}>
-      <MapPin size={16} color="#6b7280" />
-      <select
-        value={locationFilter}
-        onChange={(e) => setLocationFilter(e.target.value)}
-        style={{
-          flex: 1,
-          padding: '0 4px',
-          fontSize: '14px',
-          border: 'none',
-          backgroundColor: 'transparent',
-          color: '#374151',
-          fontFamily: 'inherit',
-          cursor: 'pointer',
-          outline: 'none',
-          fontWeight: '500'
-        }}
-      >
-        <option value="">전체 지역</option>
-        <option value="서울시">서울시</option>
-        <option value="경기북부">경기북부</option>
-        <option value="경기남부">경기남부</option>
-        <option value="경기서부">경기서부</option>
-        <option value="경기동부">경기동부</option>
-        <option value="인천시">인천시</option>
-        <option value="대전시">대전시</option>
-        <option value="대구시">대구시</option>
-        <option value="부산시">부산시</option>
-        <option value="울산시">울산시</option>
-        <option value="광주시">광주시</option>
-        <option value="세종시">세종시</option>
-        <option value="강원도">강원도</option>
-        <option value="충북">충북</option>
-        <option value="충남">충남</option>
-        <option value="경북">경북</option>
-        <option value="경남">경남</option>
-        <option value="전북">전북</option>
-        <option value="전남">전남</option>
-        <option value="제주도">제주도</option>
-      </select>
+     {/* 지역 필터 */}
+    <View style={styles.locationFilterSection}>
+      {Platform.OS === 'web' ? (
+        <View style={styles.locationSelectWrapper}>
+          <MapPin size={16} color="#6b7280" />
+          <select
+            value={locationFilter}
+            onChange={(e) => setLocationFilter(e.target.value)}
+            style={{
+              flex: 1,
+              padding: '0 4px',
+              fontSize: '14px',
+              border: 'none',
+              backgroundColor: 'transparent',
+              color: '#374151',
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              outline: 'none',
+              fontWeight: '500'
+            }}
+          >
+            <option value="">전체 지역</option>
+            <option value="서울시">서울시</option>
+            <option value="경기북부">경기북부</option>
+            <option value="경기남부">경기남부</option>
+            <option value="경기서부">경기서부</option>
+            <option value="경기동부">경기동부</option>
+            <option value="인천시">인천시</option>
+            <option value="대전시">대전시</option>
+            <option value="대구시">대구시</option>
+            <option value="부산시">부산시</option>
+            <option value="울산시">울산시</option>
+            <option value="광주시">광주시</option>
+            <option value="세종시">세종시</option>
+            <option value="강원도">강원도</option>
+            <option value="충북">충북</option>
+            <option value="충남">충남</option>
+            <option value="경북">경북</option>
+            <option value="경남">경남</option>
+            <option value="전북">전북</option>
+            <option value="전남">전남</option>
+            <option value="제주도">제주도</option>
+          </select>
+        </View>
+      ) : (
+        <TouchableOpacity 
+          style={styles.locationSelectWrapper}
+          onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
+        >
+          <MapPin size={16} color="#6b7280" />
+          <Text style={styles.locationSelectText}>
+            {locationFilter || '전체 지역'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
-  ) : (
-    <TouchableOpacity 
-      style={styles.locationSelectWrapper}
-      onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
-    >
-      <MapPin size={16} color="#6b7280" />
-      <Text style={styles.locationSelectText}>
-        {locationFilter || '전체 지역'}
-      </Text>
-    </TouchableOpacity>
-  )}
-</View>
 
       {/* Sort 모달 */}
       <Modal
@@ -515,56 +479,48 @@ const toggleRecruitingFilter = () => {
           </View>
         ) : (
           displayMatches
-            // 검색 필터 (location으로 수정)
             .filter(match => 
               searchQuery === '' ||
               match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
               (match.location && match.location.toLowerCase().includes(searchQuery.toLowerCase()))
             )
-            // 그룹별 필터 로직 (AND 조건)
-.filter(match => {
-  let passes = true;
-  
-  // 레벨 필터 - 판매자가 선수인 매치만
-  if (levelFilter === 'pro') {
-    passes = passes && match.seller.careerType === '선수';
-  }
-  
-  // 매치 유형 필터
-  if (matchTypeFilter === 'womens') {
-    passes = passes && match.matchType === '여복';
-  } else if (matchTypeFilter === 'mixed') {
-    passes = passes && match.matchType === '혼복';
-  }
-  
-  // 시간 필터
-  if (timeFilter === 'today') {
-    passes = passes && isToday(match.date);
-  }
-  
-  // 모집중 필터 - 마감되지 않은 매치만
-  if (recruitingFilter) {
-    passes = passes && !match.isClosed;
-  }
-  
-  // ✅ 지역 필터 추가
-  if (locationFilter) {
-    passes = passes && match.location.includes(locationFilter);
-  }
-  
-  return passes;
-})
-            // 정렬
+            .filter(match => {
+              let passes = true;
+              
+              if (levelFilter === 'pro') {
+                passes = passes && match.seller.careerType === '선수';
+              }
+              
+              if (matchTypeFilter === 'womens') {
+                passes = passes && match.matchType === '여복';
+              } else if (matchTypeFilter === 'mixed') {
+                passes = passes && match.matchType === '혼복';
+              }
+              
+              if (timeFilter === 'today') {
+                passes = passes && isToday(match.date);
+              }
+              
+              if (recruitingFilter) {
+                passes = passes && !match.isClosed;
+              }
+              
+              if (locationFilter) {
+                passes = passes && match.location.includes(locationFilter);
+              }
+              
+              return passes;
+            })
            .sort((a, b) => {
-  if (sortBy === 'popular') {
-    return b.applicationsCount - a.applicationsCount;
-  } else if (sortBy === 'time') {
-    return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
-  } else if (sortBy === 'ntrp') {
-    return b.ntrpRequirement.max - a.ntrpRequirement.max;
-  }
-  return 0;
-})
+              if (sortBy === 'popular') {
+                return b.applicationsCount - a.applicationsCount;
+              } else if (sortBy === 'time') {
+                return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
+              } else if (sortBy === 'ntrp') {
+                return b.ntrpRequirement.max - a.ntrpRequirement.max;
+              }
+              return 0;
+            })
             .map((match) => (
               <MatchCard 
                 key={match.id} 
@@ -612,28 +568,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fef2f2',
   },
-  previewAdminSection: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  previewAdminButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#fef2f2',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-  },
-  previewAdminText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#dc2626',
-  },
+  // 🔥 삭제됨: previewAdminSection 스타일들 (필요없으므로 코드가 깔끔해짐)
   demoControls: {
     backgroundColor: '#f3f4f6',
     paddingVertical: 12,
@@ -765,25 +700,23 @@ const styles = StyleSheet.create({
   chipTextActive: {
     color: '#ffffff',
   },
- // ✅ 지역 필터 스타일 (세련된 드롭다운)
-locationFilterSection: {
-  backgroundColor: '#ffffff',
-  paddingHorizontal: 16,
-  paddingVertical: 12,
-  borderBottomWidth: 1,
-  borderBottomColor: '#e5e7eb',
-},
-locationSelectWrapper: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 6,
-},
-locationSelectText: {
-  fontSize: 14,
-  color: '#374151',
-  fontWeight: '500',
-},
-  // Sort 모달 스타일
+  locationFilterSection: {
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  locationSelectWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  locationSelectText: {
+    fontSize: 14,
+    color: '#374151',
+    fontWeight: '500',
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',

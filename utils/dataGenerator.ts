@@ -224,57 +224,62 @@ export class DataGenerator {
    * 자연스럽고 다양한 닉네임 생성 (영어 비중 높임)
    */
   private static generateNaturalNickname(): string {
-    // 패턴 리스트: 영어 패턴을 많이 추가하여 확률적으로 영어 닉네임이 더 많이 나오게 함
-    const patterns = [
-      // --- 영어 패턴 (인스타 ID 스타일) [비중 높음] ---
-      // 1. 영어_영어 (예: daily_mood)
-      () => `${this.pick(this.EN_VIBE_WORDS)}_${this.pick(this.EN_VIBE_WORDS)}`,
-      // 2. 이름.영어 (예: min.official)
-      () => `${this.pick(this.EN_NAMES_PART)}.${this.pick(this.EN_VIBE_WORDS)}`,
-      // 3. 영어_이름 (예: urban_jun)
-      () => `${this.pick(this.EN_VIBE_WORDS)}_${this.pick(this.EN_NAMES_PART)}`,
-      // 4. 영어 + 숫자 (예: sky0214)
-      () => {
-        const word = Math.random() > 0.5 ? this.pick(this.EN_NAMES_PART) : this.pick(this.EN_VIBE_WORDS);
-        const num = Math.random() > 0.5 ? Math.floor(Math.random() * 90) + 10 : Math.floor(Math.random() * 2000) + 1000;
-        return `${word}${num}`;
-      },
-      // 5. 밑줄 감성 (예: _mood, _jun_)
-      () => Math.random() > 0.5 ? `_${this.pick(this.EN_VIBE_WORDS)}` : `_${this.pick(this.EN_NAMES_PART)}_`,
-      // 6. 감성 기록형 (예: jun.log, min.record)
-      () => `${this.pick(this.EN_NAMES_PART)}.${this.pick(['log', 'record', 'archive', 'page'])}`,
-      // 7. 반복형 (예: min_min, daily_daily)
-      () => {
-        const word = Math.random() > 0.5 ? this.pick(this.EN_NAMES_PART) : this.pick(this.EN_VIBE_WORDS);
-        return `${word}_${word}`;
-      },
-
-      // --- 혼합 패턴 ---
-      // 8. 영어 + 한글접미사 (예: Coffee수혈, Travel러버)
-      () => {
-        const rawEn = this.pick(this.EN_VIBE_WORDS);
-        const en = rawEn.charAt(0).toUpperCase() + rawEn.slice(1);
-        const krSuffixes = ['러버', '홀릭', '매니아', '살인마', '장인', '수혈', '집사', '덕후', '요정'];
-        return `${en}${this.pick(krSuffixes)}`;
-      },
-      // 9. 한글 + 영어 (예: 제주Vibes, 한강Runner)
-      () => {
-        const nouns = ['제주', '서울', '부산', '한강', '캠핑', '독서', '운동', '맛집', '새벽', '퇴근'];
-        const rawEn = this.pick(this.EN_VIBE_WORDS);
-        const en = rawEn.charAt(0).toUpperCase() + rawEn.slice(1);
-        return `${this.pick(nouns)}${en}`;
-      },
-
-      // --- 한국어 패턴 (포털/커뮤니티 스타일) [비중 낮음] ---
-      // 10. 한글 형용사 + 명사 (예: 행복한고양이)
-      () => `${this.pick(this.KR_ADJECTIVES)}${this.pick(this.KR_NOUNS)}`,
-      // 11. 커뮤니티 스타일 (예: 월급루팡)
-      () => this.pick(this.KR_COMMUNITY_STYLE),
-      // 12. 한글 명사 + 숫자 (예: 주민1, 나그네82)
-      () => `${this.pick(this.KR_NOUNS)}${Math.floor(Math.random() * 100) + 1}`,
-    ];
-
-    return this.pick(patterns)();
+    // 80% 영어, 20% 한글
+    const useKorean = Math.random() < 0.2;
+    
+    if (useKorean) {
+      // --- 한국어 패턴 (20%) ---
+      const krPatterns = [
+        // 한글 형용사 + 명사 (예: 행복한고양이)
+        () => `${this.pick(this.KR_ADJECTIVES)}${this.pick(this.KR_NOUNS)}`,
+        // 커뮤니티 스타일 (예: 월급루팡)
+        () => this.pick(this.KR_COMMUNITY_STYLE),
+        // 한글 명사 + 숫자 (예: 주민1, 나그네82)
+        () => `${this.pick(this.KR_NOUNS)}${Math.floor(Math.random() * 100) + 1}`,
+      ];
+      return this.pick(krPatterns)();
+    } else {
+      // --- 영어 패턴 (80%) ---
+      const enPatterns = [
+        // 1. 영어_영어 (예: daily_mood)
+        () => `${this.pick(this.EN_VIBE_WORDS)}_${this.pick(this.EN_VIBE_WORDS)}`,
+        // 2. 이름.영어 (예: min.official)
+        () => `${this.pick(this.EN_NAMES_PART)}.${this.pick(this.EN_VIBE_WORDS)}`,
+        // 3. 영어_이름 (예: urban_jun)
+        () => `${this.pick(this.EN_VIBE_WORDS)}_${this.pick(this.EN_NAMES_PART)}`,
+        // 4. 영어 + 숫자 (예: sky0214)
+        () => {
+          const word = Math.random() > 0.5 ? this.pick(this.EN_NAMES_PART) : this.pick(this.EN_VIBE_WORDS);
+          const num = Math.random() > 0.5 ? Math.floor(Math.random() * 90) + 10 : Math.floor(Math.random() * 2000) + 1000;
+          return `${word}${num}`;
+        },
+        // 5. 밑줄 감성 (예: _mood, _jun_)
+        () => Math.random() > 0.5 ? `_${this.pick(this.EN_VIBE_WORDS)}` : `_${this.pick(this.EN_NAMES_PART)}_`,
+        // 6. 감성 기록형 (예: jun.log, min.record)
+        () => `${this.pick(this.EN_NAMES_PART)}.${this.pick(['log', 'record', 'archive', 'page', 'daily', 'official'])}`,
+        // 7. 반복형 (예: min_min, daily_daily)
+        () => {
+          const word = Math.random() > 0.5 ? this.pick(this.EN_NAMES_PART) : this.pick(this.EN_VIBE_WORDS);
+          return `${word}_${word}`;
+        },
+        // 8. 이름+이름 (예: minjun, jiwon)
+        () => `${this.pick(this.EN_NAMES_PART)}${this.pick(this.EN_NAMES_PART)}`,
+        // 9. 대문자 시작 (예: Daily_life, Urban.mood)
+        () => {
+          const word = this.pick(this.EN_VIBE_WORDS);
+          const capitalized = word.charAt(0).toUpperCase() + word.slice(1);
+          const second = this.pick(this.EN_VIBE_WORDS);
+          return Math.random() > 0.5 ? `${capitalized}_${second}` : `${capitalized}.${second}`;
+        },
+        // 10. 숫자 사이 (예: 2min4u, 4ever_tennis)
+        () => {
+          const nums = ['2', '4', '7', '9'];
+          const word = this.pick(this.EN_NAMES_PART);
+          return Math.random() > 0.5 ? `${this.pick(nums)}${word}` : `${word}${this.pick(nums)}u`;
+        },
+      ];
+      return this.pick(enPatterns)();
+    }
   }
 
   private static pick<T>(arr: T[]): T {

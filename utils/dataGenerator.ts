@@ -409,7 +409,7 @@ export class DataGenerator {
     return this.pick(patterns)();
   }
 
-  private static generateContextualDescription(matchType: string, ntrp: number): string {
+private static generateContextualDescription(matchType: string, ntrp: number): string {
     const greetings = [
       '안녕하세요!', 
       '반갑습니다.', 
@@ -454,15 +454,21 @@ export class DataGenerator {
 
     const greeting = greetings[Math.floor(Math.random() * greetings.length)];
     const intro = intros[Math.floor(Math.random() * intros.length)];
-    
-    const selectedDetails = details
-      .sort(() => 0.5 - Math.random())
-      .slice(0, Math.floor(Math.random() * 3) + 1)
-      .join('\n');
-    
     const closing = closings[Math.floor(Math.random() * closings.length)];
 
-    return `${greeting}\n\n${intro}\n\n[진행 방식 및 정보]\n${selectedDetails}\n\n${closing}`;
+    // 10% 확률로만 [진행 방식 및 정보] 섹션 포함
+    const includeDetails = Math.random() < 0.1;
+    
+    if (includeDetails) {
+      const selectedDetails = details
+        .sort(() => 0.5 - Math.random())
+        .slice(0, Math.floor(Math.random() * 3) + 1)
+        .join('\n');
+      
+      return `${greeting}\n\n${intro}\n\n[진행 방식 및 정보]\n${selectedDetails}\n\n${closing}`;
+    } else {
+      return `${greeting}\n\n${intro}\n\n${closing}`;
+    }
   }
 
   // ==========================================

@@ -271,7 +271,7 @@ export class DataGenerator {
 
       // 5. 단순/쿨한 스타일
       `${shortCourt} ${matchType} ㄱㄱ`,
-      `오늘 ${time}시 접대 테니스 아닙니다`,
+      `몸만 오시면 됩니다 (${time}시 ${matchType})`,
       `${location} 테니스 메이트 구함`
     ];
 
@@ -396,12 +396,17 @@ export class DataGenerator {
 
     const basePrice = [10000, 15000, 20000, 25000, 30000][Math.floor(Math.random() * 5)];
 
+    // 날짜 생성: 당일(0) ~ 5일 이내
+    const randomDayOffset = Math.floor(Math.random() * 6); 
+    const matchDate = new Date();
+    matchDate.setDate(matchDate.getDate() + randomDayOffset);
+
     return {
       id: matchId,
       sellerId: sellerId,
       seller: seller,
       title: title,
-      date: new Date(Date.now() + Math.random() * 14 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      date: matchDate.toISOString().split('T')[0], // 수정된 날짜 적용
       time: startTime,
       endTime: endTime,
       court: court,

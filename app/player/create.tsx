@@ -540,4 +540,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  changeImageBtn: {
+  marginTop: 12,
+  paddingVertical: 8,
+  paddingHorizontal: 16,
+  backgroundColor: '#f3f4f6',
+  borderRadius: 8,
+},
+changeImageText: {
+  fontSize: 14,
+  color: '#6b7280',
+  fontWeight: '600',
+},
 });

@@ -29,37 +29,58 @@ export default function PlayersListScreen() {
     fetchPlayers();
   }, []);
 
-  const fetchPlayers = async () => {
+const fetchPlayers = async () => {
   try {
-    console.log('=== 플레이어 목록 조회 시작 ===');
-    
-    // 먼저 단순 조회로 테스트
+    // 1. player_profiles 조회 (JOIN 없이)
     const { data: players, error } = await supabase
       .from('player_profiles')
       .select('*')
       .order('view_count', { ascending: false });
 
-    console.log('조회 결과:', players);
-    console.log('에러:', error);
-
     if (error) throw error;
 
     if (players && players.length > 0) {
-      console.log('플레이어 수:', players.length);
+      // 2. user_id 목록 추출
+      const userIds = players.map(p => p.user_id).filter(Boolean);
       
-      // is_published 필터링 (클라이언트에서)
-      const publishedPlayers = players.filter(p => p.is_published !== false);
-      console.log('published 플레이어 수:', publishedPlayers.length);
-      
-      const top3Ids = publishedPlayers.slice(0, 3).map(p => p.id);
-      setHotPlayerIds(top3Ids);
-      setAllPlayers(publishedPlayers);
+      // 3. users 테이블에서 추가 정보 조회 (별도 쿼리)
+      let usersMap: Record<string, any> = {};
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, is_pro_verified, ntrp')
+          .in('id', userIds);
+        
+        if (usersData) {
+          usersData.forEach(u => {
+            usersMap[u.id] = u;
+          });
+        }
+      }
 
-      // pro/top 필터링은 일단 제외하고 테스트
-      setProPlayers([]);
-      setTopPlayers([]);
-    } else {
-      console.log('플레이어 데이터 없음');
+      // 4. 플레이어에 유저 정보 병합
+      const playersWithUser = players.map(p => ({
+        ...p,
+        user: usersMap[p.user_id] || null
+      }));
+
+      // 5. 조회수 Top 3 (Hot 표시용)
+      const top3Ids = playersWithUser.slice(0, 3).map(p => p.id);
+      setHotPlayerIds(top3Ids);
+
+      // 6. 카테고리별 분류
+      setAllPlayers(playersWithUser);
+
+      // 선출 인증된 사용자
+      const pros = playersWithUser.filter(p => p.user?.is_pro_verified === true);
+      setProPlayers(pros);
+
+      // 선출 아니면서 NTRP 4.0 이상
+      const tops = playersWithUser.filter(p => 
+        p.user?.is_pro_verified !== true && 
+        (p.user?.ntrp || 0) >= 4.0
+      );
+      setTopPlayers(tops);
     }
   } catch (error) {
     console.error('플레이어 목록 조회 오류:', error);

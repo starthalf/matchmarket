@@ -1,4 +1,3 @@
-// app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import { Users, Plus, ClipboardList, MessageCircle, DollarSign } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -10,11 +10,11 @@ import {
   Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { User, Flame } from 'lucide-react-native';
+import { User, ArrowLeft } from 'lucide-react-native';
 import { mockUsers } from '../../data/mockData';
 
 const { width } = Dimensions.get('window');
-const ITEM_SIZE = (width - 60) / 4; // 4열 그리드
+const ITEM_SIZE = (width - 60) / 4;
 
 export default function PlayersListScreen() {
   const router = useRouter();
@@ -72,18 +72,31 @@ export default function PlayersListScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* 헤더 */}
       <View style={styles.header}>
-        <Text style={styles.title}>Stars</Text>
-        <TouchableOpacity onPress={() => router.push('/profile')}>
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => router.back()}
+        >
+          <ArrowLeft size={24} color="#374151" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.title}>Stars</Text>
+          <Text style={styles.subtitle}>핫한 플레이어들을 확인하세요</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.profileButton}
+          onPress={() => router.push('/profile')}
+        >
           <User size={24} color="#374151" />
         </TouchableOpacity>
       </View>
-      <Text style={styles.subtitle}>핫한 플레이어들을 확인하세요</Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {renderSection('요즘 핫한 테니스 플레이어', hotPlayers)}
         {renderSection('선출의 차원이 다른 테니스', proPlayers)}
         {renderSection('전국구 무림 고수', topPlayers)}
+        <View style={{ height: 100 }} />
       </ScrollView>
 
       {/* 내 페이지 만들기 FAB */}
@@ -98,19 +111,54 @@ export default function PlayersListScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#fff' 
+  },
   header: { 
     flexDirection: 'row', 
-    justifyContent: 'space-between', 
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
   },
-  title: { fontSize: 28, fontWeight: '800', color: '#ea4c89' },
-  subtitle: { fontSize: 14, color: '#6b7280', paddingHorizontal: 20, marginBottom: 20 },
-  section: { marginBottom: 30, paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 16 },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  backButton: {
+    padding: 4,
+  },
+  headerCenter: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  profileButton: {
+    padding: 4,
+  },
+  title: { 
+    fontSize: 24, 
+    fontWeight: '800', 
+    color: '#ea4c89' 
+  },
+  subtitle: { 
+    fontSize: 13, 
+    color: '#6b7280',
+    marginTop: 2,
+  },
+  section: { 
+    marginTop: 24,
+    paddingHorizontal: 20 
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#111827', 
+    marginBottom: 16 
+  },
+  grid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    gap: 12 
+  },
   playerItem: { 
     width: ITEM_SIZE, 
     alignItems: 'center',
@@ -143,8 +191,14 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
     zIndex: 10,
+    borderWidth: 1,
+    borderColor: '#fce7f3',
   },
-  hotText: { fontSize: 10, color: '#ea4c89', fontWeight: '700' },
+  hotText: { 
+    fontSize: 10, 
+    color: '#ea4c89', 
+    fontWeight: '700' 
+  },
   fab: {
     position: 'absolute',
     bottom: 30,
@@ -161,5 +215,11 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 5,
   },
-  fabText: { color: '#fff', fontSize: 11, fontWeight: '700', textAlign: 'center' },
+  fabText: { 
+    color: '#fff', 
+    fontSize: 11, 
+    fontWeight: '700', 
+    textAlign: 'center',
+    lineHeight: 14,
+  },
 });

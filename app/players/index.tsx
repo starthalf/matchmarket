@@ -20,9 +20,10 @@ const ITEM_SIZE = (width - 60) / 4;
 export default function PlayersListScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [hotPlayers, setHotPlayers] = useState<any[]>([]);
+  const [allPlayers, setAllPlayers] = useState<any[]>([]);
   const [proPlayers, setProPlayers] = useState<any[]>([]);
   const [topPlayers, setTopPlayers] = useState<any[]>([]);
+  const [hotPlayerIds, setHotPlayerIds] = useState<string[]>([]);
 
   useEffect(() => {
     fetchPlayers();
@@ -30,33 +31,41 @@ export default function PlayersListScreen() {
 
   const fetchPlayers = async () => {
     try {
-      // 핫한 플레이어 (조회수/요청 많은 순)
-      const { data: hot } = await supabase
+      // player_profiles와 users 테이블 JOIN
+      const { data: players, error } = await supabase
         .from('player_profiles')
-        .select('*')
+        .select(`
+          *,
+          user:user_id (
+            id,
+            is_pro_verified,
+            ntrp
+          )
+        `)
         .eq('is_published', true)
-        .order('match_request_count', { ascending: false })
-        .limit(8);
+        .order('view_count', { ascending: false });
 
-      // 최근 가입 플레이어
-      const { data: recent } = await supabase
-        .from('player_profiles')
-        .select('*')
-        .eq('is_published', true)
-        .order('created_at', { ascending: false })
-        .limit(8);
+      if (error) throw error;
 
-      // 고수 플레이어 (평균 스킬 높은 순)
-      const { data: top } = await supabase
-        .from('player_profiles')
-        .select('*')
-        .eq('is_published', true)
-        .order('view_count', { ascending: false })
-        .limit(8);
+      if (players && players.length > 0) {
+        // 조회수 Top 3 ID 추출 (Hot 표시용)
+        const top3Ids = players.slice(0, 3).map(p => p.id);
+        setHotPlayerIds(top3Ids);
 
-      setHotPlayers(hot || []);
-      setProPlayers(recent || []);
-      setTopPlayers(top || []);
+        // 1. 요즘 핫한 테니스 플레이어: 모든 등록 사용자 (조회수 순)
+        setAllPlayers(players);
+
+        // 2. 선출의 차원이 다른 테니스: 선출 인증된 사용자만
+        const pros = players.filter(p => p.user?.is_pro_verified === true);
+        setProPlayers(pros);
+
+        // 3. 전국구 무림 고수: 선출이 아니면서 NTRP 4.0 이상
+        const tops = players.filter(p => 
+          p.user?.is_pro_verified !== true && 
+          (p.user?.ntrp || 0) >= 4.0
+        );
+        setTopPlayers(tops);
+      }
     } catch (error) {
       console.error('플레이어 목록 조회 오류:', error);
     } finally {
@@ -65,7 +74,7 @@ export default function PlayersListScreen() {
   };
 
   const renderPlayerItem = (player: any) => {
-    const isHot = player.match_request_count > 10;
+    const isHot = hotPlayerIds.includes(player.id);
     
     return (
       <TouchableOpacity
@@ -79,9 +88,19 @@ export default function PlayersListScreen() {
           </View>
         )}
         {player.profile_image ? (
-          <Image source={{ uri: player.profile_image }} style={styles.avatar} />
+          <Image 
+            source={{ uri: player.profile_image }} 
+            style={[
+              styles.avatar,
+              isHot && styles.avatarHot
+            ]} 
+          />
         ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
+          <View style={[
+            styles.avatar, 
+            styles.avatarPlaceholder,
+            isHot && styles.avatarHot
+          ]}>
             <User size={24} color="#9ca3af" />
           </View>
         )}
@@ -95,11 +114,20 @@ export default function PlayersListScreen() {
   const renderSection = (title: string, players: any[]) => {
     if (players.length === 0) return null;
     
+    const displayPlayers = players.slice(0, 8);
+    
     return (
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{title}</Text>
+          {players.length > 8 && (
+            <TouchableOpacity>
+              <Text style={styles.seeAllText}>전체보기</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.grid}>
-          {players.map(renderPlayerItem)}
+          {displayPlayers.map(renderPlayerItem)}
         </View>
       </View>
     );
@@ -113,7 +141,7 @@ export default function PlayersListScreen() {
     );
   }
 
-  const hasNoPlayers = hotPlayers.length === 0 && proPlayers.length === 0 && topPlayers.length === 0;
+  const hasNoPlayers = allPlayers.length === 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -145,7 +173,7 @@ export default function PlayersListScreen() {
           </View>
         ) : (
           <>
-            {renderSection('요즘 핫한 테니스 플레이어', hotPlayers)}
+            {renderSection('요즘 핫한 테니스 플레이어', allPlayers)}
             {renderSection('선출의 차원이 다른 테니스', proPlayers)}
             {renderSection('전국구 무림 고수', topPlayers)}
           </>
@@ -208,11 +236,21 @@ const styles = StyleSheet.create({
     marginTop: 24,
     paddingHorizontal: 20 
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
   sectionTitle: { 
     fontSize: 18, 
     fontWeight: '700', 
     color: '#111827', 
-    marginBottom: 16 
+  },
+  seeAllText: {
+    fontSize: 14,
+    color: '#ea4c89',
+    fontWeight: '600',
   },
   grid: { 
     flexDirection: 'row', 
@@ -234,6 +272,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#e5e7eb',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarHot: {
+    borderWidth: 3,
+    borderColor: '#ea4c89',
   },
   playerName: { 
     fontSize: 12, 

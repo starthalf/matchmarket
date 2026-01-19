@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Camera, Plus, Minus } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
+import * as ImagePicker from 'expo-image-picker';
 
 const SKILL_LABELS = ['서브', '리턴', '포핸드', '백핸드', '발리', '풋워크', '체력', '멘탈'];
 const SKILL_KEYS = ['skill_serve', 'skill_return', 'skill_forehand', 'skill_backhand', 'skill_volley', 'skill_footwork', 'skill_stamina', 'skill_mental'];

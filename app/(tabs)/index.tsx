@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, Shield, Database, User, LogIn, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
-import { PlayerCarousel } from '../../components/PlayerCarousel'; // 🔥 추가됨
+import { PlayerCarousel } from '../../components/PlayerCarousel';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
 import { useMatches } from '../../contexts/MatchContext';
@@ -216,16 +216,22 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* 🔥 [추가됨] 로고와 검색창 사이에 플레이어 슬라이더 배치 */}
+      {/* 🔥 [수정됨] 제목을 왼쪽으로, 썸네일을 오른쪽으로 배치 */}
       <View style={styles.carouselSection}>
-        <Text style={styles.sectionTitle}>The Named 🔥</Text>
-        <PlayerCarousel />
+        <View style={styles.titleContainer}>
+          <Text style={styles.titleTextMain}>THE</Text>
+          <Text style={styles.titleTextSub}>NAMED</Text>
+          <Text style={styles.fireEmoji}>🔥</Text>
+        </View>
+        <View style={styles.carouselWrapper}>
+          <PlayerCarousel />
+        </View>
       </View>
 
-      {/* 🔥 [수정됨] 검색창 + Sort 버튼 (크기 축소) */}
+      {/* 검색창 + Sort 버튼 */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Search size={18} color="#9ca3af" /> {/* 아이콘 20 -> 18 */}
+          <Search size={18} color="#9ca3af" />
           <TextInput
             style={styles.searchInput}
             placeholder="매치 검색"
@@ -244,7 +250,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.filterIconButton}>
-            <Filter size={18} color="#6b7280" /> {/* 아이콘 20 -> 18 */}
+            <Filter size={18} color="#6b7280" />
           </TouchableOpacity>
         )}
       </View>
@@ -604,36 +610,55 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontWeight: '600',
   },
-  // 🔥 [신규] 캐러셀 섹션
+  // 🔥 [수정] 가로 배치 스타일 (Flex Row)
   carouselSection: {
-    paddingTop: 12,
+    flexDirection: 'row', // 가로 배치
+    alignItems: 'center', // 세로 중앙 정렬
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     backgroundColor: '#f8f7f4',
+    gap: 12, // 제목과 캐러셀 사이 간격
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+  titleContainer: {
+    width: 60, // 제목 영역 너비 고정
+    justifyContent: 'center',
+  },
+  titleTextMain: {
+    fontSize: 12,
+    fontWeight: '800',
     color: '#111827',
-    paddingHorizontal: 20,
-    marginBottom: 4,
+    marginBottom: -2,
   },
-  // 🔥 [수정] 검색창 여백 및 높이 축소
+  titleTextSub: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#ea4c89',
+    marginBottom: 2,
+  },
+  fireEmoji: {
+    fontSize: 14,
+  },
+  carouselWrapper: {
+    flex: 1, // 남은 공간 모두 차지
+  },
+  // 검색창 스타일
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 8, // 9 -> 8
+    paddingVertical: 8,
     backgroundColor: '#f8f7f4',
-    gap: 8, // 12 -> 8
+    gap: 8,
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 12, // 16 -> 12
-    paddingHorizontal: 12, // 16 -> 12
-    paddingVertical: 8, // 10 -> 8
-    gap: 6, // 8 -> 6
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
     borderWidth: 0,
     shadowColor: '#0d0c22',
     shadowOffset: { width: 0, height: 2 },
@@ -643,12 +668,12 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 14, // 16 -> 14
+    fontSize: 14,
     color: '#0d0c22',
-    height: 20, // 높이 명시
+    height: 20,
   },
   filterIconButton: {
-    padding: 8, // 10 -> 8
+    padding: 8,
     borderRadius: 10,
     backgroundColor: '#ffffff',
     shadowColor: '#0d0c22',
@@ -658,7 +683,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sortIconButton: {
-    padding: 8, // 10 -> 8
+    padding: 8,
     borderRadius: 10,
     backgroundColor: '#0d0c22',
   },

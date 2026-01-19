@@ -221,12 +221,7 @@ export default function HomeScreen() {
       )}
 
       {/* 🔥 핫 플레이어 캐러셀 */}
-      <TouchableOpacity 
-        onPress={() => router.push('/players')}
-        activeOpacity={0.95}
-      >
-        <PlayerCarousel />
-      </TouchableOpacity>
+      <PlayerCarousel />
 
       {/* 검색창 + Sort 버튼 */}
       <View style={styles.searchContainer}>

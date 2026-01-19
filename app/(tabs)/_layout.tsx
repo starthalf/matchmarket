@@ -1,18 +1,22 @@
+// app/(tabs)/_layout.tsx
 import { Tabs } from 'expo-router';
 import { Users, Plus, ClipboardList, MessageCircle, DollarSign } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
+import { View } from 'react-native';
 import React from 'react';
 import { getUnreadNotificationCount, subscribeToNotifications, markNotificationsAsRead } from '../../lib/supabase';
 import { ToastNotification } from '../../components/ToastNotification';
 
 export default function TabLayout() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
   const { unreadCount } = useChat();
   const { matches } = useMatches();
+
+  // RootLayout에서 이미 isLoading 확인했으므로, user가 없으면 이 화면에 도달하지 않음
+  if (!user) return null;
 
   const [hasNewApplication, setHasNewApplication] = React.useState(false);
   const [hasNewChatRoom, setHasNewChatRoom] = React.useState(false);
@@ -57,14 +61,6 @@ export default function TabLayout() {
     
     return remainingSeconds > 0;
   }).length;
-
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#ec4899" />
-      </View>
-    );
-  }
 
   return (
     <>

@@ -18,8 +18,9 @@ export const supabase = (() => {
     if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
       const client = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-          persistSession: Platform.OS !== 'web',
+          persistSession: true,  // ✅ 웹에서도 세션 유지
           autoRefreshToken: true,
+          storage: Platform.OS === 'web' ? (typeof window !== 'undefined' ? window.localStorage : undefined) : undefined,
         }
       });
       console.log('🔧 DEBUG: Supabase 클라이언트 생성 성공:', !!client);

@@ -16,11 +16,21 @@ export function ToastNotification() {
   const { user } = useAuth();
   const [notification, setNotification] = useState<any>(null);
   const [slideAnim] = useState(new Animated.Value(-150));
+  const [hasCheckedInitial, setHasCheckedInitial] = useState(false);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setHasCheckedInitial(false);
+      return;
+    }
 
-    // 실시간 알림 구독
+    // 1. 로그인/새로고침 시 안 읽은 알림 확인 (1회)
+    if (!hasCheckedInitial) {
+      checkUnreadNotifications();
+      setHasCheckedInitial(true);
+    }
+
+    // 2. 실시간 알림 구독
     const subscription = supabase
       .channel('toast_notifications')
       .on('postgres_changes', {
@@ -36,7 +46,27 @@ export function ToastNotification() {
     return () => {
       subscription.unsubscribe();
     };
-  }, [user?.id]);
+  }, [user?.id, hasCheckedInitial]);
+
+  // 안 읽은 알림 중 가장 최근 것 확인
+  const checkUnreadNotifications = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('is_read', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (data && !error) {
+        showToast(data);
+      }
+    } catch (error) {
+      // 안 읽은 알림 없음
+    }
+  };
 
   const showToast = (data: any) => {
     setNotification(data);
@@ -64,9 +94,28 @@ export function ToastNotification() {
     });
   };
 
-  const handlePress = () => {
+  const handlePress = async () => {
+    // 알림 읽음 처리
+    if (notification?.id) {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notification.id);
+    }
+
     if (notification?.match_id) {
       router.push(`/match/${notification.match_id}`);
+    }
+    hideToast();
+  };
+
+  const handleClose = async () => {
+    // 닫기 버튼 눌러도 읽음 처리
+    if (notification?.id) {
+      await supabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', notification.id);
     }
     hideToast();
   };
@@ -90,7 +139,7 @@ export function ToastNotification() {
             {notification.message}
           </Text>
         </View>
-        <TouchableOpacity onPress={hideToast} style={styles.closeBtn}>
+        <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
           <X size={18} color="#fff" />
         </TouchableOpacity>
       </TouchableOpacity>

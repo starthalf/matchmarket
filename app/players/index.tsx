@@ -30,48 +30,43 @@ export default function PlayersListScreen() {
   }, []);
 
   const fetchPlayers = async () => {
-    try {
-      // player_profiles와 users 테이블 JOIN
-      const { data: players, error } = await supabase
-        .from('player_profiles')
-        .select(`
-          *,
-          user:user_id (
-            id,
-            is_pro_verified,
-            ntrp
-          )
-        `)
-        .eq('is_published', true)
-        .order('view_count', { ascending: false });
+  try {
+    console.log('=== 플레이어 목록 조회 시작 ===');
+    
+    // 먼저 단순 조회로 테스트
+    const { data: players, error } = await supabase
+      .from('player_profiles')
+      .select('*')
+      .order('view_count', { ascending: false });
 
-      if (error) throw error;
+    console.log('조회 결과:', players);
+    console.log('에러:', error);
 
-      if (players && players.length > 0) {
-        // 조회수 Top 3 ID 추출 (Hot 표시용)
-        const top3Ids = players.slice(0, 3).map(p => p.id);
-        setHotPlayerIds(top3Ids);
+    if (error) throw error;
 
-        // 1. 요즘 핫한 테니스 플레이어: 모든 등록 사용자 (조회수 순)
-        setAllPlayers(players);
+    if (players && players.length > 0) {
+      console.log('플레이어 수:', players.length);
+      
+      // is_published 필터링 (클라이언트에서)
+      const publishedPlayers = players.filter(p => p.is_published !== false);
+      console.log('published 플레이어 수:', publishedPlayers.length);
+      
+      const top3Ids = publishedPlayers.slice(0, 3).map(p => p.id);
+      setHotPlayerIds(top3Ids);
+      setAllPlayers(publishedPlayers);
 
-        // 2. 선출의 차원이 다른 테니스: 선출 인증된 사용자만
-        const pros = players.filter(p => p.user?.is_pro_verified === true);
-        setProPlayers(pros);
-
-        // 3. 전국구 무림 고수: 선출이 아니면서 NTRP 4.0 이상
-        const tops = players.filter(p => 
-          p.user?.is_pro_verified !== true && 
-          (p.user?.ntrp || 0) >= 4.0
-        );
-        setTopPlayers(tops);
-      }
-    } catch (error) {
-      console.error('플레이어 목록 조회 오류:', error);
-    } finally {
-      setLoading(false);
+      // pro/top 필터링은 일단 제외하고 테스트
+      setProPlayers([]);
+      setTopPlayers([]);
+    } else {
+      console.log('플레이어 데이터 없음');
     }
-  };
+  } catch (error) {
+    console.error('플레이어 목록 조회 오류:', error);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const renderPlayerItem = (player: any) => {
     const isHot = hotPlayerIds.includes(player.id);

@@ -1,19 +1,21 @@
 import { useEffect } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { Platform } from 'react-native';
+import { Platform, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { MatchProvider } from '@/contexts/MatchContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { InstallPrompt } from '../components/InstallPrompt';
 
-export default function RootLayout() {
+// AuthProvider 내부에서만 useAuth() 사용 가능하도록 분리
+function RootLayoutContent() {
+  const { user, isLoading } = useAuth();
   useFrameworkReady();
 
-  // 🔥 Service Worker 등록 추가
+  // 🔥 Service Worker 등록
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -48,6 +50,35 @@ export default function RootLayout() {
     }
   }, []);
 
+  // ✅ 로딩 중에는 로딩 화면 표시 (라우팅 차단)
+  if (isLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#ffffff' }}>
+        <ActivityIndicator size="large" color="#ec4899" />
+      </View>
+    );
+  }
+
+  // 로그인 안 되어있으면 로그인 페이지로
+  if (!user) {
+    return (
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#f9fafb' } }}>
+        <Stack.Screen name="auth" options={{ headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    );
+  }
+
+  // 로그인 되어있으면 메인 탭 라우터로
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#f9fafb' } }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
   return (
     <>
       <SafeAreaProvider>
@@ -60,12 +91,7 @@ export default function RootLayout() {
                   backgroundColor="transparent"
                   translucent={true}
                 />
-                <Stack screenOptions={{
-                  headerShown: false,
-                  contentStyle: { backgroundColor: '#f9fafb' }
-                }}>
-                  <Stack.Screen name="+not-found" />
-                </Stack>
+                <RootLayoutContent />
               </ChatProvider>
             </MatchProvider>
           </AdminProvider>

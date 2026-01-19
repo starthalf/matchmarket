@@ -67,31 +67,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const checkStoredAuth = async () => {
-    try {
-      if (!supabase) {
-        console.warn('Supabase가 설정되지 않음. 모의 데이터 사용.');
-        // Fallback to mock data
-        let storedUserId: string | null = null;
-        
-        if (Platform.OS === 'web') {
-          if (typeof window !== 'undefined') {
-            storedUserId = localStorage.getItem('userId');
-          }
-        } else {
-          storedUserId = await AsyncStorage.getItem('userId');
+  console.log('=== 인증 체크 시작 ===');
+  
+  try {
+    if (!supabase) {
+      console.warn('Supabase가 설정되지 않음. 모의 데이터 사용.');
+      let storedUserId: string | null = null;
+      
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined') {
+          storedUserId = localStorage.getItem('userId');
         }
-        
-        if (storedUserId) {
-          const foundUser = mockUsers.find(u => u.id === storedUserId);
-          if (foundUser && mounted.current) {
-            setUser(foundUser);
-          }
-        }
-        return;
+      } else {
+        storedUserId = await AsyncStorage.getItem('userId');
       }
+      
+      if (storedUserId) {
+        const foundUser = mockUsers.find(u => u.id === storedUserId);
+        if (foundUser && mounted.current) {
+          setUser(foundUser);
+        }
+      }
+      return;
+    }
 
-      // Supabase 세션 확인
+    // 타임아웃 설정 (5초)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
       const { data: { session }, error } = await supabase.auth.getSession();
+      clearTimeout(timeoutId);
       
       if (error) {
         console.error('세션 확인 오류:', error);
@@ -99,7 +105,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (session?.user) {
-        // 사용자 프로필 정보 가져오기
         const { data: userProfile, error: profileError } = await supabase
           .from('users')
           .select('*')
@@ -114,16 +119,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userProfile && mounted.current) {
           const user = convertSupabaseUserToUser(userProfile);
           setUser(user);
+          console.log('=== 사용자 로드 완료 ===', user.name);
         }
+      } else {
+        console.log('=== 세션 없음 ===');
       }
-    } catch (error) {
-      console.error('저장된 인증 정보 확인 실패:', error);
-    } finally {
-      if (mounted.current) {
-        setIsLoading(false);
-      }
+    } catch (fetchError) {
+      console.error('세션 가져오기 실패 (타임아웃 또는 네트워크 오류):', fetchError);
     }
-  };
+  } catch (error) {
+    console.error('저장된 인증 정보 확인 실패:', error);
+  } finally {
+    if (mounted.current) {
+      console.log('=== 로딩 종료 ===');
+      setIsLoading(false);
+    }
+  }
+};
 
   // Supabase 사용자를 앱 User 타입으로 변환
   const convertSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {

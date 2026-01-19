@@ -369,7 +369,7 @@ export default function PlayerDetailScreen() {
                   styles.requestBtnText,
                   hasRequested && styles.requestBtnTextActive
                 ]}>
-                  매치요청 {profile.match_request_count || 0}
+                  열어주세요 {profile.match_request_count || 0}
                 </Text>
               )}
             </TouchableOpacity>

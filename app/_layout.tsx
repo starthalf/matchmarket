@@ -58,13 +58,27 @@ function RootLayoutContent() {
     );
   }
 
-  // ❌ 로그인 안 되어있으면 로그인 페이지로
+// ❌ 로그인 안 되어있으면 로그인 페이지로
   if (!user) {
     console.log('❌ 사용자 없음 - login 페이지로 진입');
     return (
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#f9fafb' } }}>
         <Stack.Screen name="auth/login" options={{ headerShown: false }} />
         <Stack.Screen name="auth/signup" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="profile" options={{ headerShown: false }} />
+        <Stack.Screen name="profile-settings" options={{ headerShown: false }} />
+        <Stack.Screen name="match/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="player/[id]" options={{ headerShown: false }} />
+        <Stack.Screen name="certification" options={{ headerShown: false }} />
+        <Stack.Screen name="withdrawal-history" options={{ headerShown: false }} />
+        <Stack.Screen name="settlement-history" options={{ headerShown: false }} />
+        <Stack.Screen name="supabase-test" options={{ headerShown: false }} />
+        <Stack.Screen name="player/create" options={{ headerShown: false }} />
+        <Stack.Screen name="players/index" options={{ headerShown: false }} />
+        <Stack.Screen name="seller/[id]/reviews" options={{ headerShown: false }} />
+        <Stack.Screen name="admin-login" options={{ headerShown: false }} />
+        <Stack.Screen name="(admin)" options={{ headerShown: false }} />
         <Stack.Screen name="+not-found" />
       </Stack>
     );

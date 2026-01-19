@@ -288,7 +288,7 @@ export default function PlayerDetailScreen() {
         }));
 
         if (Platform.OS === 'web') {
-          window.alert('매치요청을 보냈습니다! 상대방이 매치를 열면 알림을 받게 됩니다.');
+          window.alert('매치 열어주세요에 좋아요를 눌렀어요! 상대방이 매치를 열면 알림을 받게 됩니다.');
         }
       }
     } catch (error: any) {

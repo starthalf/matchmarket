@@ -244,21 +244,21 @@ const updateSkill = (key: string, delta: number) => {
               <View key={key} style={styles.skillRow}>
                 <Text style={styles.skillLabel}>{SKILL_LABELS[index]}</Text>
                 <View style={styles.skillControls}>
-                  <TouchableOpacity 
-                    style={styles.skillBtn}
-                    onPress={() => updateSkill(key, -1)}
-                  >
-                    <Minus size={16} color="#6b7280" />
-                  </TouchableOpacity>
-                  <View style={styles.skillValueContainer}>
-                    <Text style={styles.skillValue}>{skills[key].toFixed(1)}</Text>
-                  </View>
-                  <TouchableOpacity 
-                    style={styles.skillBtn}
-                    onPress={() => updateSkill(key, 1)}
-                  >
-                    <Plus size={16} color="#6b7280" />
-                  </TouchableOpacity>
+                 <TouchableOpacity 
+  style={styles.skillBtn}
+  onPress={() => updateSkill(key, -0.1)}
+>
+  <Minus size={16} color="#6b7280" />
+</TouchableOpacity>
+<View style={styles.skillValueContainer}>
+  <Text style={styles.skillValue}>{skills[key].toFixed(1)}</Text>
+</View>
+<TouchableOpacity 
+  style={styles.skillBtn}
+  onPress={() => updateSkill(key, 0.1)}
+>
+  <Plus size={16} color="#6b7280" />
+</TouchableOpacity>
                 </View>
               </View>
             ))}

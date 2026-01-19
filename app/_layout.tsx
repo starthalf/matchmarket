@@ -58,8 +58,7 @@ export default function RootLayout() {
                 />
                 <Stack screenOptions={{
                   headerShown: false,
-                  contentStyle: { backgroundColor: '
-#f9fafb' }
+                  contentStyle: { backgroundColor: '#f9fafb' }
                 }}>
                   <Stack.Screen name="+not-found" />
                 </Stack>

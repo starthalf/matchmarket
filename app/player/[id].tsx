@@ -9,11 +9,11 @@ import {
   SafeAreaView,
   TextInput,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Shield, Award, Star, Send, CheckCircle } from 'lucide-react-native';
-import { mockUsers, mockMatches } from '../../data/mockData';
-import { MatchCard } from '../../components/MatchCard';
+import { ArrowLeft, Send, CheckCircle } from 'lucide-react-native';
+import { mockUsers } from '../../data/mockData';
 import Svg, { Polygon, Circle, Line, Text as SvgText } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
@@ -166,7 +166,11 @@ export default function PlayerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const user = mockUsers.find(u => u.id === id);
   
-  // 더미 스탯 데이터 (실제로는 user.stats 등에서 가져옴)
+  // 매치요청 카운트 상태
+  const [requestCount, setRequestCount] = useState(999);
+  const [hasRequested, setHasRequested] = useState(false);
+  
+  // 더미 스탯 데이터
   const playerStats = {
     serve: 4.2,
     return: 3.8,
@@ -178,7 +182,24 @@ export default function PlayerDetailScreen() {
     mental: 4.6,
   };
 
-  const playerMatches = mockMatches.filter(m => m.sellerId === id && !m.isClosed);
+  // 매치요청 버튼 핸들러
+  const handleMatchRequest = () => {
+    if (hasRequested) {
+      // 이미 요청한 경우 취소
+      setRequestCount(prev => prev - 1);
+      setHasRequested(false);
+      if (Platform.OS === 'web') {
+        window.alert('매치요청을 취소했습니다.');
+      }
+    } else {
+      // 새로 요청
+      setRequestCount(prev => prev + 1);
+      setHasRequested(true);
+      if (Platform.OS === 'web') {
+        window.alert('매치요청을 보냈습니다! 상대방이 매치를 열면 알림을 받게 됩니다.');
+      }
+    }
+  };
 
   if (!user) {
     return (
@@ -201,8 +222,19 @@ export default function PlayerDetailScreen() {
 
         {/* 매치요청 버튼 */}
         <View style={styles.requestBtnContainer}>
-          <TouchableOpacity style={styles.requestBtn}>
-            <Text style={styles.requestBtnText}>매치요청 999</Text>
+          <TouchableOpacity 
+            style={[
+              styles.requestBtn,
+              hasRequested && styles.requestBtnActive
+            ]}
+            onPress={handleMatchRequest}
+          >
+            <Text style={[
+              styles.requestBtnText,
+              hasRequested && styles.requestBtnTextActive
+            ]}>
+              매치요청 {requestCount}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -229,9 +261,10 @@ export default function PlayerDetailScreen() {
         <View style={styles.careerSection}>
           <Text style={styles.sectionTitle}>주요 입상&경력</Text>
           <View style={styles.careerBox}>
-            {/* 유저가 직접 작성한 경력 표시 */}
             <Text style={styles.careerText}>
-              {user.careerType === '선수' ? '• 전국체전 우승\n• 실업팀 5년 경력' : '등록된 경력이 없습니다'}
+              {user.careerType === '선수' 
+                ? '• 전국체전 우승\n• 실업팀 5년 경력' 
+                : '등록된 경력이 없습니다'}
             </Text>
           </View>
         </View>
@@ -244,10 +277,26 @@ export default function PlayerDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  errorContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  backLink: { color: '#ea4c89', marginTop: 10 },
-  backBtn: { position: 'absolute', top: 16, left: 16, zIndex: 10 },
-  requestBtnContainer: { alignItems: 'center', marginTop: 50, marginBottom: 16 },
+  errorContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  backLink: { 
+    color: '#ea4c89', 
+    marginTop: 10 
+  },
+  backBtn: { 
+    position: 'absolute', 
+    top: 16, 
+    left: 16, 
+    zIndex: 10 
+  },
+  requestBtnContainer: { 
+    alignItems: 'center', 
+    marginTop: 50, 
+    marginBottom: 16 
+  },
   requestBtn: {
     backgroundColor: '#fff',
     borderWidth: 2,
@@ -256,17 +305,40 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
   },
-  requestBtnText: { color: '#ea4c89', fontSize: 16, fontWeight: '700' },
-  profileSection: { alignItems: 'center', marginBottom: 20 },
+  requestBtnActive: {
+    backgroundColor: '#ea4c89',
+  },
+  requestBtnText: { 
+    color: '#ea4c89', 
+    fontSize: 16, 
+    fontWeight: '700' 
+  },
+  requestBtnTextActive: {
+    color: '#fff',
+  },
+  profileSection: { 
+    alignItems: 'center', 
+    marginBottom: 20 
+  },
   profileImage: {
     width: 100,
     height: 100,
     borderRadius: 50,
     marginBottom: 12,
   },
-  profilePlaceholder: { backgroundColor: '#e5e7eb' },
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  name: { fontSize: 22, fontWeight: '800', color: '#111827' },
+  profilePlaceholder: { 
+    backgroundColor: '#e5e7eb' 
+  },
+  nameRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 6 
+  },
+  name: { 
+    fontSize: 22, 
+    fontWeight: '800', 
+    color: '#111827' 
+  },
   ntrpBadge: {
     backgroundColor: '#ec4899',
     width: 24,
@@ -275,20 +347,49 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  ntrpText: { fontSize: 12 },
-  chartContainer: { paddingHorizontal: 40, marginBottom: 30 },
-  indexTitle: { fontSize: 14, color: '#6b7280', marginBottom: 10 },
-  careerSection: { paddingHorizontal: 20, marginBottom: 30 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 12 },
+  ntrpText: { 
+    fontSize: 12 
+  },
+  chartContainer: { 
+    paddingHorizontal: 40, 
+    marginBottom: 30 
+  },
+  indexTitle: { 
+    fontSize: 14, 
+    color: '#6b7280', 
+    marginBottom: 10 
+  },
+  careerSection: { 
+    paddingHorizontal: 20, 
+    marginBottom: 30 
+  },
+  sectionTitle: { 
+    fontSize: 16, 
+    fontWeight: '700', 
+    color: '#111827', 
+    marginBottom: 12 
+  },
   careerBox: {
     backgroundColor: '#f9fafb',
     borderRadius: 12,
     padding: 16,
     minHeight: 80,
   },
-  careerText: { fontSize: 14, color: '#374151', lineHeight: 22 },
-  commentSection: { paddingHorizontal: 20, marginBottom: 40 },
-  commentItem: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 10 },
+  careerText: { 
+    fontSize: 14, 
+    color: '#374151', 
+    lineHeight: 22 
+  },
+  commentSection: { 
+    paddingHorizontal: 20, 
+    marginBottom: 40 
+  },
+  commentItem: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 12, 
+    gap: 10 
+  },
   commentAvatar: {
     width: 36,
     height: 36,
@@ -297,9 +398,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  commentAvatarText: { fontSize: 14, fontWeight: '600', color: '#6b7280' },
-  commentText: { fontSize: 14, color: '#374151', flex: 1 },
-  highlight: { color: '#ea4c89', textDecorationLine: 'underline' },
+  commentAvatarText: { 
+    fontSize: 14, 
+    fontWeight: '600', 
+    color: '#6b7280' 
+  },
+  commentText: { 
+    fontSize: 14, 
+    color: '#374151', 
+    flex: 1 
+  },
+  highlight: { 
+    color: '#ea4c89', 
+    textDecorationLine: 'underline' 
+  },
   commentInput: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -308,6 +420,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginTop: 12,
   },
-  input: { flex: 1, paddingVertical: 12, fontSize: 14 },
-  sendBtn: { padding: 8 },
+  input: { 
+    flex: 1, 
+    paddingVertical: 12, 
+    fontSize: 14 
+  },
+  sendBtn: { 
+    padding: 8 
+  },
 });

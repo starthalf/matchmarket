@@ -59,13 +59,7 @@ export default function TabLayout() {
     return remainingSeconds > 0;
   }).length;
 
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#ec4899" />
-      </View>
-    );
-  }
+  if (!user) return null; // RootLayout에서 이미 처리됨
 
   return (
     <>

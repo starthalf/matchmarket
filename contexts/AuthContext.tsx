@@ -69,9 +69,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const checkStoredAuth = async () => {
   console.log('=== 인증 체크 시작 ===');
   
+  // 최대 5초 타임아웃
+  const timeout = setTimeout(() => {
+    if (mounted.current && isLoading) {
+      console.warn('=== 타임아웃: 강제 로딩 해제 ===');
+      setIsLoading(false);
+    }
+  }, 5000);
+  
   try {
     if (!supabase) {
-      console.warn('Supabase가 설정되지 않음. 모의 데이터 사용.');
+      console.warn('Supabase가 설정되지 않음.');
       let storedUserId: string | null = null;
       
       if (Platform.OS === 'web') {
@@ -91,45 +99,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // 타임아웃 설정 (5초)
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const { data: { session }, error } = await supabase.auth.getSession();
+    
+    if (error) {
+      console.error('세션 확인 오류:', error);
+      return;
+    }
 
-    try {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      clearTimeout(timeoutId);
-      
-      if (error) {
-        console.error('세션 확인 오류:', error);
-        return;
+    if (session?.user) {
+      const { data: userProfile, error: profileError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', session.user.id)
+        .single();
+
+      if (!profileError && userProfile && mounted.current) {
+        const user = convertSupabaseUserToUser(userProfile);
+        setUser(user);
+        console.log('=== 사용자 로드 완료 ===', user.name);
       }
-
-      if (session?.user) {
-        const { data: userProfile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (profileError) {
-          console.error('사용자 프로필 조회 오류:', profileError);
-          return;
-        }
-
-        if (userProfile && mounted.current) {
-          const user = convertSupabaseUserToUser(userProfile);
-          setUser(user);
-          console.log('=== 사용자 로드 완료 ===', user.name);
-        }
-      } else {
-        console.log('=== 세션 없음 ===');
-      }
-    } catch (fetchError) {
-      console.error('세션 가져오기 실패 (타임아웃 또는 네트워크 오류):', fetchError);
+    } else {
+      console.log('=== 세션 없음 ===');
     }
   } catch (error) {
-    console.error('저장된 인증 정보 확인 실패:', error);
+    console.error('인증 체크 실패:', error);
   } finally {
+    clearTimeout(timeout);
     if (mounted.current) {
       console.log('=== 로딩 종료 ===');
       setIsLoading(false);

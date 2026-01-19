@@ -62,7 +62,7 @@ export default function Index() {
       <StatusBar barStyle="light-content" />
       
  <ImageBackground
-        source={require('../assets/images/influence11.png')}
+        source={require('../assets/images/influence11.jpg')}
         style={styles.backgroundImage}
         resizeMode="cover"
       >

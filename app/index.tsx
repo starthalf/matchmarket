@@ -4,11 +4,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { Chrome, Share2, Smartphone, X, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
-import { Asset } from 'expo-asset';
 
 const { width, height } = Dimensions.get('window'); // height 추가
 const PRIMARY_COLOR = '#ea4c89';
-const bgImage = require('../assets/images/influence11.jpg');
 
 export default function Index() {
   const { user } = useAuth();

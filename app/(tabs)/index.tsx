@@ -216,13 +216,17 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* 🔥 [수정됨] 제목을 왼쪽으로, 썸네일을 오른쪽으로 배치 */}
+      {/* 🔥 The Named 섹션 (타이틀 누르면 전체 리스트 이동) */}
       <View style={styles.carouselSection}>
-        <View style={styles.titleContainer}>
+        <TouchableOpacity 
+          style={styles.titleContainer}
+          onPress={() => router.push('/players')}
+        >
           <Text style={styles.titleTextMain}>THE</Text>
           <Text style={styles.titleTextSub}>NAMED</Text>
           <Text style={styles.fireEmoji}>🔥</Text>
-        </View>
+        </TouchableOpacity>
+        
         <View style={styles.carouselWrapper}>
           <PlayerCarousel />
         </View>
@@ -610,18 +614,19 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontWeight: '600',
   },
-  // 🔥 [수정] 가로 배치 스타일 (Flex Row)
+  // 🔥 [The Named 섹션 스타일]
   carouselSection: {
-    flexDirection: 'row', // 가로 배치
-    alignItems: 'center', // 세로 중앙 정렬
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 16,
     backgroundColor: '#f8f7f4',
-    gap: 12, // 제목과 캐러셀 사이 간격
+    gap: 12, 
   },
   titleContainer: {
-    width: 60, // 제목 영역 너비 고정
+    width: 60,
     justifyContent: 'center',
+    // 터치 영역 명확히
   },
   titleTextMain: {
     fontSize: 12,
@@ -639,7 +644,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   carouselWrapper: {
-    flex: 1, // 남은 공간 모두 차지
+    flex: 1,
   },
   // 검색창 스타일
   searchContainer: {

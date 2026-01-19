@@ -7,9 +7,11 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { mockUsers } from '../data/mockData';
+import { User } from 'lucide-react-native';
+import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
 const AVATAR_SIZE = 44;
@@ -17,17 +19,41 @@ const AVATAR_SIZE = 44;
 export function PlayerCarousel() {
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [players, setPlayers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const flatListRef = useRef<FlatList>(null);
 
-  // 🔥 네임드/고수 필터링 (선수 출신이거나 NTRP 4.5 이상)
-  const featuredPlayers = mockUsers.filter(
-    u => u.careerType === '선수' || u.ntrp >= 4.5
-  ).slice(0, 8);
-
-  // ✅ 자동 슬라이드 로직
+  // Supabase에서 플레이어 프로필 가져오기
   useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('player_profiles')
+        .select('*')
+        .order('view_count', { ascending: false })
+        .limit(8);
+
+      if (error) throw error;
+      
+      if (data) {
+        setPlayers(data);
+      }
+    } catch (error) {
+      console.error('캐러셀 플레이어 조회 오류:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 자동 슬라이드 로직
+  useEffect(() => {
+    if (players.length === 0) return;
+
     const interval = setInterval(() => {
-      if (activeIndex === featuredPlayers.length - 1) {
+      if (activeIndex === players.length - 1) {
         flatListRef.current?.scrollToIndex({ index: 0, animated: true });
         setActiveIndex(0);
       } else {
@@ -37,17 +63,33 @@ export function PlayerCarousel() {
     }, 3000);
 
     return () => clearInterval(interval);
-  }, [activeIndex, featuredPlayers.length]);
+  }, [activeIndex, players.length]);
 
-  const renderItem = ({ item }: { item: typeof mockUsers[0] }) => (
+  const renderItem = ({ item }: { item: any }) => (
     <View style={styles.avatarContainer}>
-      {item.profileImage ? (
-        <Image source={{ uri: item.profileImage }} style={styles.avatar} />
+      {item.profile_image ? (
+        <Image source={{ uri: item.profile_image }} style={styles.avatar} />
       ) : (
-        <View style={[styles.avatar, styles.avatarPlaceholder]} />
+        <View style={[styles.avatar, styles.avatarPlaceholder]}>
+          <User size={20} color="#9ca3af" />
+        </View>
       )}
     </View>
   );
+
+  // 로딩 중이거나 플레이어가 없으면 표시 안함
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.hotLabel}>Hot</Text>
+        <ActivityIndicator size="small" color="#ea4c89" />
+      </View>
+    );
+  }
+
+  if (players.length === 0) {
+    return null; // 플레이어가 없으면 캐러셀 숨김
+  }
 
   return (
     <TouchableOpacity 
@@ -61,7 +103,7 @@ export function PlayerCarousel() {
       {/* 썸네일 리스트 */}
       <FlatList
         ref={flatListRef}
-        data={featuredPlayers}
+        data={players}
         renderItem={renderItem}
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -104,5 +146,7 @@ const styles = StyleSheet.create({
   },
   avatarPlaceholder: {
     backgroundColor: '#e5e7eb',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

@@ -7,7 +7,6 @@ import {
   ScrollView,
   TextInput,
   TouchableOpacity,
-  Alert,
   Platform,
   Modal,
   RefreshControl,
@@ -15,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, Shield, Database, User, LogIn, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
+import { PlayerCarousel } from '../../components/PlayerCarousel';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
 import { useMatches } from '../../contexts/MatchContext';
@@ -28,25 +28,22 @@ type TimeFilter = 'today' | null;
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
-  const { isAdmin } = useAdmin(); // adminLogin 제거
+  const { isAdmin } = useAdmin();
   const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   
-  // ✅ 개발 환경 확인 (데모 컨트롤용 - 필요 없다면 false로 고정하거나 삭제 가능)
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
 
-  // 그룹별로 필터 분리
   const [matchTypeFilter, setMatchTypeFilter] = useState<MatchTypeFilter>(null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   const [locationFilter, setLocationFilter] = useState<string>('');
 
-  // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -64,19 +61,27 @@ export default function HomeScreen() {
       const targetUser = mockUsers.find(u => u.name === userIdentifier);
       
       if (!targetUser) {
-        Alert.alert('로그인 실패', '사용자를 찾을 수 없습니다.');
+        if (Platform.OS === 'web') {
+          window.alert('로그인 실패: 사용자를 찾을 수 없습니다.');
+        }
         return;
       }
       
       const result = await login(targetUser.email, 'demo123');
       if (result.success) {
-        Alert.alert('로그인 성공', `${targetUser.name}(${targetUser.email})로 로그인되었습니다.`);
+        if (Platform.OS === 'web') {
+          window.alert(`로그인 성공: ${targetUser.name}(${targetUser.email})로 로그인되었습니다.`);
+        }
       } else {
-        Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
+        if (Platform.OS === 'web') {
+          window.alert(`로그인 실패: ${result.error || '로그인에 실패했습니다.'}`);
+        }
       }
     } catch (error) {
       console.error('퀵 로그인 오류:', error);
-      Alert.alert('오류', '로그인 중 오류가 발생했습니다.');
+      if (Platform.OS === 'web') {
+        window.alert('오류: 로그인 중 오류가 발생했습니다.');
+      }
     }
   };
 
@@ -84,30 +89,24 @@ export default function HomeScreen() {
     if (isAdmin) {
       router.push('/(admin)/dashboard');
     } else {
-      Alert.alert(
-        '관리자 로그인',
-        '관리자 기능에 접근하려면 로그인이 필요합니다.',
-        [
-          { text: '취소', style: 'cancel' },
-          { text: '로그인', onPress: () => router.push('/admin-login') }
-        ]
-      );
+      if (Platform.OS === 'web') {
+        if (window.confirm('관리자 기능에 접근하려면 로그인이 필요합니다. 로그인하시겠습니까?')) {
+          router.push('/admin-login');
+        }
+      }
     }
   };
 
-  // 스크롤 핸들러
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     setShowSortButton(offsetY > 50);
   };
 
-  // Sort 선택 핸들러
   const handleSortSelect = (sort: 'popular' | 'time' | 'ntrp') => {
     setSortBy(sort);
     setShowSortModal(false);
   };
 
-  // Pull to Refresh 핸들러
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshMatches();
@@ -181,7 +180,7 @@ export default function HomeScreen() {
         </View>
       </View>
     
-      {/* 개발 모드 데모 컨트롤 (관리자 로그인 버튼 삭제됨) */}
+      {/* 개발 모드 데모 컨트롤 */}
       {isDevelopment && (
         <View style={styles.demoControls}>
           <Text style={styles.demoTitle}>
@@ -208,7 +207,6 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.demoButtonText}>midnight.rider</Text>
                 </TouchableOpacity>
-                {/* 🔥 삭제됨: 관리자 로그인 버튼 */}
               </>
             ) : (
               <TouchableOpacity 
@@ -222,12 +220,18 @@ export default function HomeScreen() {
         </View>
       )}
 
-     {/* 🔥 삭제됨: previewAdminSection (쉴드 아이콘과 관리자 로그인 텍스트가 있던 영역) */}
+      {/* 🔥 핫 플레이어 캐러셀 */}
+      <TouchableOpacity 
+        onPress={() => router.push('/players')}
+        activeOpacity={0.95}
+      >
+        <PlayerCarousel />
+      </TouchableOpacity>
 
       {/* 검색창 + Sort 버튼 */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Search size={20} color="#9ca3af" />
+          <Search size={18} color="#9ca3af" />
           <TextInput
             style={styles.searchInput}
             placeholder="매치 검색"
@@ -242,11 +246,11 @@ export default function HomeScreen() {
             style={styles.sortIconButton}
             onPress={() => setShowSortModal(true)}
           >
-            <ArrowUpDown size={18} color="#ffffff" />
+            <ArrowUpDown size={16} color="#ffffff" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.filterIconButton}>
-            <Filter size={20} color="#6b7280" />
+            <Filter size={18} color="#6b7280" />
           </TouchableOpacity>
         )}
       </View>
@@ -331,62 +335,62 @@ export default function HomeScreen() {
         </ScrollView>
       </View>
 
-     {/* 지역 필터 */}
-    <View style={styles.locationFilterSection}>
-      {Platform.OS === 'web' ? (
-        <View style={styles.locationSelectWrapper}>
-          <MapPin size={16} color="#6b7280" />
-          <select
-            value={locationFilter}
-            onChange={(e) => setLocationFilter(e.target.value)}
-            style={{
-              flex: 1,
-              padding: '0 4px',
-              fontSize: '14px',
-              border: 'none',
-              backgroundColor: 'transparent',
-              color: '#374151',
-              fontFamily: 'inherit',
-              cursor: 'pointer',
-              outline: 'none',
-              fontWeight: '500'
-            }}
+      {/* 지역 필터 */}
+      <View style={styles.locationFilterSection}>
+        {Platform.OS === 'web' ? (
+          <View style={styles.locationSelectWrapper}>
+            <MapPin size={14} color="#6b7280" />
+            <select
+              value={locationFilter}
+              onChange={(e) => setLocationFilter(e.target.value)}
+              style={{
+                flex: 1,
+                padding: '0 4px',
+                fontSize: '13px',
+                border: 'none',
+                backgroundColor: 'transparent',
+                color: '#374151',
+                fontFamily: 'inherit',
+                cursor: 'pointer',
+                outline: 'none',
+                fontWeight: '500'
+              }}
+            >
+              <option value="">전체 지역</option>
+              <option value="서울시">서울시</option>
+              <option value="경기북부">경기북부</option>
+              <option value="경기남부">경기남부</option>
+              <option value="경기서부">경기서부</option>
+              <option value="경기동부">경기동부</option>
+              <option value="인천시">인천시</option>
+              <option value="대전시">대전시</option>
+              <option value="대구시">대구시</option>
+              <option value="부산시">부산시</option>
+              <option value="울산시">울산시</option>
+              <option value="광주시">광주시</option>
+              <option value="세종시">세종시</option>
+              <option value="강원도">강원도</option>
+              <option value="충북">충북</option>
+              <option value="충남">충남</option>
+              <option value="경북">경북</option>
+              <option value="경남">경남</option>
+              <option value="전북">전북</option>
+              <option value="전남">전남</option>
+              <option value="제주도">제주도</option>
+            </select>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={styles.locationSelectWrapper}
+            onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
           >
-            <option value="">전체 지역</option>
-            <option value="서울시">서울시</option>
-            <option value="경기북부">경기북부</option>
-            <option value="경기남부">경기남부</option>
-            <option value="경기서부">경기서부</option>
-            <option value="경기동부">경기동부</option>
-            <option value="인천시">인천시</option>
-            <option value="대전시">대전시</option>
-            <option value="대구시">대구시</option>
-            <option value="부산시">부산시</option>
-            <option value="울산시">울산시</option>
-            <option value="광주시">광주시</option>
-            <option value="세종시">세종시</option>
-            <option value="강원도">강원도</option>
-            <option value="충북">충북</option>
-            <option value="충남">충남</option>
-            <option value="경북">경북</option>
-            <option value="경남">경남</option>
-            <option value="전북">전북</option>
-            <option value="전남">전남</option>
-            <option value="제주도">제주도</option>
-          </select>
-        </View>
-      ) : (
-        <TouchableOpacity 
-          style={styles.locationSelectWrapper}
-          onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
-        >
-          <MapPin size={16} color="#6b7280" />
-          <Text style={styles.locationSelectText}>
-            {locationFilter || '전체 지역'}
-          </Text>
-        </TouchableOpacity>
-      )}
-    </View>
+            <MapPin size={14} color="#6b7280" />
+            <Text style={styles.locationSelectText}>
+              {locationFilter || '전체 지역'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       {/* Sort 모달 */}
       <Modal
@@ -568,44 +572,35 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fef2f2',
   },
-  // 🔥 삭제됨: previewAdminSection 스타일들 (필요없으므로 코드가 깔끔해짐)
   demoControls: {
     backgroundColor: '#f3f4f6',
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
   demoTitle: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#374151',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   demoButtons: {
     flexDirection: 'row',
   },
   demoButton: {
     backgroundColor: '#ffffff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    marginRight: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    marginRight: 6,
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   demoButtonText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
     color: '#374151',
-  },
-  adminDemoButton: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#dc2626',
-  },
-  adminDemoButtonText: {
-    color: '#dc2626',
-    fontWeight: '600',
   },
   logoutButton: {
     backgroundColor: '#fee2e2',
@@ -614,24 +609,25 @@ const styles = StyleSheet.create({
   logoutButtonText: {
     color: '#ef4444',
     fontWeight: '600',
+    fontSize: 11,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingVertical: 6,
     backgroundColor: '#f8f7f4',
-    gap: 12,
+    gap: 10,
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 6,
     borderWidth: 0,
     shadowColor: '#0d0c22',
     shadowOffset: {
@@ -644,12 +640,12 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14,
     color: '#0d0c22',
   },
   filterIconButton: {
-    padding: 10,
-    borderRadius: 10,
+    padding: 8,
+    borderRadius: 8,
     backgroundColor: '#ffffff',
     shadowColor: '#0d0c22',
     shadowOffset: {
@@ -661,22 +657,22 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   sortIconButton: {
-    padding: 10,
-    borderRadius: 10,
+    padding: 8,
+    borderRadius: 8,
     backgroundColor: '#0d0c22',
   },
   chipsContainer: {
     backgroundColor: '#f8f7f4',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 6,
     borderBottomWidth: 0,
   },
   chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 24,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
     backgroundColor: '#ffffff',
-    marginRight: 8,
+    marginRight: 6,
     borderWidth: 0,
     shadowColor: '#0d0c22',
     shadowOffset: {
@@ -693,7 +689,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
     color: '#6e6d7a',
   },
@@ -703,7 +699,7 @@ const styles = StyleSheet.create({
   locationFilterSection: {
     backgroundColor: '#ffffff',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
@@ -713,7 +709,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   locationSelectText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#374151',
     fontWeight: '500',
   },

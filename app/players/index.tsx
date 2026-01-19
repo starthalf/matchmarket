@@ -31,7 +31,7 @@ export default function PlayersListScreen() {
 
 const fetchPlayers = async () => {
   try {
-    // 1. player_profiles 조회 (JOIN 없이)
+    // 1. player_profiles 조회
     const { data: players, error } = await supabase
       .from('player_profiles')
       .select('*')
@@ -43,13 +43,15 @@ const fetchPlayers = async () => {
       // 2. user_id 목록 추출
       const userIds = players.map(p => p.user_id).filter(Boolean);
       
-      // 3. users 테이블에서 추가 정보 조회 (별도 쿼리)
+      // 3. users 테이블에서 추가 정보 조회
       let usersMap: Record<string, any> = {};
       if (userIds.length > 0) {
-        const { data: usersData } = await supabase
+        const { data: usersData, error: usersError } = await supabase
           .from('users')
-          .select('id, is_pro_verified, ntrp')
+          .select('id, certification_career, ntrp')
           .in('id', userIds);
+        
+        console.log('usersData:', usersData);
         
         if (usersData) {
           usersData.forEach(u => {
@@ -71,16 +73,20 @@ const fetchPlayers = async () => {
       // 6. 카테고리별 분류
       setAllPlayers(playersWithUser);
 
-      // 선출 인증된 사용자
-      const pros = playersWithUser.filter(p => p.user?.is_pro_verified === true);
+      // 선출 인증된 사용자 (certification_career === 'verified')
+      const pros = playersWithUser.filter(p => 
+        p.user?.certification_career === 'verified'
+      );
       setProPlayers(pros);
 
-      // 선출 아니면서 NTRP 4.0 이상
+      // 선출이 아니면서 NTRP 4.0 이상
       const tops = playersWithUser.filter(p => 
-        p.user?.is_pro_verified !== true && 
+        p.user?.certification_career !== 'verified' && 
         (p.user?.ntrp || 0) >= 4.0
       );
       setTopPlayers(tops);
+      
+      console.log('전체:', playersWithUser.length, '선출:', pros.length, '고수:', tops.length);
     }
   } catch (error) {
     console.error('플레이어 목록 조회 오류:', error);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -10,10 +10,12 @@ import {
   TextInput,
   Dimensions,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { ArrowLeft, Send, CheckCircle } from 'lucide-react-native';
-import { mockUsers } from '../../data/mockData';
+import { ArrowLeft, Send, CheckCircle, Edit2 } from 'lucide-react-native';
+import { useAuth } from '../../contexts/AuthContext';
+import { supabase } from '../../lib/supabase';
 import Svg, { Polygon, Circle, Line, Text as SvgText } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
@@ -43,7 +45,6 @@ function RadarChart({ stats }: { stats: Record<string, number> }) {
     <View style={styles.chartContainer}>
       <Text style={styles.indexTitle}>Index</Text>
       <Svg width={size} height={size}>
-        {/* 배경 원 */}
         {[1, 2, 3, 4, 5].map(level => (
           <Circle
             key={level}
@@ -55,7 +56,6 @@ function RadarChart({ stats }: { stats: Record<string, number> }) {
             strokeWidth={1}
           />
         ))}
-        {/* 축 선 */}
         {labels.map((_, i) => {
           const point = getPoint(i, 5);
           return (
@@ -70,14 +70,12 @@ function RadarChart({ stats }: { stats: Record<string, number> }) {
             />
           );
         })}
-        {/* 데이터 영역 */}
         <Polygon
           points={polygonPoints}
           fill="rgba(74, 222, 128, 0.3)"
           stroke="#22c55e"
           strokeWidth={2}
         />
-        {/* 라벨 */}
         {labels.map((label, i) => {
           const point = getPoint(i, 6);
           return (
@@ -94,7 +92,6 @@ function RadarChart({ stats }: { stats: Record<string, number> }) {
             </SvgText>
           );
         })}
-        {/* 중앙 평균 점수 */}
         <SvgText
           x={center}
           y={center}
@@ -112,20 +109,57 @@ function RadarChart({ stats }: { stats: Record<string, number> }) {
 }
 
 // 댓글 컴포넌트
-function CommentSection({ playerId }: { playerId: string }) {
+function CommentSection({ profileId, currentUserId }: { profileId: string; currentUserId?: string }) {
   const [comment, setComment] = useState('');
-  const [comments, setComments] = useState([
-    { id: '1', user: '테니스러버', text: '같이 한번만 쳐주세요!!', avatar: null },
-    { id: '2', user: '초보탈출', text: '저도 꼭 같이 치고싶어요!', avatar: null },
-  ]);
+  const [comments, setComments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  const handleSend = () => {
-    if (!comment.trim()) return;
-    setComments([
-      ...comments,
-      { id: Date.now().toString(), user: '나', text: comment, avatar: null }
-    ]);
-    setComment('');
+  useEffect(() => {
+    fetchComments();
+  }, [profileId]);
+
+  const fetchComments = async () => {
+    const { data, error } = await supabase
+      .from('player_comments')
+      .select('*')
+      .eq('player_profile_id', profileId)
+      .order('created_at', { ascending: true });
+
+    if (data) {
+      setComments(data);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!comment.trim() || !currentUserId) {
+      if (!currentUserId && Platform.OS === 'web') {
+        window.alert('로그인이 필요합니다.');
+      }
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('player_comments')
+        .insert({
+          player_profile_id: profileId,
+          user_id: currentUserId,
+          user_name: '익명', // 실제로는 유저 이름 가져오기
+          content: comment.trim(),
+        })
+        .select()
+        .single();
+
+      if (data) {
+        setComments([...comments, data]);
+        setComment('');
+      }
+    } catch (error) {
+      console.error('댓글 작성 오류:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -134,28 +168,25 @@ function CommentSection({ playerId }: { playerId: string }) {
       {comments.map(c => (
         <View key={c.id} style={styles.commentItem}>
           <View style={styles.commentAvatar}>
-            <Text style={styles.commentAvatarText}>{c.user[0]}</Text>
+            <Text style={styles.commentAvatarText}>{c.user_name?.[0] || '?'}</Text>
           </View>
-          <Text style={styles.commentText}>
-            {c.text.includes('치고싶어요') ? (
-              <>
-                {c.text.split('치고싶어요')[0]}
-                <Text style={styles.highlight}>치고싶어요</Text>
-                {c.text.split('치고싶어요')[1]}
-              </>
-            ) : c.text}
-          </Text>
+          <Text style={styles.commentText}>{c.content}</Text>
         </View>
       ))}
       <View style={styles.commentInput}>
         <TextInput
           style={styles.input}
-          placeholder="응원 메시지를 남겨주세요"
+          placeholder={currentUserId ? "응원 메시지를 남겨주세요" : "로그인 후 댓글을 작성할 수 있습니다"}
           value={comment}
           onChangeText={setComment}
+          editable={!!currentUserId}
         />
-        <TouchableOpacity onPress={handleSend} style={styles.sendBtn}>
-          <Send size={20} color="#9ca3af" />
+        <TouchableOpacity 
+          onPress={handleSend} 
+          style={styles.sendBtn}
+          disabled={loading || !currentUserId}
+        >
+          <Send size={20} color={currentUserId ? "#ea4c89" : "#9ca3af"} />
         </TouchableOpacity>
       </View>
     </View>
@@ -164,47 +195,126 @@ function CommentSection({ playerId }: { playerId: string }) {
 
 export default function PlayerDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const user = mockUsers.find(u => u.id === id);
+  const { user } = useAuth();
   
-  // 매치요청 카운트 상태
-  const [requestCount, setRequestCount] = useState(999);
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const [hasRequested, setHasRequested] = useState(false);
-  
-  // 더미 스탯 데이터
-  const playerStats = {
-    serve: 4.2,
-    return: 3.8,
-    forehand: 4.5,
-    backhand: 4.0,
-    volley: 3.5,
-    footwork: 4.8,
-    stamina: 4.3,
-    mental: 4.6,
-  };
+  const [requestLoading, setRequestLoading] = useState(false);
 
-  // 매치요청 버튼 핸들러
-  const handleMatchRequest = () => {
-    if (hasRequested) {
-      // 이미 요청한 경우 취소
-      setRequestCount(prev => prev - 1);
-      setHasRequested(false);
-      if (Platform.OS === 'web') {
-        window.alert('매치요청을 취소했습니다.');
-      }
-    } else {
-      // 새로 요청
-      setRequestCount(prev => prev + 1);
-      setHasRequested(true);
-      if (Platform.OS === 'web') {
-        window.alert('매치요청을 보냈습니다! 상대방이 매치를 열면 알림을 받게 됩니다.');
-      }
+  useEffect(() => {
+    if (id) {
+      fetchProfile();
+      checkMatchRequest();
+      incrementViewCount();
+    }
+  }, [id]);
+
+  const fetchProfile = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('player_profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+      setProfile(data);
+    } catch (error) {
+      console.error('프로필 조회 오류:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!user) {
+  const checkMatchRequest = async () => {
+    if (!user?.id) return;
+    
+    const { data } = await supabase
+      .from('player_match_requests')
+      .select('id')
+      .eq('player_profile_id', id)
+      .eq('requester_id', user.id)
+      .single();
+
+    setHasRequested(!!data);
+  };
+
+  const incrementViewCount = async () => {
+    await supabase.rpc('increment_player_view_count', { profile_id: id });
+  };
+
+  const handleMatchRequest = async () => {
+    if (!user?.id) {
+      if (Platform.OS === 'web') {
+        window.alert('로그인이 필요합니다.');
+      }
+      router.push('/auth/login');
+      return;
+    }
+
+    setRequestLoading(true);
+    try {
+      if (hasRequested) {
+        // 요청 취소
+        await supabase
+          .from('player_match_requests')
+          .delete()
+          .eq('player_profile_id', id)
+          .eq('requester_id', user.id);
+
+        setHasRequested(false);
+        setProfile((prev: any) => ({
+          ...prev,
+          match_request_count: Math.max(0, (prev?.match_request_count || 1) - 1)
+        }));
+
+        if (Platform.OS === 'web') {
+          window.alert('매치요청을 취소했습니다.');
+        }
+      } else {
+        // 새 요청
+        await supabase
+          .from('player_match_requests')
+          .insert({
+            player_profile_id: id,
+            requester_id: user.id,
+          });
+
+        setHasRequested(true);
+        setProfile((prev: any) => ({
+          ...prev,
+          match_request_count: (prev?.match_request_count || 0) + 1
+        }));
+
+        if (Platform.OS === 'web') {
+          window.alert('매치요청을 보냈습니다! 상대방이 매치를 열면 알림을 받게 됩니다.');
+        }
+      }
+    } catch (error: any) {
+      console.error('매치 요청 오류:', error);
+      if (Platform.OS === 'web') {
+        window.alert(`오류: ${error.message}`);
+      }
+    } finally {
+      setRequestLoading(false);
+    }
+  };
+
+  const isOwnProfile = user?.id === profile?.user_id;
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#ea4c89" />
+      </SafeAreaView>
+    );
+  }
+
+  if (!profile) {
     return (
       <SafeAreaView style={styles.errorContainer}>
-        <Text>플레이어를 찾을 수 없습니다</Text>
+        <Text style={styles.errorText}>플레이어를 찾을 수 없습니다</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={styles.backLink}>돌아가기</Text>
         </TouchableOpacity>
@@ -212,46 +322,72 @@ export default function PlayerDetailScreen() {
     );
   }
 
+  const playerStats = {
+    serve: profile.skill_serve || 3,
+    return: profile.skill_return || 3,
+    forehand: profile.skill_forehand || 3,
+    backhand: profile.skill_backhand || 3,
+    volley: profile.skill_volley || 3,
+    footwork: profile.skill_footwork || 3,
+    stamina: profile.skill_stamina || 3,
+    mental: profile.skill_mental || 3,
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* 뒤로가기 */}
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={24} color="#374151" />
-        </TouchableOpacity>
+        {/* 헤더 */}
+        <View style={styles.headerRow}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          {isOwnProfile && (
+            <TouchableOpacity 
+              onPress={() => router.push('/player/create')}
+              style={styles.editBtn}
+            >
+              <Edit2 size={20} color="#6b7280" />
+            </TouchableOpacity>
+          )}
+        </View>
 
         {/* 매치요청 버튼 */}
-        <View style={styles.requestBtnContainer}>
-          <TouchableOpacity 
-            style={[
-              styles.requestBtn,
-              hasRequested && styles.requestBtnActive
-            ]}
-            onPress={handleMatchRequest}
-          >
-            <Text style={[
-              styles.requestBtnText,
-              hasRequested && styles.requestBtnTextActive
-            ]}>
-              매치요청 {requestCount}
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {!isOwnProfile && (
+          <View style={styles.requestBtnContainer}>
+            <TouchableOpacity 
+              style={[
+                styles.requestBtn,
+                hasRequested && styles.requestBtnActive
+              ]}
+              onPress={handleMatchRequest}
+              disabled={requestLoading}
+            >
+              {requestLoading ? (
+                <ActivityIndicator size="small" color={hasRequested ? "#fff" : "#ea4c89"} />
+              ) : (
+                <Text style={[
+                  styles.requestBtnText,
+                  hasRequested && styles.requestBtnTextActive
+                ]}>
+                  매치요청 {profile.match_request_count || 0}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* 프로필 섹션 */}
         <View style={styles.profileSection}>
-          {user.profileImage ? (
-            <Image source={{ uri: user.profileImage }} style={styles.profileImage} />
+          {profile.profile_image ? (
+            <Image source={{ uri: profile.profile_image }} style={styles.profileImage} />
           ) : (
             <View style={[styles.profileImage, styles.profilePlaceholder]} />
           )}
           <View style={styles.nameRow}>
-            <Text style={styles.name}>{user.name}</Text>
+            <Text style={styles.name}>{profile.nickname}</Text>
             <CheckCircle size={18} color="#22c55e" />
-            <View style={styles.ntrpBadge}>
-              <Text style={styles.ntrpText}>🎾</Text>
-            </View>
           </View>
+          <Text style={styles.viewCount}>조회수 {profile.view_count || 0}</Text>
         </View>
 
         {/* 레이더 차트 */}
@@ -262,39 +398,65 @@ export default function PlayerDetailScreen() {
           <Text style={styles.sectionTitle}>주요 입상&경력</Text>
           <View style={styles.careerBox}>
             <Text style={styles.careerText}>
-              {user.careerType === '선수' 
-                ? '• 전국체전 우승\n• 실업팀 5년 경력' 
-                : '등록된 경력이 없습니다'}
+              {profile.career || '등록된 경력이 없습니다'}
             </Text>
           </View>
         </View>
 
+        {/* 자기소개 */}
+        {profile.introduction && (
+          <View style={styles.careerSection}>
+            <Text style={styles.sectionTitle}>자기소개</Text>
+            <View style={styles.careerBox}>
+              <Text style={styles.careerText}>{profile.introduction}</Text>
+            </View>
+          </View>
+        )}
+
         {/* 소통 (댓글) */}
-        <CommentSection playerId={id || ''} />
+        <CommentSection profileId={id || ''} currentUserId={user?.id} />
       </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   errorContainer: { 
     flex: 1, 
     justifyContent: 'center', 
     alignItems: 'center' 
   },
+  errorText: {
+    fontSize: 16,
+    color: '#6b7280',
+  },
   backLink: { 
     color: '#ea4c89', 
-    marginTop: 10 
+    marginTop: 10,
+    fontSize: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   backBtn: { 
-    position: 'absolute', 
-    top: 16, 
-    left: 16, 
-    zIndex: 10 
+    padding: 4,
+  },
+  editBtn: {
+    padding: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
   },
   requestBtnContainer: { 
     alignItems: 'center', 
-    marginTop: 50, 
     marginBottom: 16 
   },
   requestBtn: {
@@ -304,6 +466,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 10,
     borderRadius: 20,
+    minWidth: 140,
+    alignItems: 'center',
   },
   requestBtnActive: {
     backgroundColor: '#ea4c89',
@@ -339,16 +503,10 @@ const styles = StyleSheet.create({
     fontWeight: '800', 
     color: '#111827' 
   },
-  ntrpBadge: {
-    backgroundColor: '#ec4899',
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  ntrpText: { 
-    fontSize: 12 
+  viewCount: {
+    fontSize: 13,
+    color: '#9ca3af',
+    marginTop: 4,
   },
   chartContainer: { 
     paddingHorizontal: 40, 
@@ -361,7 +519,7 @@ const styles = StyleSheet.create({
   },
   careerSection: { 
     paddingHorizontal: 20, 
-    marginBottom: 30 
+    marginBottom: 24 
   },
   sectionTitle: { 
     fontSize: 16, 
@@ -373,7 +531,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     borderRadius: 12,
     padding: 16,
-    minHeight: 80,
+    minHeight: 60,
   },
   careerText: { 
     fontSize: 14, 
@@ -407,10 +565,6 @@ const styles = StyleSheet.create({
     fontSize: 14, 
     color: '#374151', 
     flex: 1 
-  },
-  highlight: { 
-    color: '#ea4c89', 
-    textDecorationLine: 'underline' 
   },
   commentInput: {
     flexDirection: 'row',

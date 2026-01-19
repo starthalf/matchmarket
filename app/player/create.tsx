@@ -84,7 +84,7 @@ export default function CreatePlayerPageScreen() {
 const updateSkill = (key: string, delta: number) => {
   setSkills(prev => ({
     ...prev,
-    [key]: Math.round(Math.max(1, Math.min(5, prev[key] + delta)) * 10) / 10
+    [key]: Math.round(Math.max(1, Math.min(6, prev[key] + delta)) * 10) / 10
   }));
 };
 

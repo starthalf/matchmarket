@@ -81,12 +81,12 @@ export default function CreatePlayerPageScreen() {
     }
   };
 
-  const updateSkill = (key: string, delta: number) => {
-    setSkills(prev => ({
-      ...prev,
-      [key]: Math.max(1, Math.min(5, prev[key] + delta))
-    }));
-  };
+const updateSkill = (key: string, delta: number) => {
+  setSkills(prev => ({
+    ...prev,
+    [key]: Math.round(Math.max(1, Math.min(5, prev[key] + delta)) * 10) / 10
+  }));
+};
 
   const handleSubmit = async () => {
     if (!user) {

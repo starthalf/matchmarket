@@ -270,18 +270,35 @@ const handleImagePick = async () => {
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {/* 프로필 이미지 */}
-        <View style={styles.imageSection}>
-          <TouchableOpacity style={styles.imagePickerBtn} onPress={handleImagePick}>
-            {profileImage ? (
-              <Image source={{ uri: profileImage }} style={styles.profileImage} />
-            ) : (
-              <View style={styles.imagePlaceholder}>
-                <Camera size={32} color="#9ca3af" />
-                <Text style={styles.imagePlaceholderText}>사진 추가</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
+       <View style={styles.imageSection}>
+  <TouchableOpacity 
+    style={styles.imagePickerBtn} 
+    onPress={handleImagePick}
+    disabled={imageUploading}
+  >
+    {imageUploading ? (
+      <View style={styles.imagePlaceholder}>
+        <ActivityIndicator size="large" color="#ea4c89" />
+        <Text style={styles.imagePlaceholderText}>업로드 중...</Text>
+      </View>
+    ) : profileImage ? (
+      <Image source={{ uri: profileImage }} style={styles.profileImage} />
+    ) : (
+      <View style={styles.imagePlaceholder}>
+        <Camera size={32} color="#9ca3af" />
+        <Text style={styles.imagePlaceholderText}>사진 추가</Text>
+      </View>
+    )}
+  </TouchableOpacity>
+  {profileImage && (
+    <TouchableOpacity 
+      style={styles.changeImageBtn}
+      onPress={handleImagePick}
+    >
+      <Text style={styles.changeImageText}>사진 변경</Text>
+    </TouchableOpacity>
+  )}
+</View>
 
         {/* 닉네임 */}
         <View style={styles.inputSection}>

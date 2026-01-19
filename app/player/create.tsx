@@ -159,14 +159,75 @@ const updateSkill = (key: string, delta: number) => {
     }
   };
 
-  const handleImagePick = () => {
-    if (Platform.OS === 'web') {
-      const url = window.prompt('프로필 이미지 URL을 입력하세요');
-      if (url) {
-        setProfileImage(url);
+const [imageUploading, setImageUploading] = useState(false);
+
+const handleImagePick = async () => {
+  try {
+    // 갤러리 권한 요청
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    
+    if (!permissionResult.granted) {
+      if (Platform.OS === 'web') {
+        window.alert('갤러리 접근 권한이 필요합니다.');
       }
+      return;
     }
-  };
+
+    // 이미지 선택
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled) return;
+
+    const imageUri = result.assets[0].uri;
+    setImageUploading(true);
+
+    // 이미지 업로드
+    const fileName = `${user?.id}/${Date.now()}.jpg`;
+    
+    // 웹과 네이티브 분기 처리
+    let uploadData;
+    if (Platform.OS === 'web') {
+      // 웹: fetch로 blob 변환
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      uploadData = blob;
+    } else {
+      // 네이티브: base64로 변환
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      uploadData = blob;
+    }
+
+    const { data, error } = await supabase.storage
+      .from('player-profiles')
+      .upload(fileName, uploadData, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (error) throw error;
+
+    // 공개 URL 가져오기
+    const { data: urlData } = supabase.storage
+      .from('player-profiles')
+      .getPublicUrl(fileName);
+
+    setProfileImage(urlData.publicUrl);
+
+  } catch (error: any) {
+    console.error('이미지 업로드 오류:', error);
+    if (Platform.OS === 'web') {
+      window.alert(`이미지 업로드 실패: ${error.message}`);
+    }
+  } finally {
+    setImageUploading(false);
+  }
+};
 
   if (!user) {
     return (

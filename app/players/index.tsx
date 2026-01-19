@@ -146,8 +146,8 @@ export default function PlayersListScreen() {
         ) : (
           <>
             {renderSection('요즘 핫한 테니스 플레이어', hotPlayers)}
-            {renderSection('새로 등록된 플레이어', proPlayers)}
-            {renderSection('인기 플레이어', topPlayers)}
+            {renderSection('선출의 차원이 다른 테니스', proPlayers)}
+            {renderSection('전국구 무림 고수', topPlayers)}
           </>
         )}
         <View style={{ height: 100 }} />

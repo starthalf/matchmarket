@@ -237,7 +237,7 @@ const updateSkill = (key: string, delta: number) => {
         {/* 스킬 점수 */}
         <View style={styles.inputSection}>
           <Text style={styles.label}>나의 테니스 Index</Text>
-          <Text style={styles.labelSub}>각 항목을 1~5점으로 평가해주세요</Text>
+          <Text style={styles.labelSub}>각 항목을 1~6점으로 평가해주세요</Text>
           
           <View style={styles.skillsContainer}>
             {SKILL_KEYS.map((key, index) => (

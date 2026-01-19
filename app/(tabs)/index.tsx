@@ -15,6 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, Shield, Database, User, LogIn, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
+import { PlayerCarousel } from '../../components/PlayerCarousel'; // 🔥 추가됨
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
 import { useMatches } from '../../contexts/MatchContext';
@@ -28,25 +29,22 @@ type TimeFilter = 'today' | null;
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
-  const { isAdmin } = useAdmin(); // adminLogin 제거
+  const { isAdmin } = useAdmin();
   const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
   
-  // ✅ 개발 환경 확인 (데모 컨트롤용 - 필요 없다면 false로 고정하거나 삭제 가능)
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
 
-  // 그룹별로 필터 분리
   const [matchTypeFilter, setMatchTypeFilter] = useState<MatchTypeFilter>(null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   const [locationFilter, setLocationFilter] = useState<string>('');
 
-  // 스크롤 감지 & 모달 상태
   const [showSortButton, setShowSortButton] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -95,19 +93,16 @@ export default function HomeScreen() {
     }
   };
 
-  // 스크롤 핸들러
   const handleScroll = (event: any) => {
     const offsetY = event.nativeEvent.contentOffset.y;
     setShowSortButton(offsetY > 50);
   };
 
-  // Sort 선택 핸들러
   const handleSortSelect = (sort: 'popular' | 'time' | 'ntrp') => {
     setSortBy(sort);
     setShowSortModal(false);
   };
 
-  // Pull to Refresh 핸들러
   const onRefresh = async () => {
     setRefreshing(true);
     await refreshMatches();
@@ -181,7 +176,7 @@ export default function HomeScreen() {
         </View>
       </View>
     
-      {/* 개발 모드 데모 컨트롤 (관리자 로그인 버튼 삭제됨) */}
+      {/* 개발 모드 데모 컨트롤 */}
       {isDevelopment && (
         <View style={styles.demoControls}>
           <Text style={styles.demoTitle}>
@@ -208,7 +203,6 @@ export default function HomeScreen() {
                 >
                   <Text style={styles.demoButtonText}>midnight.rider</Text>
                 </TouchableOpacity>
-                {/* 🔥 삭제됨: 관리자 로그인 버튼 */}
               </>
             ) : (
               <TouchableOpacity 
@@ -222,12 +216,16 @@ export default function HomeScreen() {
         </View>
       )}
 
-     {/* 🔥 삭제됨: previewAdminSection (쉴드 아이콘과 관리자 로그인 텍스트가 있던 영역) */}
+      {/* 🔥 [추가됨] 로고와 검색창 사이에 플레이어 슬라이더 배치 */}
+      <View style={styles.carouselSection}>
+        <Text style={styles.sectionTitle}>The Named 🔥</Text>
+        <PlayerCarousel />
+      </View>
 
-      {/* 검색창 + Sort 버튼 */}
+      {/* 🔥 [수정됨] 검색창 + Sort 버튼 (크기 축소) */}
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Search size={20} color="#9ca3af" />
+          <Search size={18} color="#9ca3af" /> {/* 아이콘 20 -> 18 */}
           <TextInput
             style={styles.searchInput}
             placeholder="매치 검색"
@@ -242,11 +240,11 @@ export default function HomeScreen() {
             style={styles.sortIconButton}
             onPress={() => setShowSortModal(true)}
           >
-            <ArrowUpDown size={18} color="#ffffff" />
+            <ArrowUpDown size={16} color="#ffffff" />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={styles.filterIconButton}>
-            <Filter size={20} color="#6b7280" />
+            <Filter size={18} color="#6b7280" /> {/* 아이콘 20 -> 18 */}
           </TouchableOpacity>
         )}
       </View>
@@ -568,7 +566,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#fef2f2',
   },
-  // 🔥 삭제됨: previewAdminSection 스타일들 (필요없으므로 코드가 깔끔해짐)
   demoControls: {
     backgroundColor: '#f3f4f6',
     paddingVertical: 12,
@@ -599,14 +596,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#374151',
   },
-  adminDemoButton: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#dc2626',
-  },
-  adminDemoButtonText: {
-    color: '#dc2626',
-    fontWeight: '600',
-  },
   logoutButton: {
     backgroundColor: '#fee2e2',
     borderColor: '#ef4444',
@@ -615,53 +604,61 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontWeight: '600',
   },
+  // 🔥 [신규] 캐러셀 섹션
+  carouselSection: {
+    paddingTop: 12,
+    backgroundColor: '#f8f7f4',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    paddingHorizontal: 20,
+    marginBottom: 4,
+  },
+  // 🔥 [수정] 검색창 여백 및 높이 축소
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 9,
+    paddingVertical: 8, // 9 -> 8
     backgroundColor: '#f8f7f4',
-    gap: 12,
+    gap: 8, // 12 -> 8
   },
   searchInputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    borderRadius: 12, // 16 -> 12
+    paddingHorizontal: 12, // 16 -> 12
+    paddingVertical: 8, // 10 -> 8
+    gap: 6, // 8 -> 6
     borderWidth: 0,
     shadowColor: '#0d0c22',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 14, // 16 -> 14
     color: '#0d0c22',
+    height: 20, // 높이 명시
   },
   filterIconButton: {
-    padding: 10,
+    padding: 8, // 10 -> 8
     borderRadius: 10,
     backgroundColor: '#ffffff',
     shadowColor: '#0d0c22',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
   },
   sortIconButton: {
-    padding: 10,
+    padding: 8, // 10 -> 8
     borderRadius: 10,
     backgroundColor: '#0d0c22',
   },

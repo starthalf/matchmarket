@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,33 +8,64 @@ import {
   Image,
   SafeAreaView,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { User, ArrowLeft } from 'lucide-react-native';
-import { mockUsers } from '../../data/mockData';
+import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
 const ITEM_SIZE = (width - 60) / 4;
 
 export default function PlayersListScreen() {
   const router = useRouter();
-  
-  // 카테고리별 플레이어 필터링
-  const hotPlayers = mockUsers
-    .filter(u => u.viewCount > 50)
-    .sort((a, b) => b.viewCount - a.viewCount)
-    .slice(0, 8);
-  
-  const proPlayers = mockUsers
-    .filter(u => u.careerType === '선수')
-    .slice(0, 8);
-  
-  const topPlayers = mockUsers
-    .filter(u => u.ntrp >= 4.5)
-    .slice(0, 8);
+  const [loading, setLoading] = useState(true);
+  const [hotPlayers, setHotPlayers] = useState<any[]>([]);
+  const [proPlayers, setProPlayers] = useState<any[]>([]);
+  const [topPlayers, setTopPlayers] = useState<any[]>([]);
 
-  const renderPlayerItem = (player: typeof mockUsers[0]) => {
-    const isHot = player.viewCount > 50;
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      // 핫한 플레이어 (조회수/요청 많은 순)
+      const { data: hot } = await supabase
+        .from('player_profiles')
+        .select('*')
+        .eq('is_published', true)
+        .order('match_request_count', { ascending: false })
+        .limit(8);
+
+      // 최근 가입 플레이어
+      const { data: recent } = await supabase
+        .from('player_profiles')
+        .select('*')
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .limit(8);
+
+      // 고수 플레이어 (평균 스킬 높은 순)
+      const { data: top } = await supabase
+        .from('player_profiles')
+        .select('*')
+        .eq('is_published', true)
+        .order('view_count', { ascending: false })
+        .limit(8);
+
+      setHotPlayers(hot || []);
+      setProPlayers(recent || []);
+      setTopPlayers(top || []);
+    } catch (error) {
+      console.error('플레이어 목록 조회 오류:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderPlayerItem = (player: any) => {
+    const isHot = player.match_request_count > 10;
     
     return (
       <TouchableOpacity
@@ -47,28 +78,42 @@ export default function PlayersListScreen() {
             <Text style={styles.hotText}>Hot</Text>
           </View>
         )}
-        {player.profileImage ? (
-          <Image source={{ uri: player.profileImage }} style={styles.avatar} />
+        {player.profile_image ? (
+          <Image source={{ uri: player.profile_image }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
             <User size={24} color="#9ca3af" />
           </View>
         )}
         <Text style={styles.playerName} numberOfLines={1}>
-          {player.name}
+          {player.nickname}
         </Text>
       </TouchableOpacity>
     );
   };
 
-  const renderSection = (title: string, players: typeof mockUsers) => (
-    <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <View style={styles.grid}>
-        {players.map(renderPlayerItem)}
+  const renderSection = (title: string, players: any[]) => {
+    if (players.length === 0) return null;
+    
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        <View style={styles.grid}>
+          {players.map(renderPlayerItem)}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#ea4c89" />
+      </SafeAreaView>
+    );
+  }
+
+  const hasNoPlayers = hotPlayers.length === 0 && proPlayers.length === 0 && topPlayers.length === 0;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -93,9 +138,18 @@ export default function PlayersListScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {renderSection('요즘 핫한 테니스 플레이어', hotPlayers)}
-        {renderSection('선출의 차원이 다른 테니스', proPlayers)}
-        {renderSection('전국구 무림 고수', topPlayers)}
+        {hasNoPlayers ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>아직 등록된 플레이어가 없습니다</Text>
+            <Text style={styles.emptySubText}>첫 번째 스타가 되어보세요!</Text>
+          </View>
+        ) : (
+          <>
+            {renderSection('요즘 핫한 테니스 플레이어', hotPlayers)}
+            {renderSection('새로 등록된 플레이어', proPlayers)}
+            {renderSection('인기 플레이어', topPlayers)}
+          </>
+        )}
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -114,6 +168,12 @@ const styles = StyleSheet.create({
   container: { 
     flex: 1, 
     backgroundColor: '#fff' 
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#fff',
   },
   header: { 
     flexDirection: 'row', 
@@ -198,6 +258,21 @@ const styles = StyleSheet.create({
     fontSize: 10, 
     color: '#ea4c89', 
     fontWeight: '700' 
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: '#9ca3af',
   },
   fab: {
     position: 'absolute',

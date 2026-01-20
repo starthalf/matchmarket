@@ -57,87 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const mounted = useRef(false);
 
-  // 앱 시작 시 저장된 로그인 정보 확인
-  useEffect(() => {
-    mounted.current = true;
-    checkStoredAuth();
-    return () => {
-      mounted.current = false;
-    };
-  }, []);
-
-  const checkStoredAuth = async () => {
-  console.log('=== 인증 체크 시작 ===');
-  
-  // 최대 5초 타임아웃
-  const timeout = setTimeout(() => {
-    if (mounted.current && isLoading) {
-      console.warn('=== 타임아웃: 강제 로딩 해제 ===');
-      setIsLoading(false);
-    }
-  }, 5000);
-  
-  try {
-    if (!supabase) {
-      console.warn('Supabase가 설정되지 않음.');
-      let storedUserId: string | null = null;
-      
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined') {
-          storedUserId = localStorage.getItem('userId');
-        }
-      } else {
-        storedUserId = await AsyncStorage.getItem('userId');
-      }
-      
-      if (storedUserId) {
-        const foundUser = mockUsers.find(u => u.id === storedUserId);
-        if (foundUser && mounted.current) {
-          setUser(foundUser);
-        }
-      }
-      return;
-    }
-
-    const { data: { session }, error } = await supabase.auth.getSession();
-    
-    if (error) {
-      console.error('세션 확인 오류:', error);
-      return;
-    }
-
-    if (session?.user) {
-      const { data: userProfile, error: profileError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
-
-      if (!profileError && userProfile && mounted.current) {
-        const user = convertSupabaseUserToUser(userProfile);
-        setUser(user);
-        console.log('=== 사용자 로드 완료 ===', user.name);
-      }
-    } else {
-      console.log('=== 세션 없음 ===');
-    }
-  } catch (error) {
-    console.error('인증 체크 실패:', error);
-  } finally {
-    clearTimeout(timeout);
-    if (mounted.current) {
-      console.log('=== 로딩 종료 ===');
-      setIsLoading(false);
-    }
-  }
-};
-
   // Supabase 사용자를 앱 User 타입으로 변환
   const convertSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
     return {
       id: supabaseUser.id,
       name: supabaseUser.name,
-      email: '', // Supabase에서는 auth.users.email을 별도로 가져와야 함
+      email: '',
       gender: supabaseUser.gender,
       ageGroup: supabaseUser.age_group,
       ntrp: supabaseUser.ntrp,
@@ -159,6 +84,108 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       accountHolder: supabaseUser.account_holder,
     };
   };
+
+  // 사용자 정보 DB에서 가져오는 함수
+  const fetchAndSetUser = async (userId: string) => {
+    try {
+      if (!supabase) return;
+      
+      const { data: userProfile, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', userId)
+        .single();
+
+      if (error) throw error;
+      if (userProfile && mounted.current) {
+        setUser(convertSupabaseUserToUser(userProfile));
+        console.log('=== 사용자 로드 완료 ===', userProfile.name);
+      }
+    } catch (e) {
+      console.error('사용자 정보 로드 실패:', e);
+    }
+  };
+
+  // 앱 시작 시 인증 초기화
+  useEffect(() => {
+    mounted.current = true;
+    
+    const initializeAuth = async () => {
+      console.log('=== 인증 초기화 시작 ===');
+      
+      try {
+        if (!supabase) {
+          console.warn('Supabase가 설정되지 않음. Mock 데이터 사용.');
+          // Mock 데이터 폴백
+          let storedUserId: string | null = null;
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            storedUserId = localStorage.getItem('userId');
+          } else {
+            storedUserId = await AsyncStorage.getItem('userId');
+          }
+          if (storedUserId) {
+            const foundUser = mockUsers.find(u => u.id === storedUserId);
+            if (foundUser && mounted.current) {
+              setUser(foundUser);
+              console.log('=== Mock 사용자 로드 완료 ===', foundUser.name);
+            }
+          }
+          return;
+        }
+
+        const { data: { session }, error } = await supabase.auth.getSession();
+        console.log('=== 세션 체크 결과 ===', { hasSession: !!session, error });
+        
+        if (error) {
+          console.error('세션 확인 오류:', error);
+          return;
+        }
+
+        if (session?.user) {
+          await fetchAndSetUser(session.user.id);
+        } else {
+          console.log('=== 세션 없음 ===');
+        }
+      } catch (error) {
+        console.error('Auth 초기화 에러:', error);
+      } finally {
+        if (mounted.current) {
+          console.log('=== 로딩 종료 ===');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    initializeAuth();
+
+    // 실시간 인증 상태 변화 감지
+    let subscription: { unsubscribe: () => void } | null = null;
+    
+    if (supabase) {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log(`🔐 Auth 상태 변경: ${event}`);
+          
+          if (event === 'SIGNED_IN' && session?.user) {
+            await fetchAndSetUser(session.user.id);
+          } else if (event === 'SIGNED_OUT') {
+            if (mounted.current) setUser(null);
+          } else if (event === 'INITIAL_SESSION') {
+            // 초기 세션 로드 완료 시 로딩 해제 보장
+            if (mounted.current) setIsLoading(false);
+          }
+        }
+      );
+      subscription = data.subscription;
+    }
+
+    return () => {
+      mounted.current = false;
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
@@ -383,34 +410,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateCurrentUser(updatedUser);
     }
   };
-
-  // Supabase 인증 상태 변경 리스너
-  useEffect(() => {
-    if (!supabase) return;
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === 'SIGNED_IN' && session?.user) {
-          // 로그인 시 프로필 정보 가져오기
-          const { data: profileData } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id);
-
-          if (profileData && profileData.length > 0 && mounted.current) {
-            const user = convertSupabaseUserToUser(profileData[0]);
-            setUser(user);
-          }
-        } else if (event === 'SIGNED_OUT') {
-          if (mounted.current) {
-            setUser(null);
-          }
-        }
-      }
-    );
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   return (
     <AuthContext.Provider value={{ user, isLoading, login, signup, logout, updateUser }}>

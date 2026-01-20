@@ -57,68 +57,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const mounted = useRef(false);
 
-  // 앱 시작 시 저장된 로그인 정보 확인 (로직 개선됨)
-  useEffect(() => {
-    mounted.current = true;
-    
-    // 인증 초기화 프로세스
-    const initializeAuth = async () => {
-      try {
-        if (!supabase) {
-           // Supabase가 없는 경우 기존 로컬 스토리지 로직 유지
-           await checkMockAuth();
-           if(mounted.current) setIsLoading(false);
-           return;
-        }
-
-        // 1. 현재 세션 가져오기
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (session?.user) {
-          await fetchAndSetUser(session.user.id);
-        } else {
-          console.log('=== 세션 없음 ===');
-        }
-      } catch (error) {
-        console.error('인증 체크 실패:', error);
-      } finally {
-        // ✅ 성공하든 실패하든 로딩 상태 반드시 해제
-        if (mounted.current) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    initializeAuth();
-
-    // 2. 실시간 인증 상태 리스너 (로그인, 로그아웃, 토큰 갱신 감지)
-    const { data: { subscription } } = supabase?.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log(`🔐 Auth 상태 변경: ${event}`);
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          await fetchAndSetUser(session.user.id);
-        } else if (event === 'SIGNED_OUT') {
-          if (mounted.current) setUser(null);
-        } else if (event === 'INITIAL_SESSION') {
-          // 초기 세션 로드 완료 시에도 로딩 해제 보장
-          if (mounted.current) setIsLoading(false);
-        }
-      }
-    ) || { data: { subscription: { unsubscribe: () => {} } } };
-
-    return () => {
-      mounted.current = false;
-      subscription.unsubscribe();
-    };
-  }, []);
-
   // Supabase 사용자를 앱 User 타입으로 변환
   const convertSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
     return {
       id: supabaseUser.id,
       name: supabaseUser.name,
-      email: '', // Supabase에서는 auth.users.email을 별도로 가져와야 함 (여기서는 생략)
+      email: '',
       gender: supabaseUser.gender,
       ageGroup: supabaseUser.age_group,
       ntrp: supabaseUser.ntrp,
@@ -141,10 +85,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   };
 
-  // 사용자 프로필 정보 가져오기 (분리됨)
-  const fetchAndSetUser = async (userId: string) => {
+  // 사용자 프로필 정보 가져오기
+  const fetchAndSetUser = async (userId: string): Promise<boolean> => {
     try {
-      if (!supabase) return;
+      if (!supabase) return false;
 
       const { data: userProfile, error: profileError } = await supabase
         .from('users')
@@ -153,39 +97,113 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
 
       if (!profileError && userProfile && mounted.current) {
-        const user = convertSupabaseUserToUser(userProfile);
-        setUser(user);
-        console.log('=== 사용자 로드 완료 ===', user.name);
+        const convertedUser = convertSupabaseUserToUser(userProfile);
+        setUser(convertedUser);
+        console.log('✅ 사용자 로드 완료:', convertedUser.name);
+        return true;
       }
+      
+      if (profileError) {
+        console.error('❌ 사용자 프로필 조회 실패:', profileError);
+      }
+      return false;
     } catch (e) {
-      console.error('사용자 데이터 로드 중 오류:', e);
+      console.error('❌ 사용자 데이터 로드 중 오류:', e);
+      return false;
     }
   };
 
   // Supabase가 없을 때(Mock 모드)를 위한 기존 로직
   const checkMockAuth = async () => {
-      let storedUserId: string | null = null;
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined') {
-          storedUserId = localStorage.getItem('userId');
-        }
-      } else {
-        storedUserId = await AsyncStorage.getItem('userId');
+    let storedUserId: string | null = null;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') {
+        storedUserId = localStorage.getItem('userId');
       }
-      
-      if (storedUserId) {
-        const foundUser = mockUsers.find(u => u.id === storedUserId);
-        if (foundUser && mounted.current) {
-          setUser(foundUser);
-        }
+    } else {
+      storedUserId = await AsyncStorage.getItem('userId');
+    }
+    
+    if (storedUserId) {
+      const foundUser = mockUsers.find(u => u.id === storedUserId);
+      if (foundUser && mounted.current) {
+        setUser(foundUser);
       }
+    }
   };
+
+  // 앱 시작 시 저장된 로그인 정보 확인
+  useEffect(() => {
+    mounted.current = true;
+    let subscription: { unsubscribe: () => void } = { unsubscribe: () => {} };
+    
+    const initializeAuth = async () => {
+      console.log('=== 인증 초기화 시작 ===');
+      
+      try {
+        if (!supabase) {
+          console.log('⚠️ Supabase 없음, Mock 모드');
+          await checkMockAuth();
+          if (mounted.current) setIsLoading(false);
+          return;
+        }
+
+        // 현재 세션 가져오기
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        console.log('📌 세션 체크 결과:', session ? '세션 있음' : '세션 없음', error ? `에러: ${error.message}` : '');
+        
+        if (session?.user) {
+          console.log('📌 기존 세션 발견, 사용자 로드 중...');
+          await fetchAndSetUser(session.user.id);
+        }
+        
+      } catch (error) {
+        console.error('❌ 인증 초기화 실패:', error);
+      } finally {
+        // 무조건 로딩 해제
+        if (mounted.current) {
+          console.log('✅ 인증 초기화 완료, 로딩 해제');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    // 실시간 인증 상태 리스너 설정
+    if (supabase) {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log(`🔐 Auth 상태 변경: ${event}`);
+          
+          if (event === 'SIGNED_IN' && session?.user) {
+            await fetchAndSetUser(session.user.id);
+            if (mounted.current) setIsLoading(false);
+          } else if (event === 'SIGNED_OUT') {
+            if (mounted.current) {
+              setUser(null);
+              setIsLoading(false);
+            }
+          } else if (event === 'TOKEN_REFRESHED') {
+            console.log('🔄 토큰 갱신됨');
+          }
+        }
+      );
+      subscription = data.subscription;
+    }
+
+    // 초기화 실행
+    initializeAuth();
+
+    return () => {
+      mounted.current = false;
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
     try {
       if (!supabase) {
         console.warn('Supabase가 설정되지 않음. 모의 데이터로 로그인 시도.');
-        // Fallback to mock data
         const foundUser = mockUsers.find(u => u.email === email);
         
         if (!foundUser) {
@@ -193,14 +211,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         if (password !== '1234' && password !== 'demo123') {
-           return { success: false, error: '비밀번호가 올바르지 않습니다. (데모: demo123)' };
+          return { success: false, error: '비밀번호가 올바르지 않습니다. (데모: demo123)' };
         }
 
         if (mounted.current) {
           setUser(foundUser);
         }
         
-        // 플랫폼별 저장
         if (Platform.OS === 'web') {
           if (typeof window !== 'undefined') {
             localStorage.setItem('userId', foundUser.id);
@@ -237,7 +254,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (userData: SignupData): Promise<{ success: boolean; error?: string }> => {
     try {
       if (!supabase) {
-        // Fallback to mock data
         const existingUser = mockUsers.find(u => u.email === userData.email);
         if (existingUser) {
           return { success: false, error: '이미 존재하는 이메일입니다.' };
@@ -340,7 +356,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
       
-      // 플랫폼별 삭제 (Mock 데이터용 클린업)
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('userId');

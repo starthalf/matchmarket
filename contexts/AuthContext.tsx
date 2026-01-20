@@ -392,7 +392,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       // 플랫폼별 삭제
-      if (Platform.OS === 'web') {
+      if (Platform.OS === 'web') { 
         if (typeof window !== 'undefined') {
           localStorage.removeItem('userId');
         }

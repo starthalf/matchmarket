@@ -56,6 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const mounted = useRef(false);
+  const isInitialized = useRef(false);  // ✅ 초기화 완료 플래그
 
   // Supabase 사용자를 앱 User 타입으로 변환
   const convertSupabaseUserToUser = (supabaseUser: SupabaseUser): User => {
@@ -90,15 +91,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!supabase) return;
       
+      console.log('=== 사용자 정보 로드 시작 ===', userId);
+      
       const { data: userProfile, error } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('사용자 프로필 조회 오류:', error);
+        throw error;
+      }
+      
       if (userProfile && mounted.current) {
-        setUser(convertSupabaseUserToUser(userProfile));
+        const convertedUser = convertSupabaseUserToUser(userProfile);
+        setUser(convertedUser);
         console.log('=== 사용자 로드 완료 ===', userProfile.name);
       }
     } catch (e) {
@@ -109,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 앱 시작 시 인증 초기화
   useEffect(() => {
     mounted.current = true;
+    isInitialized.current = false;
     
     const initializeAuth = async () => {
       console.log('=== 인증 초기화 시작 ===');
@@ -116,7 +125,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         if (!supabase) {
           console.warn('Supabase가 설정되지 않음. Mock 데이터 사용.');
-          // Mock 데이터 폴백
           let storedUserId: string | null = null;
           if (Platform.OS === 'web' && typeof window !== 'undefined') {
             storedUserId = localStorage.getItem('userId');
@@ -149,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error('Auth 초기화 에러:', error);
       } finally {
+        isInitialized.current = true;  // ✅ 초기화 완료
         if (mounted.current) {
           console.log('=== 로딩 종료 ===');
           setIsLoading(false);
@@ -164,15 +173,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (supabase) {
       const { data } = supabase.auth.onAuthStateChange(
         async (event, session) => {
-          console.log(`🔐 Auth 상태 변경: ${event}`);
+          console.log(`🔐 Auth 상태 변경: ${event}, 초기화완료: ${isInitialized.current}`);
+          
+          // ✅ 초기화 중에는 이벤트 무시 (initializeAuth에서 처리)
+          if (!isInitialized.current) {
+            console.log('=== 초기화 중이므로 이벤트 무시 ===');
+            return;
+          }
           
           if (event === 'SIGNED_IN' && session?.user) {
             await fetchAndSetUser(session.user.id);
-          } else if (event === 'SIGNED_OUT') {
-            if (mounted.current) setUser(null);
-          } else if (event === 'INITIAL_SESSION') {
-            // 초기 세션 로드 완료 시 로딩 해제 보장
             if (mounted.current) setIsLoading(false);
+          } else if (event === 'SIGNED_OUT') {
+            if (mounted.current) {
+              setUser(null);
+              setIsLoading(false);
+            }
+          } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+            await fetchAndSetUser(session.user.id);
           }
         }
       );
@@ -191,24 +209,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (!supabase) {
         console.warn('Supabase가 설정되지 않음. 모의 데이터로 로그인 시도.');
-        // Fallback to mock data
         const foundUser = mockUsers.find(u => u.email === email);
         
         if (!foundUser) {
           return { success: false, error: '존재하지 않는 계정입니다.' };
         }
 
-        if (password !== '1234') {
-          if (password !== 'demo123') {
-            return { success: false, error: '비밀번호가 올바르지 않습니다. (데모: demo123)' };
-          }
+        if (password !== '1234' && password !== 'demo123') {
+          return { success: false, error: '비밀번호가 올바르지 않습니다. (데모: demo123)' };
         }
 
         if (mounted.current) {
           setUser(foundUser);
         }
         
-        // 플랫폼별 저장
         if (Platform.OS === 'web') {
           if (typeof window !== 'undefined') {
             localStorage.setItem('userId', foundUser.id);
@@ -220,7 +234,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
 
-      // Supabase 인증 로그인
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -231,7 +244,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.user) {
-        // 사용자 프로필 정보 가져오기
         const { data: profileData, error: profileError } = await supabase
           .from('users')
           .select('*')
@@ -263,7 +275,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signup = async (userData: SignupData): Promise<{ success: boolean; error?: string }> => {
     try {
       if (!supabase) {
-        // Fallback to mock data
         const existingUser = mockUsers.find(u => u.email === userData.email);
         if (existingUser) {
           return { success: false, error: '이미 존재하는 이메일입니다.' };
@@ -307,7 +318,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
 
-      // Supabase 인증 회원가입
       const { data, error } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
@@ -321,7 +331,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: '사용자 생성에 실패했습니다.' };
       }
 
-      // 사용자 프로필 정보를 users 테이블에 저장
       const { error: insertError } = await supabase
         .from('users')
         .insert({
@@ -347,7 +356,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: '프로필 저장에 실패했습니다.' };
       }
 
-      // 사용자 객체 생성 및 설정
       const newUser: User = {
         id: data.user.id,
         name: userData.name,
@@ -391,7 +399,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
       }
       
-      // 플랫폼별 삭제
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('userId');

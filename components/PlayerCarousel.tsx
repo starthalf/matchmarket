@@ -101,7 +101,7 @@ export function PlayerCarousel() {
       <Text style={styles.hotLabel}>Hot</Text>
       
       {/* 썸네일 리스트 */}
-      <FlatList
+<FlatList
         ref={flatListRef}
         data={players}
         renderItem={renderItem}
@@ -110,6 +110,19 @@ export function PlayerCarousel() {
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         scrollEnabled={false}
+        getItemLayout={(data, index) => ({
+          length: AVATAR_SIZE + 10,  // 아바타 크기 + gap
+          offset: (AVATAR_SIZE + 10) * index,
+          index,
+        })}
+        onScrollToIndexFailed={(info) => {
+          setTimeout(() => {
+            flatListRef.current?.scrollToIndex({
+              index: info.index,
+              animated: true,
+            });
+          }, 500);
+        }}
       />
     </TouchableOpacity>
   );

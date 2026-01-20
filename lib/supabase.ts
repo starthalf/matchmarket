@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 하드코딩된 Supabase 설정 (환경변수 시스템 문제로 인해)
 const supabaseUrl = 'https://xroiblqjsxxoewfyrzjy.supabase.co';
@@ -12,15 +13,38 @@ console.log('🔧 DEBUG: 하드코딩된 설정 사용:', {
   serviceKey: supabaseServiceKey ? `${supabaseServiceKey.substring(0, 20)}...` : 'undefined'
 });
 
+// 웹용 비동기 localStorage 래퍼
+const webStorage = {
+  getItem: (key: string): Promise<string | null> => {
+    if (typeof window !== 'undefined') {
+      return Promise.resolve(localStorage.getItem(key));
+    }
+    return Promise.resolve(null);
+  },
+  setItem: (key: string, value: string): Promise<void> => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(key, value);
+    }
+    return Promise.resolve();
+  },
+  removeItem: (key: string): Promise<void> => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(key);
+    }
+    return Promise.resolve();
+  },
+};
+
 // Supabase 클라이언트 생성
 export const supabase = (() => {
   try {
     if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
       const client = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-          persistSession: true,  // ✅ 웹에서도 세션 유지
+          persistSession: true,
           autoRefreshToken: true,
-          storage: Platform.OS === 'web' ? (typeof window !== 'undefined' ? window.localStorage : undefined) : undefined,
+          detectSessionInUrl: false,
+          storage: Platform.OS === 'web' ? webStorage : AsyncStorage,
         }
       });
       console.log('🔧 DEBUG: Supabase 클라이언트 생성 성공:', !!client);
@@ -49,7 +73,6 @@ export const supabaseAdmin = (() => {
         }
       });
       console.log('🔧 DEBUG: Supabase Admin 클라이언트 생성 성공:', !!adminClient);
-      console.log('🔧 DEBUG: 최종 supabaseAdmin 클라이언트 상태:', !!adminClient);
       return adminClient;
     }
     console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다:', {
@@ -155,8 +178,8 @@ export interface SupabaseMatch {
   weather: string;
   location: string;
   created_at: string;
-  is_dummy: boolean; // 더미 데이터 구분용
-  is_closed?: boolean; // 판매자가 수동으로 마감한 상태 (선택적 - 데이터베이스에 없을 수 있음)
+  is_dummy: boolean;
+  is_closed?: boolean;
 }
 
 // 앱 설정 타입
@@ -167,7 +190,7 @@ export interface AppSettings {
   updated_at: string;
 }
 
-// 🔥 Realtime 구독 함수 추가 (179줄 이후)
+// 🔥 Realtime 구독 함수
 export const subscribeToParticipantUpdates = (
   userId: string, 
   callback: (payload: any) => void
@@ -200,8 +223,9 @@ export const subscribeToParticipantUpdates = (
     supabase.removeChannel(channel);
   };
 };
+
 // ========================================
-// 🔥 알림 관리 함수들 (STEP 2에서 추가)
+// 🔥 알림 관리 함수들
 // ========================================
 
 /**
@@ -215,6 +239,11 @@ export async function createNotification(
   relatedUserName?: string
 ) {
   try {
+    if (!supabaseAdmin) {
+      console.warn('Supabase Admin not configured');
+      return false;
+    }
+    
     const { error } = await supabaseAdmin
       .from('notifications')
       .insert({
@@ -243,6 +272,11 @@ export async function createNotification(
  */
 export async function getUnreadNotificationCount(userId: string, type?: string) {
   try {
+    if (!supabaseAdmin) {
+      console.warn('Supabase Admin not configured');
+      return 0;
+    }
+    
     let query = supabaseAdmin
       .from('notifications')
       .select('*', { count: 'exact', head: true })
@@ -271,6 +305,11 @@ export async function getUnreadNotificationCount(userId: string, type?: string) 
  */
 export async function markNotificationsAsRead(userId: string, type?: string) {
   try {
+    if (!supabaseAdmin) {
+      console.warn('Supabase Admin not configured');
+      return false;
+    }
+    
     let query = supabaseAdmin
       .from('notifications')
       .update({ read: true })
@@ -301,6 +340,11 @@ export function subscribeToNotifications(
   userId: string,
   callback: (payload: any) => void
 ) {
+  if (!supabaseAdmin) {
+    console.warn('Supabase Admin not configured');
+    return () => {};
+  }
+  
   const subscription = supabaseAdmin
     .channel(`notifications_${userId}`)
     .on(

@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // ✅ 필수 추가
 
 // 하드코딩된 Supabase 설정 (환경변수 시스템 문제로 인해)
 const supabaseUrl = 'https://xroiblqjsxxoewfyrzjy.supabase.co';
@@ -19,11 +18,9 @@ export const supabase = (() => {
     if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
       const client = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-          persistSession: true,  // ✅ 세션 유지 활성화
+          persistSession: true,  // ✅ 웹에서도 세션 유지
           autoRefreshToken: true,
-          detectSessionInUrl: false, // ✅ 웹 리다이렉트 이슈 방지
-          // ✅ 핵심 수정: 웹/앱 구분 없이 AsyncStorage 사용 (무한 로딩 해결)
-          storage: AsyncStorage,
+          storage: Platform.OS === 'web' ? (typeof window !== 'undefined' ? window.localStorage : undefined) : undefined,
         }
       });
       console.log('🔧 DEBUG: Supabase 클라이언트 생성 성공:', !!client);
@@ -52,6 +49,7 @@ export const supabaseAdmin = (() => {
         }
       });
       console.log('🔧 DEBUG: Supabase Admin 클라이언트 생성 성공:', !!adminClient);
+      console.log('🔧 DEBUG: 최종 supabaseAdmin 클라이언트 상태:', !!adminClient);
       return adminClient;
     }
     console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다:', {
@@ -157,8 +155,8 @@ export interface SupabaseMatch {
   weather: string;
   location: string;
   created_at: string;
-  is_dummy: boolean;
-  is_closed?: boolean;
+  is_dummy: boolean; // 더미 데이터 구분용
+  is_closed?: boolean; // 판매자가 수동으로 마감한 상태 (선택적 - 데이터베이스에 없을 수 있음)
 }
 
 // 앱 설정 타입
@@ -169,7 +167,7 @@ export interface AppSettings {
   updated_at: string;
 }
 
-// Realtime 구독 함수
+// 🔥 Realtime 구독 함수 추가 (179줄 이후)
 export const subscribeToParticipantUpdates = (
   userId: string, 
   callback: (payload: any) => void
@@ -202,9 +200,8 @@ export const subscribeToParticipantUpdates = (
     supabase.removeChannel(channel);
   };
 };
-
 // ========================================
-// 알림 관리 함수들
+// 🔥 알림 관리 함수들 (STEP 2에서 추가)
 // ========================================
 
 /**

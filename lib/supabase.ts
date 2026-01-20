@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // 하드코딩된 Supabase 설정 (환경변수 시스템 문제로 인해)
 const supabaseUrl = 'https://xroiblqjsxxoewfyrzjy.supabase.co';
@@ -18,9 +19,10 @@ export const supabase = (() => {
     if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
       const client = createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-          persistSession: true,  // ✅ 웹에서도 세션 유지
+          persistSession: true,
           autoRefreshToken: true,
-          storage: Platform.OS === 'web' ? (typeof window !== 'undefined' ? window.localStorage : undefined) : undefined,
+          detectSessionInUrl: false,
+          storage: AsyncStorage,  // ✅ 웹/앱 모두 AsyncStorage 사용
         }
       });
       console.log('🔧 DEBUG: Supabase 클라이언트 생성 성공:', !!client);
@@ -155,8 +157,8 @@ export interface SupabaseMatch {
   weather: string;
   location: string;
   created_at: string;
-  is_dummy: boolean; // 더미 데이터 구분용
-  is_closed?: boolean; // 판매자가 수동으로 마감한 상태 (선택적 - 데이터베이스에 없을 수 있음)
+  is_dummy: boolean;
+  is_closed?: boolean;
 }
 
 // 앱 설정 타입
@@ -167,7 +169,7 @@ export interface AppSettings {
   updated_at: string;
 }
 
-// 🔥 Realtime 구독 함수 추가 (179줄 이후)
+// 🔥 Realtime 구독 함수
 export const subscribeToParticipantUpdates = (
   userId: string, 
   callback: (payload: any) => void
@@ -200,8 +202,9 @@ export const subscribeToParticipantUpdates = (
     supabase.removeChannel(channel);
   };
 };
+
 // ========================================
-// 🔥 알림 관리 함수들 (STEP 2에서 추가)
+// 🔥 알림 관리 함수들
 // ========================================
 
 /**

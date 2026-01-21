@@ -1,29 +1,30 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, ImageBackground, StatusBar, Dimensions, ScrollView } from 'react-native'; // 1. ScrollView 추가
+import { View, Text, StyleSheet, TouchableOpacity, Platform, ImageBackground, StatusBar, Dimensions, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { router, Redirect } from 'expo-router'; // ✅ Redirect 추가
 import { Chrome, Share2, Smartphone, X, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
-const { width, height } = Dimensions.get('window'); // height 추가
+const { width, height } = Dimensions.get('window');
 const PRIMARY_COLOR = '#ea4c89';
 
 export default function Index() {
-const { user, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
+  
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
-
   const [applicantCount, setApplicantCount] = useState(5);
   const [price, setPrice] = useState(10000);
   const [isAnimating, setIsAnimating] = useState(true);
 
-  // 1. 로그인 체크
-  useEffect(() => {
-  if (isLoading) return;
-  if (user) router.replace('/(tabs)');
-}, [user, isLoading]);
+  // ✅ [핵심] useEffect 대신 선언적 Redirect 사용
+  // 로딩은 이미 _layout에서 처리했으므로 여기까지 왔다는 건 로딩이 끝났다는 뜻입니다.
+  // 유저가 있다면 즉시 탭 화면으로 보냅니다.
+  if (user) {
+    return <Redirect href="/(tabs)" />;
+  }
 
-  // 2. 애니메이션 로직
+  // 애니메이션 로직
   useEffect(() => {
     if (!isAnimating) return;
     const interval = setInterval(() => {
@@ -33,7 +34,7 @@ const { user, isLoading } = useAuth();
     return () => clearInterval(interval);
   }, [isAnimating]);
 
-  // 3. PWA 설치
+  // PWA 설치 로직
   useEffect(() => {
     if (Platform.OS !== 'web' || typeof window === 'undefined') return;
     const handleBeforeInstallPrompt = (e: Event) => {
@@ -60,24 +61,18 @@ const { user, isLoading } = useAuth();
     <View style={styles.container}>
       <StatusBar barStyle="light-content" />
       
- <ImageBackground
+      <ImageBackground
         source={require('../assets/images/influence11.jpg')}
         style={styles.backgroundImage}
         resizeMode="cover"
       >
         <View style={styles.darkOverlay}>
           <SafeAreaView style={styles.safeArea}>
-            
-            {/* [중요 변경] ScrollView 추가 
-              contentContainerStyle에 flexGrow: 1과 justifyContent: 'space-between'을 줍니다.
-              이렇게 하면 내용이 적을 땐 화면 꽉 차게 벌어지고, 많을 땐 스크롤이 됩니다.
-            */}
             <ScrollView 
               contentContainerStyle={styles.scrollContent}
               showsVerticalScrollIndicator={false}
             >
-            
-              {/* [상단] 카피 영역 */}
+              {/* 상단 섹션 */}
               <View style={styles.topSection}>
                 <Text style={styles.brandLogo}>MATCH MARKET</Text>
                 <View style={styles.copyContainer}>
@@ -90,7 +85,7 @@ const { user, isLoading } = useAuth();
                 </View>
               </View>
 
-              {/* [중간] 통계 섹션 */}
+              {/* 중간 통계 섹션 */}
               <View style={styles.centerSection}>
                 <View style={styles.statsRow}>
                   <View style={styles.statItem}>
@@ -114,7 +109,7 @@ const { user, isLoading } = useAuth();
                 </View>
               </View>
 
-              {/* [하단] 버튼 그룹 */}
+              {/* 하단 버튼 그룹 */}
               <View style={styles.bottomSection}>
                 <TouchableOpacity style={styles.glassButton} onPress={handleAndroidInstall}>
                   <Chrome size={20} color="white" />
@@ -171,20 +166,14 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    // justifyContent: 'space-between', // -> 삭제 (ScrollView가 담당)
-    // paddingVertical: 20, // -> 삭제 (필요 시 scrollContent padding으로 이동하거나 유지)
   },
-
-  // [새로 추가된 스타일]
   scrollContent: {
-    flexGrow: 1, // 화면이 길면 꽉 채우고, 내용이 많으면 늘어남
-    justifyContent: 'space-between', // 상단-중단-하단 배치 유지
-    paddingVertical: 40, // 상하 여백
+    flexGrow: 1, 
+    justifyContent: 'space-between',
+    paddingVertical: 40, 
   },
-
-  // [Top Section]
   topSection: { 
-    marginTop: 20, // marginTop 조절 (ScrollView 내부라서)
+    marginTop: 20, 
     alignItems: 'center', 
   },
   brandLogo: {
@@ -214,11 +203,9 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     textAlign: 'center',
   },
-
-  // [Center Section]
   centerSection: { 
     width: '100%',
-    marginVertical: 40, // marginTop 고정값 대신 상하 여백으로 유연하게
+    marginVertical: 40, 
   },
   statsRow: {
     flexDirection: 'row',
@@ -253,11 +240,9 @@ const styles = StyleSheet.create({
   icon: {
     marginBottom: 4, 
   },
-
-  // [Bottom Section]
   bottomSection: {
     gap: 12,
-    marginBottom: 20, // 하단 여백 확보
+    marginBottom: 20, 
   },
   glassButton: {
     flexDirection: 'row',
@@ -276,8 +261,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 0.5,
   },
-  
-  // Modal (그대로 유지)
   modalOverlay: {
     position: 'absolute',
     top: 0, left: 0, right: 0, bottom: 0,

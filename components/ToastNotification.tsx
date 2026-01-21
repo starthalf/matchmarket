@@ -135,8 +135,8 @@ const checkUnreadNotifications = async () => {
         <View style={styles.textContainer}>
           <Text style={styles.title}>{notification.title}</Text>
           <Text style={styles.message} numberOfLines={1}>
-    {notification.body || notification.message || '내 스타가 매치를 열었습니다.'}
-  </Text>
+            {notification.message}
+          </Text>
         </View>
         <TouchableOpacity onPress={handleClose} style={styles.closeBtn}>
           <X size={18} color="#fff" />

@@ -9,7 +9,7 @@ const { width, height } = Dimensions.get('window'); // height 추가
 const PRIMARY_COLOR = '#ea4c89';
 
 export default function Index() {
-  const { user } = useAuth();
+const { user, isLoading } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showIOSModal, setShowIOSModal] = useState(false);
 
@@ -19,8 +19,9 @@ export default function Index() {
 
   // 1. 로그인 체크
   useEffect(() => {
-    if (user) router.replace('/(tabs)');
-  }, [user]);
+  if (isLoading) return;
+  if (user) router.replace('/(tabs)');
+}, [user, isLoading]);
 
   // 2. 애니메이션 로직
   useEffect(() => {

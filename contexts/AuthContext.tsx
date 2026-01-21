@@ -118,10 +118,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     mounted.current = true;
     isInitialized.current = false;
-    
+
     const initializeAuth = async () => {
       console.log('=== 인증 초기화 시작 ===');
-      
+
       try {
         if (!supabase) {
           console.warn('Supabase가 설정되지 않음. Mock 데이터 사용.');
@@ -138,28 +138,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               console.log('=== Mock 사용자 로드 완료 ===', foundUser.name);
             }
           }
+          if (mounted.current) {
+            setIsLoading(false);
+          }
           return;
         }
 
         const { data: { session }, error } = await supabase.auth.getSession();
         console.log('=== 세션 체크 결과 ===', { hasSession: !!session, error });
-        
+
         if (error) {
           console.error('세션 확인 오류:', error);
+          if (mounted.current) {
+            setIsLoading(false);
+          }
           return;
         }
 
         if (session?.user) {
+          console.log('=== 세션 발견, 사용자 정보 로드 ===');
           await fetchAndSetUser(session.user.id);
         } else {
-          console.log('=== 세션 없음 ===');
+          console.log('=== 세션 없음, 로그아웃 상태 ===');
         }
       } catch (error) {
         console.error('Auth 초기화 에러:', error);
       } finally {
-        isInitialized.current = true;  // ✅ 초기화 완료
+        isInitialized.current = true;
         if (mounted.current) {
-          console.log('=== 로딩 종료 ===');
+          console.log('=== 초기화 완료, 로딩 종료 ===');
           setIsLoading(false);
         }
       }
@@ -169,27 +176,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 실시간 인증 상태 변화 감지
     let subscription: { unsubscribe: () => void } | null = null;
-    
+
     if (supabase) {
       const { data } = supabase.auth.onAuthStateChange(
         async (event, session) => {
           console.log(`🔐 Auth 상태 변경: ${event}, 초기화완료: ${isInitialized.current}`);
-          
-          // ✅ 초기화 중에는 이벤트 무시 (initializeAuth에서 처리)
-          if (!isInitialized.current) {
-            console.log('=== 초기화 중이므로 이벤트 무시 ===');
+
+          // INITIAL_SESSION 이벤트는 항상 무시 (initializeAuth에서 처리함)
+          if (event === 'INITIAL_SESSION') {
+            console.log('=== INITIAL_SESSION 이벤트 무시 ===');
             return;
           }
-          
+
+          // 초기화 중에는 다른 이벤트도 무시
+          if (!isInitialized.current) {
+            console.log('=== 초기화 중이므로 이벤트 무시 ===', event);
+            return;
+          }
+
           if (event === 'SIGNED_IN' && session?.user) {
+            console.log('=== SIGNED_IN 이벤트 처리 ===');
             await fetchAndSetUser(session.user.id);
             if (mounted.current) setIsLoading(false);
           } else if (event === 'SIGNED_OUT') {
+            console.log('=== SIGNED_OUT 이벤트 처리 ===');
             if (mounted.current) {
               setUser(null);
               setIsLoading(false);
             }
           } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+            console.log('=== TOKEN_REFRESHED 이벤트 처리 ===');
             await fetchAndSetUser(session.user.id);
           }
         }
@@ -391,21 +407,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
+      console.log('=== 로그아웃 시작 ===');
+
       if (supabase) {
         await supabase.auth.signOut();
       }
-      
+
       if (mounted.current) {
         setUser(null);
       }
-      
+
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('userId');
+          localStorage.removeItem('lastLoginEmail');
         }
       } else {
         await AsyncStorage.removeItem('userId');
+        await AsyncStorage.removeItem('lastLoginEmail');
       }
+
+      console.log('=== 로그아웃 완료 ===');
     } catch (error) {
       console.error('로그아웃 실패:', error);
     }

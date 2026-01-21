@@ -16,12 +16,28 @@ const { user, isLoading } = useAuth();
   const [applicantCount, setApplicantCount] = useState(5);
   const [price, setPrice] = useState(10000);
   const [isAnimating, setIsAnimating] = useState(true);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
-  // 1. 로그인 체크
+  // 1. 로그인 체크 - 개선된 버전
   useEffect(() => {
-  if (isLoading) return;
-  if (user) router.replace('/(tabs)');
-}, [user, isLoading]);
+    console.log('[Index] 상태 체크:', { isLoading, hasUser: !!user });
+
+    // 로딩 타임아웃 설정 (5초)
+    const timeout = setTimeout(() => {
+      if (isLoading) {
+        console.warn('[Index] 로딩 타임아웃 발생');
+        setLoadingTimeout(true);
+      }
+    }, 5000);
+
+    // 로딩이 완료되고 사용자가 있으면 tabs로 이동
+    if (!isLoading && user) {
+      console.log('[Index] 사용자 확인됨, tabs로 이동');
+      router.replace('/(tabs)');
+    }
+
+    return () => clearTimeout(timeout);
+  }, [user, isLoading]);
 
   // 2. 애니메이션 로직
   useEffect(() => {
@@ -55,6 +71,18 @@ const { user, isLoading } = useAuth();
 
   const handleIOSInstall = () => setShowIOSModal(true);
   const handleWebView = () => router.push('/(tabs)');
+
+  // 로딩 중이고 타임아웃이 아직 안 됐으면 로딩 화면 표시
+  if (isLoading && !loadingTimeout) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <StatusBar barStyle="light-content" />
+        <View style={{ padding: 20, backgroundColor: 'rgba(0,0,0,0.8)', borderRadius: 12 }}>
+          <Text style={{ color: '#fff', fontSize: 16, marginBottom: 12, textAlign: 'center' }}>로딩 중...</Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

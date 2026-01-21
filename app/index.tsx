@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, ImageBackground, StatusBar, Dimensions, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { router, Redirect } from 'expo-router';
+import { router, Redirect } from 'expo-router'; // ✅ Redirect 추가
 import { Chrome, Share2, Smartphone, X, TrendingUp } from 'lucide-react-native';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,7 +17,12 @@ export default function Index() {
   const [price, setPrice] = useState(10000);
   const [isAnimating, setIsAnimating] = useState(true);
 
-  // ❌ [삭제됨] 여기에 있던 if (user) return ... 은 에러의 원인입니다!
+  // ✅ [핵심] useEffect 대신 선언적 Redirect 사용
+  // 로딩은 이미 _layout에서 처리했으므로 여기까지 왔다는 건 로딩이 끝났다는 뜻입니다.
+  // 유저가 있다면 즉시 탭 화면으로 보냅니다.
+  if (user) {
+    return <Redirect href="/(tabs)" />;
+  }
 
   // 애니메이션 로직
   useEffect(() => {
@@ -39,11 +44,6 @@ export default function Index() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
-
-  // ✅ [이동됨] 모든 Hook(useEffect 등) 선언이 끝난 후, 맨 마지막에 체크해야 합니다.
-  if (user) {
-    return <Redirect href="/(tabs)" />;
-  }
 
   const handleAndroidInstall = async () => {
     if (deferredPrompt) {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,        
     fontWeight: '500',
-    marginBottom: 8,      
+    marginBottom: 8,     
     opacity: 0.9,
     textAlign: 'center',
   },

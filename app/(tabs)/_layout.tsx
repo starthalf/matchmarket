@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
-import { View, ActivityIndicator, Text } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import React from 'react';
 import { getUnreadNotificationCount, subscribeToNotifications, markNotificationsAsRead } from '../../lib/supabase';
 import { ToastNotification } from '../../components/ToastNotification';
@@ -18,30 +18,7 @@ export default function TabLayout() {
   const [hasNewChatRoom, setHasNewChatRoom] = React.useState(false);
   const [hasRejected, setHasRejected] = React.useState(false);
   const [hasPaymentConfirmed, setHasPaymentConfirmed] = React.useState(false);
-  const [loadingTimeout, setLoadingTimeout] = React.useState(false);
-
-  // 로딩 타임아웃 및 인증 체크
-  React.useEffect(() => {
-    console.log('[TabLayout] 상태 체크:', { isLoading, hasUser: !!user });
-
-    // 로딩 타임아웃 설정 (5초)
-    const timeout = setTimeout(() => {
-      if (isLoading) {
-        console.warn('[TabLayout] 로딩 타임아웃 발생, 강제로 로그인 페이지로 이동');
-        setLoadingTimeout(true);
-        router.replace('/auth/login');
-      }
-    }, 5000);
-
-    // 로딩이 완료되었는데 사용자가 없으면 로그인 페이지로 이동
-    if (!isLoading && !user) {
-      console.log('[TabLayout] 로딩 완료, 사용자 없음 → 로그인 페이지로 이동');
-      router.replace('/auth/login');
-    }
-
-    return () => clearTimeout(timeout);
-  }, [user, isLoading]);
-
+  
   React.useEffect(() => {
     if (!user) return;
 
@@ -81,13 +58,10 @@ export default function TabLayout() {
     return remainingSeconds > 0;
   }).length;
 
-  if (isLoading && !loadingTimeout) {
+  if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f9fafb' }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#ec4899" />
-        <View style={{ marginTop: 20 }}>
-          <Text style={{ fontSize: 16, color: '#6b7280', textAlign: 'center' }}>로그인 확인 중...</Text>
-        </View>
       </View>
     );
   }

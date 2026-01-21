@@ -49,24 +49,23 @@ export function ToastNotification() {
   }, [user?.id, hasCheckedInitial]);
 
   // 안 읽은 알림 중 가장 최근 것 확인
-  const checkUnreadNotifications = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', user?.id)
-        .eq('read', false)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+const checkUnreadNotifications = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', user?.id)
+      .eq('read', false)
+      .order('created_at', { ascending: false })
+      .limit(1);  // ✅ .single() 제거
 
-      if (data && !error) {
-        showToast(data);
-      }
-    } catch (error) {
-      // 안 읽은 알림 없음
+    if (data && data.length > 0 && !error) {
+      showToast(data[0]);  // ✅ 배열의 첫 번째 요소
     }
-  };
+  } catch (error) {
+    // 안 읽은 알림 없음
+  }
+};
 
   const showToast = (data: any) => {
     setNotification(data);

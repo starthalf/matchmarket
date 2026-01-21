@@ -55,7 +55,7 @@ export function ToastNotification() {
         .from('notifications')
         .select('*')
         .eq('user_id', user?.id)
-        .eq('is_read', false)
+        .eq('read', false)
         .order('created_at', { ascending: false })
         .limit(1)
         .single();
@@ -99,7 +99,7 @@ export function ToastNotification() {
     if (notification?.id) {
       await supabase
         .from('notifications')
-        .update({ is_read: true })
+        .update({ read: true })
         .eq('id', notification.id);
     }
 
@@ -114,7 +114,7 @@ export function ToastNotification() {
     if (notification?.id) {
       await supabase
         .from('notifications')
-        .update({ is_read: true })
+        .update({ read: true })
         .eq('id', notification.id);
     }
     hideToast();

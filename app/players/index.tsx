@@ -9,6 +9,7 @@ import {
   SafeAreaView,
   Dimensions,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { User, ArrowLeft } from 'lucide-react-native';
@@ -26,74 +27,119 @@ export default function PlayersListScreen() {
   const [hotPlayerIds, setHotPlayerIds] = useState<string[]>([]);
 
   useEffect(() => {
-    fetchPlayers();
+    let isMounted = true;
+    
+    // ✅ 안전장치: 15초 넘게 로딩 중이면 강제 종료
+    const safetyTimeout = setTimeout(() => {
+      if (isMounted) {
+        console.warn('🎾 15초 안전 timeout 발동 - 강제 로딩 종료');
+        setLoading(false);
+      }
+    }, 15000);
+    
+    fetchPlayers().finally(() => {
+      clearTimeout(safetyTimeout);
+    });
+    
+    return () => {
+      isMounted = false;
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
-const fetchPlayers = async () => {
-  try {
-    // 1. player_profiles 조회
-    const { data: players, error } = await supabase
-      .from('player_profiles')
-      .select('*')
-      .order('view_count', { ascending: false });
+  const fetchPlayers = async () => {
+    console.log('🎾 fetchPlayers 시작');
+    
+    // ✅ 쿼리에 timeout 씌우는 헬퍼
+    const withTimeout = <T,>(promise: Promise<T>, ms: number, label: string): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) => 
+          setTimeout(() => reject(new Error(`${label} timeout (${ms}ms)`)), ms)
+        )
+      ]);
+    };
 
-    if (error) throw error;
+    try {
+      // 1. player_profiles 조회 (10초 timeout)
+      console.log('🎾 player_profiles 조회 시작');
+      const { data: players, error } = await withTimeout(
+        supabase
+          .from('player_profiles')
+          .select('*')
+          .order('view_count', { ascending: false }),
+        10000,
+        'player_profiles 조회'
+      );
+      console.log('🎾 player_profiles 조회 완료:', players?.length);
 
-    if (players && players.length > 0) {
-      // 2. user_id 목록 추출
-      const userIds = players.map(p => p.user_id).filter(Boolean);
-      
-      // 3. users 테이블에서 추가 정보 조회
-      let usersMap: Record<string, any> = {};
-      if (userIds.length > 0) {
-        const { data: usersData, error: usersError } = await supabase
-          .from('users')
-          .select('id, certification_career, ntrp')
-          .in('id', userIds);
+      if (error) throw error;
+
+      if (players && players.length > 0) {
+        // 2. user_id 목록 추출
+        const userIds = players.map(p => p.user_id).filter(Boolean);
         
-        console.log('usersData:', usersData);
-        
-        if (usersData) {
-          usersData.forEach(u => {
-            usersMap[u.id] = u;
-          });
+        // 3. users 테이블에서 추가 정보 조회
+        let usersMap: Record<string, any> = {};
+        if (userIds.length > 0) {
+          console.log('🎾 users 조회 시작');
+          const { data: usersData } = await withTimeout(
+            supabase
+              .from('users')
+              .select('id, certification_career, ntrp')
+              .in('id', userIds),
+            10000,
+            'users 조회'
+          );
+          console.log('🎾 users 조회 완료:', usersData?.length);
+          
+          if (usersData) {
+            usersData.forEach(u => {
+              usersMap[u.id] = u;
+            });
+          }
         }
+
+        // 4. 플레이어에 유저 정보 병합
+        const playersWithUser = players.map(p => ({
+          ...p,
+          user: usersMap[p.user_id] || null
+        }));
+
+        // 5. 조회수 Top 3 (Hot 표시용)
+        const top3Ids = playersWithUser.slice(0, 3).map(p => p.id);
+        setHotPlayerIds(top3Ids);
+
+        // 6. 카테고리별 분류
+        setAllPlayers(playersWithUser);
+
+        // 선출 인증된 사용자 (certification_career === 'verified')
+        const pros = playersWithUser.filter(p => 
+          p.user?.certification_career === 'verified'
+        );
+        setProPlayers(pros);
+
+        // 선출이 아니면서 NTRP 4.0 이상
+        const tops = playersWithUser.filter(p => 
+          p.user?.certification_career !== 'verified' && 
+          (p.user?.ntrp || 0) >= 4.0
+        );
+        setTopPlayers(tops);
+        
+        console.log('🎾 완료 - 전체:', playersWithUser.length, '선출:', pros.length, '고수:', tops.length);
+      } else {
+        console.log('🎾 플레이어 데이터 없음');
       }
-
-      // 4. 플레이어에 유저 정보 병합
-      const playersWithUser = players.map(p => ({
-        ...p,
-        user: usersMap[p.user_id] || null
-      }));
-
-      // 5. 조회수 Top 3 (Hot 표시용)
-      const top3Ids = playersWithUser.slice(0, 3).map(p => p.id);
-      setHotPlayerIds(top3Ids);
-
-      // 6. 카테고리별 분류
-      setAllPlayers(playersWithUser);
-
-      // 선출 인증된 사용자 (certification_career === 'verified')
-      const pros = playersWithUser.filter(p => 
-        p.user?.certification_career === 'verified'
-      );
-      setProPlayers(pros);
-
-      // 선출이 아니면서 NTRP 4.0 이상
-      const tops = playersWithUser.filter(p => 
-        p.user?.certification_career !== 'verified' && 
-        (p.user?.ntrp || 0) >= 4.0
-      );
-      setTopPlayers(tops);
-      
-      console.log('전체:', playersWithUser.length, '선출:', pros.length, '고수:', tops.length);
+    } catch (error) {
+      console.error('🎾 플레이어 목록 조회 오류:', error);
+      if (Platform.OS === 'web') {
+        window.alert('플레이어 목록을 불러오지 못했습니다: ' + (error as Error).message);
+      }
+    } finally {
+      console.log('🎾 setLoading(false)');
+      setLoading(false);
     }
-  } catch (error) {
-    console.error('플레이어 목록 조회 오류:', error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const renderPlayerItem = (player: any) => {
     const isHot = hotPlayerIds.includes(player.id);
@@ -195,7 +241,7 @@ const fetchPlayers = async () => {
           </View>
         ) : (
           <>
-                        {renderSection('선출의 차원이 다른 테니스', proPlayers)}
+            {renderSection('선출의 차원이 다른 테니스', proPlayers)}
             {renderSection('전국구 무림 고수', topPlayers)}
             {renderSection('요즘 핫한 테니스 플레이어', allPlayers)}
           </>

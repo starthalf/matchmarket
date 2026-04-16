@@ -225,32 +225,36 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
                 </TouchableOpacity>
               </>
            ) : (
-              <TouchableOpacity 
-                style={[styles.demoButton, styles.logoutButton]}
+             <TouchableOpacity 
+                style={[
+                  styles.demoButton, 
+                  styles.logoutButton,
+                  isLoggingOut && styles.logoutButtonDisabled
+                ]}
+                disabled={isLoggingOut}
                 onPress={async () => {
-                  console.log('🚪 로그아웃 버튼 클릭됨');
-                  console.log('현재 상태 - user:', user?.name, 'isAdmin:', isAdmin);
+                  // ✅ 중복 클릭 방지 - 이미 로그아웃 중이면 무시
+                  if (isLoggingOut) return;
                   
+                  setIsLoggingOut(true);
                   try {
-                    // ✅ admin 상태 먼저 정리 (signOut 호출 전에)
                     if (isAdmin) {
-                      console.log('→ adminLogout 실행');
                       await adminLogout();
                     }
-                    // ✅ logout이 실제 supabase.auth.signOut()을 호출
-                    // (AuthContext의 onAuthStateChange가 AdminContext에도 SIGNED_OUT 전파)
-                    console.log('→ logout 실행');
                     await logout();
-                    console.log('✅ 로그아웃 완료');
                   } catch (error) {
-                    console.error('❌ 로그아웃 오류:', error);
+                    console.error('로그아웃 오류:', error);
                     if (Platform.OS === 'web') {
                       window.alert('로그아웃 중 오류가 발생했습니다: ' + (error as Error).message);
                     }
+                  } finally {
+                    setIsLoggingOut(false);
                   }
                 }}
               >
-                <Text style={styles.logoutButtonText}>로그아웃</Text>
+                <Text style={styles.logoutButtonText}>
+                  {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
+                </Text>
               </TouchableOpacity>
             )}
           </ScrollView>

@@ -3,7 +3,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { AdminService, AdminUser } from '../lib/adminService';
 import { supabase } from '../lib/supabase';
 
-
+// 데모 관리자 이메일 목록 
+const DEMO_ADMIN_EMAILS = ['admin@demo.com', 'hcgkhlee@gmail.com'];
 
 interface AdminContextType {
   adminUser: AdminUser | null;

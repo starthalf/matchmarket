@@ -44,9 +44,10 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   const [locationFilter, setLocationFilter] = useState<string>('');
 
-  const [showSortButton, setShowSortButton] = useState(false);
+ const [showSortButton, setShowSortButton] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // ✅ 로그아웃 중복 클릭 방지
 
   useEffect(() => {
     mounted.current = true;

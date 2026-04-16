@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -6,12 +6,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const supabaseUrl = 'https://xroiblqjsxxoewfyrzjy.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyb2libHFqc3h4b2V3Znlyemp5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY4NjYwNDUsImV4cCI6MjA3MjQ0MjA0NX0.7yJY-u-L-_UdZgMVKFJlR2mmJel-wLt9ItehVMt0wNo';
 const supabaseServiceKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhyb2libHFqc3h4b2V3Znlyemp5Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1Njg2NjA0NSwiZXhwIjoyMDcyNDQyMDQ1fQ.ZKkFNqnlt3IJKLUizIaC4oOKXp9NAao8YOW5Z_fZduA';
-
-console.log('🔧 DEBUG: 하드코딩된 설정 사용:', {
-  url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
-  anonKey: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'undefined',
-  serviceKey: supabaseServiceKey ? `${supabaseServiceKey.substring(0, 20)}...` : 'undefined'
-});
 
 // 웹용 비동기 localStorage 래퍼
 const webStorage = {
@@ -35,8 +29,31 @@ const webStorage = {
   },
 };
 
-// Supabase 클라이언트 생성
-export const supabase = (() => {
+// ✅ globalThis에 캐싱 - HMR 재실행 시에도 같은 인스턴스 재사용
+// (Multiple GoTrueClient instances 경고 방지)
+const globalForSupabase = globalThis as unknown as {
+  __supabase_client__?: SupabaseClient | null;
+  __supabase_admin_client__?: SupabaseClient | null;
+  __supabase_logged__?: boolean;
+};
+
+// 로그는 최초 1회만 출력
+if (!globalForSupabase.__supabase_logged__) {
+  console.log('🔧 DEBUG: 하드코딩된 설정 사용:', {
+    url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
+    anonKey: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'undefined',
+    serviceKey: supabaseServiceKey ? `${supabaseServiceKey.substring(0, 20)}...` : 'undefined'
+  });
+  globalForSupabase.__supabase_logged__ = true;
+}
+
+// ✅ 일반 클라이언트 (싱글톤)
+export const supabase: SupabaseClient | null = (() => {
+  // 이미 만들어진 인스턴스가 있으면 재사용
+  if (globalForSupabase.__supabase_client__ !== undefined) {
+    return globalForSupabase.__supabase_client__;
+  }
+
   try {
     if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
       const client = createClient(supabaseUrl, supabaseAnonKey, {
@@ -45,43 +62,47 @@ export const supabase = (() => {
           autoRefreshToken: true,
           detectSessionInUrl: false,
           storage: Platform.OS === 'web' ? webStorage : AsyncStorage,
+          storageKey: 'sb-matchmarket-auth', // ✅ 명시적 키 지정
         }
       });
-           return client;
+      globalForSupabase.__supabase_client__ = client;
+      return client;
     }
-    console.warn('⚠️ Supabase 설정이 올바르지 않습니다:', {
-      hasUrl: !!supabaseUrl,
-      hasAnonKey: !!supabaseAnonKey,
-      urlValid: supabaseUrl ? supabaseUrl.startsWith('https://') : false,
-      keyValid: supabaseAnonKey ? supabaseAnonKey.length > 20 : false
-    });
+    console.warn('⚠️ Supabase 설정이 올바르지 않습니다');
+    globalForSupabase.__supabase_client__ = null;
     return null;
   } catch (error) {
     console.warn('Supabase 클라이언트 생성 실패:', error);
+    globalForSupabase.__supabase_client__ = null;
     return null;
   }
 })();
 
-export const supabaseAdmin = (() => {
+// ✅ Admin 클라이언트 (싱글톤 + 별도 storageKey로 충돌 방지)
+export const supabaseAdmin: SupabaseClient | null = (() => {
+  // 이미 만들어진 인스턴스가 있으면 재사용
+  if (globalForSupabase.__supabase_admin_client__ !== undefined) {
+    return globalForSupabase.__supabase_admin_client__;
+  }
+
   try {
     if (supabaseUrl && supabaseServiceKey && supabaseUrl.startsWith('https://') && supabaseServiceKey.length > 20) {
       const adminClient = createClient(supabaseUrl, supabaseServiceKey, {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
+          persistSession: false,
+          storageKey: 'sb-matchmarket-admin', // ✅ 일반 클라이언트와 다른 키 (충돌 방지)
         }
       });
+      globalForSupabase.__supabase_admin_client__ = adminClient;
       return adminClient;
     }
-    console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다:', {
-      hasUrl: !!supabaseUrl,
-      hasServiceKey: !!supabaseServiceKey,
-      urlValid: supabaseUrl ? supabaseUrl.startsWith('https://') : false,
-      keyValid: supabaseServiceKey ? supabaseServiceKey.length > 20 : false
-    });
+    console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다');
+    globalForSupabase.__supabase_admin_client__ = null;
     return null;
   } catch (error) {
     console.warn('Supabase Admin 클라이언트 생성 실패:', error);
+    globalForSupabase.__supabase_admin_client__ = null;
     return null;
   }
 })();

@@ -391,20 +391,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
-      
+      // ✅ 로컬 상태 먼저 정리 (UI 즉시 반응 + signOut 실패해도 로그아웃된 것처럼 동작)
       if (mounted.current) {
         setUser(null);
       }
       
+      // ✅ localStorage / AsyncStorage 먼저 제거
       if (Platform.OS === 'web') {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('userId');
         }
       } else {
         await AsyncStorage.removeItem('userId');
+      }
+      
+      // ✅ supabase signOut은 5초 timeout 걸어서 무한 대기 방지
+      if (supabase) {
+        const signOutPromise = supabase.auth.signOut();
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('signOut timeout')), 5000)
+        );
+        
+        try {
+          await Promise.race([signOutPromise, timeoutPromise]);
+        } catch (signOutError) {
+          console.warn('signOut 타임아웃 또는 실패 (로컬 로그아웃은 완료):', signOutError);
+        }
       }
     } catch (error) {
       console.error('로그아웃 실패:', error);

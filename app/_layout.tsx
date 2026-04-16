@@ -4,7 +4,6 @@ import { StatusBar } from 'expo-status-bar';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import * as SplashScreen from 'expo-splash-screen'; // 스플래시 스크린 제어
-
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { MatchProvider } from '@/contexts/MatchContext';
@@ -29,8 +28,8 @@ function RootLayoutNav() {
   // ✅ [핵심] 로딩 중일 때는 아무런 Provider도, Stack도 렌더링하지 않음 (무한 로딩 원천 차단)
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-        <ActivityIndicator size="large" color="#ea4c89" />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAF7' }}>
+        <ActivityIndicator size="large" color="#0F3D2E" />
       </View>
     );
   }
@@ -47,7 +46,7 @@ function RootLayoutNav() {
           />
           <Stack screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: '#f9fafb' }
+            contentStyle: { backgroundColor: '#FAFAF7' }
           }}>
             <Stack.Screen name="+not-found" />
           </Stack>
@@ -59,6 +58,42 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  // ✨ Pretendard 웹폰트 로드 + 전역 폰트 세팅 (웹 전용)
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // 1. Pretendard 폰트 CDN 로드
+      if (!document.getElementById('pretendard-font')) {
+        const link = document.createElement('link');
+        link.id = 'pretendard-font';
+        link.rel = 'stylesheet';
+        link.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+        document.head.appendChild(link);
+      }
+
+      // 2. 전역 body 폰트 및 기본 스타일 세팅
+      if (!document.getElementById('matchmarket-global-style')) {
+        const style = document.createElement('style');
+        style.id = 'matchmarket-global-style';
+        style.innerHTML = `
+          html, body, #root, #__next {
+            font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            background-color: #FAFAF7;
+          }
+          * {
+            font-family: inherit;
+          }
+          input, textarea, select, button {
+            font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+  }, []);
 
   // Service Worker 등록 로직
   useEffect(() => {
@@ -104,4 +139,4 @@ export default function RootLayout() {
       <InstallPrompt />
     </SafeAreaProvider>
   );
-} 
+}

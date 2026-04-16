@@ -37,9 +37,9 @@
         "android.permission.ACCESS_NETWORK_STATE"
       ]
     },
-    "web": {
-      "bundler": "metro",
-      "output": "static",
+ "web": {
+  "bundler": "metro",
+  "output": "single",
       "favicon": "./assets/favicon.png",
       "name": "테니스 매칭 앱",
       "shortName": "테니스",

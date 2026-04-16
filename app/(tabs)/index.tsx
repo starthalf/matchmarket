@@ -28,7 +28,7 @@ type TimeFilter = 'today' | null;
 
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
-  const { isAdmin } = useAdmin();
+  const { isAdmin, adminLogin } = useAdmin();
   const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
   const safeStyles = useSafeStyles();
   const mounted = useRef(false);
@@ -59,9 +59,12 @@ export default function HomeScreen() {
     try {
       // admin 예외처리
       if (userIdentifier === 'admin') {
-        const result = await adminLogin('hcgkhlee@gmail.com', 'YOUR_PASSWORD');
-        if (result.success) router.push('/(admin)/dashboard');
-        else window.alert(`관리자 로그인 실패: ${result.error}`);
+        const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
+        if (result.success) {
+          router.push('/(admin)/dashboard');
+        } else {
+          window.alert(`관리자 로그인 실패: ${result.error}`);
+        }
         return;
       }
 
@@ -197,10 +200,9 @@ export default function HomeScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
             {!user ? (
               <>
-                <>
                 <TouchableOpacity 
                   style={[styles.demoButton, styles.adminDemoButton]}
-                  onPress={() => handleQuickAdminLogin()}
+                  onPress={() => handleQuickLogin('admin')}
                 >
                   <Text style={[styles.demoButtonText, styles.adminDemoButtonText]}>🛡️ admin</Text>
                 </TouchableOpacity>
@@ -269,76 +271,46 @@ export default function HomeScreen() {
       <View style={styles.chipsContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <TouchableOpacity
-            style={[
-              styles.chip,
-              levelFilter === 'pro' && styles.chipActive
-            ]}
+            style={[styles.chip, levelFilter === 'pro' && styles.chipActive]}
             onPress={toggleLevelFilter}
           >
-            <Text style={[
-              styles.chipText,
-              levelFilter === 'pro' && styles.chipTextActive
-            ]}>
+            <Text style={[styles.chipText, levelFilter === 'pro' && styles.chipTextActive]}>
               선출
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.chip,
-              matchTypeFilter === 'womens' && styles.chipActive
-            ]}
+            style={[styles.chip, matchTypeFilter === 'womens' && styles.chipActive]}
             onPress={() => toggleMatchTypeFilter('womens')}
           >
-            <Text style={[
-              styles.chipText,
-              matchTypeFilter === 'womens' && styles.chipTextActive
-            ]}>
+            <Text style={[styles.chipText, matchTypeFilter === 'womens' && styles.chipTextActive]}>
               여복
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.chip,
-              matchTypeFilter === 'mixed' && styles.chipActive
-            ]}
+            style={[styles.chip, matchTypeFilter === 'mixed' && styles.chipActive]}
             onPress={() => toggleMatchTypeFilter('mixed')}
           >
-            <Text style={[
-              styles.chipText,
-              matchTypeFilter === 'mixed' && styles.chipTextActive
-            ]}>
+            <Text style={[styles.chipText, matchTypeFilter === 'mixed' && styles.chipTextActive]}>
               혼복
             </Text>
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={[
-              styles.chip,
-              timeFilter === 'today' && styles.chipActive
-            ]}
+            style={[styles.chip, timeFilter === 'today' && styles.chipActive]}
             onPress={toggleTimeFilter}
           >
-            <Text style={[
-              styles.chipText,
-              timeFilter === 'today' && styles.chipTextActive
-            ]}>
+            <Text style={[styles.chipText, timeFilter === 'today' && styles.chipTextActive]}>
               오늘
             </Text>
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[
-              styles.chip,
-              recruitingFilter && styles.chipActive
-            ]}
+            style={[styles.chip, recruitingFilter && styles.chipActive]}
             onPress={toggleRecruitingFilter}
           >
-            <Text style={[
-              styles.chipText,
-              recruitingFilter && styles.chipTextActive
-            ]}>
+            <Text style={[styles.chipText, recruitingFilter && styles.chipTextActive]}>
               모집중
             </Text>
           </TouchableOpacity>
@@ -427,45 +399,30 @@ export default function HomeScreen() {
                 style={styles.sortOption}
                 onPress={() => handleSortSelect('popular')}
               >
-                <Text style={[
-                  styles.sortOptionText,
-                  sortBy === 'popular' && styles.sortOptionTextActive
-                ]}>
+                <Text style={[styles.sortOptionText, sortBy === 'popular' && styles.sortOptionTextActive]}>
                   인기순
                 </Text>
-                {sortBy === 'popular' && (
-                  <Check size={20} color="#ea4c89" />
-                )}
+                {sortBy === 'popular' && <Check size={20} color="#ea4c89" />}
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.sortOption}
                 onPress={() => handleSortSelect('time')}
               >
-                <Text style={[
-                  styles.sortOptionText,
-                  sortBy === 'time' && styles.sortOptionTextActive
-                ]}>
+                <Text style={[styles.sortOptionText, sortBy === 'time' && styles.sortOptionTextActive]}>
                   시간순
                 </Text>
-                {sortBy === 'time' && (
-                  <Check size={20} color="#ea4c89" />
-                )}
+                {sortBy === 'time' && <Check size={20} color="#ea4c89" />}
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={styles.sortOption}
                 onPress={() => handleSortSelect('ntrp')}
               >
-                <Text style={[
-                  styles.sortOptionText,
-                  sortBy === 'ntrp' && styles.sortOptionTextActive
-                ]}>
+                <Text style={[styles.sortOptionText, sortBy === 'ntrp' && styles.sortOptionTextActive]}>
                   NTRP순
                 </Text>
-                {sortBy === 'ntrp' && (
-                  <Check size={20} color="#ea4c89" />
-                )}
+                {sortBy === 'ntrp' && <Check size={20} color="#ea4c89" />}
               </TouchableOpacity>
             </View>
           </View>
@@ -525,7 +482,7 @@ export default function HomeScreen() {
               
               return passes;
             })
-           .sort((a, b) => {
+            .sort((a, b) => {
               if (sortBy === 'popular') {
                 return b.applicationsCount - a.applicationsCount;
               } else if (sortBy === 'time') {
@@ -612,6 +569,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#374151',
   },
+  adminDemoButton: {
+    backgroundColor: '#fef2f2',
+    borderColor: '#dc2626',
+  },
+  adminDemoButtonText: {
+    color: '#dc2626',
+    fontWeight: '700',
+  },
   logoutButton: {
     backgroundColor: '#fee2e2',
     borderColor: '#ef4444',
@@ -640,10 +605,7 @@ const styles = StyleSheet.create({
     gap: 6,
     borderWidth: 0,
     shadowColor: '#0d0c22',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 8,
     elevation: 2,
@@ -658,10 +620,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: '#ffffff',
     shadowColor: '#0d0c22',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
     shadowRadius: 6,
     elevation: 2,
@@ -685,10 +644,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
     borderWidth: 0,
     shadowColor: '#0d0c22',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 2,
@@ -736,10 +692,7 @@ const styles = StyleSheet.create({
     maxWidth: 400,
     padding: 24,
     shadowColor: '#0d0c22',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 10,

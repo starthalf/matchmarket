@@ -47,8 +47,7 @@ export const supabase = (() => {
           storage: Platform.OS === 'web' ? webStorage : AsyncStorage,
         }
       });
-      console.log('🔧 DEBUG: Supabase 클라이언트 생성 성공:', !!client);
-      return client;
+           return client;
     }
     console.warn('⚠️ Supabase 설정이 올바르지 않습니다:', {
       hasUrl: !!supabaseUrl,
@@ -72,7 +71,6 @@ export const supabaseAdmin = (() => {
           persistSession: false
         }
       });
-      console.log('🔧 DEBUG: Supabase Admin 클라이언트 생성 성공:', !!adminClient);
       return adminClient;
     }
     console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다:', {

@@ -223,10 +223,13 @@ export default function HomeScreen() {
                   <Text style={styles.demoButtonText}>midnight.rider</Text>
                 </TouchableOpacity>
               </>
-            ) : (
+           ) : (
               <TouchableOpacity 
                 style={[styles.demoButton, styles.logoutButton]}
-                onPress={logout}
+                onPress={async () => {
+                  await logout();
+                  await adminLogout();
+                }}
               >
                 <Text style={styles.logoutButtonText}>로그아웃</Text>
               </TouchableOpacity>

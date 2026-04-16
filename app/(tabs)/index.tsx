@@ -189,6 +189,13 @@ export default function HomeScreen() {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
             {!user ? (
               <>
+                <>
+                <TouchableOpacity 
+                  style={[styles.demoButton, styles.adminDemoButton]}
+                  onPress={() => handleQuickAdminLogin()}
+                >
+                  <Text style={[styles.demoButtonText, styles.adminDemoButtonText]}>🛡️ admin</Text>
+                </TouchableOpacity>
                 <TouchableOpacity 
                   style={styles.demoButton}
                   onPress={() => handleQuickLogin('aesthetic.vibes')}

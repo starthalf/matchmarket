@@ -687,7 +687,6 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
   </View>
 )}
 
-// ✅ 수정된 코드 - 마감되지 않은 매치만 입금확인 가능
 {/* ✅ 수정된 코드 - 마감되지 않은 매치만 입금확인 가능 */}
 {application.status === 'payment_submitted' && !match.isClosed && (
   <View style={styles.applicationActions}>

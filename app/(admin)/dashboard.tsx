@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { DollarSign, Users, Calendar, TrendingUp, CreditCard, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, User } from 'lucide-react-native';
+import { DollarSign, Users, Calendar, TrendingUp, CreditCard, TriangleAlert as AlertTriangle, CircleCheck as CheckCircle, User, ArrowLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 

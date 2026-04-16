@@ -98,15 +98,6 @@ export const isSupabaseAdminConfigured = () => {
   return !!(supabaseAdmin && typeof supabaseAdmin.from === 'function');
 };
 
-// 하드코딩 상태 로깅
-if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  console.log('🔧 Supabase 하드코딩 설정 상태:', {
-    hasUrl: !!supabaseUrl,
-    hasAnonKey: !!supabaseAnonKey,
-    hasServiceKey: !!supabaseServiceKey,
-    url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined'
-  });
-}
 
 // 사용자 프로필 타입 정의
 export interface UserProfile {

@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   grid: { 
     flexDirection: 'row', 
     flexWrap: 'wrap', 
-    gap: 12 
+    gap: 8,
   },
   playerItem: { 
     width: ITEM_SIZE, 

@@ -231,14 +231,15 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
                   console.log('현재 상태 - user:', user?.name, 'isAdmin:', isAdmin);
                   
                   try {
+                    // ✅ admin 상태 먼저 정리 (signOut 호출 전에)
                     if (isAdmin) {
                       console.log('→ adminLogout 실행');
                       await adminLogout();
                     }
-                    if (user) {
-                      console.log('→ logout 실행');
-                      await logout();
-                    }
+                    // ✅ logout이 실제 supabase.auth.signOut()을 호출
+                    // (AuthContext의 onAuthStateChange가 AdminContext에도 SIGNED_OUT 전파)
+                    console.log('→ logout 실행');
+                    await logout();
                     console.log('✅ 로그아웃 완료');
                   } catch (error) {
                     console.error('❌ 로그아웃 오류:', error);

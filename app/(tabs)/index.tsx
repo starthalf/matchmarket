@@ -58,12 +58,9 @@ export default function HomeScreen() {
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
       // admin 예외처리
-    if (userIdentifier === 'admin') {
-        await logout();
+   if (userIdentifier === 'admin') {
         const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
-        if (result.success) {
-          router.push('/(admin)/dashboard');
-        } else {
+        if (!result.success) {
           window.alert(`관리자 로그인 실패: ${result.error}`);
         }
         return;

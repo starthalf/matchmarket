@@ -227,8 +227,25 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
               <TouchableOpacity 
                 style={[styles.demoButton, styles.logoutButton]}
                 onPress={async () => {
-                  await logout();
-                  await adminLogout();
+                  console.log('🚪 로그아웃 버튼 클릭됨');
+                  console.log('현재 상태 - user:', user?.name, 'isAdmin:', isAdmin);
+                  
+                  try {
+                    if (isAdmin) {
+                      console.log('→ adminLogout 실행');
+                      await adminLogout();
+                    }
+                    if (user) {
+                      console.log('→ logout 실행');
+                      await logout();
+                    }
+                    console.log('✅ 로그아웃 완료');
+                  } catch (error) {
+                    console.error('❌ 로그아웃 오류:', error);
+                    if (Platform.OS === 'web') {
+                      window.alert('로그아웃 중 오류가 발생했습니다: ' + (error as Error).message);
+                    }
+                  }
                 }}
               >
                 <Text style={styles.logoutButtonText}>로그아웃</Text>

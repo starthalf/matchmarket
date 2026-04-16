@@ -57,6 +57,14 @@ export default function HomeScreen() {
 
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
+      // admin 예외처리
+      if (userIdentifier === 'admin') {
+        const result = await adminLogin('hcgkhlee@gmail.com', 'YOUR_PASSWORD');
+        if (result.success) router.push('/(admin)/dashboard');
+        else window.alert(`관리자 로그인 실패: ${result.error}`);
+        return;
+      }
+
       const { mockUsers } = await import('../../data/mockData');
       const targetUser = mockUsers.find(u => u.name === userIdentifier);
       

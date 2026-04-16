@@ -16,7 +16,8 @@ import { User, ArrowLeft } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
 const { width } = Dimensions.get('window');
-const ITEM_SIZE = (width - 60) / 4;
+// 가로 4개 = 양쪽 패딩 20*2 + 아이템 사이 gap 8*3 = 64
+const ITEM_SIZE = (width - 64) / 4;
 
 export default function PlayersListScreen() {
   const router = useRouter();

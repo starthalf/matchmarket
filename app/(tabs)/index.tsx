@@ -201,7 +201,7 @@ export default function HomeScreen() {
             {!user ? (
               <>
                 <TouchableOpacity 
-                  style={[styles.demoButton, styles.adminDemoButton]}
+                  style={[styles.demoButton, styles.adminDemoButton]} 
                   onPress={() => handleQuickLogin('admin')}
                 >
                   <Text style={[styles.demoButtonText, styles.adminDemoButtonText]}>🛡️ admin</Text>

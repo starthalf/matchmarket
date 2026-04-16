@@ -96,10 +96,11 @@ export function AdminProvider({ children }: { children: ReactNode }) {
 
   const adminLogout = async () => {
     try {
-      if (supabase) {
-        await supabase.auth.signOut();
-      }
+      console.log('🔴 adminLogout 시작');
+      // ✅ signOut은 AuthContext에서 호출하도록 하고, 여기선 상태만 정리
+      // (signOut을 두 번 호출하면 onAuthStateChange가 꼬임)
       setAdminUser(null);
+      console.log('🔴 adminLogout 완료 - adminUser null로 설정');
     } catch (error) {
       console.error('관리자 로그아웃 오류:', error);
     }

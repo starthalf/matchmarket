@@ -103,8 +103,24 @@ export default function AdminDashboardScreen() {
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
-          <Text style={styles.title}>관리자 대시보드</Text>
-          <Text style={styles.subtitle}>MatchMarket 운영 현황</Text>
+          <View style={styles.headerRow}>
+            <TouchableOpacity 
+              style={styles.backButton}
+              onPress={() => {
+                if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/(tabs)');
+                }
+              }}
+            >
+              <ArrowLeft size={24} color="#374151" />
+            </TouchableOpacity>
+            <View style={styles.headerTextContainer}>
+              <Text style={styles.title}>관리자 대시보드</Text>
+              <Text style={styles.subtitle}>MatchMarket 운영 현황</Text>
+            </View>
+          </View>
         </View>
       </View>
 

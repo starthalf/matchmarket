@@ -46,10 +46,7 @@ if (!_cache.__sb_logged__) {
 
 // ✅ 일반 클라이언트 (싱글톤)
 export const supabase: SupabaseClient | null = (() => {
-  // 이미 만들어진 인스턴스가 있으면 재사용
-  if (globalForSupabase.__supabase_client__ !== undefined) {
-    return globalForSupabase.__supabase_client__;
-  }
+  if (_cache.__sb_client__) return _cache.__sb_client__;
 
   try {
     if (supabaseUrl && supabaseAnonKey && supabaseUrl.startsWith('https://') && supabaseAnonKey.length > 20) {
@@ -59,18 +56,15 @@ export const supabase: SupabaseClient | null = (() => {
           autoRefreshToken: true,
           detectSessionInUrl: false,
           storage: Platform.OS === 'web' ? webStorage : AsyncStorage,
-          storageKey: 'sb-matchmarket-auth', // ✅ 명시적 키 지정
+          storageKey: 'sb-matchmarket-auth',
         }
       });
-      globalForSupabase.__supabase_client__ = client;
+      _cache.__sb_client__ = client;
       return client;
     }
-    console.warn('⚠️ Supabase 설정이 올바르지 않습니다');
-    globalForSupabase.__supabase_client__ = null;
     return null;
   } catch (error) {
     console.warn('Supabase 클라이언트 생성 실패:', error);
-    globalForSupabase.__supabase_client__ = null;
     return null;
   }
 })();

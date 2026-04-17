@@ -29,22 +29,19 @@ const webStorage = {
   },
 };
 
-// ✅ globalThis에 캐싱 - HMR 재실행 시에도 같은 인스턴스 재사용
+// ✅ window 객체에 캐싱 - Bolt HMR에서도 인스턴스 재사용
 // (Multiple GoTrueClient instances 경고 방지)
-const globalForSupabase = globalThis as unknown as {
-  __supabase_client__?: SupabaseClient | null;
-  __supabase_admin_client__?: SupabaseClient | null;
-  __supabase_logged__?: boolean;
+const getCache = () => {
+  if (typeof window !== 'undefined') return window as any;
+  if (typeof globalThis !== 'undefined') return globalThis as any;
+  return {} as any;
 };
+const _cache = getCache();
 
 // 로그는 최초 1회만 출력
-if (!globalForSupabase.__supabase_logged__) {
-  console.log('🔧 DEBUG: 하드코딩된 설정 사용:', {
-    url: supabaseUrl ? `${supabaseUrl.substring(0, 20)}...` : 'undefined',
-    anonKey: supabaseAnonKey ? `${supabaseAnonKey.substring(0, 20)}...` : 'undefined',
-    serviceKey: supabaseServiceKey ? `${supabaseServiceKey.substring(0, 20)}...` : 'undefined'
-  });
-  globalForSupabase.__supabase_logged__ = true;
+if (!_cache.__sb_logged__) {
+  console.log('🔧 DEBUG: 하드코딩된 설정 사용 (싱글톤)');
+  _cache.__sb_logged__ = true;
 }
 
 // ✅ 일반 클라이언트 (싱글톤)

@@ -71,10 +71,7 @@ export const supabase: SupabaseClient | null = (() => {
 
 // ✅ Admin 클라이언트 (싱글톤 + 별도 storageKey로 충돌 방지)
 export const supabaseAdmin: SupabaseClient | null = (() => {
-  // 이미 만들어진 인스턴스가 있으면 재사용
-  if (globalForSupabase.__supabase_admin_client__ !== undefined) {
-    return globalForSupabase.__supabase_admin_client__;
-  }
+  if (_cache.__sb_admin__) return _cache.__sb_admin__;
 
   try {
     if (supabaseUrl && supabaseServiceKey && supabaseUrl.startsWith('https://') && supabaseServiceKey.length > 20) {
@@ -82,18 +79,15 @@ export const supabaseAdmin: SupabaseClient | null = (() => {
         auth: {
           autoRefreshToken: false,
           persistSession: false,
-          storageKey: 'sb-matchmarket-admin', // ✅ 일반 클라이언트와 다른 키 (충돌 방지)
+          storageKey: 'sb-matchmarket-admin',
         }
       });
-      globalForSupabase.__supabase_admin_client__ = adminClient;
+      _cache.__sb_admin__ = adminClient;
       return adminClient;
     }
-    console.warn('⚠️ Supabase Admin 설정이 올바르지 않습니다');
-    globalForSupabase.__supabase_admin_client__ = null;
     return null;
   } catch (error) {
     console.warn('Supabase Admin 클라이언트 생성 실패:', error);
-    globalForSupabase.__supabase_admin_client__ = null;
     return null;
   }
 })();

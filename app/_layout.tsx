@@ -59,6 +59,67 @@ function RootLayoutNav() {
 export default function RootLayout() {
   useFrameworkReady();
 
+  // 🔥 PWA manifest & 메타 태그 동적 주입 (웹 전용)
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // manifest 링크
+      if (!document.querySelector('link[rel="manifest"]')) {
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = '/manifest.json';
+        document.head.appendChild(manifestLink);
+      }
+
+      // theme-color
+      if (!document.querySelector('meta[name="theme-color"]')) {
+        const themeColorMeta = document.createElement('meta');
+        themeColorMeta.name = 'theme-color';
+        themeColorMeta.content = '#ea4c89';
+        document.head.appendChild(themeColorMeta);
+      }
+
+      // mobile-web-app-capable
+      if (!document.querySelector('meta[name="mobile-web-app-capable"]')) {
+        const mobileCapableMeta = document.createElement('meta');
+        mobileCapableMeta.name = 'mobile-web-app-capable';
+        mobileCapableMeta.content = 'yes';
+        document.head.appendChild(mobileCapableMeta);
+      }
+
+      // apple-mobile-web-app-capable
+      if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
+        const appleCapableMeta = document.createElement('meta');
+        appleCapableMeta.name = 'apple-mobile-web-app-capable';
+        appleCapableMeta.content = 'yes';
+        document.head.appendChild(appleCapableMeta);
+      }
+
+      // apple-mobile-web-app-status-bar-style
+      if (!document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')) {
+        const appleStatusBarMeta = document.createElement('meta');
+        appleStatusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
+        appleStatusBarMeta.content = 'default';
+        document.head.appendChild(appleStatusBarMeta);
+      }
+
+      // apple-mobile-web-app-title
+      if (!document.querySelector('meta[name="apple-mobile-web-app-title"]')) {
+        const appleTitleMeta = document.createElement('meta');
+        appleTitleMeta.name = 'apple-mobile-web-app-title';
+        appleTitleMeta.content = '테니스';
+        document.head.appendChild(appleTitleMeta);
+      }
+
+      // apple-touch-icon
+      if (!document.querySelector('link[rel="apple-touch-icon"]')) {
+        const appleIconLink = document.createElement('link');
+        appleIconLink.rel = 'apple-touch-icon';
+        appleIconLink.href = '/assets/images/icon-192.png';
+        document.head.appendChild(appleIconLink);
+      }
+    }
+  }, []);
+
   // ✨ Pretendard 웹폰트 로드 + 전역 폰트 세팅 (웹 전용)
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {

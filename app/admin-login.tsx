@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Shield, ArrowRight, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Shield, ArrowRight, ArrowLeft, Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
 import { useAdmin } from '../contexts/AdminContext';
 import { useSafeStyles } from '../constants/Styles';
 
@@ -57,6 +57,16 @@ export default function AdminLoginScreen() {
 
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
+      <View style={safeStyles.safeHeader}>
+        <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity style={safeStyles.backButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
+          <View style={safeStyles.placeholder} />
+          <View style={safeStyles.placeholder} />
+        </View>
+      </View>
+
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}

@@ -1,5 +1,7 @@
 // public/service-worker.js
-const CACHE_NAME = 'matchmarket-v1';
+// 🔥 배포할 때마다 이 버전 숫자를 올려주세요 (v1 → v2 → v3 ...)
+const CACHE_NAME = 'matchmarket-v2';
+
 const urlsToCache = [
   '/',
   '/index.html',
@@ -7,20 +9,19 @@ const urlsToCache = [
 
 // 설치 이벤트
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
+  console.log('Service Worker: Installing...', CACHE_NAME);
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Service Worker: Caching files');
         return cache.addAll(urlsToCache);
       })
-      .then(() => self.skipWaiting())
   );
 });
 
-// 활성화 이벤트
+// 활성화 이벤트 (이전 캐시 삭제)
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
+  console.log('Service Worker: Activating...', CACHE_NAME);
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -31,9 +32,16 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
-  return self.clients.claim();
+});
+
+// 🔥 SKIP_WAITING 메시지 수신 시 즉시 활성화
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('Service Worker: Skip waiting requested');
+    self.skipWaiting();
+  }
 });
 
 // Fetch 이벤트 (네트워크 우선 전략)

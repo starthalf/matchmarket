@@ -22,12 +22,11 @@ export default function ProfileSettingsScreen() {
   const safeStyles = useSafeStyles();
   const [formData, setFormData] = useState({
     name: currentUser?.name || '',
-    email: currentUser?.name || '', // 임시로 name을 email로 사용
+    email: currentUser?.name || '',
     ntrp: currentUser?.ntrp.toString() || '',
     experience: currentUser?.experience.toString() || '',
     playStyle: currentUser?.playStyle || '올라운드',
     careerType: currentUser?.careerType || '동호인',
-    // 계좌 정보 추가
     bankName: currentUser?.bankName || '',
     accountNumber: currentUser?.accountNumber || '',
     accountHolder: currentUser?.accountHolder || '',
@@ -40,9 +39,6 @@ export default function ProfileSettingsScreen() {
   });
 
   const handleSaveProfile = async () => {
-    console.log('handleSaveProfile 호출됨');
-    
-    // 계좌 정보 유효성 검사
     if (formData.bankName || formData.accountNumber || formData.accountHolder) {
       if (!formData.bankName || !formData.accountNumber || !formData.accountHolder) {
         if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -54,7 +50,6 @@ export default function ProfileSettingsScreen() {
       }
     }
 
-    // 웹 환경
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       if (!window.confirm('프로필 정보를 저장하시겠습니까?')) {
         return;
@@ -66,19 +61,6 @@ export default function ProfileSettingsScreen() {
           return;
         }
 
-        console.log('프로필 저장 시작:', currentUser.id);
-        console.log('저장할 데이터:', {
-          name: formData.name,
-          ntrp: parseFloat(formData.ntrp),
-          experience: parseInt(formData.experience),
-          play_style: formData.playStyle,
-          career_type: formData.careerType,
-          bank_name: formData.bankName,
-          account_number: formData.accountNumber,
-          account_holder: formData.accountHolder,
-        });
-
-        // Supabase에 저장
         const { error } = await supabase
           .from('users')
           .update({
@@ -94,14 +76,10 @@ export default function ProfileSettingsScreen() {
           .eq('id', currentUser.id);
 
         if (error) {
-          console.error('프로필 저장 오류:', error);
           window.alert('프로필 저장 중 오류가 발생했습니다: ' + error.message);
           return;
         }
 
-        console.log('프로필 저장 성공!');
-
-        // 로컬 상태 업데이트
         const updatedUser = {
           ...currentUser,
           name: formData.name,
@@ -117,11 +95,9 @@ export default function ProfileSettingsScreen() {
         updateUser(updatedUser);
         window.alert('프로필이 저장되었습니다.');
       } catch (error) {
-        console.error('저장 중 오류:', error);
         window.alert('프로필 저장 중 오류가 발생했습니다.');
       }
     } else {
-      // 모바일 환경
       Alert.alert(
         '프로필 저장',
         '프로필 정보를 저장하시겠습니까?',
@@ -136,7 +112,6 @@ export default function ProfileSettingsScreen() {
                   return;
                 }
 
-                // Supabase에 저장
                 const { error } = await supabase
                   .from('users')
                   .update({
@@ -152,12 +127,10 @@ export default function ProfileSettingsScreen() {
                   .eq('id', currentUser.id);
 
                 if (error) {
-                  console.error('프로필 저장 오류:', error);
                   Alert.alert('오류', '프로필 저장 중 오류가 발생했습니다.');
                   return;
                 }
 
-                // 로컬 상태 업데이트
                 const updatedUser = {
                   ...currentUser,
                   name: formData.name,
@@ -173,7 +146,6 @@ export default function ProfileSettingsScreen() {
                 updateUser(updatedUser);
                 Alert.alert('완료', '프로필이 저장되었습니다.');
               } catch (error) {
-                console.error('저장 중 오류:', error);
                 Alert.alert('오류', '프로필 저장 중 오류가 발생했습니다.');
               }
             }
@@ -181,14 +153,6 @@ export default function ProfileSettingsScreen() {
         ]
       );
     }
-  };
-
-  const handleChangePassword = () => {
-    Alert.alert(
-      '비밀번호 변경',
-      '비밀번호 변경 기능은 준비 중입니다.',
-      [{ text: '확인' }]
-    );
   };
 
   const handleDeleteAccount = () => {
@@ -334,7 +298,7 @@ export default function ProfileSettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* 계좌 정보 섹션 추가 */}
+        {/* 계좌 정보 섹션 */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <CreditCard size={20} color="#3b82f6" />

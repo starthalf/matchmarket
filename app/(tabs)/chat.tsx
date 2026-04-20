@@ -1,4 +1,4 @@
-// app/(tabs)/chat.tsx - Supabase 실시간 채팅 버전
+// app/(tabs)/chat.tsx - 판매/참여 탭 분리 버전
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +10,6 @@ import { ChatRoom, ChatMessage } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
 import { router } from 'expo-router';
 import { supabaseAdmin } from '../../lib/supabase';
-import { useFocusEffect } from '@react-navigation/native';
 import { markNotificationsAsRead } from '../../lib/supabase';
 
 export default function ChatScreen() {
@@ -18,6 +17,7 @@ export default function ChatScreen() {
   const { matches } = useMatches();
   const { markAllAsRead } = useChat();
   const safeStyles = useSafeStyles();
+  const [selectedTab, setSelectedTab] = useState<'selling' | 'participating'>('selling');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoom, setSelectedRoom] = useState<ChatRoom | null>(null);
   const [messageInput, setMessageInput] = useState('');
@@ -25,31 +25,23 @@ export default function ChatScreen() {
   const [roomLastMessages, setRoomLastMessages] = useState<{ [roomId: string]: ChatMessage }>({});
   const scrollViewRef = useRef<ScrollView>(null);
 
- // 🔥 채팅 화면 진입 시 알림 읽음 처리
+  // 🔥 채팅 화면 진입 시 알림 읽음 처리
   useEffect(() => {
     if (user) {
       markNotificationsAsRead(user.id, 'new_chat_room');
     }
   }, [user]);
 
- // 내가 참여한 매치들에서 채팅방 생성
-const myChatRooms: ChatRoom[] = matches
-  .filter(match => {
-    return match.sellerId === user?.id || 
-           match.applications?.some(app => 
-             app.userId === user?.id && 
-             app.status === 'confirmed'  // 입금확인 후에만 채팅방 입장
-           );
-  })
-  .map(match => ({
-    id: `chat_${match.id}`,
-    matchId: match.id,
-    participantIds: [
-      match.sellerId,
-      ...(match.applications?.filter(app => 
-        app.status === 'confirmed'  // 입금확인 후에만 채팅방 입장
-      ).map(app => app.userId) || [])
-    ],
+  // 판매 매치 채팅방 (내가 판매자인 매치)
+  const sellingChatRooms: ChatRoom[] = matches
+    .filter(match => match.sellerId === user?.id)
+    .map(match => ({
+      id: `chat_${match.id}`,
+      matchId: match.id,
+      participantIds: [
+        match.sellerId,
+        ...(match.applications?.filter(app => app.status === 'confirmed').map(app => app.userId) || [])
+      ],
       lastMessage: {
         id: `msg_${match.id}_last`,
         roomId: `chat_${match.id}`,
@@ -65,23 +57,55 @@ const myChatRooms: ChatRoom[] = matches
       matchTitle: match.title,
       matchDate: match.date,
       matchTime: match.time,
-   participantCount: 1 + (match.applications?.filter(app => 
-  app.status === 'confirmed'  // 입금확인 후에만 채팅방 입장
-).length || 0)
+      participantCount: 1 + (match.applications?.filter(app => app.status === 'confirmed').length || 0)
     }));
 
+  // 참여 매치 채팅방 (내가 참여자인 매치, confirmed 상태만)
+  const participatingChatRooms: ChatRoom[] = matches
+    .filter(match =>
+      match.sellerId !== user?.id &&
+      match.applications?.some(app => app.userId === user?.id && app.status === 'confirmed')
+    )
+    .map(match => ({
+      id: `chat_${match.id}`,
+      matchId: match.id,
+      participantIds: [
+        match.sellerId,
+        ...(match.applications?.filter(app => app.status === 'confirmed').map(app => app.userId) || [])
+      ],
+      lastMessage: {
+        id: `msg_${match.id}_last`,
+        roomId: `chat_${match.id}`,
+        senderId: match.sellerId,
+        senderName: match.seller.name,
+        message: '매치가 생성되었습니다. 안전하고 즐거운 경기 되세요!',
+        type: 'system',
+        timestamp: match.createdAt,
+        isRead: false
+      },
+      updatedAt: match.createdAt,
+      createdAt: match.createdAt,
+      matchTitle: match.title,
+      matchDate: match.date,
+      matchTime: match.time,
+      participantCount: 1 + (match.applications?.filter(app => app.status === 'confirmed').length || 0)
+    }));
+
+  // 현재 탭에 따른 채팅방 목록
+  const currentRooms = selectedTab === 'selling' ? sellingChatRooms : participatingChatRooms;
+
   // 검색 필터링
-  const filteredRooms = myChatRooms.filter(room =>
+  const filteredRooms = currentRooms.filter(room =>
     searchQuery === '' ||
     (room as any).matchTitle?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // 각 방의 최근 메시지 로드
-  const loadRoomLastMessages = async () => {
+  const loadRoomLastMessages = async (rooms: ChatRoom[]) => {
     if (!user) return;
 
     try {
-      for (const room of myChatRooms) {
+      for (const room of rooms) {
         const { data, error } = await supabaseAdmin
           .from('chat_messages')
           .select('*')
@@ -113,12 +137,12 @@ const myChatRooms: ChatRoom[] = matches
     }
   };
 
-  // 채팅방 목록 변경 시 최근 메시지들 로드
+  // 탭 변경 또는 채팅방 목록 변경 시 최근 메시지 로드
   useEffect(() => {
-    if (user && myChatRooms.length > 0) {
-      loadRoomLastMessages();
+    if (user && currentRooms.length > 0) {
+      loadRoomLastMessages(currentRooms);
     }
-  }, [user, myChatRooms.length]);
+  }, [user, selectedTab, currentRooms.length]);
 
   // Supabase에서 메시지 불러오기
   const loadMessages = async (roomId: string) => {
@@ -147,7 +171,6 @@ const myChatRooms: ChatRoom[] = matches
         }));
         setMessages(loadedMessages);
       } else {
-        // 첫 메시지가 없으면 시스템 메시지 생성
         createInitialMessage(roomId);
       }
     } catch (error) {
@@ -189,7 +212,7 @@ const myChatRooms: ChatRoom[] = matches
     }
   };
 
-  // 메시지 전송 (Supabase에 저장)
+  // 메시지 전송
   const sendMessage = async () => {
     if (!messageInput.trim() || !selectedRoom || !user) return;
 
@@ -204,17 +227,14 @@ const myChatRooms: ChatRoom[] = matches
       isRead: false
     };
 
-    // 즉시 UI에 표시
     setMessages(prev => [...prev, newMessage]);
     setMessageInput('');
 
-    // 채팅 목록의 최근 메시지도 업데이트
     setRoomLastMessages(prev => ({
       ...prev,
       [selectedRoom.id]: newMessage
     }));
 
-    // Supabase에 저장
     try {
       const { error } = await supabaseAdmin
         .from('chat_messages')
@@ -238,20 +258,19 @@ const myChatRooms: ChatRoom[] = matches
       Alert.alert('오류', '메시지 전송 중 문제가 발생했습니다.');
     }
 
-    // 스크롤을 최하단으로
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
 
-  // 채팅방 선택시 메시지 로드
+  // 채팅방 선택 시 메시지 로드
   useEffect(() => {
     if (selectedRoom) {
       loadMessages(selectedRoom.id);
     }
   }, [selectedRoom?.id]);
 
-  // 실시간 메시지 구독 (새 메시지 자동 수신)
+  // 실시간 메시지 구독
   useEffect(() => {
     if (!selectedRoom) return;
 
@@ -278,20 +297,17 @@ const myChatRooms: ChatRoom[] = matches
             isRead: newMsg.is_read
           };
 
-          // 내가 보낸 메시지가 아닐 때만 추가 (중복 방지)
           setMessages(prev => {
             const exists = prev.some(m => m.id === chatMessage.id);
             if (exists) return prev;
             return [...prev, chatMessage];
           });
 
-          // 채팅 목록의 최근 메시지도 업데이트
           setRoomLastMessages(prev => ({
             ...prev,
             [selectedRoom.id]: chatMessage
           }));
 
-          // 새 메시지가 오면 스크롤 내리기
           setTimeout(() => {
             scrollViewRef.current?.scrollToEnd({ animated: true });
           }, 100);
@@ -310,15 +326,15 @@ const myChatRooms: ChatRoom[] = matches
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
     if (diffInHours < 24) {
-      return date.toLocaleTimeString('ko-KR', { 
-        hour: '2-digit', 
+      return date.toLocaleTimeString('ko-KR', {
+        hour: '2-digit',
         minute: '2-digit',
-        hour12: false 
+        hour12: false
       });
     } else {
-      return date.toLocaleDateString('ko-KR', { 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('ko-KR', {
+        month: 'short',
+        day: 'numeric'
       });
     }
   };
@@ -345,16 +361,15 @@ const myChatRooms: ChatRoom[] = matches
       <View style={styles.container}>
         {!selectedRoom ? (
           <>
+            {/* 헤더 */}
             <View style={safeStyles.safeHeader}>
               <View style={safeStyles.safeHeaderContent}>
                 <View>
                   <Text style={styles.title}>채팅</Text>
-                  <Text style={styles.subtitle}>
-                    매치 참여자들과 소통하세요
-                  </Text>
+                  <Text style={styles.subtitle}>매치 참여자들과 소통하세요</Text>
                 </View>
                 <View style={styles.headerIcons}>
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.headerLoginIcon}
                     onPress={() => {
                       if (user) {
@@ -374,6 +389,27 @@ const myChatRooms: ChatRoom[] = matches
               </View>
             </View>
 
+            {/* 탭 */}
+            <View style={styles.tabContainer}>
+              <TouchableOpacity
+                style={[styles.tabButton, selectedTab === 'selling' && styles.tabButtonActive]}
+                onPress={() => setSelectedTab('selling')}
+              >
+                <Text style={[styles.tabButtonText, selectedTab === 'selling' && styles.tabButtonTextActive]}>
+                  판매 매치 ({sellingChatRooms.length})
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.tabButton, selectedTab === 'participating' && styles.tabButtonActive]}
+                onPress={() => setSelectedTab('participating')}
+              >
+                <Text style={[styles.tabButtonText, selectedTab === 'participating' && styles.tabButtonTextActive]}>
+                  참여 매치 ({participatingChatRooms.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* 검색 */}
             <View style={styles.searchContainer}>
               <Search size={20} color="#9ca3af" />
               <TextInput
@@ -385,19 +421,26 @@ const myChatRooms: ChatRoom[] = matches
               />
             </View>
 
+            {/* 채팅방 목록 */}
             <ScrollView style={styles.roomList} showsVerticalScrollIndicator={false}>
               {filteredRooms.length === 0 ? (
                 <View style={styles.emptyStateContainer}>
                   <MessageCircle size={48} color="#9ca3af" />
-                  <Text style={styles.emptyStateTitle}>채팅방이 없습니다</Text>
+                  <Text style={styles.emptyStateTitle}>
+                    {selectedTab === 'selling' ? '판매한 매치가 없습니다' : '참여한 매치가 없습니다'}
+                  </Text>
                   <Text style={styles.emptyStateSubtitle}>
-                    매치에 참여하거나 등록하면{'\n'}채팅방이 생성됩니다
+                    {selectedTab === 'selling'
+                      ? '매치를 등록하면\n채팅방이 생성됩니다'
+                      : '매치에 참여하고 입금 확정이 되면\n채팅방이 생성됩니다'}
                   </Text>
                   <TouchableOpacity
                     style={styles.emptyStateButton}
-                    onPress={() => router.push('/(tabs)/index')}
+                    onPress={() => router.push(selectedTab === 'selling' ? '/(tabs)/register' : '/(tabs)/index')}
                   >
-                    <Text style={styles.emptyStateButtonText}>매치 찾아보기</Text>
+                    <Text style={styles.emptyStateButtonText}>
+                      {selectedTab === 'selling' ? '매치 등록하기' : '매치 찾아보기'}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               ) : (
@@ -407,10 +450,13 @@ const myChatRooms: ChatRoom[] = matches
                     style={styles.roomItem}
                     onPress={() => setSelectedRoom(room)}
                   >
-                    <View style={styles.roomIcon}>
-                      <Users size={24} color="#ec4899" />
+                    <View style={[
+                      styles.roomIcon,
+                      selectedTab === 'selling' ? styles.roomIconSelling : styles.roomIconParticipating
+                    ]}>
+                      <Users size={24} color={selectedTab === 'selling' ? '#ec4899' : '#3b82f6'} />
                     </View>
-                    
+
                     <View style={styles.roomContent}>
                       <View style={styles.roomHeader}>
                         <Text style={styles.roomTitle}>
@@ -420,7 +466,7 @@ const myChatRooms: ChatRoom[] = matches
                           {formatTime(roomLastMessages[room.id]?.timestamp || room.lastMessage?.timestamp || room.updatedAt)}
                         </Text>
                       </View>
-                      
+
                       <View style={styles.roomInfo}>
                         <View style={styles.roomInfoRow}>
                           <Calendar size={14} color="#6b7280" />
@@ -432,7 +478,7 @@ const myChatRooms: ChatRoom[] = matches
                           {(room as any).participantCount}명 참여
                         </Text>
                       </View>
-                      
+
                       <Text style={styles.lastMessage}>
                         {roomLastMessages[room.id]?.message || room.lastMessage?.message || '메시지가 없습니다'}
                       </Text>
@@ -451,7 +497,7 @@ const myChatRooms: ChatRoom[] = matches
         ) : (
           <>
             <View style={styles.chatHeader}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => setSelectedRoom(null)}
               >
@@ -467,9 +513,9 @@ const myChatRooms: ChatRoom[] = matches
               </View>
             </View>
 
-            <ScrollView 
+            <ScrollView
               ref={scrollViewRef}
-              style={styles.messageList} 
+              style={styles.messageList}
               showsVerticalScrollIndicator={false}
               onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
@@ -564,6 +610,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabButtonActive: {
+    borderBottomColor: '#ea4c89',
+  },
+  tabButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#6e6d7a',
+  },
+  tabButtonTextActive: {
+    color: '#ea4c89',
+  },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -611,7 +682,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   emptyStateContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 32,
@@ -629,6 +699,7 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     textAlign: 'center',
     marginBottom: 24,
+    lineHeight: 22,
   },
   emptyStateButton: {
     backgroundColor: '#ec4899',
@@ -656,10 +727,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#fce7f3',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+  },
+  roomIconSelling: {
+    backgroundColor: '#fce7f3',
+  },
+  roomIconParticipating: {
+    backgroundColor: '#dbeafe',
   },
   roomContent: {
     flex: 1,

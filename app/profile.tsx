@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Settings, Award, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Camera, User, CreditCard } from 'lucide-react-native';
+import { Settings, Award, Heart, Clock, CircleCheck as CheckCircle, CircleAlert as AlertCircle, Camera, User, CreditCard, ArrowLeft } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { CertificationBadge } from '../components/CertificationBadge';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -100,7 +100,6 @@ export default function ProfileScreen() {
         const imageUri = result.assets[0].uri;
         setProfileImage(imageUri);
         
-        // 플랫폼별 저장
         if (currentUser) {
           try {
             if (Platform.OS === 'web') {
@@ -142,7 +141,6 @@ export default function ProfileScreen() {
         const imageUri = result.assets[0].uri;
         setProfileImage(imageUri);
         
-        // 플랫폼별 저장
         if (currentUser) {
           try {
             if (Platform.OS === 'web') {
@@ -167,7 +165,6 @@ export default function ProfileScreen() {
   const removeProfileImage = () => {
     setProfileImage(null);
     
-    // 플랫폼별 삭제
     if (currentUser) {
       try {
         if (Platform.OS === 'web') {
@@ -185,7 +182,7 @@ export default function ProfileScreen() {
     Alert.alert('완료', '프로필 사진이 삭제되었습니다.');
   };
 
-  const handleLogout = () => {
+  const handleGoToSettings = () => {
     router.push('/profile-settings');
   };
 
@@ -193,8 +190,11 @@ export default function ProfileScreen() {
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
+          <TouchableOpacity style={safeStyles.backButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#374151" />
+          </TouchableOpacity>
           <Text style={styles.title}>프로필</Text>
-          <TouchableOpacity style={styles.settingsButton} onPress={handleLogout}>
+          <TouchableOpacity style={styles.settingsButton} onPress={handleGoToSettings}>
             <Settings size={20} color="#6b7280" />
           </TouchableOpacity>
         </View>

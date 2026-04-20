@@ -40,7 +40,18 @@ export default function Index() {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
-  // ✅ [이동됨] 모든 Hook(useEffect 등) 선언이 끝난 후, 맨 마지막에 체크해야 합니다.
+  // ✅ PWA로 설치해서 실행한 경우 랜딩 건너뛰고 바로 홈으로
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+      || (window.navigator as any).standalone === true
+      || document.referrer.includes('android-app://');
+    
+    if (isStandalone) {
+      return <Redirect href="/(tabs)" />;
+    }
+  }
+
+  // ✅ 로그인된 경우 바로 홈으로
   if (user) {
     return <Redirect href="/(tabs)" />;
   }

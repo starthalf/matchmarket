@@ -1,31 +1,28 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Platform, View, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import * as SplashScreen from 'expo-splash-screen'; // 스플래시 스크린 제어
+import * as SplashScreen from 'expo-splash-screen';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { MatchProvider } from '@/contexts/MatchContext';
 import { AdminProvider } from '@/contexts/AdminContext';
 import { ChatProvider } from '@/contexts/ChatContext';
 import { InstallPrompt } from '../components/InstallPrompt';
+import { UpdateBanner } from '../components/UpdateBanner';
 
-// 스플래시 자동 숨김 방지
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
-// 🔥 네비게이션 및 프로바이더 로직을 분리한 컴포넌트
 function RootLayoutNav() {
   const { isLoading, user } = useAuth();
 
-  // 로딩 상태에 따라 스플래시 스크린 제어
   useEffect(() => {
     if (!isLoading) {
       SplashScreen.hideAsync().catch(() => {});
     }
   }, [isLoading]);
 
-  // ✅ [핵심] 로딩 중일 때는 아무런 Provider도, Stack도 렌더링하지 않음 (무한 로딩 원천 차단)
   if (isLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FAFAF7' }}>
@@ -34,7 +31,6 @@ function RootLayoutNav() {
     );
   }
 
-  // ✅ 로딩이 끝나면 비로소 Provider와 화면들을 렌더링함
   return (
     <AdminProvider>
       <MatchProvider>
@@ -59,10 +55,13 @@ function RootLayoutNav() {
 export default function RootLayout() {
   useFrameworkReady();
 
+  // 🔥 PWA 업데이트 관련 state
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false);
+  const waitingWorkerRef = useRef<ServiceWorker | null>(null);
+
   // 🔥 PWA manifest & 메타 태그 동적 주입 (웹 전용)
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      // manifest 링크
       if (!document.querySelector('link[rel="manifest"]')) {
         const manifestLink = document.createElement('link');
         manifestLink.rel = 'manifest';
@@ -70,7 +69,6 @@ export default function RootLayout() {
         document.head.appendChild(manifestLink);
       }
 
-      // theme-color
       if (!document.querySelector('meta[name="theme-color"]')) {
         const themeColorMeta = document.createElement('meta');
         themeColorMeta.name = 'theme-color';
@@ -78,7 +76,6 @@ export default function RootLayout() {
         document.head.appendChild(themeColorMeta);
       }
 
-      // mobile-web-app-capable
       if (!document.querySelector('meta[name="mobile-web-app-capable"]')) {
         const mobileCapableMeta = document.createElement('meta');
         mobileCapableMeta.name = 'mobile-web-app-capable';
@@ -86,7 +83,6 @@ export default function RootLayout() {
         document.head.appendChild(mobileCapableMeta);
       }
 
-      // apple-mobile-web-app-capable
       if (!document.querySelector('meta[name="apple-mobile-web-app-capable"]')) {
         const appleCapableMeta = document.createElement('meta');
         appleCapableMeta.name = 'apple-mobile-web-app-capable';
@@ -94,7 +90,6 @@ export default function RootLayout() {
         document.head.appendChild(appleCapableMeta);
       }
 
-      // apple-mobile-web-app-status-bar-style
       if (!document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')) {
         const appleStatusBarMeta = document.createElement('meta');
         appleStatusBarMeta.name = 'apple-mobile-web-app-status-bar-style';
@@ -102,7 +97,6 @@ export default function RootLayout() {
         document.head.appendChild(appleStatusBarMeta);
       }
 
-      // apple-mobile-web-app-title
       if (!document.querySelector('meta[name="apple-mobile-web-app-title"]')) {
         const appleTitleMeta = document.createElement('meta');
         appleTitleMeta.name = 'apple-mobile-web-app-title';
@@ -110,7 +104,6 @@ export default function RootLayout() {
         document.head.appendChild(appleTitleMeta);
       }
 
-      // apple-touch-icon
       if (!document.querySelector('link[rel="apple-touch-icon"]')) {
         const appleIconLink = document.createElement('link');
         appleIconLink.rel = 'apple-touch-icon';
@@ -123,7 +116,6 @@ export default function RootLayout() {
   // ✨ Pretendard 웹폰트 로드 + 전역 폰트 세팅 (웹 전용)
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
-      // 1. Pretendard 폰트 CDN 로드
       if (!document.getElementById('pretendard-font')) {
         const link = document.createElement('link');
         link.id = 'pretendard-font';
@@ -132,7 +124,6 @@ export default function RootLayout() {
         document.head.appendChild(link);
       }
 
-      // 2. 전역 body 폰트 및 기본 스타일 세팅
       if (!document.getElementById('matchmarket-global-style')) {
         const style = document.createElement('style');
         style.id = 'matchmarket-global-style';
@@ -156,7 +147,7 @@ export default function RootLayout() {
     }
   }, []);
 
-  // Service Worker 등록 로직
+  // 🔥 Service Worker 등록 + 자동 업데이트 감지
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && 'serviceWorker' in navigator) {
       window.addEventListener('load', () => {
@@ -164,10 +155,46 @@ export default function RootLayout() {
           .register('/service-worker.js')
           .then((registration) => {
             console.log('✅ Service Worker registered:', registration);
+
+            // 🔥 1시간마다 새 버전 체크
+            setInterval(() => {
+              console.log('🔍 Service Worker 업데이트 체크');
+              registration.update();
+            }, 60 * 60 * 1000);
+
+            // 🔥 새 버전 감지 시 배너 표시
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker) {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    console.log('🆕 새 버전이 설치되었습니다');
+                    waitingWorkerRef.current = newWorker;
+                    setShowUpdateBanner(true);
+                  }
+                });
+              }
+            });
+
+            // 🔥 페이지 로드 시 이미 대기 중인 새 버전이 있는지 체크
+            if (registration.waiting && navigator.serviceWorker.controller) {
+              console.log('🆕 대기 중인 새 버전 발견');
+              waitingWorkerRef.current = registration.waiting;
+              setShowUpdateBanner(true);
+            }
           })
           .catch((error) => {
             console.log('❌ Service Worker registration failed:', error);
           });
+      });
+
+      // 🔥 새 SW 활성화되면 페이지 새로고침
+      let refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        console.log('🔄 새 버전 적용, 새로고침합니다');
+        window.location.reload();
       });
     }
   }, []);
@@ -191,13 +218,30 @@ export default function RootLayout() {
     }
   }, []);
 
-  // 최상위에는 AuthProvider만 감싸고, 내부는 Nav 컴포넌트에게 위임
+  // 🔥 사용자가 업데이트 버튼 클릭 시
+  const handleUpdate = () => {
+    if (waitingWorkerRef.current) {
+      waitingWorkerRef.current.postMessage({ type: 'SKIP_WAITING' });
+    }
+    setShowUpdateBanner(false);
+  };
+
+  // 🔥 사용자가 배너 닫기 클릭 시
+  const handleDismissUpdate = () => {
+    setShowUpdateBanner(false);
+  };
+
   return (
     <SafeAreaProvider>
       <AuthProvider>
         <RootLayoutNav />
       </AuthProvider>
       <InstallPrompt />
+      <UpdateBanner
+        visible={showUpdateBanner}
+        onUpdate={handleUpdate}
+        onDismiss={handleDismissUpdate}
+      />
     </SafeAreaProvider>
   );
 }

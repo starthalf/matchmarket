@@ -1,8 +1,8 @@
-// app/(tabs)/match-management.tsx - 완전 구현 버전
+// app/(tabs)/match-management.tsx - 완전 구현 버전 + 매치 복사 + 종료 매치 마감 해제 방지
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ClipboardList, Users, Check, X, Clock, Calendar, CheckCircle, User, LogIn } from 'lucide-react-native';
+import { ClipboardList, Users, Check, X, Clock, Calendar, CheckCircle, User, LogIn, Copy } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { Match, MatchApplication } from '../../types/tennis';
@@ -278,8 +278,6 @@ useEffect(() => {
     }
   };
 
-// 수정할 부분: 248번째 줄부터 302번째 줄까지
-
 // 🆕 입금 확인 처리
 const handleConfirmPayment = (matchId: string, applicationId: string) => {
   const match = matches.find(m => m.id === matchId);
@@ -348,7 +346,33 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
     );
   }
 };
-  
+
+  // 🆕 매치 복사해서 새로 등록
+  const handleCopyMatch = (match: Match) => {
+    if (typeof window !== 'undefined' && window.confirm) {
+      if (!window.confirm('이 매치를 복사하여 새 매치를 등록하시겠습니까?\n매치 등록 화면으로 이동합니다.')) {
+        return;
+      }
+    }
+    
+    // 매치 정보를 쿼리 파라미터로 전달
+    const params = new URLSearchParams({
+      copyFrom: 'true',
+      title: match.title,
+      court: match.court,
+      location: match.location || '서울시',
+      description: match.description || '',
+      basePrice: match.basePrice.toString(),
+      matchType: match.matchType.join(','),
+      maleCount: match.expectedParticipants.male.toString(),
+      femaleCount: match.expectedParticipants.female.toString(),
+      ntrpMin: match.ntrpRequirement.min.toString(),
+      ntrpMax: match.ntrpRequirement.max.toString(),
+    });
+    
+    router.push(`/(tabs)/register?${params.toString()}`);
+  };
+
   // 모집중/마감 토글
   const handleToggleRecruitment = (match: Match) => {
     const newStatus = !match.isClosed;
@@ -359,6 +383,8 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
       if (matchEndDateTime < new Date()) {
         if (typeof window !== 'undefined') {
           window.alert('종료된 매치는 모집을 다시 열 수 없습니다.\n매치 복사 기능을 이용해주세요.');
+        } else {
+          Alert.alert('알림', '종료된 매치는 모집을 다시 열 수 없습니다.\n매치 복사 기능을 이용해주세요.');
         }
         return;
       }
@@ -466,6 +492,12 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
     default: return '알 수 없음';
   }
 };
+
+  // 🆕 매치가 종료되었는지 확인하는 헬퍼
+  const isMatchExpired = (match: Match) => {
+    const matchEndDateTime = new Date(`${match.date} ${match.endTime}`);
+    return matchEndDateTime < new Date();
+  };
 
   if (!user) {
     return (
@@ -609,16 +641,30 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
 
                           <View style={styles.matchControlSection}>
   <View style={styles.recruitmentToggle}>
-    <Text style={styles.recruitmentToggleLabel}>
-      {match.isClosed ? '마감됨' : '모집중'}
+    <Text style={[
+      styles.recruitmentToggleLabel,
+      isMatchExpired(match) && match.isClosed && { color: '#9ca3af' }
+    ]}>
+      {match.isClosed ? (isMatchExpired(match) ? '종료됨' : '마감됨') : '모집중'}
     </Text>
     <Switch
       value={!match.isClosed}
       onValueChange={() => handleToggleRecruitment(match)}
       trackColor={{ false: '#d1d5db', true: '#86efac' }}
       thumbColor={!match.isClosed ? '#16a34a' : '#f3f4f6'}
+      disabled={isMatchExpired(match) && match.isClosed}
     />
   </View>
+
+  {/* 🆕 매치 복사 버튼 */}
+  <TouchableOpacity
+    style={styles.copyButton}
+    onPress={() => handleCopyMatch(match)}
+    activeOpacity={0.7}
+  >
+    <Copy size={16} color="#6b7280" />
+    <Text style={styles.copyButtonText}>복사</Text>
+  </TouchableOpacity>
   
   {/* 경기완료 버튼 - 비활성화
   <TouchableOpacity
@@ -800,6 +846,25 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
                             </View>
                           </TouchableOpacity>
 
+                          {/* 🆕 지난 매치에도 복사 버튼 */}
+                          <View style={{ 
+                            marginTop: 12, 
+                            paddingTop: 12, 
+                            borderTopWidth: 1, 
+                            borderTopColor: '#e5e7eb',
+                            flexDirection: 'row',
+                            justifyContent: 'flex-end'
+                          }}>
+                            <TouchableOpacity
+                              style={styles.copyButton}
+                              onPress={() => handleCopyMatch(match)}
+                              activeOpacity={0.7}
+                            >
+                              <Copy size={16} color="#6b7280" />
+                              <Text style={styles.copyButtonText}>복사해서 다시 열기</Text>
+                            </TouchableOpacity>
+                          </View>
+
                           {match.isCompleted && (
                             <View style={styles.completedBadge}>
                               <CheckCircle size={16} color="#16a34a" />
@@ -807,16 +872,7 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
                             </View>
                           )}
 
-                          {!match.isCompleted && (
-                            <TouchableOpacity
-                              style={styles.completeButton}
-                              onPress={() => handleCompleteMatch(match)}
-                              activeOpacity={0.7}
-                            >
-                              <CheckCircle size={18} color="#ffffff" />
-                              <Text style={styles.completeButtonText}>경기완료</Text>
-                            </TouchableOpacity>
-                          )}
+                          {/* handleCompleteMatch 주석 처리됨 - 지난 매치에서도 제거 */}
                         </View>
                       ))}
                     </View>
@@ -1168,6 +1224,24 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#374151',
   },
+  // 🆕 매치 복사 버튼 스타일
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  copyButtonText: {
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: 13,
+  },
   completeButton: {
   flexDirection: 'row',
   alignItems: 'center',
@@ -1189,7 +1263,7 @@ completeButtonText: {
   fontSize: 14,
 },
 completeButtonTextDisabled: {
-  color: '#9ca3af',  // 비활성화 시 회색 텍스트
+  color: '#9ca3af',
 },
   completedBadge: {
     flexDirection: 'row',
@@ -1220,8 +1294,7 @@ completeButtonTextDisabled: {
   applicationItem: {
     backgroundColor: '#f8f7f4',
     padding: 12,
-    borderRadius:
-      8,
+    borderRadius: 8,
     marginBottom: 8,
   },
   applicationUser: {

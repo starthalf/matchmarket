@@ -688,7 +688,7 @@ export class DataGenerator {
         current_applicants_male: match.currentApplicants.male,
         current_applicants_female: match.currentApplicants.female,
         current_applicants_total: match.currentApplicants.total,
-      match_type: Array.isArray(match.matchType) ? match.matchType.join(',') : match.matchType,
+    match_type: Array.isArray(match.matchType) ? match.matchType.join(',') : String(match.matchType).replace(/[\[\]"\\]/g, ''),
         waiting_applicants: match.waitingApplicants,
         ad_enabled: match.adEnabled,
         ntrp_min: match.ntrpRequirement.min,

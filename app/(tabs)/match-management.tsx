@@ -363,7 +363,7 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
       location: match.location || '서울시',
       description: match.description || '',
       basePrice: match.basePrice.toString(),
-      matchType: match.matchType.join(','),
+   matchType: Array.isArray(match.matchType) ? match.matchType.join(',') : String(match.matchType || '혼복'),
       maleCount: match.expectedParticipants.male.toString(),
       femaleCount: match.expectedParticipants.female.toString(),
       ntrpMin: match.ntrpRequirement.min.toString(),

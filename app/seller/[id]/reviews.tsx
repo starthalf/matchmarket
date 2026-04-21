@@ -67,8 +67,10 @@ export default function SellerReviewsScreen() {
         }
       }
       
-      setSeller(foundSeller || null);
+    setSeller(foundSeller || null);
+    } finally {
       setIsLoading(false);
+    }
     };
 
     loadSeller();

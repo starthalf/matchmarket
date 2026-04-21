@@ -941,7 +941,7 @@ const styles = StyleSheet.create({
     color: '#111827',
     marginLeft: 12,
     minWidth: 0,
-  },
+  }, 
   wonSymbol: {
     fontSize: 16,
     fontWeight: '600',

@@ -988,6 +988,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#f9fafb',
     justifyContent: 'center',
   },
+  timeRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  timeItem: {
+    flex: 1,
+    minWidth: 0,
+  },
   dateTimeText: {
     fontSize: 14,
     color: '#374151',

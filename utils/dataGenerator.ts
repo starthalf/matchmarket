@@ -624,7 +624,9 @@ export class DataGenerator {
         female: supabaseMatch.current_applicants_female,
         total: supabaseMatch.current_applicants_total,
       },
-      matchType: supabaseMatch.match_type as '단식' | '남복' | '여복' | '혼복',
+  matchType: supabaseMatch.match_type.includes(',') 
+        ? supabaseMatch.match_type.split(',') as any
+        : supabaseMatch.match_type as any,
       waitingApplicants: supabaseMatch.waiting_applicants,
       waitingList: [],
       participants: (supabaseMatch as any).participants || [],

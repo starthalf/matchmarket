@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     minHeight: 80,
     textAlignVertical: 'top',
   },
-  inputWithIcon: {
+ inputWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
     borderWidth: 1,
@@ -933,12 +933,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#ffffff',
+    overflow: 'hidden',
   },
   textInputWithIcon: {
     flex: 1,
     fontSize: 16,
     color: '#111827',
     marginLeft: 12,
+    minWidth: 0,
   },
   wonSymbol: {
     fontSize: 16,

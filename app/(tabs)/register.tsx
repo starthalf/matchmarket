@@ -1,4 +1,4 @@
-// app/(tabs)/register.tsx - v2 기준 완전한 버전 (시/군 단위 지역)
+// app/(tabs)/register.tsx - v2 기준 완전한 버전 (시/군 단위 지역) + 매치 복사 기능
 
 import React, { useState } from 'react';
 import { useEffect } from 'react';
@@ -21,7 +21,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { useAuth } from '../../contexts/AuthContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { Match } from '../../types/tennis';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 import { createNotification } from '../../lib/supabase';
 
@@ -29,6 +29,7 @@ export default function RegisterScreen() {
   const { user: currentUser } = useAuth();
   const { addMatch } = useMatches();
   const safeStyles = useSafeStyles();
+  const searchParams = useLocalSearchParams();
   
  const [formData, setFormData] = useState({
   title: '',
@@ -54,6 +55,27 @@ export default function RegisterScreen() {
   ntrpMax: '4.5',
   location: '서울시', // ✅ 기본값 서울시
 });
+
+  // 🆕 매치 복사 데이터 적용
+  useEffect(() => {
+    if (searchParams.copyFrom === 'true') {
+      setFormData(prev => ({
+        ...prev,
+        title: (searchParams.title as string) || prev.title,
+        court: (searchParams.court as string) || prev.court,
+        location: (searchParams.location as string) || prev.location,
+        description: (searchParams.description as string) || prev.description,
+        basePrice: (searchParams.basePrice as string) || prev.basePrice,
+        matchType: searchParams.matchType 
+          ? (searchParams.matchType as string).split(',') as Array<'단식' | '남복' | '여복' | '혼복'>
+          : prev.matchType,
+        maleCount: (searchParams.maleCount as string) || prev.maleCount,
+        femaleCount: (searchParams.femaleCount as string) || prev.femaleCount,
+        ntrpMin: (searchParams.ntrpMin as string) || prev.ntrpMin,
+        ntrpMax: (searchParams.ntrpMax as string) || prev.ntrpMax,
+      }));
+    }
+  }, [searchParams.copyFrom]);
   
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
@@ -319,6 +341,13 @@ router.push(`/match/${newMatchId}`);
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {/* 🆕 매치 복사 안내 배너 */}
+        {searchParams.copyFrom === 'true' && (
+          <View style={styles.copyBanner}>
+            <Text style={styles.copyBannerText}>📋 기존 매치에서 복사되었습니다. 날짜와 시간을 변경해주세요!</Text>
+          </View>
+        )}
+
         {/* 판매자 정보 카드 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>판매자 정보</Text>
@@ -437,13 +466,12 @@ router.push(`/match/${newMatchId}`);
         onChange={(e) => setFormData({...formData, date: new Date(e.target.value)})}
         style={{
           width: '100%',
-          padding: '8px 6px',
-          fontSize: '12px',
-          borderRadius: '8px',
+          padding: '10px 12px',
+          fontSize: '14px',
+          borderRadius: '12px',
           border: '1px solid #d1d5db',
           backgroundColor: '#f9fafb',
-          fontFamily: 'inherit',
-          boxSizing: 'border-box' as any,
+          fontFamily: 'inherit'
         }}
       />
     ) : (
@@ -469,15 +497,14 @@ router.push(`/match/${newMatchId}`);
           newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
           setFormData({...formData, time: newTime});
         }}
-       style={{
+        style={{
           width: '100%',
-          padding: '8px 6px',
-          fontSize: '12px',
-          borderRadius: '8px',
+          padding: '10px 12px',
+          fontSize: '14px',
+          borderRadius: '12px',
           border: '1px solid #d1d5db',
           backgroundColor: '#f9fafb',
-          fontFamily: 'inherit',
-          boxSizing: 'border-box' as any,
+          fontFamily: 'inherit'
         }}
       />
     ) : (
@@ -503,15 +530,14 @@ router.push(`/match/${newMatchId}`);
           newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
           setFormData({...formData, endTime: newTime});
         }}
-   style={{
+        style={{
           width: '100%',
-          padding: '8px 6px',
-          fontSize: '12px',
-          borderRadius: '8px',
+          padding: '10px 12px',
+          fontSize: '14px',
+          borderRadius: '12px',
           border: '1px solid #d1d5db',
           backgroundColor: '#f9fafb',
-          fontFamily: 'inherit',
-          boxSizing: 'border-box' as any,
+          fontFamily: 'inherit'
         }}
       />
     ) : (
@@ -701,7 +727,7 @@ router.push(`/match/${newMatchId}`);
                 style={styles.textInputWithIcon}
                 value={formData.basePrice}
                 onChangeText={(text) => setFormData({...formData, basePrice: text})}
-                placeholder="코트비+공값의 1/N (예: 8,000)"
+                placeholder="코트비+공값의 1/N을 입력하세요 (예: 35000)"
                 placeholderTextColor="#9ca3af"
                 keyboardType="numeric"
               />
@@ -810,6 +836,22 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: 16,
   },
+  // 🆕 매치 복사 안내 배너 스타일
+  copyBanner: {
+    backgroundColor: '#dbeafe',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#93c5fd',
+  },
+  copyBannerText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1e40af',
+    textAlign: 'center',
+  },
   section: {
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
@@ -903,23 +945,22 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6b7280',
   },
-  // 기존 locationScrollContainer, locationChip 관련 스타일 삭제하고:
-locationDropdownButton: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  gap: 12,
-  borderWidth: 1,
-  borderColor: '#d1d5db',
-  borderRadius: 12,
-  paddingHorizontal: 16,
-  paddingVertical: 12,
-  backgroundColor: '#ffffff',
-},
-locationDropdownButtonText: {
-  flex: 1,
-  fontSize: 16,
-  color: '#111827',
-},
+  locationDropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#ffffff',
+  },
+  locationDropdownButtonText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+  },
   dateTimeContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -927,8 +968,7 @@ locationDropdownButtonText: {
   },
   dateTimeItem: {
     flex: 1,
-    marginHorizontal: 2,
-    minWidth: 0,
+    marginHorizontal: 4,
   },
   dateTimeInput: {
     flexDirection: 'row',

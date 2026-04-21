@@ -230,12 +230,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     backgroundColor: '#ffffff',
-    gap: 12,
   },
   textInput: {
     flex: 1,
     fontSize: 16,
     color: '#374151',
+    marginLeft: 12,
+    minWidth: 0,
   },
   eyeButton: {
     padding: 4,

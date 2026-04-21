@@ -353,6 +353,17 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
   const handleToggleRecruitment = (match: Match) => {
     const newStatus = !match.isClosed;
     
+    // 🔥 날짜 지난 매치는 마감 해제 불가
+    if (!newStatus) {
+      const matchEndDateTime = new Date(`${match.date} ${match.endTime}`);
+      if (matchEndDateTime < new Date()) {
+        if (typeof window !== 'undefined') {
+          window.alert('종료된 매치는 모집을 다시 열 수 없습니다.\n매치 복사 기능을 이용해주세요.');
+        }
+        return;
+      }
+    }
+    
     const executeToggle = () => {
       updateMatch({
         ...match,

@@ -112,7 +112,7 @@ const handlePress = () => {
         <Text style={styles.title} numberOfLines={2}>{match.title}</Text>
         <View style={styles.matchTypeBadge}>
           <Text style={styles.matchTypeText}>
-  {String(match.matchType).replace(/[\[\]"「」]/g, '').replace(/,/g, ', ')}
+  {Array.isArray(match.matchType) ? match.matchType.join(' · ') : String(match.matchType)}
 </Text>
         </View>
       </View>

@@ -701,7 +701,7 @@ router.push(`/match/${newMatchId}`);
                 style={styles.textInputWithIcon}
                 value={formData.basePrice}
                 onChangeText={(text) => setFormData({...formData, basePrice: text})}
-                placeholder="코트비+공값의 1/N을 입력하세요 (예: 35000)"
+                placeholder="코트비+공값의 1/N (예: 8,000)"
                 placeholderTextColor="#9ca3af"
                 keyboardType="numeric"
               />

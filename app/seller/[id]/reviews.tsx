@@ -25,7 +25,8 @@ export default function SellerReviewsScreen() {
 
   // 판매자 정보 로드
   React.useEffect(() => {
-    const loadSeller = async () => {
+ const loadSeller = async () => {
+      try {
       // 1. mockUsers에서 먼저 찾기
       let foundSeller = mockUsers.find(u => u.id === id);
       

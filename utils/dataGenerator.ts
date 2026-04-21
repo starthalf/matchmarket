@@ -624,9 +624,9 @@ export class DataGenerator {
         female: supabaseMatch.current_applicants_female,
         total: supabaseMatch.current_applicants_total,
       },
-  matchType: supabaseMatch.match_type.includes(',') 
-        ? supabaseMatch.match_type.split(',') as any
-        : supabaseMatch.match_type as any,
+matchType: supabaseMatch.match_type.includes(',') 
+      ? supabaseMatch.match_type.split(',') 
+      : supabaseMatch.match_type,
       waitingApplicants: supabaseMatch.waiting_applicants,
       waitingList: [],
       participants: (supabaseMatch as any).participants || [],

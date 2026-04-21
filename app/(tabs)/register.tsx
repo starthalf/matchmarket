@@ -924,7 +924,8 @@ locationDropdownButtonText: {
   },
   dateTimeItem: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: 2,
+    minWidth: 0,
   },
   dateTimeInput: {
     flexDirection: 'row',

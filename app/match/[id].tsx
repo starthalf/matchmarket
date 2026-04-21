@@ -464,7 +464,9 @@ useEffect(() => {
             <Text style={styles.matchTitle}>{match.title}</Text>
             <View style={styles.matchTypeBadge}>
 <Text style={styles.matchTypeText}>
-  {String(match.matchType).replace(/[\[\]"「」]/g, '').replace(/,/g, ', ')}
+  {Array.isArray(match.matchType) 
+    ? match.matchType.join(' · ') 
+    : String(match.matchType).replace(/[\[\]"\\]/g, '').trim()}
 </Text>
             </View>
           </View>

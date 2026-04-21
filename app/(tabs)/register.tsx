@@ -437,12 +437,13 @@ router.push(`/match/${newMatchId}`);
         onChange={(e) => setFormData({...formData, date: new Date(e.target.value)})}
         style={{
           width: '100%',
-          padding: '10px 12px',
-          fontSize: '14px',
-          borderRadius: '12px',
+          padding: '8px 6px',
+          fontSize: '12px',
+          borderRadius: '8px',
           border: '1px solid #d1d5db',
           backgroundColor: '#f9fafb',
-          fontFamily: 'inherit'
+          fontFamily: 'inherit',
+          boxSizing: 'border-box' as any,
         }}
       />
     ) : (
@@ -468,14 +469,15 @@ router.push(`/match/${newMatchId}`);
           newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
           setFormData({...formData, time: newTime});
         }}
-        style={{
+       style={{
           width: '100%',
-          padding: '10px 12px',
-          fontSize: '14px',
-          borderRadius: '12px',
+          padding: '8px 6px',
+          fontSize: '12px',
+          borderRadius: '8px',
           border: '1px solid #d1d5db',
           backgroundColor: '#f9fafb',
-          fontFamily: 'inherit'
+          fontFamily: 'inherit',
+          boxSizing: 'border-box' as any,
         }}
       />
     ) : (
@@ -501,14 +503,15 @@ router.push(`/match/${newMatchId}`);
           newTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
           setFormData({...formData, endTime: newTime});
         }}
-        style={{
+   style={{
           width: '100%',
-          padding: '10px 12px',
-          fontSize: '14px',
-          borderRadius: '12px',
+          padding: '8px 6px',
+          fontSize: '12px',
+          borderRadius: '8px',
           border: '1px solid #d1d5db',
           backgroundColor: '#f9fafb',
-          fontFamily: 'inherit'
+          fontFamily: 'inherit',
+          boxSizing: 'border-box' as any,
         }}
       />
     ) : (

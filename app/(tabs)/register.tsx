@@ -100,9 +100,9 @@ export default function RegisterScreen() {
   }
 
  const handleSubmit = async () => {
-  // ✅ 계좌 정보 확인 (최우선 검사)
+  // ✅ 계좌 정보 확인 (최우선 검사) - confirm 필요하므로 유지
   if (!currentUser?.bankName || !currentUser?.accountNumber || !currentUser?.accountHolder) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && window.confirm) {
       if (window.confirm('매치를 판매하려면 먼저 계좌 정보를 등록해야 합니다.\n프로필 설정에서 계좌 정보를 입력해주세요.\n\n설정 페이지로 이동하시겠습니까?')) {
         router.push('/profile-settings');
       }
@@ -112,10 +112,7 @@ export default function RegisterScreen() {
         '매치를 판매하려면 먼저 계좌 정보를 등록해야 합니다.\n프로필 설정에서 계좌 정보를 입력해주세요.',
         [
           { text: '취소', style: 'cancel' },
-          {
-            text: '설정으로 이동',
-            onPress: () => router.push('/profile-settings')
-          }
+          { text: '설정으로 이동', onPress: () => router.push('/profile-settings') }
         ]
       );
     }
@@ -124,25 +121,16 @@ export default function RegisterScreen() {
 
   if (!formData.title || !formData.court || !formData.basePrice ||
       (!formData.maleCount && !formData.femaleCount) || !formData.ntrpMin || !formData.ntrpMax) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.alert('모든 필수 항목을 입력해주세요.');
-    } else {
-      Alert.alert('입력 오류', '모든 필수 항목을 입력해주세요.');
-    }
+    toast.show('모든 필수 항목을 입력해주세요.', 'error');
     return;
   }
 
   if (!currentUser) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.alert('로그인 정보가 없습니다. 다시 로그인해주세요.');
-    } else {
-      Alert.alert('오류', '로그인 정보가 없습니다. 다시 로그인해주세요.');
-    }
+    toast.show('로그인 정보가 없습니다. 다시 로그인해주세요.', 'error');
     router.replace('/auth/login');
     return;
   }
 
-  // 숫자 변환 및 유효성 검사
   const basePriceNum = parseInt(formData.basePrice);
   const maleCountNum = parseInt(formData.maleCount) || 0;
   const femaleCountNum = parseInt(formData.femaleCount) || 0;
@@ -150,43 +138,30 @@ export default function RegisterScreen() {
   const ntrpMaxNum = parseFloat(formData.ntrpMax);
 
   if (isNaN(basePriceNum) || basePriceNum <= 0) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.alert('올바른 가격을 입력해주세요.');
-    } else {
-      Alert.alert('입력 오류', '올바른 가격을 입력해주세요.');
-    }
+    toast.show('올바른 가격을 입력해주세요.', 'error');
     return;
   }
 
   if (maleCountNum + femaleCountNum === 0) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.alert('최소 1명 이상의 참가자가 필요합니다.');
-    } else {
-      Alert.alert('입력 오류', '최소 1명 이상의 참가자가 필요합니다.');
-    }
+    toast.show('최소 1명 이상의 참가자가 필요합니다.', 'error');
     return;
   }
 
   if (isNaN(ntrpMinNum) || isNaN(ntrpMaxNum) || ntrpMinNum > ntrpMaxNum) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.alert('NTRP 범위를 올바르게 입력해주세요.');
-    } else {
-      Alert.alert('입력 오류', 'NTRP 범위를 올바르게 입력해주세요.');
-    }
+    toast.show('NTRP 범위를 올바르게 입력해주세요.', 'error');
     return;
   }
 
   setIsSubmitting(true);
 
   try {
-    // 새로운 매치 객체 생성
     const newMatchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     console.log('새 매치 ID 생성:', newMatchId);
     
-   const newMatch: Match = {
-  id: newMatchId,
-  sellerId: currentUser.id,
-  seller: currentUser,
+    const newMatch: Match = {
+      id: newMatchId,
+      sellerId: currentUser.id,
+      seller: currentUser,
       title: formData.title,
       date: formData.date.toISOString().split('T')[0],
       time: formatTime(formData.time),
@@ -219,74 +194,66 @@ export default function RegisterScreen() {
         max: ntrpMaxNum,
       },
       weather: '맑음',
-      location: formData.location, // ✅ 선택한 지역 사용
+      location: formData.location,
       createdAt: new Date().toISOString(),
-  isClosed: false,
-  isDummy: false,
-};
+      isClosed: false,
+      isDummy: false,
+    };
 
     console.log('매치 객체 생성 완료:', newMatch);
 
-    // MatchContext에 매치 추가
-console.log('새 매치 추가 중:', newMatchId);
-await addMatch(newMatch);
-console.log('매치 추가 완료');
+    console.log('새 매치 추가 중:', newMatchId);
+    await addMatch(newMatch);
+    console.log('매치 추가 완료');
 
-// 폼 초기화
-setFormData({
-  title: '',
-  date: new Date(),
-  time: (() => {
-    const defaultTime = new Date();
-    defaultTime.setHours(19, 0, 0, 0);
-    return defaultTime;
-  })(),
-  endTime: (() => {
-    const defaultEndTime = new Date();
-    defaultEndTime.setHours(22, 0, 0, 0);
-    return defaultEndTime;
-  })(),
-  court: '',
-  description: '',
-  basePrice: '',
-  matchType: ['혼복'],
-  maleCount: '2',
-  femaleCount: '2',
-  adEnabled: false,
-  ntrpMin: '3.0',
-  ntrpMax: '4.5',
-  location: '서울시', // ✅ 기본값으로 초기화
-});
+    // 폼 초기화
+    setFormData({
+      title: '',
+      date: new Date(),
+      time: (() => {
+        const defaultTime = new Date();
+        defaultTime.setHours(19, 0, 0, 0);
+        return defaultTime;
+      })(),
+      endTime: (() => {
+        const defaultEndTime = new Date();
+        defaultEndTime.setHours(22, 0, 0, 0);
+        return defaultEndTime;
+      })(),
+      court: '',
+      description: '',
+      basePrice: '',
+      matchType: ['혼복'],
+      maleCount: '2',
+      femaleCount: '2',
+      adEnabled: false,
+      ntrpMin: '3.0',
+      ntrpMax: '4.5',
+      location: '서울시',
+    });
 
-// 매치 상세페이지로 즉시 이동
-console.log('매치 상세페이지로 이동:', newMatchId);
+    // 판매자에게 채팅 알림 전송
+    if (currentUser) {
+      await createNotification(
+        currentUser.id,
+        'new_chat_room',
+        newMatchId,
+        currentUser.id,
+        currentUser.name
+      );
+    }
 
-// 🔥 판매자에게 채팅 알림 전송 (Supabase)
-if (currentUser) {
-  await createNotification(
-    currentUser.id,
-    'new_chat_room',
-    newMatchId,
-    currentUser.id,
-    currentUser.name
-  );
-}
+    toast.show('매치가 성공적으로 등록되었습니다! 🎾');
+    setTimeout(() => {
+      router.push(`/match/${newMatchId}`);
+    }, 500);
 
-// 알림 표시
-if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  toast.show('매치가 성공적으로 등록되었습니다! 🎾');
-} else {
-  Alert.alert('성공', '매치가 성공적으로 등록되었습니다! 🎾');
-}
-
-router.push(`/match/${newMatchId}`);
-
-} catch (error) {
-  console.error('매치 등록 중 오류:', error);
- toast.show('매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
-} finally {
-  setIsSubmitting(false);
-}
+  } catch (error) {
+    console.error('매치 등록 중 오류:', error);
+    toast.show('매치 등록 중 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+  } finally {
+    setIsSubmitting(false);
+  }
 };
 
   const formatDate = (date: Date) => {

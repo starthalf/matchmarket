@@ -139,9 +139,7 @@ useEffect(() => {
   // 🆕 매치가 마감되면 입금 모달 강제 닫기
   if (match.isClosed && showPaymentTimer) {
     setShowPaymentTimer(false);
-    if (typeof window !== 'undefined' && window.alert) {
-      toast.show('매치가 마감되어 입금이 불가능합니다.');
-    }
+    toast.show('매치가 마감되어 입금이 불가능합니다.', 'error');
     return;
   }
   

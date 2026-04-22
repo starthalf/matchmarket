@@ -138,7 +138,7 @@ export function ToastNotification() {
     });
   };
 
-  const handlePress = async () => {
+  cconst handlePress = async () => {
     // 클릭 시 즉시 읽음 처리 및 이동
     if (notification?.id) {
       await supabase
@@ -147,8 +147,27 @@ export function ToastNotification() {
         .eq('id', notification.id);
     }
 
-    if (notification?.match_id) {
-      router.push(`/match/${notification.match_id}`);
+    // 알림 타입에 따라 이동 경로 분기
+    switch (notification?.type) {
+      case 'new_application':
+      case 'payment_confirmed':
+        // 호스트용 알림 → 매치관리 페이지
+        router.push('/(tabs)/match-management');
+        break;
+      case 'approved':
+      case 'rejected':
+        // 참여자용 알림 → 매치관리 페이지 (참여매치 탭)
+        router.push('/(tabs)/match-management');
+        break;
+      case 'new_chat_room':
+        // 채팅 알림 → 채팅 페이지
+        router.push('/(tabs)/chat');
+        break;
+      default:
+        if (notification?.match_id) {
+          router.push(`/match/${notification.match_id}`);
+        }
+        break;
     }
     hideToast();
   };

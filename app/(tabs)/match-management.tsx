@@ -453,7 +453,7 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
       const matchEndDateTime = new Date(`${match.date} ${match.endTime}`);
       if (matchEndDateTime < new Date()) {
         if (typeof window !== 'undefined') {
-          window.alert('종료된 매치는 모집을 다시 열 수 없습니다.\n매치 복사 기능을 이용해주세요.');
+          toast.show('종료된 매치는 모집을 다시 열 수 없습니다.\n매치 복사 기능을 이용해주세요.');
         } else {
           Alert.alert('알림', '종료된 매치는 모집을 다시 열 수 없습니다.\n매치 복사 기능을 이용해주세요.');
         }

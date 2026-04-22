@@ -20,11 +20,7 @@ import { supabase } from '../lib/supabase';
 
 // 웹/모바일 호환 Alert 함수
 const showAlert = (title: string, message?: string) => {
-  if (Platform.OS === 'web') {
-    window.alert(message || title);
-  } else {
-    Alert.alert(title, message);
-  }
+ toast.show(title, message);
 };
 
 const showConfirm = (title: string, message: string, onConfirm: () => void) => {

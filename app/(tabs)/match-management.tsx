@@ -9,7 +9,7 @@ import { Match, MatchApplication } from '../../types/tennis';
 import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager } from '../../utils/earningsManager';
 import { router } from 'expo-router';
-import { supabase, subscribeToParticipantUpdates, createNotification, markNotificationsAsRead } from '../../lib/supabase';
+import { supabase, supabaseAdmin, subscribeToParticipantUpdates, createNotification, markNotificationsAsRead } from '../../lib/supabase';
 
 export default function MatchManagementScreen() {
   const { user } = useAuth();

@@ -327,7 +327,7 @@ useEffect(() => {
     if (typeof window !== 'undefined' && window.confirm) {
       if (window.confirm(`${application.userName}님의 참여신청을 거절하시겠습니까?`)) {
         executeRejection().then(() => {
-          window.alert('참여신청이 거절되었습니다.');
+          toast.show('참여신청이 거절되었습니다.');
         });
       }
     } else {

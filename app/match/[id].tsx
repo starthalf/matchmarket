@@ -33,6 +33,7 @@ import { useSafeStyles } from '../../constants/Styles';
 import { Match, MatchApplication } from '../../types/tennis';
 import { createNotification } from '../../lib/supabase';
 import { supabase } from '../../lib/supabase';  // 이 줄 추가
+import { toast } from '../../utils/toast';
 
 export default function MatchDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

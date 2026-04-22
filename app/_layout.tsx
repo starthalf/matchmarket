@@ -100,7 +100,7 @@ export default function RootLayout() {
       if (!document.querySelector('meta[name="apple-mobile-web-app-title"]')) {
         const appleTitleMeta = document.createElement('meta');
         appleTitleMeta.name = 'apple-mobile-web-app-title';
-        appleTitleMeta.content = '테니스';
+        appleTitleMeta.content = '매치마켓';
         document.head.appendChild(appleTitleMeta);
       }
 

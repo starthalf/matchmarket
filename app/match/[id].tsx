@@ -140,7 +140,7 @@ useEffect(() => {
   if (match.isClosed && showPaymentTimer) {
     setShowPaymentTimer(false);
     if (typeof window !== 'undefined' && window.alert) {
-      window.alert('매치가 마감되어 입금이 불가능합니다.');
+      toast.show('매치가 마감되어 입금이 불가능합니다.');
     }
     return;
   }
@@ -163,12 +163,12 @@ useEffect(() => {
       // 처음 승인될 때만 알림 (상태 변화 감지)
       if (myApplication?.status === 'pending') {
         if (typeof window !== 'undefined' && window.alert) {
-          window.alert('🎾 매치 참가 승인!\n매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.');
+          toast.show('🎾 매치 참가 승인!\n매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.');
         }
       } else if (myApplication === undefined) {
         // 로그인 시
         if (typeof window !== 'undefined' && window.alert) {
-          window.alert(`💰 입금 대기중\n승인된 매치가 있습니다.\n${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초 내에 입금을 완료해주세요.`);
+          toast.show(`💰 입금 대기중\n승인된 매치가 있습니다.\n${Math.floor(remainingSeconds / 60)}분 ${remainingSeconds % 60}초 내에 입금을 완료해주세요.`);
         }
       }
     } else {
@@ -188,7 +188,7 @@ useEffect(() => {
         setShowPaymentTimer(false);
         
         if (typeof window !== 'undefined' && window.alert) {
-          window.alert('결제 시간 만료\n결제 시간이 만료되어 참여신청이 취소되었습니다.');
+          toast.show('결제 시간 만료\n결제 시간이 만료되어 참여신청이 취소되었습니다.');
         }
       }
     }

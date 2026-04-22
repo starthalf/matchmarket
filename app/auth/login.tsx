@@ -89,8 +89,12 @@ export default function LoginScreen() {
       // 로그인 성공 시 이메일 저장
       await saveLastEmail(formData.email);
       router.replace('/(tabs)');
-    } else {
-      Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
+   } else {
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert(result.error || '이메일 또는 비밀번호가 올바르지 않습니다.');
+      } else {
+        Alert.alert('로그인 실패', result.error || '로그인에 실패했습니다.');
+      }
     }
   };
 

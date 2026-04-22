@@ -88,7 +88,7 @@ export function ToastNotification() {
       case 'payment_confirmed':
         return {
           title: '💰 입금 확인 완료',
-          message: '입금이 확인되어 참여가 확정되었습니다.',
+          message: `${userName}님이 입금이 완료되었습니다. 확인 후 참여를 확정하세요`,
         };
       case 'new_chat_room':
         return {

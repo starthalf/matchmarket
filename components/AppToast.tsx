@@ -32,7 +32,7 @@ export function AppToast() {
           duration: 250,
           useNativeDriver: true,
         }).start(() => setVisible(false));
-      }, 2500);
+      }, 3500);
     });
 
     return () => toast.removeListener();

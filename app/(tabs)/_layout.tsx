@@ -68,8 +68,9 @@ export default function TabLayout() {
   }
 
   return (
-    <>
+   <>
       <ToastNotification />
+      <AppToast />
       <Tabs
         screenOptions={{
           headerShown: false,

@@ -180,13 +180,7 @@ useEffect(() => {
         
         }
 
-        // 입금완료 알림 → 판매자에게 알림
-        if (notif.type === 'payment_confirmed') {
-          if (typeof window !== 'undefined' && window.alert) {
-            window.alert('💰 입금완료!\n참여자가 입금을 완료했습니다.\n매치관리에서 입금을 확인해주세요.');
-          }
-        }
-
+        
         // 새 신청 알림 → 판매자에게 알림 + 매치 데이터 갱신
         if (notif.type === 'new_application') {
           try {

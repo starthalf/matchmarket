@@ -177,9 +177,7 @@ useEffect(() => {
             console.error('매치 데이터 갱신 실패:', err);
           }
 
-          if (typeof window !== 'undefined' && window.alert) {
-            window.alert('🎾 매치 참가 승인!\n매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.');
-          }
+        
         }
 
         // 입금완료 알림 → 판매자에게 알림

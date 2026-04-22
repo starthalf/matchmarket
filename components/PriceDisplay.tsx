@@ -94,13 +94,7 @@ export function PriceDisplay({
   // 🔥 가격 변동 사유 메시지 생성
   const getPriceReasonText = () => {
     if (!isIncreasing || !showChange || isClosed) return null;
-    
-    const reasons: string[] = [];
-    if (viewCount >= 500) reasons.push('조회수가 높아');
-    if (applicationsCount >= expectedParticipants * 5) reasons.push('참여신청이 많아');
-    
-    if (reasons.length === 0) return null;
-    return `🔥 ${reasons.join(', ')} 가격이 상승했습니다`;
+    return '🔥 신청자가 폭증하고 있어요';
   };
 
   const priceReasonText = getPriceReasonText();

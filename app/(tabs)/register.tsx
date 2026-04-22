@@ -28,7 +28,7 @@ import { toast } from '../../utils/toast';
 
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();
-  const { addMatch } = useMatches();
+const { addMatch, matches } = useMatches();
   const safeStyles = useSafeStyles();
   const searchParams = useLocalSearchParams();
   

@@ -274,7 +274,7 @@ useEffect(() => {
   if (typeof window !== 'undefined' && window.confirm) {
     if (window.confirm(`${application.userName}님의 참여신청을 승인하시겠습니까?`)) {
       executeApproval();
-      window.alert('참여신청이 승인되었습니다.');
+      toast.show('참여신청이 승인되었습니다.');
     }
   } else {
     Alert.alert(

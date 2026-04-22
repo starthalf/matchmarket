@@ -67,8 +67,45 @@ export function ToastNotification() {
     }
   };
 
+  const getNotificationContent = (data: any) => {
+    const userName = data.related_user_name || '알 수 없는 사용자';
+    switch (data.type) {
+      case 'new_application':
+        return {
+          title: '🎾 새로운 참여신청',
+          message: `${userName}님이 매치 참여를 신청했습니다.`,
+        };
+      case 'approved':
+        return {
+          title: '✅ 매치 참가 승인',
+          message: '매치 참가가 승인되었습니다. 5분 내에 입금해주세요.',
+        };
+      case 'rejected':
+        return {
+          title: '❌ 참여신청 거절',
+          message: '매치 참여신청이 거절되었습니다.',
+        };
+      case 'payment_confirmed':
+        return {
+          title: '💰 입금 확인 완료',
+          message: '입금이 확인되어 참여가 확정되었습니다.',
+        };
+      case 'new_chat_room':
+        return {
+          title: '💬 채팅방 개설',
+          message: '매치 채팅방이 개설되었습니다.',
+        };
+      default:
+        return {
+          title: '🔔 알림',
+          message: '새로운 알림이 있습니다.',
+        };
+    }
+  };
+
   const showToast = (data: any) => {
-    setNotification(data);
+    const content = getNotificationContent(data);
+    setNotification({ ...data, title: content.title, message: content.message });
     
     // 슬라이드 다운 (나타나기)
     Animated.timing(slideAnim, {

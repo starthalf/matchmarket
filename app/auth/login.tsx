@@ -73,7 +73,11 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!formData.email || !formData.password) {
-      Alert.alert('입력 오류', '이메일과 비밀번호를 모두 입력해주세요.');
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.alert('이메일과 비밀번호를 모두 입력해주세요.');
+      } else {
+        Alert.alert('입력 오류', '이메일과 비밀번호를 모두 입력해주세요.');
+      }
       return;
     }
 

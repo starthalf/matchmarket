@@ -152,6 +152,20 @@ export default function RegisterScreen() {
     return;
   }
 
+// ✅ 같은 날짜에 이미 등록한 매치가 있는지 체크
+  const matchDate = formData.date.toISOString().split('T')[0];
+  const existingMatch = matches.find(m => 
+    m.sellerId === currentUser.id && m.date === matchDate
+  );
+  if (existingMatch) {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      window.alert(`${matchDate}에 이미 등록된 매치가 있습니다.\n하루에 1개의 매치만 등록할 수 있습니다.`);
+    } else {
+      Alert.alert('등록 불가', `${matchDate}에 이미 등록된 매치가 있습니다.\n하루에 1개의 매치만 등록할 수 있습니다.`);
+    }
+    return;
+  }
+
   setIsSubmitting(true);
 
   try {

@@ -138,8 +138,7 @@ export function ToastNotification() {
     });
   };
 
-  const handlePress = async () => {
-    // 클릭 시 즉시 읽음 처리 및 이동
+ const handlePress = async () => {
     if (notification?.id) {
       await supabase
         .from('notifications')
@@ -147,8 +146,23 @@ export function ToastNotification() {
         .eq('id', notification.id);
     }
 
-    if (notification?.match_id) {
-      router.push(`/match/${notification.match_id}`);
+    switch (notification?.type) {
+      case 'new_application':
+      case 'payment_confirmed':
+        router.push('/(tabs)/match-management');
+        break;
+      case 'approved':
+      case 'rejected':
+        router.push('/(tabs)/match-management');
+        break;
+      case 'new_chat_room':
+        router.push('/(tabs)/chat');
+        break;
+      default:
+        if (notification?.match_id) {
+          router.push(`/match/${notification.match_id}`);
+        }
+        break;
     }
     hideToast();
   };

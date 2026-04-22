@@ -708,13 +708,11 @@ useEffect(() => {
                   <TouchableOpacity 
                     style={styles.copyButton}
                     onPress={() => {
-                      if (typeof navigator !== 'undefined' && navigator.clipboard) {
-                        navigator.clipboard.writeText(sellerInfo?.accountNumber || '');
-                        if (typeof window !== 'undefined' && window.alert) {
-                          window.alert('계좌번호가 복사되었습니다.');
-                        }
-                      }
-                    }}
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(sellerInfo?.accountNumber || '');
+    toast.show('계좌번호가 복사되었습니다.');
+  }
+}}
                   >
                     <Copy size={16} color="#6b7280" />
                   </TouchableOpacity>

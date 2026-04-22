@@ -8,6 +8,7 @@ import { View, ActivityIndicator } from 'react-native';
 import React from 'react';
 import { getUnreadNotificationCount, subscribeToNotifications, markNotificationsAsRead } from '../../lib/supabase';
 import { ToastNotification } from '../../components/ToastNotification';
+import { AppToast } from '../../components/AppToast';
 
 export default function TabLayout() {
   const { user, isLoading } = useAuth();

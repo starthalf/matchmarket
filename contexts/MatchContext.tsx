@@ -153,10 +153,11 @@ useEffect(() => {
       try {
         const allMatches = await DataGenerator.getAllMatches(mockMatches);
         
-        // 각 매치의 대기자 목록을 Supabase에서 동기화 (오류 발생해도 계속 진행)
-        const syncedMatches = await Promise.allSettled(
-          allMatches.map(match => WaitlistManager.syncWaitingListFromDB(match))
-        );
+        // 웹에서 대량 병렬 요청 방지 — 동기화 스킵하고 로컬 데이터 사용
+        const syncedMatches = allMatches.map(match => ({
+          status: 'fulfilled' as const,
+          value: match
+        }));
         
         // 성공한 매치들만 추출
         const successfulMatches = syncedMatches

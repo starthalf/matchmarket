@@ -234,6 +234,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: true };
       }
 
+      // 기존 세션 빠르게 정리 (타임아웃 없이 로컬만)
+      try {
+        await Promise.race([
+          supabase.auth.signOut({ scope: 'local' }),
+          new Promise((_, reject) => setTimeout(() => reject(), 1500))
+        ]);
+      } catch (_) {}
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,

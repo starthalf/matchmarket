@@ -448,19 +448,7 @@ export default function ChatScreen() {
                   <TouchableOpacity
                     key={room.id}
                     style={styles.roomItem}
-               onPress={() => {
-                      setSelectedRoom(room);
-                      // 해당 방의 마지막 메시지를 읽음으로 표시
-                      setRoomLastMessages(prev => {
-                        const lastMsg = prev[room.id];
-                        if (lastMsg) {
-                          return { ...prev, [room.id]: { ...lastMsg, isRead: true } };
-                        }
-                        return prev;
-                      });
-                      // 하드코딩된 lastMessage도 읽음 처리
-                      room.lastMessage = room.lastMessage ? { ...room.lastMessage, isRead: true } : room.lastMessage;
-                    }}
+                    onPress={() => setSelectedRoom(room)}
                   >
                     <View style={[
                       styles.roomIcon,
@@ -496,24 +484,10 @@ export default function ChatScreen() {
                       </Text>
                     </View>
 
-                   {(() => {
-                      // 마감된 매치면 N 표시 안 함
-                      const relatedMatch = matches.find(m => `chat_${m.id}` === room.id);
-                      if (relatedMatch?.isClosed) return null;
-
-                      const lastMsg = roomLastMessages[room.id];
-                      const hasUnread = lastMsg && lastMsg.senderId !== user?.id && !lastMsg.isRead;
-                      const isNewRoom = !lastMsg && room.lastMessage && !room.lastMessage.isRead;
-                      
-                      if (hasUnread || isNewRoom) {
-                        return (
-                          <View style={styles.unreadBadge}>
-                            <Text style={styles.unreadBadgeText}>N</Text>
-                          </View>
-                        );
-                      }
-                      return null;
-                    })()}
+                    {!room.lastMessage?.isRead && (
+                      <View style={styles.unreadBadge}>
+                        <Text style={styles.unreadBadgeText}>N</Text>
+                      </View>
                     )}
                   </TouchableOpacity>
                 ))

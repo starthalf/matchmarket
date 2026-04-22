@@ -738,7 +738,7 @@ useEffect(() => {
               </View>
             </View>
 
-
+            // ✅ 수정된 코드 - 마감된 매치는 입금완료 버튼 비활성화
 <TouchableOpacity 
   style={[
     styles.paymentCompleteButton,

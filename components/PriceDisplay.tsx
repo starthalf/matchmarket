@@ -91,6 +91,20 @@ export function PriceDisplay({
   const priceChangePercentage = Math.abs(((animatedPrice - basePrice) / basePrice * 100)).toFixed(0);
   const showChange = Math.abs(parseInt(priceChangePercentage)) > 0;
 
+  // 🔥 가격 변동 사유 메시지 생성
+  const getPriceReasonText = () => {
+    if (!isIncreasing || !showChange || isClosed) return null;
+    
+    const reasons: string[] = [];
+    if (viewCount >= 500) reasons.push('조회수가 높아');
+    if (applicationsCount >= expectedParticipants * 5) reasons.push('참여신청이 많아');
+    
+    if (reasons.length === 0) return null;
+    return `🔥 ${reasons.join(', ')} 가격이 상승했습니다`;
+  };
+
+  const priceReasonText = getPriceReasonText();
+
   return (
     <View style={styles.container}>
       <View style={styles.priceRow}>
@@ -120,6 +134,9 @@ export function PriceDisplay({
           </View>
         )}
       </View>
+      {priceReasonText && (
+        <Text style={styles.priceReason}>{priceReasonText}</Text>
+      )}
     </View>
   );
 }
@@ -169,5 +186,11 @@ const styles = StyleSheet.create({
   closedPrice: {
     textDecorationLine: 'line-through',
     color: '#9ca3af',
+  },
+  priceReason: {
+    fontSize: 11,
+    color: '#dc2626',
+    fontWeight: '600',
+    marginTop: 4,
   },
 });

@@ -51,6 +51,41 @@ const [sellerInfo, setSellerInfo] = useState<any>(null);
 
 const match = matches.find(m => m.id === id);
 
+// 🔥 매치 상세 진입 시 조회수 +1 (유저당 1회만)
+useEffect(() => {
+  if (!match || !user || match.sellerId === user.id) return;
+  
+  const viewKey = `viewed_${match.id}_${user.id}`;
+  if (typeof window !== 'undefined' && localStorage.getItem(viewKey)) return;
+  
+  const newViewCount = (match.seller?.viewCount || 0) + 1;
+  
+  // 로컬 상태 업데이트
+  updateMatch({
+    ...match,
+    seller: {
+      ...match.seller,
+      viewCount: newViewCount
+    }
+  });
+  
+  // DB 업데이트
+  supabase
+    .from('matches')
+    .update({ seller_view_count: newViewCount })
+    .eq('id', match.id)
+    .then(() => {
+      console.log('👁️ 조회수 +1:', match.id, '→', newViewCount);
+    });
+  
+  // 중복 방지
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(viewKey, 'true');
+  }
+}, [match?.id, user?.id]);
+
+// 🔥 초기 가격을 동적 계산
+
 // 🔥 초기 가격을 동적 계산
 const calculateInitialPrice = () => {
   if (!match) return 0;

@@ -93,7 +93,7 @@ export function ToastNotification() {
       case 'new_chat_room':
         return {
           title: '💬 채팅방 개설',
-          message: '매치 채팅방이 개설되었습니다.',
+          message: '참여가 확정되어 채팅방에 입장되었습니다.',
         };
       default:
         return {

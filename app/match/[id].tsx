@@ -307,13 +307,7 @@ useEffect(() => {
   };
 
   const showAlert = (message: string): void => {
-    if (typeof window !== 'undefined' && window.alert) {
-      // 웹 환경
-      window.alert(message);
-    } else {
-      // 모바일 환경
-      Alert.alert('알림', message);
-    }
+    toast.show(message);
   };
 
   const handleCancelApplication = async () => {

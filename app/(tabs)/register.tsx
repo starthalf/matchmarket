@@ -273,7 +273,7 @@ if (currentUser) {
 
 // 알림 표시
 if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  window.alert('매치가 성공적으로 등록되었습니다! 🎾');
+  toast.show('매치가 성공적으로 등록되었습니다! 🎾');
 } else {
   Alert.alert('성공', '매치가 성공적으로 등록되었습니다! 🎾');
 }

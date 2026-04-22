@@ -159,9 +159,9 @@ export default function RegisterScreen() {
   );
   if (existingMatch) {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.alert(`${matchDate}에 이미 등록된 매치가 있습니다.\n하루에 1개의 매치만 등록할 수 있습니다.`);
+      window.alert(`${matchDate}에 이미 등록된 매치가 있습니다.\n동일날짜에는 1개 매치만 등록할 수 있습니다.`);
     } else {
-      Alert.alert('등록 불가', `${matchDate}에 이미 등록된 매치가 있습니다.\n하루에 1개의 매치만 등록할 수 있습니다.`);
+      Alert.alert('등록 불가', `${matchDate}에 이미 등록된 매치가 있습니다.\n동일날짜에는 1개 매치만 등록할 수 있습니다.`);
     }
     return;
   }

@@ -448,7 +448,19 @@ export default function ChatScreen() {
                   <TouchableOpacity
                     key={room.id}
                     style={styles.roomItem}
-                    onPress={() => setSelectedRoom(room)}
+               onPress={() => {
+                      setSelectedRoom(room);
+                      // 해당 방의 마지막 메시지를 읽음으로 표시
+                      setRoomLastMessages(prev => {
+                        const lastMsg = prev[room.id];
+                        if (lastMsg) {
+                          return { ...prev, [room.id]: { ...lastMsg, isRead: true } };
+                        }
+                        return prev;
+                      });
+                      // 하드코딩된 lastMessage도 읽음 처리
+                      room.lastMessage = room.lastMessage ? { ...room.lastMessage, isRead: true } : room.lastMessage;
+                    }}
                   >
                     <View style={[
                       styles.roomIcon,

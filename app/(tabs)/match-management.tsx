@@ -471,7 +471,7 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
     if (typeof window !== 'undefined' && window.confirm) {
       if (window.confirm(newStatus ? '매치를 마감하시겠습니까?' : '매치 모집을 다시 시작하시겠습니까?')) {
         executeToggle();
-        window.alert(newStatus ? '매치가 마감되었습니다.' : '매치 모집이 시작되었습니다.');
+        toast.show(newStatus ? '매치가 마감되었습니다.' : '매치 모집이 시작되었습니다.');
       }
     } else {
       Alert.alert(

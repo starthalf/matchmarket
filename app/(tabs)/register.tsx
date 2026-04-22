@@ -24,6 +24,7 @@ import { Match } from '../../types/tennis';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 import { createNotification } from '../../lib/supabase';
+import { toast } from '../../utils/toast';
 
 export default function RegisterScreen() {
   const { user: currentUser } = useAuth();

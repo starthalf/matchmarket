@@ -130,43 +130,121 @@ const pastMyApplications = myApplications.filter(match => {
     return () => clearInterval(interval);
   }, [myMatches, updateMatch]);
 
-// 🔥 판매자: 입금완료 실시간 알림 감지
+// 🔥 실시간 알림 감지: notifications 테이블 INSERT 구독
 useEffect(() => {
   if (!user) return;
 
-  const unsubscribe = subscribeToParticipantUpdates(user.id, (updatedParticipant) => {
-    // 판매자가 등록한 매치 찾기
-    const myMatch = myMatches.find(m => m.id === updatedParticipant.match_id);
-    
-    if (myMatch && updatedParticipant.status === 'payment_submitted') {
-      // 입금완료 알림
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert(`💰 입금완료!\n참여자가 입금을 완료했습니다.\n매치관리에서 입금을 확인해주세요.`);
+  const channel = supabaseAdmin
+    .channel(`match-mgmt-notif-${user.id}`)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'notifications',
+        filter: `user_id=eq.${user.id}`
+      },
+      async (payload) => {
+        console.log('🔔 실시간 알림 수신:', payload.new);
+        const notif = payload.new as any;
+
+        // 승인 알림 → 참여자에게 알림 + 매치 데이터 갱신
+        if (notif.type === 'approved') {
+          try {
+            const { data: matchData, error } = await supabaseAdmin
+              .from('matches')
+              .select('*')
+              .eq('id', notif.match_id)
+              .single();
+
+            if (!error && matchData) {
+              // MatchContext 로컬 상태 갱신
+              updateMatch({
+                ...matches.find(m => m.id === matchData.id)!,
+                applications: matchData.applications || [],
+                participants: matchData.participants || [],
+                isClosed: matchData.is_closed,
+                isCompleted: matchData.is_completed,
+                currentApplicants: {
+                  male: matchData.current_applicants_male || 0,
+                  female: matchData.current_applicants_female || 0,
+                  total: matchData.current_applicants_total || 0,
+                },
+              });
+              console.log('✅ 승인된 매치 데이터 실시간 갱신 완료');
+            }
+          } catch (err) {
+            console.error('매치 데이터 갱신 실패:', err);
+          }
+
+          if (typeof window !== 'undefined' && window.alert) {
+            window.alert('🎾 매치 참가 승인!\n매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.');
+          }
+        }
+
+        // 입금완료 알림 → 판매자에게 알림
+        if (notif.type === 'payment_confirmed') {
+          if (typeof window !== 'undefined' && window.alert) {
+            window.alert('💰 입금완료!\n참여자가 입금을 완료했습니다.\n매치관리에서 입금을 확인해주세요.');
+          }
+        }
+
+        // 새 신청 알림 → 판매자에게 알림 + 매치 데이터 갱신
+        if (notif.type === 'new_application') {
+          try {
+            const { data: matchData, error } = await supabaseAdmin
+              .from('matches')
+              .select('*')
+              .eq('id', notif.match_id)
+              .single();
+
+            if (!error && matchData) {
+              updateMatch({
+                ...matches.find(m => m.id === matchData.id)!,
+                applications: matchData.applications || [],
+                participants: matchData.participants || [],
+                currentApplicants: {
+                  male: matchData.current_applicants_male || 0,
+                  female: matchData.current_applicants_female || 0,
+                  total: matchData.current_applicants_total || 0,
+                },
+              });
+              console.log('✅ 새 신청 매치 데이터 실시간 갱신 완료');
+            }
+          } catch (err) {
+            console.error('매치 데이터 갱신 실패:', err);
+          }
+        }
+
+        // 거절 알림
+        if (notif.type === 'rejected') {
+          try {
+            const { data: matchData, error } = await supabaseAdmin
+              .from('matches')
+              .select('*')
+              .eq('id', notif.match_id)
+              .single();
+
+            if (!error && matchData) {
+              updateMatch({
+                ...matches.find(m => m.id === matchData.id)!,
+                applications: matchData.applications || [],
+              });
+            }
+          } catch (err) {
+            console.error('매치 데이터 갱신 실패:', err);
+          }
+        }
       }
-    }
-  });
+    )
+    .subscribe((status) => {
+      console.log('📡 알림 구독 상태:', status);
+    });
 
-  return () => unsubscribe();
-}, [user, myMatches]);
-
-// 🔥 참여자: 승인 감지 및 매치 상세 화면으로 자동 이동
-useEffect(() => {
-  if (!user) return;
-
-  const unsubscribe = subscribeToParticipantUpdates(user.id, (updatedParticipant) => {
-    // 승인된 매치 찾기
-    const approvedMatch = matches.find(m => m.id === updatedParticipant.match_id);
-    
-    if (approvedMatch && updatedParticipant.status === 'approved') {
-      if (typeof window !== 'undefined' && window.alert) {
-        window.alert('🎾 매치 참가 승인!\n매치 참가가 승인되었습니다.\n5분 내에 입금을 완료해주세요.');
-        router.push(`/match/${approvedMatch.id}`);
-      }
-    }
-  });
-
-  return () => unsubscribe();
-}, [user, matches]);
+  return () => {
+    supabaseAdmin.removeChannel(channel);
+  };
+}, [user]);
 
   const handleApproveApplication = (matchId: string, applicationId: string) => {
   const match = matches.find(m => m.id === matchId);

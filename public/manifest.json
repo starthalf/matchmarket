@@ -1,6 +1,6 @@
 {
   "name": "테니스 매칭 앱",
-  "short_name": "테니스",
+  "short_name": "매치마켓",
   "description": "프리미엄 테니스 매칭 플랫폼",
   "start_url": "/",
   "display": "standalone",

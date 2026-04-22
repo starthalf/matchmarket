@@ -398,7 +398,7 @@ const handleConfirmPayment = (matchId: string, applicationId: string) => {
   if (typeof window !== 'undefined' && window.confirm) {
     if (window.confirm(`${application.userName}님의 입금을 확인하시겠습니까?\n\n확인 시 참여가 확정되어 채팅방에 입장됩니다.`)) {
       executeConfirmation();
-      toast.show('입금이 확인되었습니다.');
+      toast.show('참여가 확정 되었습니다.');
     }
   } else {
     Alert.alert(

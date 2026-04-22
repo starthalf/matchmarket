@@ -496,11 +496,13 @@ export default function ChatScreen() {
                       </Text>
                     </View>
 
-                    {(() => {
+                   {(() => {
+                      // 마감된 매치면 N 표시 안 함
+                      const relatedMatch = matches.find(m => `chat_${m.id}` === room.id);
+                      if (relatedMatch?.isClosed) return null;
+
                       const lastMsg = roomLastMessages[room.id];
-                      // DB에서 가져온 최근 메시지가 있고, 내가 보낸 게 아니고, 안 읽은 경우
                       const hasUnread = lastMsg && lastMsg.senderId !== user?.id && !lastMsg.isRead;
-                      // 또는 DB 메시지가 없는데 채팅방이 새로 생긴 경우 (시스템 메시지)
                       const isNewRoom = !lastMsg && room.lastMessage && !room.lastMessage.isRead;
                       
                       if (hasUnread || isNewRoom) {

@@ -778,7 +778,7 @@ const styles = StyleSheet.create({
   },
   floatingFilter: {
     position: 'absolute',
-    bottom: 90,
+    bottom: 16,
     alignSelf: 'center',
     flexDirection: 'row',
     backgroundColor: '#ffffff',

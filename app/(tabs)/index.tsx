@@ -603,7 +603,10 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.floatingTab, matchFilter === 'hot' && styles.floatingTabActive]}
-          onPress={() => setMatchFilter('hot')}
+         onPress={() => {
+            setMatchFilter('hot');
+            flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+          }}
         >
           <Text style={[styles.floatingTabText, matchFilter === 'hot' && styles.floatingTabTextActive]}>🔥 HOT</Text>
         </TouchableOpacity>

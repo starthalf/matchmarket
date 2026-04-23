@@ -310,7 +310,7 @@ if (existingMatch) {
             <Text style={styles.title}>매치 판매</Text>
             <DollarSign size={24} color="#16a34a" />
           </View>
-          <Text style={styles.subtitle}>당신의 테니스를 판매하세요. <br>인기가 높으면 가격이 올라갑니다</br></Text>
+          <Text style={styles.subtitle}>당신의 테니스를 판매하세요. <br></br>인기가 높으면 가격이 올라갑니다</Text>
         </View>
       </View>
 

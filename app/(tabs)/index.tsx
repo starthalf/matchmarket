@@ -21,6 +21,7 @@ import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 import { isToday as isTodayHelper } from '../../utils/dateHelper';
+import { PricingCalculator } from '../../types/tennis';
 
 type MatchTypeFilter = 'womens' | 'mixed' | null;
 type LevelFilter = 'pro' | null;

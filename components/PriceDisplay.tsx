@@ -120,9 +120,7 @@ export function PriceDisplay({
           </View>
         )}
       </View>
-      {isClosed && showChange && (
-        <Text style={styles.basePriceText}>기본가 {basePrice.toLocaleString()}원</Text>
-      )}
+      
       {priceReasonText && (
         <Text style={styles.priceReason}>{priceReasonText}</Text>
       )}
@@ -182,9 +180,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
-  basePriceText: {
-    fontSize: 11,
-    color: '#9ca3af',
-    fontWeight: '500',
-  },
+  
 });

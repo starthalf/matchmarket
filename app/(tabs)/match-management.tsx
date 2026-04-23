@@ -230,8 +230,12 @@ useEffect(() => {
         }
       }
     )
-    .subscribe((status) => {
+    .subscribe((status, err) => {
       console.log('📡 알림 구독 상태:', status);
+      if (status === 'CHANNEL_ERROR') {
+        console.warn('알림 구독 실패 - 채널 제거');
+        supabaseAdmin.removeChannel(channel);
+      }
     });
 
   return () => {

@@ -519,11 +519,11 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
               
               return passes;
             })
-            .sort((a, b) => {
+           .sort((a, b) => {
               if (sortBy === 'popular') {
                 return b.applicationsCount - a.applicationsCount;
               } else if (sortBy === 'time') {
-                return new Date(a.date + ' ' + a.time).getTime() - new Date(b.date + ' ' + b.time).getTime();
+                return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
               } else if (sortBy === 'ntrp') {
                 return b.ntrpRequirement.max - a.ntrpRequirement.max;
               }

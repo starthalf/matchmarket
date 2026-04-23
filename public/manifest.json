@@ -1,7 +1,7 @@
 {
-  "name": "테니스 매칭 앱",
+  "name": "테니스 경매 마켓",
   "short_name": "매치마켓",
-  "description": "프리미엄 테니스 매칭 플랫폼",
+  "description": "선출, 고수, 인플루언서와 매치",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

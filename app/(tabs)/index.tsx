@@ -44,8 +44,9 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   const [locationFilter, setLocationFilter] = useState<string>('');
 
- const [showSortButton, setShowSortButton] = useState(false);
+ const [showSearchBar, setShowSearchBar] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false); // ✅ 로그아웃 중복 클릭 방지
 
@@ -108,8 +109,7 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
   };
 
   const handleScroll = (event: any) => {
-    const offsetY = event.nativeEvent.contentOffset.y;
-    setShowSortButton(offsetY > 50);
+    // scroll tracking (reserved for future use)
   };
 
   const handleSortSelect = (sort: 'popular' | 'time' | 'ntrp') => {
@@ -264,139 +264,152 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
       {/* 🔥 핫 플레이어 캐러셀 */}
       <PlayerCarousel />
 
-      {/* 검색창 + Sort 버튼 */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchInputContainer}>
-          <Search size={18} color="#9ca3af" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="매치 검색"
-            placeholderTextColor="#9ca3af"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        </View>
-        
-        {showSortButton ? (
-          <TouchableOpacity 
-            style={styles.sortIconButton}
-            onPress={() => setShowSortModal(true)}
-          >
-            <ArrowUpDown size={16} color="#ffffff" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity style={styles.filterIconButton}>
-            <Filter size={18} color="#6b7280" />
-          </TouchableOpacity>
-        )}
-      </View>
+     {/* 검색 + 필터 + 지역 한 줄 */}
+      <View style={styles.filterRow}>
+        {/* 지역 아이콘 */}
+        <TouchableOpacity
+          style={[styles.iconButton, locationFilter ? styles.iconButtonActive : null]}
+          onPress={() => setShowLocationModal(true)}
+        >
+          <MapPin size={18} color={locationFilter ? '#ffffff' : '#6b7280'} />
+        </TouchableOpacity>
 
-      {/* 필터 칩들 */}
-      <View style={styles.chipsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        {/* 필터 칩들 */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll} contentContainerStyle={styles.chipsContent}>
           <TouchableOpacity
             style={[styles.chip, levelFilter === 'pro' && styles.chipActive]}
             onPress={toggleLevelFilter}
           >
-            <Text style={[styles.chipText, levelFilter === 'pro' && styles.chipTextActive]}>
-              선출
-            </Text>
+            <Text style={[styles.chipText, levelFilter === 'pro' && styles.chipTextActive]}>선출</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.chip, matchTypeFilter === 'womens' && styles.chipActive]}
             onPress={() => toggleMatchTypeFilter('womens')}
           >
-            <Text style={[styles.chipText, matchTypeFilter === 'womens' && styles.chipTextActive]}>
-              여복
-            </Text>
+            <Text style={[styles.chipText, matchTypeFilter === 'womens' && styles.chipTextActive]}>여복</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.chip, matchTypeFilter === 'mixed' && styles.chipActive]}
             onPress={() => toggleMatchTypeFilter('mixed')}
           >
-            <Text style={[styles.chipText, matchTypeFilter === 'mixed' && styles.chipTextActive]}>
-              혼복
-            </Text>
+            <Text style={[styles.chipText, matchTypeFilter === 'mixed' && styles.chipTextActive]}>혼복</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.chip, timeFilter === 'today' && styles.chipActive]}
             onPress={toggleTimeFilter}
           >
-            <Text style={[styles.chipText, timeFilter === 'today' && styles.chipTextActive]}>
-              오늘
-            </Text>
+            <Text style={[styles.chipText, timeFilter === 'today' && styles.chipTextActive]}>오늘</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.chip, recruitingFilter && styles.chipActive]}
             onPress={toggleRecruitingFilter}
           >
-            <Text style={[styles.chipText, recruitingFilter && styles.chipTextActive]}>
-              모집중
-            </Text>
+            <Text style={[styles.chipText, recruitingFilter && styles.chipTextActive]}>모집중</Text>
           </TouchableOpacity>
         </ScrollView>
+
+        {/* 검색 아이콘 */}
+        <TouchableOpacity
+          style={[styles.iconButton, showSearchBar && styles.iconButtonActive]}
+          onPress={() => setShowSearchBar(prev => !prev)}
+        >
+          <Search size={18} color={showSearchBar ? '#ffffff' : '#6b7280'} />
+        </TouchableOpacity>
+
+        {/* 필터/정렬 아이콘 */}
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() => setShowSortModal(true)}
+        >
+          <Filter size={18} color="#6b7280" />
+        </TouchableOpacity>
       </View>
 
-      {/* 지역 필터 */}
-      <View style={styles.locationFilterSection}>
-        {Platform.OS === 'web' ? (
-          <View style={styles.locationSelectWrapper}>
-            <MapPin size={14} color="#6b7280" />
-            <select
-              value={locationFilter}
-              onChange={(e) => setLocationFilter(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '0 4px',
-                fontSize: '13px',
-                border: 'none',
-                backgroundColor: 'transparent',
-                color: '#374151',
-                fontFamily: 'inherit',
-                cursor: 'pointer',
-                outline: 'none',
-                fontWeight: '500'
-              }}
-            >
-              <option value="">전체 지역</option>
-              <option value="서울시">서울시</option>
-              <option value="경기북부">경기북부</option>
-              <option value="경기남부">경기남부</option>
-              <option value="경기서부">경기서부</option>
-              <option value="경기동부">경기동부</option>
-              <option value="인천시">인천시</option>
-              <option value="대전시">대전시</option>
-              <option value="대구시">대구시</option>
-              <option value="부산시">부산시</option>
-              <option value="울산시">울산시</option>
-              <option value="광주시">광주시</option>
-              <option value="세종시">세종시</option>
-              <option value="강원도">강원도</option>
-              <option value="충북">충북</option>
-              <option value="충남">충남</option>
-              <option value="경북">경북</option>
-              <option value="경남">경남</option>
-              <option value="전북">전북</option>
-              <option value="전남">전남</option>
-              <option value="제주도">제주도</option>
-            </select>
+      {/* 검색바 (토글) */}
+      {showSearchBar && (
+        <View style={styles.searchBarExpanded}>
+          <Search size={16} color="#9ca3af" />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="매치 검색..."
+            placeholderTextColor="#9ca3af"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoFocus
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery('')}>
+              <X size={16} color="#9ca3af" />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* 지역 선택 모달 */}
+      <Modal
+        visible={showLocationModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowLocationModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLocationModal(false)}
+        >
+          <View style={styles.sortModalContainer}>
+            <View style={styles.sortModalHeader}>
+              <Text style={styles.sortModalTitle}>지역 선택</Text>
+              <TouchableOpacity onPress={() => setShowLocationModal(false)}>
+                <X size={24} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={{ maxHeight: 400 }}>
+              {[
+                { label: '전체 지역', value: '' },
+                { label: '서울시', value: '서울시' },
+                { label: '경기북부', value: '경기북부' },
+                { label: '경기남부', value: '경기남부' },
+                { label: '경기서부', value: '경기서부' },
+                { label: '경기동부', value: '경기동부' },
+                { label: '인천시', value: '인천시' },
+                { label: '대전시', value: '대전시' },
+                { label: '대구시', value: '대구시' },
+                { label: '부산시', value: '부산시' },
+                { label: '울산시', value: '울산시' },
+                { label: '광주시', value: '광주시' },
+                { label: '세종시', value: '세종시' },
+                { label: '강원도', value: '강원도' },
+                { label: '충북', value: '충북' },
+                { label: '충남', value: '충남' },
+                { label: '경북', value: '경북' },
+                { label: '경남', value: '경남' },
+                { label: '전북', value: '전북' },
+                { label: '전남', value: '전남' },
+                { label: '제주도', value: '제주도' },
+              ].map((loc) => (
+                <TouchableOpacity
+                  key={loc.value}
+                  style={styles.sortOption}
+                  onPress={() => {
+                    setLocationFilter(loc.value);
+                    setShowLocationModal(false);
+                  }}
+                >
+                  <Text style={[styles.sortOptionText, locationFilter === loc.value && styles.sortOptionTextActive]}>
+                    {loc.label}
+                  </Text>
+                  {locationFilter === loc.value && <Check size={20} color="#ea4c89" />}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
-        ) : (
-          <TouchableOpacity 
-            style={styles.locationSelectWrapper}
-            onPress={() => {/* TODO: 모바일 드롭다운 모달 */}}
-          >
-            <MapPin size={14} color="#6b7280" />
-            <Text style={styles.locationSelectText}>
-              {locationFilter || '전체 지역'}
-            </Text>
-          </TouchableOpacity>
-        )}
-      </View>
+        </TouchableOpacity>
+      </Modal>
 
       {/* Sort 모달 */}
       <Modal
@@ -601,7 +614,7 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '700',
   },
- logoutButton: {
+  logoutButton: {
     backgroundColor: '#fee2e2',
     borderColor: '#ef4444',
   },
@@ -613,24 +626,44 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 11,
   },
-  searchContainer: {
+  filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     backgroundColor: '#f8f7f4',
-    gap: 10,
+    gap: 6,
   },
-  searchInputContainer: {
+  chipsScroll: {
     flex: 1,
+  },
+  chipsContent: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  iconButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#ffffff',
+    shadowColor: '#0d0c22',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  iconButtonActive: {
+    backgroundColor: '#0d0c22',
+  },
+  searchBarExpanded: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
+    marginHorizontal: 12,
+    marginBottom: 6,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    gap: 6,
-    borderWidth: 0,
+    gap: 8,
     shadowColor: '#0d0c22',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -642,33 +675,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0d0c22',
   },
-  filterIconButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    shadowColor: '#0d0c22',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  sortIconButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#0d0c22',
-  },
-  chipsContainer: {
-    backgroundColor: '#f8f7f4',
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderBottomWidth: 0,
-  },
   chip: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     backgroundColor: '#ffffff',
-    marginRight: 6,
     borderWidth: 0,
     shadowColor: '#0d0c22',
     shadowOffset: { width: 0, height: 2 },
@@ -688,23 +699,6 @@ const styles = StyleSheet.create({
   },
   chipTextActive: {
     color: '#ffffff',
-  },
-  locationFilterSection: {
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  locationSelectWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  locationSelectText: {
-    fontSize: 13,
-    color: '#374151',
-    fontWeight: '500',
   },
   modalOverlay: {
     flex: 1,
@@ -770,4 +764,4 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 20,
   },
-}); 
+});

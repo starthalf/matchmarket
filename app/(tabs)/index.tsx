@@ -551,6 +551,7 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
         </View>
       ) : (
         <FlatList
+          ref={flatListRef}
           style={styles.matchList}
           data={filteredMatches.slice(0, displayCount)}
           keyExtractor={(item) => item.id}

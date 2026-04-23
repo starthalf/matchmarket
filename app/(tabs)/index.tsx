@@ -5,11 +5,13 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  FlatList,
   TextInput,
   TouchableOpacity,
   Platform,
   Modal,
   RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, Shield, Database, User, LogIn, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';

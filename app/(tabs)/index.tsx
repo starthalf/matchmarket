@@ -34,7 +34,8 @@ export default function HomeScreen() {
 const { isAdmin, adminLogin, adminLogout } = useAdmin();
   const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
   const safeStyles = useSafeStyles();
-  const mounted = useRef(false);
+const mounted = useRef(false);
+  const flatListRef = useRef<FlatList>(null);
   
   const isDevelopment = process.env.NODE_ENV === 'development';
   

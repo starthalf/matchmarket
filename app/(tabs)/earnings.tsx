@@ -426,6 +426,11 @@ export default function EarningsScreen() {
 }
 
 const styles = StyleSheet.create({
+ headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#ea4c89',
+  },
   content: {
     flex: 1,
     backgroundColor: '#f9fafb',

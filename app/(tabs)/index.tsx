@@ -594,7 +594,10 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
       <View style={styles.floatingFilter}>
         <TouchableOpacity
           style={[styles.floatingTab, matchFilter === 'all' && styles.floatingTabActive]}
-          onPress={() => setMatchFilter('all')}
+          onPress={() => {
+            setMatchFilter('all');
+            flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+          }}
         >
 <Text style={[styles.floatingTabText, matchFilter === 'all' && styles.floatingTabTextActive]}>일반매치</Text>
         </TouchableOpacity>

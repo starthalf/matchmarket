@@ -157,12 +157,8 @@ const { addMatch, matches } = useMatches();
   const existingMatch = matches.find(m => 
     m.sellerId === currentUser.id && m.date === matchDate
   );
-  if (existingMatch) {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      window.alert(`${matchDate}에 이미 등록된 매치가 있습니다.\n동일날짜에는 1개 매치만 등록할 수 있습니다.`);
-    } else {
-      Alert.alert('등록 불가', `${matchDate}에 이미 등록된 매치가 있습니다.\n동일날짜에는 1개 매치만 등록할 수 있습니다.`);
-    }
+if (existingMatch) {
+    toast.show(`${matchDate}에 이미 등록된 매치가 있습니다. 동일날짜에는 1개만 등록 가능합니다.`, 'error');
     return;
   }
 

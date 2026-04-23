@@ -43,12 +43,13 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   const [locationFilter, setLocationFilter] = useState<string>('');
+  const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('all');
 
  const [showSearchBar, setShowSearchBar] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false); // ✅ 로그아웃 중복 클릭 방지
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   useEffect(() => {
     mounted.current = true;
@@ -59,7 +60,6 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
 
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
-      // admin 예외처리
    if (userIdentifier === 'admin') {
         const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
         if (!result.success) {
@@ -233,7 +233,6 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
                 ]}
                 disabled={isLoggingOut}
                 onPress={async () => {
-                  // ✅ 중복 클릭 방지 - 이미 로그아웃 중이면 무시
                   if (isLoggingOut) return;
                   
                   setIsLoggingOut(true);
@@ -271,7 +270,7 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
           style={[styles.iconButton, locationFilter ? styles.iconButtonActive : null]}
           onPress={() => setShowLocationModal(true)}
         >
-          <MapPin size={18} color={locationFilter ? '#ffffff' : '#6b7280'} />
+          <MapPin size={20} color={locationFilter ? '#ea4c89' : '#0d0c22'} />
         </TouchableOpacity>
 
         {/* 필터 칩들 */}
@@ -317,7 +316,7 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
           style={[styles.iconButton, showSearchBar && styles.iconButtonActive]}
           onPress={() => setShowSearchBar(prev => !prev)}
         >
-          <Search size={18} color={showSearchBar ? '#ffffff' : '#6b7280'} />
+          <Search size={20} color={showSearchBar ? '#ea4c89' : '#0d0c22'} />
         </TouchableOpacity>
 
         {/* 필터/정렬 아이콘 */}
@@ -325,7 +324,7 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
           style={styles.iconButton}
           onPress={() => setShowSortModal(true)}
         >
-          <Filter size={18} color="#6b7280" />
+          <Filter size={20} color="#0d0c22" />
         </TouchableOpacity>
       </View>
 
@@ -529,6 +528,12 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
               }
               return 0;
             })
+            .filter(match => {
+              if (matchFilter === 'hot') {
+                return match.currentPrice > match.basePrice;
+              }
+              return true;
+            })
             .map((match) => (
               <MatchCard 
                 key={match.id} 
@@ -539,6 +544,22 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
         )}
         <View style={styles.bottomPadding} />
       </ScrollView>
+
+      {/* 플로팅 매치 필터 */}
+      <View style={styles.floatingFilter}>
+        <TouchableOpacity
+          style={[styles.floatingTab, matchFilter === 'all' && styles.floatingTabActive]}
+          onPress={() => setMatchFilter('all')}
+        >
+          <Text style={[styles.floatingTabText, matchFilter === 'all' && styles.floatingTabTextActive]}>전체</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.floatingTab, matchFilter === 'hot' && styles.floatingTabActive]}
+          onPress={() => setMatchFilter('hot')}
+        >
+          <Text style={[styles.floatingTabText, matchFilter === 'hot' && styles.floatingTabTextActive]}>🔥 HOT</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -644,9 +665,7 @@ const styles = StyleSheet.create({
   iconButton: {
     padding: 6,
   },
-  iconButtonActive: {
-    backgroundColor: '#0d0c22',
-  },
+  iconButtonActive: {},
   searchBarExpanded: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -755,6 +774,36 @@ const styles = StyleSheet.create({
     color: '#6b7280',
   },
   bottomPadding: {
-    height: 20,
+    height: 100,
+  },
+  floatingFilter: {
+    position: 'absolute',
+    bottom: 90,
+    alignSelf: 'center',
+    flexDirection: 'row',
+    backgroundColor: '#ffffff',
+    borderRadius: 25,
+    padding: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  floatingTab: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 22,
+  },
+  floatingTabActive: {
+    backgroundColor: '#0d0c22',
+  },
+  floatingTabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  floatingTabTextActive: {
+    color: '#ffffff',
   },
 });

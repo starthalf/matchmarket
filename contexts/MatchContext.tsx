@@ -95,7 +95,7 @@ useEffect(() => {
   }, 60000);
 
   return () => clearInterval(interval);
-}, [isLoadingMatches, matches.length]); // 로딩 완료 & 매치 개수 변경 시 실행
+}, [isLoadingMatches]); // 로딩 완료 시에만 실행 (matches.length 제거)
 
   // Supabase 실시간 구독: 다른 사용자의 매치 변경사항 실시간 반영
   useEffect(() => {

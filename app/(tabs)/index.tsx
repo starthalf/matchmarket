@@ -474,98 +474,118 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
         </TouchableOpacity>
       </Modal>
 
-      {/* 매치 목록 */}
-      <ScrollView
-        style={styles.matchList}
-        showsVerticalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor="#ea4c89"
-            colors={['#ea4c89']}
-          />
-        }
-      >
-        {isLoadingMatches ? (
-          <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>매치를 불러오는 중...</Text>
-          </View>
-        ) : (
-          displayMatches
-            .filter(match => 
-              searchQuery === '' ||
-              match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-              (match.location && match.location.toLowerCase().includes(searchQuery.toLowerCase()))
-            )
-            .filter(match => {
-              let passes = true;
-              
-              if (levelFilter === 'pro') {
-                passes = passes && match.seller.careerType === '선수';
-              }
-              
-              if (matchTypeFilter === 'womens') {
-                passes = passes && match.matchType === '여복';
-              } else if (matchTypeFilter === 'mixed') {
-                passes = passes && match.matchType === '혼복';
-              }
-              
-              if (timeFilter === 'today') {
-                passes = passes && isToday(match.date);
-              }
-              
-              if (recruitingFilter) {
-                passes = passes && !match.isClosed;
-              }
-              
-              if (locationFilter) {
-                passes = passes && match.location.includes(locationFilter);
-              }
-              
-              return passes;
-            })
-           .sort((a, b) => {
-              if (sortBy === 'popular') {
-                return b.applicationsCount - a.applicationsCount;
-              } else if (sortBy === 'time') {
-                return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
-              } else if (sortBy === 'ntrp') {
-                return b.ntrpRequirement.max - a.ntrpRequirement.max;
-              }
-              return 0;
-            })
-            .filter(match => {
-              const matchDateTime = new Date(`${match.date}T${match.time}`);
-              const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60));
-              const applications = match.applications || [];
-              
-              const dynamicPrice = PricingCalculator.calculateDynamicPrice({
-                viewCount: match.seller?.viewCount || 0,
-                applicationsCount: applications.length,
-                expectedApplicants: (match.expectedParticipants?.total || 0) * 5,
-                hoursUntilMatch,
-                basePrice: match.basePrice,
-                maxPrice: match.maxPrice || 200000,
-              });
+   {/* 매치 목록 */}
+      {isLoadingMatches ? (
+        <View style={[styles.matchList, styles.loadingContainer]}>
+          <Text style={styles.loadingText}>매치를 불러오는 중...</Text>
+        </View>
+      ) : (
+        <FlatList
+          style={styles.matchList}
+          data={
+            displayMatches
+              .filter(match => 
+                searchQuery === '' ||
+                match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                (match.location && match.location.toLowerCase().includes(searchQuery.toLowerCase()))
+              )
+              .filter(match => {
+                let passes = true;
+                
+                if (levelFilter === 'pro') {
+                  passes = passes && match.seller.careerType === '선수';
+                }
+                
+                if (matchTypeFilter === 'womens') {
+                  passes = passes && match.matchType === '여복';
+                } else if (matchTypeFilter === 'mixed') {
+                  passes = passes && match.matchType === '혼복';
+                }
+                
+                if (timeFilter === 'today') {
+                  passes = passes && isToday(match.date);
+                }
+                
+                if (recruitingFilter) {
+                  passes = passes && !match.isClosed;
+                }
+                
+                if (locationFilter) {
+                  passes = passes && match.location.includes(locationFilter);
+                }
+                
+                return passes;
+              })
+              .sort((a, b) => {
+                if (sortBy === 'popular') {
+                  const diff = b.applicationsCount - a.applicationsCount;
+                  if (diff !== 0) return diff;
+                  return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+                } else if (sortBy === 'time') {
+                  return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+                } else if (sortBy === 'ntrp') {
+                  const diff = b.ntrpRequirement.max - a.ntrpRequirement.max;
+                  if (diff !== 0) return diff;
+                  return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+                }
+                return 0;
+              })
+              .filter(match => {
+                const matchDateTime = new Date(`${match.date}T${match.time}`);
+                const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60));
+                const applications = match.applications || [];
+                
+                const dynamicPrice = PricingCalculator.calculateDynamicPrice({
+                  viewCount: match.seller?.viewCount || 0,
+                  applicationsCount: applications.length,
+                  expectedApplicants: (match.expectedParticipants?.total || 0) * 5,
+                  hoursUntilMatch,
+                  basePrice: match.basePrice,
+                  maxPrice: match.maxPrice || 200000,
+                });
 
-              if (matchFilter === 'hot') {
-                return dynamicPrice > match.basePrice;
-              }
-              return dynamicPrice <= match.basePrice;
-            })
-            .map((match) => (
-              <MatchCard 
-                key={match.id} 
-                match={match}
-                onPress={() => router.push(`/match/${match.id}`)}
-              />
-            ))
-        )}
-        <View style={styles.bottomPadding} />
-      </ScrollView>
+                if (matchFilter === 'hot') {
+                  return dynamicPrice > match.basePrice;
+                }
+                return dynamicPrice <= match.basePrice;
+              })
+              .slice(0, displayCount)
+          }
+          keyExtractor={(item) => item.id}
+          renderItem={({ item: match }) => (
+            <MatchCard 
+              match={match}
+              onPress={() => router.push(`/match/${match.id}`)}
+            />
+          )}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={async () => {
+                setRefreshing(true);
+                setDisplayCount(20);
+                await refreshMatches();
+                setRefreshing(false);
+              }}
+              tintColor="#ea4c89"
+              colors={['#ea4c89']}
+            />
+          }
+          onEndReached={() => {
+            setDisplayCount(prev => prev + 20);
+          }}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={
+            <View style={styles.bottomPadding} />
+          }
+          ListEmptyComponent={
+            <View style={styles.loadingContainer}>
+              <Text style={styles.loadingText}>매치가 없습니다</Text>
+            </View>
+          }
+        />
+      )}
 
       {/* 플로팅 매치 필터 */}
       <View style={styles.floatingFilter}>

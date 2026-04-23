@@ -532,7 +532,8 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
               if (matchFilter === 'hot') {
                 return match.currentPrice > match.basePrice;
               }
-              return true;
+              return match.currentPrice <= match.basePrice;
+            
             })
             .map((match) => (
               <MatchCard 

@@ -197,7 +197,7 @@ export default function EarningsScreen() {
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
-          <Text style={safeStyles.headerTitle}>수익 관리</Text>
+        <Text style={styles.headerTitle}>수익관리</Text>
           <TouchableOpacity
             onPress={() => router.push('/settlement-history')}
             style={styles.headerHistoryButton}>

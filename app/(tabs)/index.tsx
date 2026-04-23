@@ -37,7 +37,7 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
   const isDevelopment = process.env.NODE_ENV === 'development';
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('popular');
+const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
 
   const [matchTypeFilter, setMatchTypeFilter] = useState<MatchTypeFilter>(null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);

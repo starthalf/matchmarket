@@ -152,6 +152,75 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
     return isTodayHelper(dateString);
   };
 
+  const filteredMatches = useMemo(() => {
+    return displayMatches
+      .filter(match => 
+        searchQuery === '' ||
+        match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (match.location && match.location.toLowerCase().includes(searchQuery.toLowerCase()))
+      )
+      .filter(match => {
+        let passes = true;
+        
+        if (levelFilter === 'pro') {
+          passes = passes && match.seller.careerType === '선수';
+        }
+        
+        if (matchTypeFilter === 'womens') {
+          passes = passes && match.matchType === '여복';
+        } else if (matchTypeFilter === 'mixed') {
+          passes = passes && match.matchType === '혼복';
+        }
+        
+        if (timeFilter === 'today') {
+          passes = passes && isToday(match.date);
+        }
+        
+        if (recruitingFilter) {
+          passes = passes && !match.isClosed;
+        }
+        
+        if (locationFilter) {
+          passes = passes && match.location.includes(locationFilter);
+        }
+        
+        return passes;
+      })
+      .sort((a, b) => {
+        if (sortBy === 'popular') {
+          const diff = b.applicationsCount - a.applicationsCount;
+          if (diff !== 0) return diff;
+          return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+        } else if (sortBy === 'time') {
+          return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+        } else if (sortBy === 'ntrp') {
+          const diff = b.ntrpRequirement.max - a.ntrpRequirement.max;
+          if (diff !== 0) return diff;
+          return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+        }
+        return 0;
+      })
+      .filter(match => {
+        const matchDateTime = new Date(`${match.date}T${match.time}`);
+        const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60));
+        const applications = match.applications || [];
+        
+        const dynamicPrice = PricingCalculator.calculateDynamicPrice({
+          viewCount: match.seller?.viewCount || 0,
+          applicationsCount: applications.length,
+          expectedApplicants: (match.expectedParticipants?.total || 0) * 5,
+          hoursUntilMatch,
+          basePrice: match.basePrice,
+          maxPrice: match.maxPrice || 200000,
+        });
+
+        if (matchFilter === 'hot') {
+          return dynamicPrice > match.basePrice;
+        }
+        return dynamicPrice <= match.basePrice;
+      });
+  }, [displayMatches, searchQuery, levelFilter, matchTypeFilter, timeFilter, recruitingFilter, locationFilter, sortBy, matchFilter]);
+
   return (
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>

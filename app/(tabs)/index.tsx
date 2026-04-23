@@ -46,7 +46,8 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   const [locationFilter, setLocationFilter] = useState<string>('');
-  const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('all');
+ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('all');
+  const [displayCount, setDisplayCount] = useState(20);
 
  const [showSearchBar, setShowSearchBar] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);

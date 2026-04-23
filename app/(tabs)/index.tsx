@@ -143,6 +143,11 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
     setRecruitingFilter(prev => !prev);
   };
   
+// 필터 변경 시 표시 개수 리셋
+  useEffect(() => {
+    setDisplayCount(20);
+  }, [matchFilter, matchTypeFilter, levelFilter, timeFilter, recruitingFilter, locationFilter, searchQuery, sortBy]);
+
   const isToday = (dateString: string) => {
     return isTodayHelper(dateString);
   };

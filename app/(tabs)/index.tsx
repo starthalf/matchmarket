@@ -149,7 +149,7 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
         <View style={safeStyles.safeHeaderContent}>
           <View>
             <Text style={styles.title}>MatchMarket</Text>
-            <Text style={styles.subtitle}>인기가 높은 매치에 참여하세요</Text>
+            <Text style={styles.subtitle}>AI가 인기 높은 매치의 가격을 조절합니다 </Text>
           </View>
           <View style={styles.headerIcons}>
             <TouchableOpacity 

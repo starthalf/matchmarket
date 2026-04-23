@@ -551,7 +551,7 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
           style={[styles.floatingTab, matchFilter === 'all' && styles.floatingTabActive]}
           onPress={() => setMatchFilter('all')}
         >
-          <Text style={[styles.floatingTabText, matchFilter === 'all' && styles.floatingTabTextActive]}>전체</Text>
+<Text style={[styles.floatingTabText, matchFilter === 'all' && styles.floatingTabTextActive]}>일반매치</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.floatingTab, matchFilter === 'hot' && styles.floatingTabActive]}

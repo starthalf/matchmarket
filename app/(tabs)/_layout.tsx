@@ -136,7 +136,7 @@ export default function TabLayout() {
         <Tabs.Screen
           name="match-management"
           options={{
-            title: "매치LIVE",
+            title: "나의매치",
             tabBarIcon: ({ size, color }) => (
               <View style={{ position: 'relative' }}>
                 <ClipboardList size={size} color={color} />

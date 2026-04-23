@@ -9,8 +9,8 @@ interface PriceDisplayProps {
   maxPrice: number;
   hoursUntilMatch: number;
   viewCount: number;
-  applicationsCount: number; // 참여신청자 수
-  expectedParticipants: number; // 모집인원 총합
+  applicationsCount: number;
+  expectedParticipants: number;
   isClosed?: boolean;
   onPriceChange?: (price: number) => void;
 }
@@ -26,12 +26,11 @@ export function PriceDisplay({
   isClosed = false,
   onPriceChange
 }: PriceDisplayProps) {
-  // 동적 가격 계산 함수
   const calculateDynamicPrice = () => {
     const factors: PricingFactors = {
       viewCount,
       applicationsCount,
-      expectedApplicants: expectedParticipants * 5, // 모집인원의 5배
+      expectedApplicants: expectedParticipants * 5,
       hoursUntilMatch,
       basePrice,
       maxPrice
@@ -40,13 +39,11 @@ export function PriceDisplay({
     return PricingCalculator.calculateDynamicPrice(factors);
   };
 
-  // 🔥 초기 가격을 동적 계산된 가격으로 설정
   const initialCalculatedPrice = calculateDynamicPrice();
   const [animatedPrice, setAnimatedPrice] = useState(initialCalculatedPrice);
   const [isIncreasing, setIsIncreasing] = useState(initialCalculatedPrice > basePrice);
   const [prevPrice, setPrevPrice] = useState(initialCalculatedPrice);
 
-  // 🔥 초기 렌더링 시에도 부모에게 가격 알림
   useEffect(() => {
     if (onPriceChange) {
       onPriceChange(initialCalculatedPrice);
@@ -58,32 +55,28 @@ export function PriceDisplay({
       setAnimatedPrice(prevDisplayPrice => {
         const targetPrice = calculateDynamicPrice();
         
-        // 최종 가격 제한
         const finalPrice = Math.min(
           maxPrice,
           Math.max(basePrice, targetPrice)
         );
 
-        // 3% 임계값 체크 - basePrice 대비 변동이 3% 미만이면 업데이트 스킵
         const priceChange = Math.abs(finalPrice - prevPrice);
         const changePercentage = priceChange / basePrice;
 
         if (changePercentage < 0.03) {
-          return prevDisplayPrice; // 이전 가격 유지
+          return prevDisplayPrice;
         }
 
-        // 3% 이상 변동 시에만 업데이트
         setPrevPrice(finalPrice);
         setIsIncreasing(finalPrice > basePrice);
 
-        // 부모 컴포넌트에 가격 변경 알림
         if (onPriceChange) {
           onPriceChange(finalPrice);
         }
 
         return finalPrice;
       });
-    }, 120000); // 2분 (120000ms)
+    }, 120000);
 
     return () => clearInterval(interval);
   }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants, prevPrice]);
@@ -91,7 +84,6 @@ export function PriceDisplay({
   const priceChangePercentage = Math.abs(((animatedPrice - basePrice) / basePrice * 100)).toFixed(0);
   const showChange = Math.abs(parseInt(priceChangePercentage)) > 0;
 
-  // 🔥 가격 변동 사유 메시지 생성
   const getPriceReasonText = () => {
     if (!isIncreasing || !showChange || isClosed) return null;
     return '🔥 신청자가 폭증하고 있어요';
@@ -109,7 +101,7 @@ export function PriceDisplay({
         ]}>
           {animatedPrice.toLocaleString()}원
         </Text>
-        {showChange && !isClosed && (
+        {showChange && (
           <View style={[
             styles.changeIndicator, 
             isIncreasing ? styles.upTrend : styles.downTrend
@@ -128,6 +120,9 @@ export function PriceDisplay({
           </View>
         )}
       </View>
+      {isClosed && showChange && (
+        <Text style={styles.basePriceText}>기본가 {basePrice.toLocaleString()}원</Text>
+      )}
       {priceReasonText && (
         <Text style={styles.priceReason}>{priceReasonText}</Text>
       )}
@@ -186,5 +181,10 @@ const styles = StyleSheet.create({
     color: '#dc2626',
     fontWeight: '600',
     marginTop: 4,
+  },
+  basePriceText: {
+    fontSize: 11,
+    color: '#9ca3af',
+    fontWeight: '500',
   },
 });

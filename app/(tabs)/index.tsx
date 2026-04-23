@@ -530,11 +530,23 @@ const { isAdmin, adminLogin, adminLogout } = useAdmin();
               return 0;
             })
             .filter(match => {
+              const matchDateTime = new Date(`${match.date}T${match.time}`);
+              const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60));
+              const applications = match.applications || [];
+              
+              const dynamicPrice = PricingCalculator.calculateDynamicPrice({
+                viewCount: match.seller?.viewCount || 0,
+                applicationsCount: applications.length,
+                expectedApplicants: (match.expectedParticipants?.total || 0) * 5,
+                hoursUntilMatch,
+                basePrice: match.basePrice,
+                maxPrice: match.maxPrice || 200000,
+              });
+
               if (matchFilter === 'hot') {
-                return match.currentPrice > match.basePrice;
+                return dynamicPrice > match.basePrice;
               }
-              return match.currentPrice <= match.basePrice;
-            
+              return dynamicPrice <= match.basePrice;
             })
             .map((match) => (
               <MatchCard 

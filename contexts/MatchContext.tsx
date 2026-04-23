@@ -88,11 +88,9 @@ useEffect(() => {
   console.log('🔍 MatchContext: 매치 로드 완료 - 자동 마감 체크 실행');
   checkAndCloseExpiredMatches();
 
-  // 1분마다 체크
   const interval = setInterval(() => {
-    console.log('🔍 MatchContext: 1분 주기 자동 마감 체크 실행');
     checkAndCloseExpiredMatches();
-  }, 60000);
+  }, 300000); // 5분
 
   return () => clearInterval(interval);
 }, [isLoadingMatches]); // 로딩 완료 시에만 실행 (matches.length 제거)

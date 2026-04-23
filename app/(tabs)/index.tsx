@@ -642,14 +642,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   iconButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#ffffff',
-    shadowColor: '#0d0c22',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    padding: 6,
   },
   iconButtonActive: {
     backgroundColor: '#0d0c22',

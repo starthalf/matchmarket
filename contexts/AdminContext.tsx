@@ -66,7 +66,10 @@ export function AdminProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         console.log('AdminContext: auth state changed:', event);
         
-   if (event === 'SIGNED_OUT') {
+  if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('AdminContext: 로그인 감지, admin 상태 체크...');
+          await checkAdminStatus();
+        } else if (event === 'SIGNED_OUT') {
           setAdminUser(null);
           console.log('AdminContext: 로그아웃 감지됨');
         }

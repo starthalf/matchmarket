@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   upTrend: {
-    backgroundColor: '#fee2e2',
+    backgroundColor: '#fee2e2', 
   },
   changeText: {
     fontSize: 10,

@@ -80,7 +80,7 @@ export class AdminService {
         .select('id')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .single();
+        .maybeSingle();
 
       if (error || !adminData) {
         return false;

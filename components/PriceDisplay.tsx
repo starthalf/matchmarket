@@ -17,10 +17,10 @@ interface PriceDisplayProps {
 
 const HEAT_CONFIG = [
   { label: '', color: 'transparent', bg: 'transparent' },
-  { label: '관심 증가 중', color: '#f59e0b', bg: '#fffbeb' },
-  { label: '인기 매치', color: '#f97316', bg: '#fff7ed' },
-  { label: '🔥 뜨거운 매치', color: '#ef4444', bg: '#fef2f2' },
-  { label: '🔥🔥 경쟁 폭발', color: '#dc2626', bg: '#fef2f2' },
+  { label: '관심이 증가하고 있어요', color: '#f59e0b', bg: '#fffbeb' },
+  { label: '신청자가 몰리고 있어요', color: '#f97316', bg: '#fff7ed' },
+  { label: '🔥 신청자가 폭증하고 있어요', color: '#ef4444', bg: '#fef2f2' },
+  { label: '🔥🔥 신청 경쟁이 엄청 치열해요', color: '#dc2626', bg: '#fef2f2' },
 ];
 
 export function PriceDisplay({

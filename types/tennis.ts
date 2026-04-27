@@ -209,26 +209,26 @@ export class PricingCalculator {
     const actualSlots = Math.max(1, expectedApplicants / 5);
     const demandRatio = applicationsCount / actualSlots;
 
-    // 1. 조회수 보너스 (최대 +20%) — 200회부터, x² 곡선
+   // 1. 조회수 보너스 (최대 +20%) — 30회부터, x² 곡선
     let viewBonus = 0;
-    if (viewCount >= 200) {
-      const normalized = Math.min((viewCount - 200) / 1800, 1);
+    if (viewCount >= 30) {
+      const normalized = Math.min((viewCount - 30) / 970, 1); // 30~1000 → 0~1
       viewBonus = Math.pow(normalized, 2) * 0.20;
     }
 
-    // 2. 수요 보너스 (최대 +200%) — 2배부터, x³ 곡선
+    // 2. 수요 보너스 (최대 +200%) — 1배부터, x³ 곡선
     let demandBonus = 0;
-    if (demandRatio >= 2) {
-      const normalized = Math.min((demandRatio - 2) / 8, 1);
+    if (demandRatio >= 1) {
+      const normalized = Math.min((demandRatio - 1) / 9, 1); // 1~10배 → 0~1
       demandBonus = Math.pow(normalized, 3) * 2.0;
     }
 
     // 3. 시간 긴급 보너스 (최대 +15%) — 24시간 이내 + 수요 있을 때만
     let urgencyBonus = 0;
-    if (hoursUntilMatch <= 24 && demandRatio >= 2) {
+    if (hoursUntilMatch <= 24 && demandRatio >= 1) {
       const timeNormalized = Math.max(0, 1 - (hoursUntilMatch / 24));
       const urgencyMultiplier = Math.pow(timeNormalized, 2) * 0.15;
-      const demandWeight = Math.min(demandRatio / 4, 1);
+      const demandWeight = Math.min(demandRatio / 3, 1);
       urgencyBonus = urgencyMultiplier * demandWeight;
     }
 

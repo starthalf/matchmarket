@@ -109,7 +109,7 @@ export function PriceDisplay({
         ]}>
           {animatedPrice.toLocaleString()}원
         </Text>
-        {showChange && !isClosed && (
+        {showChange && (
           <View style={[styles.changeIndicator, styles.upTrend]}>
             <ArrowUp size={12} color="#dc2626" />
             <Text style={[styles.changeText, styles.upText]}>

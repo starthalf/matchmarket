@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { ArrowUp, Flame, TrendingUp, Eye } from 'lucide-react-native';
+import { ArrowUp, ArrowDown } from 'lucide-react-native';
 import { PricingFactors, PricingCalculator } from '../types/tennis';
 
 interface PriceDisplayProps {
@@ -15,14 +15,6 @@ interface PriceDisplayProps {
   onPriceChange?: (price: number) => void;
 }
 
-const HEAT_CONFIG = [
-  { label: '', color: 'transparent', bg: 'transparent' },
-  { label: '관심 증가 중', color: '#f59e0b', bg: '#fffbeb' },
-  { label: '인기 매치', color: '#f97316', bg: '#fff7ed' },
-  { label: '🔥 뜨거운 매치', color: '#ef4444', bg: '#fef2f2' },
-  { label: '🔥🔥 경쟁 폭발', color: '#dc2626', bg: '#fef2f2' },
-];
-
 export function PriceDisplay({
   currentPrice,
   basePrice,
@@ -34,8 +26,6 @@ export function PriceDisplay({
   isClosed = false,
   onPriceChange
 }: PriceDisplayProps) {
-  const actualSlots = Math.max(1, expectedParticipants);
-
   const calculateDynamicPrice = () => {
     const factors: PricingFactors = {
       viewCount,
@@ -53,10 +43,6 @@ export function PriceDisplay({
   const [animatedPrice, setAnimatedPrice] = useState(initialCalculatedPrice);
   const [isIncreasing, setIsIncreasing] = useState(initialCalculatedPrice > basePrice);
   const [prevPrice, setPrevPrice] = useState(initialCalculatedPrice);
-
-  // 열기 레벨 계산
-  const heatLevel = PricingCalculator.getHeatLevel(viewCount, applicationsCount, actualSlots);
-  const heatInfo = HEAT_CONFIG[heatLevel];
 
   useEffect(() => {
     if (onPriceChange) {
@@ -96,11 +82,17 @@ export function PriceDisplay({
   }, [basePrice, maxPrice, hoursUntilMatch, viewCount, applicationsCount, expectedParticipants, prevPrice]);
 
   const priceChangePercentage = Math.abs(((animatedPrice - basePrice) / basePrice * 100)).toFixed(0);
-  const showChange = animatedPrice > basePrice;
+  const showChange = Math.abs(parseInt(priceChangePercentage)) > 0;
+
+  const getPriceReasonText = () => {
+    if (!isIncreasing || !showChange || isClosed) return null;
+    return '🔥 신청자가 폭증하고 있어요';
+  };
+
+  const priceReasonText = getPriceReasonText();
 
   return (
     <View style={styles.container}>
-      {/* 가격 표시 */}
       <View style={styles.priceRow}>
         <Text style={[
           styles.price, 
@@ -110,29 +102,27 @@ export function PriceDisplay({
           {animatedPrice.toLocaleString()}원
         </Text>
         {showChange && (
-          <View style={[styles.changeIndicator, styles.upTrend]}>
-            <ArrowUp size={12} color="#dc2626" />
-            <Text style={[styles.changeText, styles.upText]}>
+          <View style={[
+            styles.changeIndicator, 
+            isIncreasing ? styles.upTrend : styles.downTrend
+          ]}>
+            {isIncreasing ? (
+              <ArrowUp size={12} color="#dc2626" />
+            ) : (
+              <ArrowDown size={12} color="#16a34a" />
+            )}
+            <Text style={[
+              styles.changeText,
+              isIncreasing ? styles.upText : styles.downText
+            ]}>
               {priceChangePercentage}%
             </Text>
           </View>
         )}
       </View>
-
-      {/* 열기 게이지 — 가격 변동 없어도 표시 */}
-      {heatLevel > 0 && !isClosed && (
-        <View style={[styles.heatBadge, { backgroundColor: heatInfo.bg }]}>
-          {heatLevel >= 3 ? (
-            <Flame size={12} color={heatInfo.color} />
-          ) : heatLevel >= 2 ? (
-            <TrendingUp size={12} color={heatInfo.color} />
-          ) : (
-            <Eye size={12} color={heatInfo.color} />
-          )}
-          <Text style={[styles.heatText, { color: heatInfo.color }]}>
-            {heatInfo.label}
-          </Text>
-        </View>
+      
+      {priceReasonText && (
+        <Text style={styles.priceReason}>{priceReasonText}</Text>
       )}
     </View>
   );
@@ -141,13 +131,12 @@ export function PriceDisplay({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'flex-end',
-    gap: 6,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    marginBottom: 2,
+    marginBottom: 4,
   },
   price: {
     fontSize: 18,
@@ -156,10 +145,6 @@ const styles = StyleSheet.create({
   },
   increasing: {
     color: '#dc2626',
-  },
-  closedPrice: {
-    textDecorationLine: 'line-through',
-    color: '#9ca3af',
   },
   changeIndicator: {
     flexDirection: 'row',
@@ -172,6 +157,9 @@ const styles = StyleSheet.create({
   upTrend: {
     backgroundColor: '#fee2e2',
   },
+  downTrend: {
+    backgroundColor: '#fdf2f8',
+  },
   changeText: {
     fontSize: 10,
     fontWeight: '600',
@@ -179,16 +167,18 @@ const styles = StyleSheet.create({
   upText: {
     color: '#dc2626',
   },
-  heatBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
+  downText: {
+    color: '#16a34a',
   },
-  heatText: {
+  closedPrice: {
+    textDecorationLine: 'line-through',
+    color: '#9ca3af',
+  },
+  priceReason: {
     fontSize: 11,
+    color: '#dc2626',
     fontWeight: '600',
+    marginTop: 4,
   },
+  
 });

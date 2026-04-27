@@ -75,12 +75,12 @@ export class AdminService {
       }
 
       // admin_users 테이블에서 권한 확인
-     const { data: adminData, error } = await supabase
+      const { data: adminData, error } = await supabase
         .from('admin_users')
         .select('id')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .maybeSingle();
+        .single();
 
       if (error || !adminData) {
         return false;

@@ -213,11 +213,12 @@ export class PricingCalculator {
     }
 
     // 3. 시간 긴급 보너스 (최대 +15%) — 24시간 이내 + 수요 있을 때만
+   // 3. 시간 긴급 보너스 (최대 +5%) — 6시간 이내 + 수요 3배 이상일 때만
     let urgencyBonus = 0;
-    if (hoursUntilMatch <= 24 && demandRatio >= 1) {
-      const timeNormalized = Math.max(0, 1 - (hoursUntilMatch / 24));
-      const urgencyMultiplier = Math.pow(timeNormalized, 2) * 0.15;
-      const demandWeight = Math.min(demandRatio / 3, 1);
+    if (hoursUntilMatch <= 6 && demandRatio >= 3) {
+      const timeNormalized = Math.max(0, 1 - (hoursUntilMatch / 6));
+      const urgencyMultiplier = Math.pow(timeNormalized, 3) * 0.05;
+      const demandWeight = Math.min((demandRatio - 3) / 7, 1);
       urgencyBonus = urgencyMultiplier * demandWeight;
     }
 

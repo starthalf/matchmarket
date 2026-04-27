@@ -20,13 +20,11 @@ export interface User {
   viewCount: number;
   likeCount: number;
   avgRating: number;
-  // ✅ 계좌 정보 추가
   bankName?: string;
   accountNumber?: string;
   accountHolder?: string;
 }
 
-// 🆕 새로운 참여신청 인터페이스 - 대기시스템 대신 사용
 export interface MatchApplication {
   id: string;
   matchId: string;
@@ -35,16 +33,15 @@ export interface MatchApplication {
   userGender: '남성' | '여성';
   userNtrp: number;
   userProfileImage?: string;
-  appliedPrice: number; // 참여신청 당시의 가격
+  appliedPrice: number;
   appliedAt: string;
   status: 'pending' | 'approved' | 'rejected' | 'expired' | 'payment_submitted' | 'confirmed';
   approvedAt?: string;
   rejectedAt?: string;
   paymentRequestedAt?: string;
-  paymentExpiresAt?: string; // 결제요청 5분 타이머
+  paymentExpiresAt?: string;
 }
 
-// 기존 대기자 인터페이스 (하위 호환성을 위해 유지)
 export interface WaitingApplicant {
   id: string;
   userId: string;
@@ -56,7 +53,7 @@ export interface WaitingApplicant {
   paymentRequestedAt?: string;
   paymentExpiresAt?: string;
   paymentSubmittedAt?: string;
-  paymentConfirmedAt?: string; // 판매자 입금확인 시각
+  paymentConfirmedAt?: string;
   depositorName?: string;
 }
 
@@ -91,11 +88,11 @@ export interface Match {
   court: string;
   description: string;
   basePrice: number;
-  initialPrice?: number; // 🗑️ 삭제 예정 (호환성 유지)
+  initialPrice?: number;
   currentPrice: number;
   maxPrice: number;
   expectedViews: number;
-  expectedWaitingApplicants?: number; // 🗑️ 삭제 예정 (호환성 유지)
+  expectedWaitingApplicants?: number;
   expectedParticipants: {
     male: number;
     female: number;
@@ -107,14 +104,9 @@ export interface Match {
     total: number;
   };
   matchType: '단식' | '남복' | '여복' | '혼복';
-  
-  // 🔄 기존 대기자 시스템 (호환성 유지)
   waitingApplicants?: number;
   waitingList?: WaitingApplicant[];
-  
-  // 🆕 새로운 참여신청 시스템
   applications?: MatchApplication[];
-  
   participants: MatchParticipant[];
   adEnabled: boolean;
   ntrpRequirement: {
@@ -125,11 +117,10 @@ export interface Match {
   location: string;
   createdAt: string;
   isClosed?: boolean;
-  isCompleted?: boolean;      // 경기 완료 여부
-  completedAt?: string;        // 경기 완료 시각 (ISO 8601 형식)
+  isCompleted?: boolean;
+  completedAt?: string;
 }
 
-// 🆕 채팅 관련 인터페이스
 export interface ChatRoom {
   id: string;
   matchId: string;
@@ -185,47 +176,93 @@ export interface CertificationRequest {
   submittedAt: string;
 }
 
-// 🆕 새로운 가격 로직을 위한 인터페이스
 export interface PricingFactors {
   viewCount: number;
-  applicationsCount: number; // 참여신청자 수
-  expectedApplicants: number; // 모집인원 × 10
+  applicationsCount: number;
+  expectedApplicants: number;
   hoursUntilMatch: number;
   basePrice: number;
   maxPrice: number;
 }
 
-// 🆕 새로운 가격 계산 유틸리티
+// 🆕 고도화된 비선형 동적 가격 계산
 export class PricingCalculator {
   /**
-   * 간소화된 동적 가격 계산
-   * - 조회수 할증: 500회 이상부터 (최대 10%)
-   * - 참여신청자 할증: 모집인원수의 5배 이상부터 (최대 100%)
+   * 비선형 동적 가격 계산
+   * - 5% 미만 변동은 0원 처리 (의미 없는 소폭 변동 제거)
+   * - 임계점 돌파 시 본격 상승, 경쟁 치열하면 급등
    */
   static calculateDynamicPrice(factors: PricingFactors): number {
-    let price = factors.basePrice;
+    const { basePrice, maxPrice, viewCount, applicationsCount, expectedApplicants, hoursUntilMatch } = factors;
 
-    // 1. 조회수 할증 (500회 이상부터, 최대 10%)
-    if (factors.viewCount >= 500) {
-      const viewMultiplier = Math.min(0.1, (factors.viewCount - 500) / 2000 * 0.1);
-      price *= (1 + viewMultiplier);
+    const actualSlots = Math.max(1, expectedApplicants / 5);
+    const demandRatio = applicationsCount / actualSlots;
+
+    // 1. 조회수 보너스 (최대 +20%) — 30회부터, x² 곡선
+    let viewBonus = 0;
+    if (viewCount >= 30) {
+      const normalized = Math.min((viewCount - 30) / 970, 1);
+      viewBonus = Math.pow(normalized, 2) * 0.20;
     }
 
-    // 2. 참여신청자 할증 (모집인원 × 5배 이상부터, 최대 100%)
-    if (factors.applicationsCount >= factors.expectedApplicants) {
-      const applicationMultiplier = Math.min(1.0, (factors.applicationsCount - factors.expectedApplicants) / factors.expectedApplicants);
-      price *= (1 + applicationMultiplier);
+    // 2. 수요 보너스 (최대 +200%) — 1배부터, x³ 곡선
+    let demandBonus = 0;
+    if (demandRatio >= 1) {
+      const normalized = Math.min((demandRatio - 1) / 9, 1);
+      demandBonus = Math.pow(normalized, 3) * 2.0;
     }
 
-    // 3. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
-    price = Math.max(factors.basePrice, price);
-    price = Math.min(factors.maxPrice, price);
+    // 3. 시간 긴급 보너스 (최대 +15%) — 24시간 이내 + 수요 있을 때만
+    let urgencyBonus = 0;
+    if (hoursUntilMatch <= 24 && demandRatio >= 1) {
+      const timeNormalized = Math.max(0, 1 - (hoursUntilMatch / 24));
+      const urgencyMultiplier = Math.pow(timeNormalized, 2) * 0.15;
+      const demandWeight = Math.min(demandRatio / 3, 1);
+      urgencyBonus = urgencyMultiplier * demandWeight;
+    }
 
-    return Math.round(price / 100) * 100;
+    // 5% 미만 변동은 0원 처리
+    const totalBonus = viewBonus + demandBonus + urgencyBonus;
+    if (totalBonus < 0.05) {
+      return basePrice;
+    }
+
+    let finalPrice = basePrice * (1 + totalBonus);
+    finalPrice = Math.max(basePrice, finalPrice);
+    finalPrice = Math.min(maxPrice, finalPrice);
+
+    return Math.round(finalPrice / 100) * 100;
+  }
+
+  /**
+   * 관심도(열기) 레벨 — 가격 변동 없어도 UI에 표시
+   * 0: 조용 / 1: 관심 증가 / 2: 인기 / 3: 뜨거움 / 4: 폭발
+   */
+  static getHeatLevel(viewCount: number, applicationsCount: number, actualSlots: number): number {
+    const demandRatio = applicationsCount / Math.max(1, actualSlots);
+
+    let viewScore = 0;
+    if (viewCount >= 30) viewScore = 0.5;
+    if (viewCount >= 100) viewScore = 1;
+    if (viewCount >= 300) viewScore = 1.5;
+    if (viewCount >= 500) viewScore = 2;
+
+    let demandScore = 0;
+    if (demandRatio >= 0.5) demandScore = 0.5;
+    if (demandRatio >= 1) demandScore = 1;
+    if (demandRatio >= 3) demandScore = 1.5;
+    if (demandRatio >= 5) demandScore = 2;
+
+    const totalScore = viewScore + demandScore;
+
+    if (totalScore >= 3.5) return 4;
+    if (totalScore >= 2.5) return 3;
+    if (totalScore >= 1.5) return 2;
+    if (totalScore >= 0.5) return 1;
+    return 0;
   }
 }
 
-// 매치 타입별 도우미 함수들
 export const MatchTypeHelper = {
   getDisplayName(matchType: Match['matchType']): string {
     switch (matchType) {
@@ -322,7 +359,6 @@ export const MatchTypeHelper = {
   }
 };
 
-// 추가 유틸리티 타입들
 export type MatchStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
 export type ParticipantStatus = 'waiting' | 'confirmed' | 'cancelled';
 export type PaymentStatus = 'pending' | 'paid' | 'refunded';

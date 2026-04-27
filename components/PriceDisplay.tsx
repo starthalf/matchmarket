@@ -110,11 +110,16 @@ export function PriceDisplay({
         )}
       </View>
 
-      {heatLevel > 0 && !isClosed && (
+     {heatLevel > 0 && !isClosed && (
         <View style={[styles.heatBadge, { backgroundColor: heatInfo.bg }]}>
-          {heatLevel >= 3 ? (
+          {heatLevel === 4 ? (
+            <>
+              <Flame size={12} color={heatInfo.color} />
+              <Flame size={12} color={heatInfo.color} />
+            </>
+          ) : heatLevel === 3 ? (
             <Flame size={12} color={heatInfo.color} />
-          ) : heatLevel >= 2 ? (
+          ) : heatLevel === 2 ? (
             <TrendingUp size={12} color={heatInfo.color} />
           ) : (
             <Eye size={12} color={heatInfo.color} />

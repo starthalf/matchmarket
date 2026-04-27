@@ -195,33 +195,82 @@ export interface PricingFactors {
   maxPrice: number;
 }
 
-// 🆕 새로운 가격 계산 유틸리티
+// 🆕 고도화된 비선형 동적 가격 계산
 export class PricingCalculator {
   /**
-   * 간소화된 동적 가격 계산
-   * - 조회수 할증: 500회 이상부터 (최대 10%)
-   * - 참여신청자 할증: 모집인원수의 5배 이상부터 (최대 100%)
+   * 비선형 동적 가격 계산
+   * - 5% 미만 변동은 0원 처리 (의미 없는 소폭 변동 제거)
+   * - 임계점(신청자 2배+) 돌파 시 본격 상승
+   * - 경쟁 치열(5배+)하면 급등
    */
   static calculateDynamicPrice(factors: PricingFactors): number {
-    let price = factors.basePrice;
+    const { basePrice, maxPrice, viewCount, applicationsCount, expectedApplicants, hoursUntilMatch } = factors;
 
-    // 1. 조회수 할증 (500회 이상부터, 최대 10%)
-    if (factors.viewCount >= 500) {
-      const viewMultiplier = Math.min(0.1, (factors.viewCount - 500) / 2000 * 0.1);
-      price *= (1 + viewMultiplier);
+    const actualSlots = Math.max(1, expectedApplicants / 5);
+    const demandRatio = applicationsCount / actualSlots;
+
+    // 1. 조회수 보너스 (최대 +20%) — 200회부터, x² 곡선
+    let viewBonus = 0;
+    if (viewCount >= 200) {
+      const normalized = Math.min((viewCount - 200) / 1800, 1);
+      viewBonus = Math.pow(normalized, 2) * 0.20;
     }
 
-    // 2. 참여신청자 할증 (모집인원 × 5배 이상부터, 최대 100%)
-    if (factors.applicationsCount >= factors.expectedApplicants) {
-      const applicationMultiplier = Math.min(1.0, (factors.applicationsCount - factors.expectedApplicants) / factors.expectedApplicants);
-      price *= (1 + applicationMultiplier);
+    // 2. 수요 보너스 (최대 +200%) — 2배부터, x³ 곡선
+    let demandBonus = 0;
+    if (demandRatio >= 2) {
+      const normalized = Math.min((demandRatio - 2) / 8, 1);
+      demandBonus = Math.pow(normalized, 3) * 2.0;
     }
 
-    // 3. 기본가격 아래로 안떨어지는 로직, 최대가격 20만원 유지
-    price = Math.max(factors.basePrice, price);
-    price = Math.min(factors.maxPrice, price);
+    // 3. 시간 긴급 보너스 (최대 +15%) — 24시간 이내 + 수요 있을 때만
+    let urgencyBonus = 0;
+    if (hoursUntilMatch <= 24 && demandRatio >= 2) {
+      const timeNormalized = Math.max(0, 1 - (hoursUntilMatch / 24));
+      const urgencyMultiplier = Math.pow(timeNormalized, 2) * 0.15;
+      const demandWeight = Math.min(demandRatio / 4, 1);
+      urgencyBonus = urgencyMultiplier * demandWeight;
+    }
 
-    return Math.round(price / 100) * 100;
+    // 5% 미만 변동은 0원 처리
+    const totalBonus = viewBonus + demandBonus + urgencyBonus;
+    if (totalBonus < 0.05) {
+      return basePrice;
+    }
+
+    let finalPrice = basePrice * (1 + totalBonus);
+    finalPrice = Math.max(basePrice, finalPrice);
+    finalPrice = Math.min(maxPrice, finalPrice);
+
+    return Math.round(finalPrice / 100) * 100;
+  }
+
+  /**
+   * 관심도(열기) 레벨 계산 — 가격이 안 움직여도 UI에 표시
+   * 0: 조용 / 1: 관심 증가 / 2: 인기 / 3: 뜨거움 / 4: 폭발
+   */
+  static getHeatLevel(viewCount: number, applicationsCount: number, actualSlots: number): number {
+    const demandRatio = applicationsCount / Math.max(1, actualSlots);
+
+    let viewScore = 0;
+    if (viewCount >= 30) viewScore = 0.5;
+    if (viewCount >= 100) viewScore = 1;
+    if (viewCount >= 300) viewScore = 1.5;
+    if (viewCount >= 500) viewScore = 2;
+
+    let demandScore = 0;
+    if (demandRatio >= 0.5) demandScore = 0.5;
+    if (demandRatio >= 1) demandScore = 1;
+    if (demandRatio >= 3) demandScore = 1.5;
+    if (demandRatio >= 5) demandScore = 2;
+
+    const totalScore = viewScore + demandScore;
+
+    if (totalScore >= 3.5) return 4;
+    if (totalScore >= 2.5) return 3;
+    if (totalScore >= 1.5) return 2;
+    if (totalScore >= 0.5) return 1;
+    return 0;
   }
 }
 

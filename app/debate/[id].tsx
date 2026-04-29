@@ -260,15 +260,19 @@ export default function DebateDetailScreen() {
          {myVote ? (
             <View style={styles.resultContainer}>
               <View style={styles.resultBarWrapper}>
-                <View style={[styles.resultBarAgree, { flex: Math.max(agreePercent, 15) }]}>
-                  <Text style={styles.resultBarText}>👍 {agreePercent}%</Text>
-                </View>
-                <View style={[styles.resultBarDisagree, { flex: Math.max(disagreePercent, 15) }]}>
-                  <Text style={[styles.resultBarText, { color: '#6b7280' }]}>👎 {disagreePercent}%</Text>
-                </View>
+                {agreePercent > 0 && (
+                  <View style={[styles.resultBarAgree, { flex: agreePercent }]}>
+                    <Text style={styles.resultBarText}>👍 찬성 {agreePercent}%</Text>
+                  </View>
+                )}
+                {disagreePercent > 0 && (
+                  <View style={[styles.resultBarDisagree, { flex: disagreePercent, backgroundColor: '#ef4444' }]}>
+                    <Text style={styles.resultBarText}>👎 반대 {disagreePercent}%</Text>
+                  </View>
+                )}
               </View>
               <Text style={styles.totalVotes}>{total}명 참여</Text>
-            </View> 
+            </View>
           ) : (
             <View style={styles.voteButtons}>
               <TouchableOpacity style={styles.agreeBtn} onPress={() => handleVote('agree')}>

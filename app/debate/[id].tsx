@@ -39,8 +39,7 @@ export default function DebateDetailScreen() {
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pastDebates, setPastDebates] = useState<any[]>([]);
-  const [userNames, setUserNames] = useState<Record<string, string>>({});
-
+  
   useEffect(() => {
     if (id) {
       loadAll();
@@ -114,38 +113,15 @@ export default function DebateDetailScreen() {
 
     if (error || !data) return;
 
-    // 유저 이름 일괄 조회
-    const uniqueUserIds = [...new Set(data.map((c: any) => c.user_id))];
-    const { data: usersData } = await supabase
-      .from('users')
-      .select('id, name')
-      .in('id', uniqueUserIds);
-
-    const namesMap: Record<string, string> = {};
-    usersData?.forEach((u: any) => { namesMap[u.id] = u.name; });
-    setUserNames(prev => ({ ...prev, ...namesMap }));
-
-    // 부모 댓글 + 대댓글 매핑
     const parents = data.filter((c: any) => !c.parent_id);
     const withReplies = parents.map((parent: any) => ({
       ...parent,
-      userName: namesMap[parent.user_id] || '익명',
-      replies: data
-        .filter((c: any) => c.parent_id === parent.id)
-        .map((reply: any) => ({
-          ...reply,
-          userName: namesMap[reply.user_id] || '익명',
-        })),
+      replies: data.filter((c: any) => c.parent_id === parent.id),
     }));
     setComments(withReplies);
 
-    // TOP 3
     const sorted = [...parents].sort((a, b) => b.like_count - a.like_count);
-    setTopComments(
-      sorted.slice(0, 3)
-        .filter((c: any) => c.like_count > 0)
-        .map((c: any) => ({ ...c, userName: namesMap[c.user_id] || '익명' }))
-    );
+    setTopComments(sorted.slice(0, 3).filter((c: any) => c.like_count > 0));
   };
 
   const fetchMyLikes = async () => {

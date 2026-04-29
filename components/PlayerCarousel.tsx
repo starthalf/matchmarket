@@ -14,7 +14,7 @@ import { User } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 
 const { width } = Dimensions.get('window');
-const AVATAR_SIZE = 44;
+const AVATAR_SIZE = 32;
 
 export function PlayerCarousel() {
   const router = useRouter();
@@ -69,7 +69,7 @@ export function PlayerCarousel() {
         <Image source={{ uri: item.profile_image }} style={styles.avatar} />
       ) : (
         <View style={[styles.avatar, styles.avatarPlaceholder]}>
-          <User size={20} color="#9ca3af" />
+          <User size={14} color="#9ca3af" />
         </View>
       )}
     </View>
@@ -106,8 +106,8 @@ export function PlayerCarousel() {
         contentContainerStyle={styles.listContent}
         scrollEnabled={false}
         getItemLayout={(data, index) => ({
-          length: AVATAR_SIZE + 10,
-          offset: (AVATAR_SIZE + 10) * index,
+          length: AVATAR_SIZE + 6,
+          offset: (AVATAR_SIZE + 6) * index,
           index,
         })}
         onScrollToIndexFailed={(info) => {
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   listContent: {
-    gap: 10,
+    gap: 6,
   },
   avatarContainer: {
     alignItems: 'center',
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: AVATAR_SIZE / 2,
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#ea4c89',
   },
   avatarPlaceholder: {

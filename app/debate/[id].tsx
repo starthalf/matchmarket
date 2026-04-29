@@ -267,7 +267,7 @@ export default function DebateDetailScreen() {
                  <Text style={[styles.resultBarText, { color: '#6b7280' }]}>반대 {disagreePercent}%</Text>
                 </View>
               </View>
-              <Text style={styles.totalVotes}>{total}명 참여</Text>
+              <Text style={styles.totalVotes}>{total}명 참여</Text> 
             </View>
           ) : (
             <View style={styles.voteButtons}>

@@ -92,17 +92,7 @@ export default function DebateDetailScreen() {
     if (data) setMyVote(data.vote);
   };
 
-  const fetchUserName = async (userId: string): Promise<string> => {
-    if (userNames[userId]) return userNames[userId];
-    const { data } = await supabase
-      .from('users')
-      .select('name')
-      .eq('id', userId)
-      .maybeSingle();
-    const name = data?.name || '익명';
-    setUserNames(prev => ({ ...prev, [userId]: name }));
-    return name;
-  };
+ 
 
   const fetchComments = async () => {
     const { data, error } = await supabase

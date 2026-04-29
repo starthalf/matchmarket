@@ -23,7 +23,6 @@ export function PlayerCarousel() {
   const [loading, setLoading] = useState(true);
   const flatListRef = useRef<FlatList>(null);
 
-  // Supabase에서 플레이어 프로필 가져오기
   useEffect(() => {
     fetchPlayers();
   }, []);
@@ -48,7 +47,6 @@ export function PlayerCarousel() {
     }
   };
 
-  // 자동 슬라이드 로직
   useEffect(() => {
     if (players.length === 0) return;
 
@@ -77,7 +75,6 @@ export function PlayerCarousel() {
     </View>
   );
 
-  // 로딩 중이거나 플레이어가 없으면 표시 안함
   if (loading) {
     return (
       <View style={styles.container}>
@@ -88,7 +85,7 @@ export function PlayerCarousel() {
   }
 
   if (players.length === 0) {
-    return null; // 플레이어가 없으면 캐러셀 숨김
+    return null;
   }
 
   return (
@@ -97,11 +94,9 @@ export function PlayerCarousel() {
       activeOpacity={0.9}
       onPress={() => router.push('/players')}
     >
-      {/* Hot 라벨 */}
       <Text style={styles.hotLabel}>Hot</Text>
       
-      {/* 썸네일 리스트 */}
-<FlatList
+      <FlatList
         ref={flatListRef}
         data={players}
         renderItem={renderItem}
@@ -111,7 +106,7 @@ export function PlayerCarousel() {
         contentContainerStyle={styles.listContent}
         scrollEnabled={false}
         getItemLayout={(data, index) => ({
-          length: AVATAR_SIZE + 10,  // 아바타 크기 + gap
+          length: AVATAR_SIZE + 10,
           offset: (AVATAR_SIZE + 10) * index,
           index,
         })}
@@ -133,10 +128,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
   },
   hotLabel: {
     fontSize: 14,

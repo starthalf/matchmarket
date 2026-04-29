@@ -6,9 +6,6 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, router } from 'expo-router';
@@ -21,6 +18,7 @@ import {
   Send,
   ChevronDown,
   ChevronUp,
+  ChevronRight,
 } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,28 +39,35 @@ export default function DebateDetailScreen() {
   const [likedComments, setLikedComments] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pastDebates, setPastDebates] = useState<any[]>([]);
+  const [userNames, setUserNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (id) {
-      fetchDebate();
-      fetchComments();
-      fetchPastDebates();
+      loadAll();
     }
   }, [id]);
 
-  useEffect(() => {
-    if (id && user) {
+  const loadAll = async () => {
+    await fetchDebate();
+    await fetchComments();
+    fetchPastDebates();
+    if (user) {
       fetchMyVote();
       fetchMyLikes();
     }
-  }, [id, user]);
+  };
 
   const fetchDebate = async () => {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('daily_debates')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
+
+    if (error) {
+      console.error('토론 조회 오류:', error);
+      return;
+    }
     if (data) setDebate(data);
 
     const { data: voteData } = await supabase
@@ -84,32 +89,63 @@ export default function DebateDetailScreen() {
       .select('vote')
       .eq('debate_id', id)
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
     if (data) setMyVote(data.vote);
   };
 
-  const fetchComments = async () => {
-    // 전체 댓글 (대댓글 포함)
+  const fetchUserName = async (userId: string): Promise<string> => {
+    if (userNames[userId]) return userNames[userId];
     const { data } = await supabase
+      .from('users')
+      .select('name')
+      .eq('id', userId)
+      .maybeSingle();
+    const name = data?.name || '익명';
+    setUserNames(prev => ({ ...prev, [userId]: name }));
+    return name;
+  };
+
+  const fetchComments = async () => {
+    const { data, error } = await supabase
       .from('debate_comments')
-      .select('*, user:user_id(id, name)')
+      .select('*')
       .eq('debate_id', id)
       .order('created_at', { ascending: true });
 
-    if (data) {
-      // 부모 댓글만
-      const parents = data.filter((c: any) => !c.parent_id);
-      // 대댓글 매핑
-      const withReplies = parents.map((parent: any) => ({
-        ...parent,
-        replies: data.filter((c: any) => c.parent_id === parent.id),
-      }));
-      setComments(withReplies);
+    if (error || !data) return;
 
-      // TOP 3 (좋아요 기준)
-      const sorted = [...parents].sort((a, b) => b.like_count - a.like_count);
-      setTopComments(sorted.slice(0, 3).filter((c: any) => c.like_count > 0));
-    }
+    // 유저 이름 일괄 조회
+    const uniqueUserIds = [...new Set(data.map((c: any) => c.user_id))];
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, name')
+      .in('id', uniqueUserIds);
+
+    const namesMap: Record<string, string> = {};
+    usersData?.forEach((u: any) => { namesMap[u.id] = u.name; });
+    setUserNames(prev => ({ ...prev, ...namesMap }));
+
+    // 부모 댓글 + 대댓글 매핑
+    const parents = data.filter((c: any) => !c.parent_id);
+    const withReplies = parents.map((parent: any) => ({
+      ...parent,
+      userName: namesMap[parent.user_id] || '익명',
+      replies: data
+        .filter((c: any) => c.parent_id === parent.id)
+        .map((reply: any) => ({
+          ...reply,
+          userName: namesMap[reply.user_id] || '익명',
+        })),
+    }));
+    setComments(withReplies);
+
+    // TOP 3
+    const sorted = [...parents].sort((a, b) => b.like_count - a.like_count);
+    setTopComments(
+      sorted.slice(0, 3)
+        .filter((c: any) => c.like_count > 0)
+        .map((c: any) => ({ ...c, userName: namesMap[c.user_id] || '익명' }))
+    );
   };
 
   const fetchMyLikes = async () => {
@@ -216,6 +252,13 @@ export default function DebateDetailScreen() {
   if (!debate) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <ArrowLeft size={24} color="#0d0c22" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>오늘의 토론</Text>
+          <View style={{ width: 24 }} />
+        </View>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>로딩 중...</Text>
         </View>
@@ -229,16 +272,11 @@ export default function DebateDetailScreen() {
 
   const formatDate = (dateStr: string) => {
     const d = new Date(dateStr);
-    const month = d.getMonth() + 1;
-    const day = d.getDate();
-    const hours = d.getHours();
-    const mins = d.getMinutes().toString().padStart(2, '0');
-    return `${month}/${day} ${hours}:${mins}`;
+    return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes().toString().padStart(2, '0')}`;
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
           <ArrowLeft size={24} color="#0d0c22" />
@@ -253,7 +291,6 @@ export default function DebateDetailScreen() {
           <Text style={styles.dateLabel}>{debate.display_date}</Text>
           <Text style={styles.questionText}>"{debate.question}"</Text>
 
-          {/* 투표 영역 */}
           {myVote ? (
             <View style={styles.resultContainer}>
               <View style={styles.resultBarWrapper}>
@@ -290,14 +327,10 @@ export default function DebateDetailScreen() {
                   <Text style={styles.topBadgeText}>{index + 1}</Text>
                 </View>
                 <View style={styles.topCommentContent}>
-                  <Text style={styles.commentAuthor}>{comment.user?.name || '익명'}</Text>
+                  <Text style={styles.commentAuthor}>{comment.userName}</Text>
                   <Text style={styles.commentText}>{comment.content}</Text>
                   <View style={styles.commentMeta}>
-                    <Heart
-                      size={12}
-                      color={likedComments.has(comment.id) ? '#ef4444' : '#9ca3af'}
-                      fill={likedComments.has(comment.id) ? '#ef4444' : 'none'}
-                    />
+                    <Heart size={12} color="#ef4444" fill="#ef4444" />
                     <Text style={styles.likeCount}>{comment.like_count}</Text>
                   </View>
                 </View>
@@ -308,9 +341,7 @@ export default function DebateDetailScreen() {
 
         {/* 전체 댓글 */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            💬 댓글 {comments.length}개
-          </Text>
+          <Text style={styles.sectionTitle}>💬 댓글 {comments.length}개</Text>
 
           {comments.length === 0 ? (
             <View style={styles.emptyComments}>
@@ -320,39 +351,27 @@ export default function DebateDetailScreen() {
             comments.map((comment) => (
               <View key={comment.id} style={styles.commentCard}>
                 <View style={styles.commentHeader}>
-                  <Text style={styles.commentAuthor}>{comment.user?.name || '익명'}</Text>
+                  <Text style={styles.commentAuthor}>{comment.userName}</Text>
                   <Text style={styles.commentTime}>{formatDate(comment.created_at)}</Text>
                 </View>
                 <Text style={styles.commentText}>{comment.content}</Text>
                 <View style={styles.commentActions}>
-                  <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => handleLike(comment.id)}
-                  >
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => handleLike(comment.id)}>
                     <Heart
                       size={14}
                       color={likedComments.has(comment.id) ? '#ef4444' : '#9ca3af'}
                       fill={likedComments.has(comment.id) ? '#ef4444' : 'none'}
                     />
-                    <Text style={[
-                      styles.actionText,
-                      likedComments.has(comment.id) && styles.actionTextActive,
-                    ]}>
+                    <Text style={[styles.actionText, likedComments.has(comment.id) && styles.actionTextActive]}>
                       {comment.like_count}
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => setReplyTo(comment)}
-                  >
+                  <TouchableOpacity style={styles.actionBtn} onPress={() => setReplyTo(comment)}>
                     <MessageCircle size={14} color="#9ca3af" />
                     <Text style={styles.actionText}>답글</Text>
                   </TouchableOpacity>
                   {comment.replies?.length > 0 && (
-                    <TouchableOpacity
-                      style={styles.actionBtn}
-                      onPress={() => toggleReplies(comment.id)}
-                    >
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => toggleReplies(comment.id)}>
                       {expandedReplies.has(comment.id) ? (
                         <ChevronUp size={14} color="#6b7280" />
                       ) : (
@@ -363,27 +382,20 @@ export default function DebateDetailScreen() {
                   )}
                 </View>
 
-                {/* 대댓글 */}
                 {expandedReplies.has(comment.id) && comment.replies?.map((reply: any) => (
                   <View key={reply.id} style={styles.replyCard}>
                     <View style={styles.commentHeader}>
-                      <Text style={styles.commentAuthor}>{reply.user?.name || '익명'}</Text>
+                      <Text style={styles.commentAuthor}>{reply.userName}</Text>
                       <Text style={styles.commentTime}>{formatDate(reply.created_at)}</Text>
                     </View>
                     <Text style={styles.commentText}>{reply.content}</Text>
-                    <TouchableOpacity
-                      style={styles.actionBtn}
-                      onPress={() => handleLike(reply.id)}
-                    >
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleLike(reply.id)}>
                       <Heart
                         size={12}
                         color={likedComments.has(reply.id) ? '#ef4444' : '#9ca3af'}
                         fill={likedComments.has(reply.id) ? '#ef4444' : 'none'}
                       />
-                      <Text style={[
-                        styles.actionText,
-                        likedComments.has(reply.id) && styles.actionTextActive,
-                      ]}>
+                      <Text style={[styles.actionText, likedComments.has(reply.id) && styles.actionTextActive]}>
                         {reply.like_count}
                       </Text>
                     </TouchableOpacity>
@@ -406,7 +418,7 @@ export default function DebateDetailScreen() {
               >
                 <Text style={styles.pastDate}>{past.display_date}</Text>
                 <Text style={styles.pastQuestion} numberOfLines={1}>{past.question}</Text>
-                <ChevronDown size={14} color="#9ca3af" style={{ transform: [{ rotate: '-90deg' }] }} />
+                <ChevronRight size={14} color="#9ca3af" />
               </TouchableOpacity>
             ))}
           </View>
@@ -420,7 +432,7 @@ export default function DebateDetailScreen() {
         {replyTo && (
           <View style={styles.replyIndicator}>
             <Text style={styles.replyIndicatorText}>
-              {replyTo.user?.name || '익명'}에게 답글
+              {replyTo.userName || '익명'}에게 답글
             </Text>
             <TouchableOpacity onPress={() => setReplyTo(null)}>
               <Text style={styles.replyCancelText}>취소</Text>
@@ -451,19 +463,9 @@ export default function DebateDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f8f7f4',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 16,
-    color: '#9ca3af',
-  },
+  safeArea: { flex: 1, backgroundColor: '#f8f7f4' },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { fontSize: 16, color: '#9ca3af' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -474,14 +476,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
   },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: '#0d0c22',
-  },
-  scrollView: {
-    flex: 1,
-  },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#0d0c22' },
+  scrollView: { flex: 1 },
   debateCard: {
     backgroundColor: '#fff',
     margin: 16,
@@ -493,11 +489,7 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 4,
   },
-  dateLabel: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginBottom: 12,
-  },
+  dateLabel: { fontSize: 12, color: '#9ca3af', marginBottom: 12 },
   questionText: {
     fontSize: 22,
     fontWeight: '800',
@@ -506,247 +498,86 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  voteButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  voteButtons: { flexDirection: 'row', gap: 12 },
   agreeBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 14,
-    backgroundColor: '#f0fdf4',
-    borderWidth: 2,
-    borderColor: '#bbf7d0',
-    gap: 8,
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 16, borderRadius: 14,
+    backgroundColor: '#f0fdf4', borderWidth: 2, borderColor: '#bbf7d0', gap: 8,
   },
   disagreeBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 14,
-    backgroundColor: '#fef2f2',
-    borderWidth: 2,
-    borderColor: '#fecaca',
-    gap: 8,
+    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 16, borderRadius: 14,
+    backgroundColor: '#fef2f2', borderWidth: 2, borderColor: '#fecaca', gap: 8,
   },
-  agreeBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#16a34a',
-  },
-  disagreeBtnText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#dc2626',
-  },
-  resultContainer: {
-    gap: 8,
-  },
-  resultBarWrapper: {
-    flexDirection: 'row',
-    borderRadius: 10,
-    overflow: 'hidden',
-    height: 44,
-  },
-  resultBarAgree: {
-    backgroundColor: '#22c55e',
-    justifyContent: 'center',
-    paddingLeft: 12,
-  },
-  resultBarDisagree: {
-    backgroundColor: '#ef4444',
-    justifyContent: 'center',
-    alignItems: 'flex-end',
-    paddingRight: 12,
-  },
-  resultBarText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  totalVotes: {
-    fontSize: 13,
-    color: '#9ca3af',
-    textAlign: 'center',
-  },
-  section: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#0d0c22',
-    marginBottom: 12,
-  },
+  agreeBtnText: { fontSize: 16, fontWeight: '700', color: '#16a34a' },
+  disagreeBtnText: { fontSize: 16, fontWeight: '700', color: '#dc2626' },
+  resultContainer: { gap: 8 },
+  resultBarWrapper: { flexDirection: 'row', borderRadius: 10, overflow: 'hidden', height: 44 },
+  resultBarAgree: { backgroundColor: '#22c55e', justifyContent: 'center', paddingLeft: 12 },
+  resultBarDisagree: { backgroundColor: '#ef4444', justifyContent: 'center', alignItems: 'flex-end', paddingRight: 12 },
+  resultBarText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+  totalVotes: { fontSize: 13, color: '#9ca3af', textAlign: 'center' },
+  section: { paddingHorizontal: 16, marginBottom: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#0d0c22', marginBottom: 12 },
   topCommentCard: {
-    flexDirection: 'row',
-    backgroundColor: '#fffbeb',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#fef3c7',
-    gap: 10,
+    flexDirection: 'row', backgroundColor: '#fffbeb', borderRadius: 12,
+    padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#fef3c7', gap: 10,
   },
   topBadge: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#f59e0b',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 24, height: 24, borderRadius: 12,
+    backgroundColor: '#f59e0b', justifyContent: 'center', alignItems: 'center',
   },
-  topBadgeText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#fff',
-  },
-  topCommentContent: {
-    flex: 1,
-  },
+  topBadgeText: { fontSize: 12, fontWeight: '800', color: '#fff' },
+  topCommentContent: { flex: 1 },
   commentCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
+    backgroundColor: '#fff', borderRadius: 12, padding: 14,
+    marginBottom: 8, borderWidth: 1, borderColor: '#f3f4f6',
   },
   commentHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 6,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', marginBottom: 6,
   },
-  commentAuthor: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#374151',
-  },
-  commentTime: {
-    fontSize: 11,
-    color: '#9ca3af',
-  },
-  commentText: {
-    fontSize: 14,
-    color: '#374151',
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  commentActions: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  actionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  actionText: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  actionTextActive: {
-    color: '#ef4444',
-  },
-  likeCount: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
+  commentAuthor: { fontSize: 13, fontWeight: '700', color: '#374151' },
+  commentTime: { fontSize: 11, color: '#9ca3af' },
+  commentText: { fontSize: 14, color: '#374151', lineHeight: 20, marginBottom: 8 },
+  commentActions: { flexDirection: 'row', gap: 16 },
+  commentMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  actionText: { fontSize: 12, color: '#9ca3af' },
+  actionTextActive: { color: '#ef4444' },
+  likeCount: { fontSize: 12, color: '#9ca3af' },
   replyCard: {
-    marginLeft: 20,
-    marginTop: 8,
-    paddingLeft: 12,
-    borderLeftWidth: 2,
-    borderLeftColor: '#e5e7eb',
-    paddingVertical: 8,
+    marginLeft: 20, marginTop: 8, paddingLeft: 12,
+    borderLeftWidth: 2, borderLeftColor: '#e5e7eb', paddingVertical: 8,
   },
-  emptyComments: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
-    alignItems: 'center',
-  },
-  emptyText: {
-    fontSize: 14,
-    color: '#9ca3af',
-  },
+  emptyComments: { backgroundColor: '#fff', borderRadius: 12, padding: 24, alignItems: 'center' },
+  emptyText: { fontSize: 14, color: '#9ca3af' },
   pastCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-    gap: 10,
+    flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff',
+    borderRadius: 12, padding: 14, marginBottom: 6,
+    borderWidth: 1, borderColor: '#f3f4f6', gap: 10,
   },
-  pastDate: {
-    fontSize: 12,
-    color: '#9ca3af',
-    minWidth: 70,
-  },
-  pastQuestion: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-  },
+  pastDate: { fontSize: 12, color: '#9ca3af', minWidth: 70 },
+  pastQuestion: { flex: 1, fontSize: 14, fontWeight: '600', color: '#374151' },
   inputBar: {
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#f3f4f6',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: '#fff', borderTopWidth: 1,
+    borderTopColor: '#f3f4f6', paddingHorizontal: 16, paddingVertical: 8,
   },
   replyIndicator: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 4,
-    marginBottom: 4,
+    flexDirection: 'row', justifyContent: 'space-between',
+    alignItems: 'center', paddingVertical: 6, paddingHorizontal: 4, marginBottom: 4,
   },
-  replyIndicatorText: {
-    fontSize: 12,
-    color: '#ea4c89',
-    fontWeight: '600',
-  },
-  replyCancelText: {
-    fontSize: 12,
-    color: '#9ca3af',
-  },
-  inputRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: 8,
-  },
+  replyIndicatorText: { fontSize: 12, color: '#ea4c89', fontWeight: '600' },
+  replyCancelText: { fontSize: 12, color: '#9ca3af' },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8 },
   commentInput: {
-    flex: 1,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 20,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: '#0d0c22',
-    maxHeight: 80,
+    flex: 1, backgroundColor: '#f3f4f6', borderRadius: 20,
+    paddingHorizontal: 16, paddingVertical: 10, fontSize: 14,
+    color: '#0d0c22', maxHeight: 80,
   },
   sendBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#ea4c89',
-    justifyContent: 'center',
-    alignItems: 'center',
+    width: 40, height: 40, borderRadius: 20,
+    backgroundColor: '#ea4c89', justifyContent: 'center', alignItems: 'center',
   },
-  sendBtnDisabled: {
-    backgroundColor: '#e5e7eb',
-  },
+  sendBtnDisabled: { backgroundColor: '#e5e7eb' },
 });

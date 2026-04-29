@@ -398,7 +398,7 @@ export default function DebateDetailScreen() {
         {replyTo && (
           <View style={styles.replyIndicator}>
             <Text style={styles.replyIndicatorText}>
-              {replyTo.userName || '익명'}에게 답글
+              익명에게 답글
             </Text>
             <TouchableOpacity onPress={() => setReplyTo(null)}>
               <Text style={styles.replyCancelText}>취소</Text>

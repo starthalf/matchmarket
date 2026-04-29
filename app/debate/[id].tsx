@@ -257,17 +257,17 @@ export default function DebateDetailScreen() {
           <Text style={styles.dateLabel}>{debate.display_date}</Text>
           <Text style={styles.questionText}>"{debate.question}"</Text>
 
-          {myVote ? (
+         {myVote ? (
             <View style={styles.resultContainer}>
               <View style={styles.resultBarWrapper}>
-                <View style={[styles.resultBarAgree, { flex: agreePercent }]}>
-                  <Text style={styles.resultBarText}>👍 찬성 {agreePercent}%</Text>
+                <View style={[styles.resultBarAgree, { flex: Math.max(agreePercent, 15) }]}>
+                  <Text style={styles.resultBarText}>👍 {agreePercent}%</Text>
                 </View>
-                <View style={[styles.resultBarDisagree, { flex: disagreePercent }]}>
-                 <Text style={[styles.resultBarText, { color: '#6b7280' }]}>반대 {disagreePercent}%</Text>
+                <View style={[styles.resultBarDisagree, { flex: Math.max(disagreePercent, 15) }]}>
+                  <Text style={[styles.resultBarText, { color: '#6b7280' }]}>👎 {disagreePercent}%</Text>
                 </View>
               </View>
-              <Text style={styles.totalVotes}>{total}명 참여</Text> 
+              <Text style={styles.totalVotes}>{total}명 참여</Text>
             </View>
           ) : (
             <View style={styles.voteButtons}>

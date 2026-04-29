@@ -293,7 +293,7 @@ export default function DebateDetailScreen() {
                   <Text style={styles.topBadgeText}>{index + 1}</Text>
                 </View>
                 <View style={styles.topCommentContent}>
-                  <Text style={styles.commentAuthor}>{comment.userName}</Text>
+                 <Text style={styles.commentAuthor}>익명</Text>
                   <Text style={styles.commentText}>{comment.content}</Text>
                   <View style={styles.commentMeta}>
                     <Heart size={12} color="#ef4444" fill="#ef4444" />
@@ -317,7 +317,7 @@ export default function DebateDetailScreen() {
             comments.map((comment) => (
               <View key={comment.id} style={styles.commentCard}>
                 <View style={styles.commentHeader}>
-                  <Text style={styles.commentAuthor}>{comment.userName}</Text>
+                  <Text style={styles.commentAuthor}>익명</Text>
                   <Text style={styles.commentTime}>{formatDate(comment.created_at)}</Text>
                 </View>
                 <Text style={styles.commentText}>{comment.content}</Text>

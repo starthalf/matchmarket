@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, Filter, Shield, Database, User, LogIn, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { PlayerCarousel } from '../../components/PlayerCarousel';
+import { DailyDebateMini } from '../../components/DailyDebateMini';
 import { useAuth } from '../../contexts/AuthContext';
 import { useAdmin } from '../../contexts/AdminContext';
 import { useMatches } from '../../contexts/MatchContext';
@@ -339,8 +340,16 @@ const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
         </View>
       )}
 
-      {/* 🔥 핫 플레이어 캐러셀 */}
-      <PlayerCarousel />
+      {/* 🔥 핫 플레이어 + 오늘의 토론 */}
+      <View style={styles.topRow}>
+        <View style={styles.topRowLeft}>
+          <PlayerCarousel />
+        </View>
+        <View style={styles.topRowDivider} />
+        <View style={styles.topRowRight}>
+          <DailyDebateMini />
+        </View>
+      </View>
 
      {/* 검색 + 필터 + 지역 한 줄 */}
       <View style={styles.filterRow}>
@@ -697,6 +706,23 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontWeight: '600',
     fontSize: 11,
+  },
+  topRow: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  topRowLeft: {
+    flex: 1,
+  },
+  topRowDivider: {
+    width: 1,
+    backgroundColor: '#e5e7eb',
+    marginVertical: 8,
+  },
+  topRowRight: {
+    flex: 1,
   },
   filterRow: {
     flexDirection: 'row',

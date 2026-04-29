@@ -42,10 +42,10 @@ export function DailyDebateMini() {
 
   if (!debate) {
     return (
-      <View style={styles.container}>
+      <TouchableOpacity style={styles.container} activeOpacity={1}>
         <Text style={styles.label}>🔥 토론</Text>
         <Text style={styles.emptyText}>준비 중...</Text>
-      </View>
+      </TouchableOpacity>
     );
   }
 
@@ -55,21 +55,13 @@ export function DailyDebateMini() {
       activeOpacity={0.7}
       onPress={() => router.push(`/debate/${debate.id}`)}
     >
-      <View style={styles.header}>
+      <View style={styles.topLine}>
         <Text style={styles.label}>🔥 토론</Text>
-        <ChevronRight size={14} color="#9ca3af" />
+        <ChevronRight size={12} color="#9ca3af" />
       </View>
-
-      <Text style={styles.question} numberOfLines={2}>
+      <Text style={styles.question} numberOfLines={1}>
         {debate.question}
       </Text>
-
-      <View style={styles.footer}>
-        <MessageCircle size={11} color="#9ca3af" />
-        <Text style={styles.footerText}>{commentCount}</Text>
-        <Text style={styles.footerDot}>·</Text>
-        <Text style={styles.footerText}>{voteCount}명 참여</Text>
-      </View>
     </TouchableOpacity>
   );
 }
@@ -77,43 +69,29 @@ export function DailyDebateMini() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 12,
     justifyContent: 'center',
   },
-  header: {
+  topLine: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    justifyContent: 'space-between',
+    marginBottom: 4,
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '700',
     color: '#ea4c89',
   },
   emptyText: {
-    fontSize: 12,
+    fontSize: 11,
     color: '#9ca3af',
   },
   question: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#0d0c22',
-    lineHeight: 18,
-    marginBottom: 8,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-  },
-  footerDot: {
-    fontSize: 10,
-    color: '#9ca3af',
-  },
-  footerText: {
-    fontSize: 10,
-    color: '#9ca3af',
+    lineHeight: 16,
   },
 });

@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   hotLabelBottom: {
     fontSize: 9,
     fontWeight: '600',
-    color: '#d1d5db',
+    color: '#ea4c89',
     lineHeight: 11,
   },
   listContent: {

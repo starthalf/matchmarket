@@ -268,7 +268,7 @@ export default function DebateDetailScreen() {
                 </View>
               </View>
               <Text style={styles.totalVotes}>{total}명 참여</Text>
-            </View>
+            </View> 
           ) : (
             <View style={styles.voteButtons}>
               <TouchableOpacity style={styles.agreeBtn} onPress={() => handleVote('agree')}>

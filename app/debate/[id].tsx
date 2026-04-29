@@ -351,7 +351,7 @@ export default function DebateDetailScreen() {
                 {expandedReplies.has(comment.id) && comment.replies?.map((reply: any) => (
                   <View key={reply.id} style={styles.replyCard}>
                     <View style={styles.commentHeader}>
-                      <Text style={styles.commentAuthor}>{reply.userName}</Text>
+                     <Text style={styles.commentAuthor}>익명</Text>
                       <Text style={styles.commentTime}>{formatDate(reply.created_at)}</Text>
                     </View>
                     <Text style={styles.commentText}>{reply.content}</Text>

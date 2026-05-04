@@ -78,10 +78,7 @@ export function PlayerCarousel() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <View style={styles.hotLabelWrap}>
-          <Text style={styles.hotLabelTop}>Hot</Text>
-          <Text style={styles.hotLabelBottom}>People</Text>
-        </View>
+        <Text style={styles.hotLabel}>Hot</Text>
         <ActivityIndicator size="small" color="#ea4c89" />
       </View>
     );
@@ -97,10 +94,7 @@ export function PlayerCarousel() {
       activeOpacity={0.9}
       onPress={() => router.push('/players')}
     >
-      <View style={styles.hotLabelWrap}>
-        <Text style={styles.hotLabelTop}>Hot</Text>
-        <Text style={styles.hotLabelBottom}>People</Text>
-      </View>
+      <Text style={styles.hotLabel}>Hot</Text>
       
       <FlatList
         ref={flatListRef}
@@ -137,21 +131,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: '#fff',
   },
-  hotLabelWrap: {
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  hotLabelTop: {
-    fontSize: 11,
+  hotLabel: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#ea4c89',
-    lineHeight: 13,
-  },
-  hotLabelBottom: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: '#ea4c89',
-    lineHeight: 11,
+    marginRight: 12,
   },
   listContent: {
     gap: 6,

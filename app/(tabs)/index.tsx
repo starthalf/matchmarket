@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f3f4f6',
   },
   topRowLeft: {
-    flex: 1,
+    flex: 7,
   },
   topRowDivider: {
     width: 1,
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
     marginVertical: 8,
   },
   topRowRight: {
-    flex: 1,
+    flex: 3,
   },
   filterRow: {
     flexDirection: 'row',

@@ -125,11 +125,13 @@ export default function DebateDetailScreen() {
     }
   };
 
-  const fetchPastDebates = async () => {
+const fetchPastDebates = async () => {
+    const today = new Date().toISOString().split('T')[0];
     const { data } = await supabase
       .from('daily_debates')
       .select('*')
       .neq('id', id)
+      .lte('display_date', today)
       .order('display_date', { ascending: false })
       .limit(10);
     if (data) setPastDebates(data);

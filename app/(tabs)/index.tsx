@@ -599,8 +599,16 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
         />
       )}
 
-      {/* 플로팅 매치 필터 */}
       <View style={styles.floatingFilter}>
+        <TouchableOpacity
+          style={[styles.floatingTab, matchFilter === 'hot' && styles.floatingTabActive]}
+          onPress={() => {
+            setMatchFilter('hot');
+            flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+          }}
+        >
+          <Text style={[styles.floatingTabText, matchFilter === 'hot' && styles.floatingTabTextActive]}>🔥 HOT</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           style={[styles.floatingTab, matchFilter === 'all' && styles.floatingTabActive]}
           onPress={() => {
@@ -608,16 +616,7 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
             flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
           }}
         >
-<Text style={[styles.floatingTabText, matchFilter === 'all' && styles.floatingTabTextActive]}>일반매치</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.floatingTab, matchFilter === 'hot' && styles.floatingTabActive]}
-         onPress={() => {
-            setMatchFilter('hot');
-            flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-          }}
-        >
-          <Text style={[styles.floatingTabText, matchFilter === 'hot' && styles.floatingTabTextActive]}>🔥 HOT</Text>
+          <Text style={[styles.floatingTabText, matchFilter === 'all' && styles.floatingTabTextActive]}>일반매치</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

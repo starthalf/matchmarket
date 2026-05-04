@@ -47,8 +47,22 @@ export default function DebateDetailScreen() {
   }, [id]);
 
   const loadAll = async () => {
-    await fetchDebate();
-    await fetchComments();
+    const timeout = (ms: number) => new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('timeout')), ms)
+    );
+    
+    try {
+      await Promise.race([fetchDebate(), timeout(8000)]);
+    } catch (e) {
+      console.log('토론 로드 재시도...');
+      try {
+        await Promise.race([fetchDebate(), timeout(8000)]);
+      } catch {
+        console.error('토론 로드 실패');
+      }
+    }
+    
+    fetchComments();
     fetchPastDebates();
     if (user) {
       fetchMyVote();

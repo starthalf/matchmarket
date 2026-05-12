@@ -27,11 +27,11 @@ export function DailyDebateMini() {
     if (!debateData) return;
     setDebate(debateData);
 
-    const { count: votes } = await supabase
+    const { count: realVotes } = await supabase
       .from('debate_votes')
       .select('*', { count: 'exact', head: true })
       .eq('debate_id', debateData.id);
-    setVoteCount(votes || 0);
+    setVoteCount((debateData.agree_count || 0) + (debateData.disagree_count || 0) + (realVotes || 0));
 
     const { count: comments } = await supabase
       .from('debate_comments')

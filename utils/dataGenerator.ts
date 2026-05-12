@@ -159,6 +159,104 @@ export class DataGenerator {
   private static readonly MATCH_TYPES = ['단식', '남복', '여복', '혼복'];
 
   // ==========================================
+  // HOT 매치 전용 셀럽 데이터셋
+  // ==========================================
+
+  // 셀럽 카테고리별 닉네임 (실제 인플루언서 느낌)
+  private static readonly CELEB_NICKNAMES = {
+    female_pro: [
+      'tennis_jina', 'jiwon.ace', 'serve_queen', 'minji_tennis', 'court_diva',
+      'tennisgirl_yu', 'ace.sohee', 'rally_jin', 'topspin_hye', 'tennis.yuna',
+      '지나프로', '소희코치', '유나선수', '혜진프로'
+    ],
+    male_pro: [
+      'tennis_jaehyun', 'ace.minsu', 'serve_king', 'pro_donghyun', 'rally_taeho',
+      'topspin.jun', 'tennis_seojun', 'court_master_kim', 'baseline.woo', 'ace_doyoon',
+      '재현프로', '민수코치', '태호선수', '도윤프로'
+    ],
+    youtuber: [
+      'tennis.tv_official', 'rally_studio', 'ace_channel', 'court_vlog', 'tennislab.kr',
+      'serve_studio', 'tennis_with_kay', 'rally.diary', 'tennis_holic_tv', 'gametennis.official',
+      '테니스TV', '랠리스튜디오', '테니스랩'
+    ],
+    influencer: [
+      '_tennis_daily_', 'court.muse', 'ace.archive', 'tennis_mood', 'rally.diary',
+      'tennislook.book', '_serve_diary_', 'tennis.editorial', 'court_aesthetic', 'matchday.log',
+      'tennisstyle.kr', 'tenniswear_official'
+    ]
+  };
+
+  // 셀럽 카테고리별 인증 패턴
+  private static readonly CELEB_PROFILES = {
+    female_pro: {
+      gender: '여성',
+      ntrpRange: [4.5, 6.0],
+      experienceRange: [120, 360], // 10년~30년
+      careerType: '선수',
+      cert: { ntrp: 'verified', career: 'verified', youtube: 'none', instagram: 'verified' },
+      ratingRange: [4.7, 5.0],
+      viewBase: 5000,
+      likeBase: 800,
+    },
+    male_pro: {
+      gender: '남성',
+      ntrpRange: [5.0, 6.5],
+      experienceRange: [150, 400],
+      careerType: '선수',
+      cert: { ntrp: 'verified', career: 'verified', youtube: 'verified', instagram: 'verified' },
+      ratingRange: [4.6, 5.0],
+      viewBase: 6000,
+      likeBase: 1000,
+    },
+    youtuber: {
+      gender: null, // 랜덤
+      ntrpRange: [3.5, 5.0],
+      experienceRange: [60, 240],
+      careerType: '동호인',
+      cert: { ntrp: 'verified', career: 'none', youtube: 'verified', instagram: 'verified' },
+      ratingRange: [4.5, 4.9],
+      viewBase: 8000,
+      likeBase: 1500,
+    },
+    influencer: {
+      gender: '여성', // 인플루언서는 여성 비중 높게
+      ntrpRange: [3.0, 4.5],
+      experienceRange: [24, 120],
+      careerType: '동호인',
+      cert: { ntrp: 'none', career: 'none', youtube: 'none', instagram: 'verified' },
+      ratingRange: [4.4, 4.9],
+      viewBase: 7000,
+      likeBase: 1200,
+    }
+  };
+
+  // 셀럽 매치 전용 제목 패턴 (값/희소성 강조)
+  private static readonly CELEB_TITLE_PATTERNS = [
+    (court: string, matchType: string) => `🔥 ${court} ${matchType} 게스트 모집 (인원 한정)`,
+    (court: string, matchType: string) => `[프리미엄] ${court} ${matchType} 1자리 오픈`,
+    (court: string, matchType: string) => `✨ ${court} 프라이빗 ${matchType}`,
+    (court: string, matchType: string) => `[VIP] ${court} ${matchType} 게스트 1분`,
+    (court: string, matchType: string) => `${court} ${matchType} 함께 치실 분 (선착순)`,
+    (court: string, matchType: string) => `🎾 ${court} ${matchType} - 매너게임 환영`,
+    (court: string, matchType: string) => `[클래스 매치] ${court} ${matchType}`,
+    (court: string, matchType: string) => `${court}에서 ${matchType} 함께 하실 분 ✨`,
+    (court: string, matchType: string) => `[게스트 모집] ${court} ${matchType} - 즐겁게 쳐요`,
+    (court: string, matchType: string) => `🔥 HOT! ${court} ${matchType} 자리 한정`,
+  ];
+
+  // 셀럽 매치 설명 패턴
+  private static readonly CELEB_DESCRIPTIONS = [
+    '안녕하세요 :) 평소 함께 치고 싶었던 분들과 좋은 시간 보내고 싶어서 자리 마련했어요. 매너 게임 환영합니다!',
+    '오랜만에 게스트 매치 오픈해요. 실력보다는 분위기 좋게 즐겁게 치실 분 환영합니다 🎾',
+    '코트 어렵게 잡았어요! 함께 좋은 시간 보내실 분 찾습니다. 끝나고 가볍게 차 한잔도 좋아요 ☕',
+    '프라이빗하게 진행되는 매치입니다. 매너와 실력 모두 갖추신 분 환영해요.',
+    '평소 자주 못 뵙던 분들과 함께 치고 싶어 오픈합니다. 편하게 신청 주세요 :)',
+    '게스트 한 분 모십니다. 신구로 진행하고, 끝나고 식사 자리도 있어요!',
+    '오랜만에 코트에 서요. 같이 치실 분 환영합니다 ✨ 사진/영상 촬영 있을 수 있으니 참고해주세요.',
+    '함께 운동하고 좋은 인연 만들 수 있는 자리입니다. 부담없이 신청 주세요!',
+  ];
+
+  // ==========================================
   // 제목 생성용 데이터셋
   // ==========================================
 
@@ -456,6 +554,153 @@ export class DataGenerator {
   // 4. 메인 매치 생성 함수
   // ==========================================
 
+  /**
+   * HOT 매치 전용 - 셀럽/인플루언서 매치 생성
+   */
+  static generateCelebMatch(category?: 'female_pro' | 'male_pro' | 'youtuber' | 'influencer'): Match {
+    // 카테고리 미지정 시 랜덤 (인플루언서/여자선출 비중 높게)
+    const categories: ('female_pro' | 'male_pro' | 'youtuber' | 'influencer')[] = 
+      ['female_pro', 'female_pro', 'male_pro', 'youtuber', 'influencer', 'influencer'];
+    const selectedCategory = category || categories[Math.floor(Math.random() * categories.length)];
+    
+    const profile = this.CELEB_PROFILES[selectedCategory];
+    const nicknamePool = this.CELEB_NICKNAMES[selectedCategory];
+    
+    const sellerId = `celeb_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const matchId = `match_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    
+    const sellerName = nicknamePool[Math.floor(Math.random() * nicknamePool.length)];
+    const sellerGender = profile.gender || (Math.random() > 0.5 ? '남성' : '여성');
+    
+    // NTRP, 경력 (셀럽 수준)
+    const [ntrpMin, ntrpMax] = profile.ntrpRange;
+    const sellerNtrp = Math.round((ntrpMin + Math.random() * (ntrpMax - ntrpMin)) * 10) / 10;
+    const [expMin, expMax] = profile.experienceRange;
+    const experience = expMin + Math.floor(Math.random() * (expMax - expMin));
+    
+    // 평점 (높게)
+    const [ratingMin, ratingMax] = profile.ratingRange;
+    const avgRating = Math.round((ratingMin + Math.random() * (ratingMax - ratingMin)) * 10) / 10;
+    
+    // 조회수, 좋아요 (높게)
+    const viewCount = profile.viewBase + Math.floor(Math.random() * 3000);
+    const likeCount = profile.likeBase + Math.floor(Math.random() * 500);
+
+    const seller: User = {
+      id: sellerId,
+      name: sellerName,
+      gender: sellerGender,
+      ageGroup: ['20대', '30대', '40대'][Math.floor(Math.random() * 3)] as any,
+      ntrp: sellerNtrp,
+      experience: experience,
+      playStyle: this.PLAY_STYLES[Math.floor(Math.random() * this.PLAY_STYLES.length)] as any,
+      careerType: profile.careerType as any,
+      certification: {
+        ntrp: profile.cert.ntrp as any,
+        career: profile.cert.career as any,
+        youtube: profile.cert.youtube as any,
+        instagram: profile.cert.instagram as any,
+      },
+      profileImage: `https://picsum.photos/seed/${sellerId}/200/200`, // 셀럽은 무조건 프사 있음
+      viewCount: viewCount,
+      likeCount: likeCount,
+      avgRating: avgRating,
+    };
+
+    // 지역/코트 (셀럽은 서울/경기 핵심 지역 위주)
+    const premiumCourts = [
+      '반얀트리 클럽', '올림픽공원 테니스장', '잠원 한강공원', '서울숲 테니스장',
+      '하남 유니온파크', '미사한강5호공원', '판교 수질복원센터', '분당 수내 시립',
+      '장충 테니스장', '양재 시민의숲', '망원 한강공원'
+    ];
+    const court = premiumCourts[Math.floor(Math.random() * premiumCourts.length)];
+    const selectedRegion = court.includes('하남') || court.includes('미사') || court.includes('판교') || court.includes('분당')
+      ? '경기도' : '서울시';
+    
+    // 매치 타입 (셀럽 성별에 따라 조정)
+    let matchType: '단식' | '남복' | '여복' | '혼복';
+    if (sellerGender === '여성') {
+      matchType = (['여복', '여복', '혼복', '단식'] as const)[Math.floor(Math.random() * 4)];
+    } else {
+      matchType = (['남복', '남복', '혼복', '단식'] as const)[Math.floor(Math.random() * 4)];
+    }
+    
+    // 시간 (저녁/주말 골든타임 위주)
+    const goldenHours = [18, 19, 20, 10, 14, 16];
+    const startHour = goldenHours[Math.floor(Math.random() * goldenHours.length)];
+    const startTime = `${startHour.toString().padStart(2, '0')}:00`;
+    const endTime = `${(startHour + 2).toString().padStart(2, '0')}:00`;
+    
+    // 날짜 (가까운 시일 내)
+    const randomDayOffset = Math.floor(Math.random() * 4);
+    const matchDate = new Date();
+    matchDate.setDate(matchDate.getDate() + randomDayOffset);
+
+    // NTRP 요구사항 (셀럽 매치는 요구치도 약간 높게)
+    const reqNtrpMin = Math.max(3.0, sellerNtrp - 1.5);
+    
+    // 제목/설명 (셀럽 전용 패턴)
+    const titlePattern = this.CELEB_TITLE_PATTERNS[Math.floor(Math.random() * this.CELEB_TITLE_PATTERNS.length)];
+    const shortCourt = court.split(' ')[0];
+    const title = titlePattern(shortCourt, matchType);
+    const description = this.CELEB_DESCRIPTIONS[Math.floor(Math.random() * this.CELEB_DESCRIPTIONS.length)];
+
+    // 인원 구성
+    let expectedMale = 0, expectedFemale = 0;
+    if (matchType === '단식') {
+      if (sellerGender === '남성') expectedMale = 2; else expectedFemale = 2;
+    } else if (matchType === '남복') {
+      expectedMale = 4;
+    } else if (matchType === '여복') {
+      expectedFemale = 4;
+    } else {
+      expectedMale = 2; expectedFemale = 2;
+    }
+
+    // HOT 매치 = 신청자/대기자 많음 (가격 상승 트리거)
+    const currentMale = Math.min(expectedMale, Math.floor(expectedMale * (0.7 + Math.random() * 0.3)));
+    const currentFemale = Math.min(expectedFemale, Math.floor(expectedFemale * (0.7 + Math.random() * 0.3)));
+    
+    // 대기자 많이 (HOT 조건)
+    const waitingApplicants = 5 + Math.floor(Math.random() * 15); // 5~20명
+    
+    // 조회수 매우 높게 (HOT 조건)
+    const expectedViews = 300 + Math.floor(Math.random() * 700); // 300~1000
+    
+    // 가격 (셀럽은 기본가도 높게)
+    const basePrice = [25000, 30000, 35000, 40000, 50000][Math.floor(Math.random() * 5)];
+
+    return {
+      id: matchId,
+      sellerId: sellerId,
+      seller: seller,
+      title: title,
+      date: matchDate.toISOString().split('T')[0],
+      time: startTime,
+      endTime: endTime,
+      court: court,
+      description: description,
+      basePrice: basePrice,
+      initialPrice: basePrice,
+      currentPrice: basePrice, // PricingCalculator가 view/applicant 기반으로 계산
+      maxPrice: basePrice * 3,
+      expectedViews: expectedViews,
+      expectedWaitingApplicants: waitingApplicants,
+      expectedParticipants: { male: expectedMale, female: expectedFemale, total: expectedMale + expectedFemale },
+      currentApplicants: { male: currentMale, female: currentFemale, total: currentMale + currentFemale },
+      matchType: matchType,
+      waitingApplicants: waitingApplicants,
+      waitingList: [],
+      participants: [],
+      adEnabled: true, // 셀럽은 무조건 광고 ON
+      ntrpRequirement: { min: reqNtrpMin, max: reqNtrpMin + 2.0 },
+      weather: '맑음',
+      location: selectedRegion,
+      createdAt: new Date().toISOString(),
+      isClosed: false, // HOT 매치는 진행중인 것만
+    } as any;
+  }
+
   static generateNewMatch(forceClose: boolean = false): Match {
     const sellerId = `seller_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
     const matchId = `match_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -624,9 +869,9 @@ export class DataGenerator {
         female: supabaseMatch.current_applicants_female,
         total: supabaseMatch.current_applicants_total,
       },
-matchType: supabaseMatch.match_type.includes(',') 
-      ? supabaseMatch.match_type.split(',') 
-      : supabaseMatch.match_type,
+      matchType: supabaseMatch.match_type.includes(',') 
+        ? supabaseMatch.match_type.split(',') 
+        : supabaseMatch.match_type,
       waitingApplicants: supabaseMatch.waiting_applicants,
       waitingList: [],
       participants: (supabaseMatch as any).participants || [],
@@ -688,7 +933,7 @@ matchType: supabaseMatch.match_type.includes(',')
         current_applicants_male: match.currentApplicants.male,
         current_applicants_female: match.currentApplicants.female,
         current_applicants_total: match.currentApplicants.total,
-    match_type: Array.isArray(match.matchType) ? match.matchType.join(',') : String(match.matchType).replace(/[\[\]"\\]/g, ''),
+        match_type: Array.isArray(match.matchType) ? match.matchType.join(',') : String(match.matchType).replace(/[\[\]"\\]/g, ''),
         waiting_applicants: match.waitingApplicants,
         ad_enabled: match.adEnabled,
         ntrp_min: match.ntrpRequirement.min,
@@ -726,21 +971,51 @@ matchType: supabaseMatch.match_type.includes(',')
     }
   }
 
-  static async generateOneTimeDummyMatches(count: number = 10): Promise<Match[]> {
+  /**
+   * 일반 더미 매치 생성 (셀럽 비율 조절 가능)
+   * @param count 전체 매치 개수
+   * @param celebRatio 셀럽 매치 비율 (0.0 ~ 1.0, 기본 0.2 = 20%)
+   */
+  static async generateOneTimeDummyMatches(count: number = 10, celebRatio: number = 0.2): Promise<Match[]> {
     const matches: Match[] = [];
     
-    const closedCount = Math.floor(count * 0.4);
+    // 셀럽 매치 개수
+    const celebCount = Math.floor(count * celebRatio);
+    // 일반 매치 개수
+    const normalCount = count - celebCount;
+    // 마감된 일반 매치 비율 (40%)
+    const closedCount = Math.floor(normalCount * 0.4);
     
-    for (let i = 0; i < count; i++) {
+    // 1. 셀럽 매치 생성 (HOT 매치용)
+    for (let i = 0; i < celebCount; i++) {
+      matches.push(this.generateCelebMatch());
+    }
+    
+    // 2. 일반 매치 생성
+    for (let i = 0; i < normalCount; i++) {
       const shouldClose = i < closedCount;
       matches.push(this.generateNewMatch(shouldClose));
     }
     
+    // 3. 셔플
     for (let i = matches.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [matches[i], matches[j]] = [matches[j], matches[i]];
     }
     
+    const promises = matches.map(m => this.saveMatchToSupabase(m));
+    await Promise.all(promises);
+    return matches;
+  }
+
+  /**
+   * HOT 매치만 일괄 생성 (셀럽/인플루언서/유튜버/선출 매치)
+   */
+  static async generateCelebMatchesOnly(count: number = 5): Promise<Match[]> {
+    const matches: Match[] = [];
+    for (let i = 0; i < count; i++) {
+      matches.push(this.generateCelebMatch());
+    }
     const promises = matches.map(m => this.saveMatchToSupabase(m));
     await Promise.all(promises);
     return matches;

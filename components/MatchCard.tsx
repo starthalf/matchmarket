@@ -397,6 +397,6 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   cardDisabled: {
-    opacity: 0.45,
+    opacity: 0.65,
   },
 });

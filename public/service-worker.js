@@ -1,6 +1,6 @@
 // public/service-worker.js
 // 🔥 배포할 때마다 이 버전 숫자를 올려주세요 (v1 → v2 → v3 ...)
-const CACHE_NAME = 'matchmarket-v2';
+const CACHE_NAME = 'matchmarket-v3';
 
 const urlsToCache = [
   '/',

@@ -170,7 +170,7 @@ const handlePress = () => {
         </View>
       </View>
       
-      {/* 마감 오버레이 */}
+     {/* 마감 오버레이 */}
       {match.isClosed && (
         <View style={styles.closedOverlay}>
           <View style={styles.closedBadge}>
@@ -178,6 +178,9 @@ const handlePress = () => {
           </View>
         </View>
       )}
+
+      {/* 마감 시 화이트 페이드 효과 */}
+      {match.isClosed && <View style={styles.fadeOverlay} pointerEvents="none" />}
     </TouchableOpacity>
   );
 }

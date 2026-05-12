@@ -87,12 +87,14 @@ export default function DebateDetailScreen() {
       .from('debate_votes')
       .select('vote')
       .eq('debate_id', id);
-    if (voteData) {
-      setVotes({
-        agree: voteData.filter((v: any) => v.vote === 'agree').length,
-        disagree: voteData.filter((v: any) => v.vote === 'disagree').length,
-      });
-    }
+    
+    const realAgree = voteData?.filter((v: any) => v.vote === 'agree').length || 0;
+    const realDisagree = voteData?.filter((v: any) => v.vote === 'disagree').length || 0;
+    
+    setVotes({
+      agree: (data?.agree_count || 0) + realAgree,
+      disagree: (data?.disagree_count || 0) + realDisagree,
+    });
   };
 
   const fetchMyVote = async () => {

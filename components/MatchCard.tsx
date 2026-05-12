@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.55)',
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
     borderRadius: 16,
     zIndex: 1,
   },

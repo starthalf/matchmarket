@@ -47,18 +47,13 @@ export default function DebateDetailScreen() {
   }, [id]);
 
   const loadAll = async () => {
-    const timeout = (ms: number) => new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('timeout')), ms)
-    );
-    
-    try {
-      await Promise.race([fetchDebate(), timeout(8000)]);
-    } catch (e) {
-      console.log('토론 로드 재시도...');
+    for (let i = 0; i < 3; i++) {
       try {
-        await Promise.race([fetchDebate(), timeout(8000)]);
-      } catch {
-        console.error('토론 로드 실패');
+        await fetchDebate();
+        break;
+      } catch (e) {
+        console.log(`토론 로드 시도 ${i + 1}/3 실패`);
+        if (i < 2) await new Promise(r => setTimeout(r, 2000));
       }
     }
     

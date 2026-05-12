@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw, Trash2, Plus } from 'lucide-react-native';
+import { ArrowLeft, Database, CircleCheck as CheckCircle, Circle as XCircle, TriangleAlert as AlertTriangle, RefreshCw, Trash2, Plus, Star } from 'lucide-react-native';
 import { SupabaseConnectionTest } from '../utils/supabaseConnectionTest';
 import { DataGenerator } from '../utils/dataGenerator';
 import { useSafeStyles } from '../constants/Styles';
@@ -54,7 +54,9 @@ export default function SupabaseTestScreen() {
         setDbStats(stats);
       }
     } catch (error) {
-      Alert.alert('테스트 오류', '연결 테스트 중 오류가 발생했습니다.');
+      if (typeof window !== 'undefined') {
+        window.alert('연결 테스트 중 오류가 발생했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -91,8 +93,8 @@ export default function SupabaseTestScreen() {
           runConnectionTest();
         }
       } else {
-        console.log('❌ 삭제 실패:', result.error);
-        window.alert?.(`삭제 실패: ${result.error || '더미 데이터 삭제에 실패했습니다.'}`);
+        console.log('❌ 삭제 실패');
+        window.alert?.('더미 데이터 삭제에 실패했습니다.');
       }
     } catch (error) {
       console.log('💥 삭제 중 예외 발생:', error);
@@ -115,7 +117,7 @@ export default function SupabaseTestScreen() {
         console.log(`✅ ${result.deletedCount}개 더미 매치 삭제 완료`);
         runConnectionTest(); // 자동으로 새로고침
       } else {
-        console.log('❌ 삭제 실패:', result.error);
+        console.log('❌ 삭제 실패');
       }
     } catch (error) {
       console.log('💥 오류:', error);
@@ -127,21 +129,79 @@ export default function SupabaseTestScreen() {
   const handleGenerateOneTimeDummy = async () => {
     setIsLoading(true);
     try {
-      console.log('🎾 일회성 더미 데이터 10개 생성 시작...');
-      const newMatches = await DataGenerator.generateOneTimeDummyMatches(10);
+      console.log('🎾 일회성 더미 데이터 10개 생성 시작 (셀럽 20% 포함)...');
+      // 기본 20% 셀럽 비율
+      const newMatches = await DataGenerator.generateOneTimeDummyMatches(10, 0.2);
       
       if (newMatches.length > 0) {
-        Alert.alert(
-          '생성 완료! 🎉',
-          `${newMatches.length}개의 더미 매치가 생성되었습니다!`,
-          [{ text: '확인', onPress: () => runConnectionTest() }]
-        );
+        if (typeof window !== 'undefined') {
+          window.alert(`🎉 ${newMatches.length}개의 더미 매치가 생성되었습니다!\n(셀럽 매치 약 2개 포함)`);
+        }
+        runConnectionTest();
       } else {
-        Alert.alert('생성 실패', '더미 매치 생성에 실패했습니다.');
+        if (typeof window !== 'undefined') {
+          window.alert('더미 매치 생성에 실패했습니다.');
+        }
       }
     } catch (error) {
-      Alert.alert('오류', '더미 매치 생성 중 오류가 발생했습니다.');
       console.error('더미 생성 오류:', error);
+      if (typeof window !== 'undefined') {
+        window.alert('더미 매치 생성 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // ⭐ 셀럽(HOT) 매치만 생성
+  const handleGenerateCelebMatches = async () => {
+    setIsLoading(true);
+    try {
+      console.log('⭐ 셀럽 매치 5개 생성 시작...');
+      const newMatches = await DataGenerator.generateCelebMatchesOnly(5);
+      
+      if (newMatches.length > 0) {
+        if (typeof window !== 'undefined') {
+          window.alert(`⭐ ${newMatches.length}개의 셀럽(HOT) 매치가 생성되었습니다!\n(여자선출, 남자선출, 유튜버, 인플루언서)`);
+        }
+        runConnectionTest();
+      } else {
+        if (typeof window !== 'undefined') {
+          window.alert('셀럽 매치 생성에 실패했습니다.');
+        }
+      }
+    } catch (error) {
+      console.error('셀럽 매치 생성 오류:', error);
+      if (typeof window !== 'undefined') {
+        window.alert('셀럽 매치 생성 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 🎯 혼합 더미 생성 (셀럽 30% 포함)
+  const handleGenerateMixedDummy = async () => {
+    setIsLoading(true);
+    try {
+      console.log('🎯 혼합 더미 데이터 20개 생성 시작 (셀럽 30% 포함)...');
+      const newMatches = await DataGenerator.generateOneTimeDummyMatches(20, 0.3);
+      
+      if (newMatches.length > 0) {
+        if (typeof window !== 'undefined') {
+          window.alert(`🎉 ${newMatches.length}개 매치 생성 완료!\n(셀럽 매치 약 6개 + 일반 매치 14개)`);
+        }
+        runConnectionTest();
+      } else {
+        if (typeof window !== 'undefined') {
+          window.alert('매치 생성에 실패했습니다.');
+        }
+      }
+    } catch (error) {
+      console.error('혼합 더미 생성 오류:', error);
+      if (typeof window !== 'undefined') {
+        window.alert('매치 생성 중 오류가 발생했습니다.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -171,8 +231,8 @@ export default function SupabaseTestScreen() {
           runConnectionTest();
         }
       } else {
-        console.log('❌ 삭제 실패:', result.error);
-        window.alert?.(`삭제 실패: ${result.error || '모든 매치 삭제에 실패했습니다.'}`);
+        console.log('❌ 삭제 실패');
+        window.alert?.('모든 매치 삭제에 실패했습니다.');
       }
     } catch (error) {
       console.log('💥 오류:', error);
@@ -181,6 +241,7 @@ export default function SupabaseTestScreen() {
       setIsDeletingDummy(false);
     }
   };
+
   const getStatusIcon = (status: boolean) => {
     return status ? (
       <CheckCircle size={20} color="#16a34a" />
@@ -387,11 +448,15 @@ export default function SupabaseTestScreen() {
                 </Text>
               </TouchableOpacity>
               
-              {/* 생성 버튼 */}
+              {/* ━━━━━━ 생성 버튼들 ━━━━━━ */}
+              <View style={styles.divider} />
+              <Text style={styles.dummyDataTitle}>➕ 더미 매치 생성</Text>
+
+              {/* 일반 더미 생성 (셀럽 20% 포함) */}
               <TouchableOpacity
                 style={[
                   styles.deleteDummyButton, 
-                  { backgroundColor: '#16a34a', marginTop: 8 }, 
+                  { backgroundColor: '#16a34a', marginTop: 4 }, 
                   isLoading && styles.deleteDummyButtonDisabled
                 ]}
                 onPress={handleGenerateOneTimeDummy}
@@ -399,7 +464,43 @@ export default function SupabaseTestScreen() {
               >
                 <Plus size={16} color="#ffffff" />
                 <Text style={styles.deleteDummyButtonText}>
-                  {isLoading ? '생성 중...' : '더미 데이터 10개 생성'}
+                  {isLoading ? '생성 중...' : '더미 데이터 10개 생성 (셀럽 20%)'}
+                </Text>
+              </TouchableOpacity>
+
+              {/* ⭐ 셀럽(HOT) 매치만 생성 */}
+              <TouchableOpacity
+                style={[
+                  styles.deleteDummyButton, 
+                  { backgroundColor: '#ea4c89', marginTop: 8 }, 
+                  isLoading && styles.deleteDummyButtonDisabled
+                ]}
+                onPress={handleGenerateCelebMatches}
+                disabled={isLoading}
+              >
+                <Star size={16} color="#ffffff" />
+                <Text style={styles.deleteDummyButtonText}>
+                  {isLoading ? '생성 중...' : '⭐ 셀럽 HOT 매치 5개 생성'}
+                </Text>
+              </TouchableOpacity>
+
+              <Text style={styles.helpText}>
+                여자선출 · 남자선출 · 유튜버 · 인플루언서 매치 (인증 배지, 높은 조회수/대기자)
+              </Text>
+
+              {/* 🎯 혼합 더미 생성 (셀럽 30%) */}
+              <TouchableOpacity
+                style={[
+                  styles.deleteDummyButton, 
+                  { backgroundColor: '#7c3aed', marginTop: 8 }, 
+                  isLoading && styles.deleteDummyButtonDisabled
+                ]}
+                onPress={handleGenerateMixedDummy}
+                disabled={isLoading}
+              >
+                <Plus size={16} color="#ffffff" />
+                <Text style={styles.deleteDummyButtonText}>
+                  {isLoading ? '생성 중...' : '🎯 혼합 더미 20개 (셀럽 30%)'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -648,5 +749,17 @@ const styles = StyleSheet.create({
     color: '#6b7280',
     marginTop: 8,
     textAlign: 'center',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e5e7eb',
+    marginVertical: 16,
+  },
+  helpText: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 6,
+    paddingHorizontal: 4,
+    lineHeight: 16,
   },
 });

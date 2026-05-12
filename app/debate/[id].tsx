@@ -268,7 +268,13 @@ const fetchPastDebates = async () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+      <TouchableOpacity onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/(tabs)');
+            }
+          }}>
           <ArrowLeft size={24} color="#0d0c22" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>오늘의 토론</Text>

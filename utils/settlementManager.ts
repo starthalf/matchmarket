@@ -31,6 +31,33 @@ export interface MonthlySettlementWithPayments {
   seller_name?: string;
 }
 
+// 판매자별 누적 통계
+export interface AggregatedSellerStats {
+  seller_id: string;
+  seller_name: string;
+  total_match_count: number;
+  total_revenue: number;
+  total_additional_revenue: number;
+  total_commission_due: number;
+  total_paid_amount: number;
+  total_unpaid_amount: number;
+  settlement_months_count: number;
+  completed_months_count: number;
+  is_currently_suspended: boolean;
+  first_settlement: string; // 'YYYY-MM'
+  last_settlement: string;
+  monthly_breakdown: Array<{
+    id: string;
+    year: number;
+    month: number;
+    match_count: number;
+    commission_due: number;
+    total_paid_amount: number;
+    unpaid_amount: number;
+    is_account_suspended: boolean;
+  }>;
+}
+
 export class SettlementManager {
   static async getAllSettlementsByMonth(year: number, month: number): Promise<MonthlySettlementWithPayments[]> {
     try {
@@ -66,6 +93,103 @@ export class SettlementManager {
       return settlementsWithPayments;
     } catch (error) {
       console.error('월별 정산 조회 중 오류:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 판매자별 누적 통계 조회 (모든 월 합산)
+   */
+  static async getAggregatedSellerStats(): Promise<AggregatedSellerStats[]> {
+    try {
+      const { data: settlements, error } = await supabaseAdmin
+        .from('monthly_settlements')
+        .select(`
+          *,
+          users:seller_id (
+            name
+          )
+        `)
+        .order('year', { ascending: false })
+        .order('month', { ascending: false });
+
+      if (error) {
+        console.error('전체 정산 조회 실패:', error);
+        return [];
+      }
+
+      if (!settlements || settlements.length === 0) {
+        return [];
+      }
+
+      // seller_id별로 그룹화하여 누적 계산
+      const sellerMap = new Map<string, AggregatedSellerStats>();
+
+      for (const s of settlements) {
+        const sellerId = s.seller_id;
+        const monthKey = `${s.year}-${String(s.month).padStart(2, '0')}`;
+
+        if (!sellerMap.has(sellerId)) {
+          sellerMap.set(sellerId, {
+            seller_id: sellerId,
+            seller_name: s.users?.name || '알 수 없음',
+            total_match_count: 0,
+            total_revenue: 0,
+            total_additional_revenue: 0,
+            total_commission_due: 0,
+            total_paid_amount: 0,
+            total_unpaid_amount: 0,
+            settlement_months_count: 0,
+            completed_months_count: 0,
+            is_currently_suspended: false,
+            first_settlement: monthKey,
+            last_settlement: monthKey,
+            monthly_breakdown: []
+          });
+        }
+
+        const agg = sellerMap.get(sellerId)!;
+        agg.total_match_count += s.match_count || 0;
+        agg.total_revenue += s.total_revenue || 0;
+        agg.total_additional_revenue += s.additional_revenue || 0;
+        agg.total_commission_due += s.commission_due || 0;
+        agg.total_paid_amount += s.total_paid_amount || 0;
+        agg.total_unpaid_amount += s.unpaid_amount || 0;
+        agg.settlement_months_count += 1;
+
+        if ((s.unpaid_amount || 0) === 0) {
+          agg.completed_months_count += 1;
+        }
+        if (s.is_account_suspended) {
+          agg.is_currently_suspended = true;
+        }
+
+        if (monthKey < agg.first_settlement) agg.first_settlement = monthKey;
+        if (monthKey > agg.last_settlement) agg.last_settlement = monthKey;
+
+        agg.monthly_breakdown.push({
+          id: s.id,
+          year: s.year,
+          month: s.month,
+          match_count: s.match_count || 0,
+          commission_due: s.commission_due || 0,
+          total_paid_amount: s.total_paid_amount || 0,
+          unpaid_amount: s.unpaid_amount || 0,
+          is_account_suspended: s.is_account_suspended || false,
+        });
+      }
+
+      // 월별 내역은 최신순 정렬 (year DESC, month DESC)
+      for (const agg of sellerMap.values()) {
+        agg.monthly_breakdown.sort((a, b) => {
+          if (b.year !== a.year) return b.year - a.year;
+          return b.month - a.month;
+        });
+      }
+
+      return Array.from(sellerMap.values());
+    } catch (error) {
+      console.error('판매자 통합 통계 조회 중 오류:', error);
       return [];
     }
   }

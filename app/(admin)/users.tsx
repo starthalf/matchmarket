@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, User, Star, Award, Calendar, TrendingUp, Eye, Heart, FileText, X } from 'lucide-react-native';
 import { CertificationBadge } from '../../components/CertificationBadge';
 import { useSafeStyles } from '../../constants/Styles';
-import { supabaseAdmin as supabase } from '../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 
 // 웹/모바일 호환 Alert 함수
 const showAlert = (title: string, message?: string) => {

@@ -194,6 +194,60 @@ export class SettlementManager {
     }
   }
 
+  /**
+   * 여러 판매자의 모든 monthly_settlements를 일괄 정지/해제
+   * @param sellerIds 대상 판매자 ID 배열
+   * @param suspend true=정지, false=해제
+   */
+  static async bulkSetSuspendBySellerIds(
+    sellerIds: string[],
+    suspend: boolean
+  ): Promise<{ success: boolean; affectedCount: number; error?: string }> {
+    if (sellerIds.length === 0) {
+      return { success: false, affectedCount: 0, error: '대상이 없습니다.' };
+    }
+
+    try {
+      const updateData: any = {
+        is_account_suspended: suspend,
+        is_blocked: suspend,
+      };
+
+      if (suspend) {
+        updateData.suspension_date = new Date().toISOString();
+      } else {
+        updateData.suspension_date = null;
+      }
+
+      console.log('일괄 정지/해제 시도:', { sellerIds, suspend, updateData });
+
+      const { data, error } = await supabaseAdmin
+        .from('monthly_settlements')
+        .update(updateData)
+        .in('seller_id', sellerIds)
+        .select('id');
+
+      if (error) {
+        console.error('일괄 정지/해제 실패:', error);
+        return {
+          success: false,
+          affectedCount: 0,
+          error: `일괄 처리 실패: ${error.message}`,
+        };
+      }
+
+      console.log('일괄 정지/해제 성공:', data?.length, '건');
+      return { success: true, affectedCount: data?.length || 0 };
+    } catch (error: any) {
+      console.error('일괄 처리 중 오류:', error);
+      return {
+        success: false,
+        affectedCount: 0,
+        error: `시스템 오류: ${error?.message || '알 수 없는 오류'}`,
+      };
+    }
+  }
+
   static async getPaymentsBySettlementId(settlementId: string): Promise<SettlementPayment[]> {
     try {
       const { data, error } = await supabaseAdmin

@@ -227,9 +227,9 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
     <SafeAreaView style={safeStyles.safeContainer}>
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
-          <View>
+          <View style={styles.headerLeft}>
             <Text style={styles.title}>MatchMarket</Text>
-            <Text style={styles.subtitle}>내 매치가 인기가 많으면 가격이 올라갑니다 </Text>
+            <Text style={styles.subtitle} numberOfLines={1}>내 매치가 인기가 많으면 가격이 올라갑니다</Text>
           </View>
           <View style={styles.headerIcons}>
             <TouchableOpacity 
@@ -624,6 +624,10 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
 }
 
 const styles = StyleSheet.create({
+  headerLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
   title: {
     fontSize: 24,
     fontWeight: '700',
@@ -637,7 +641,8 @@ const styles = StyleSheet.create({
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 8,
+    flexShrink: 0,
   },
   headerLoginIcon: {
     padding: 8,

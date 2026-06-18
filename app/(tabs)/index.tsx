@@ -229,7 +229,7 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
         <View style={safeStyles.safeHeaderContent}>
           <View>
             <Text style={styles.title}>MatchMarket</Text>
-            <Text style={styles.subtitle}>AI가 인기 높은 매치의 가격을 조절합니다 </Text>
+            <Text style={styles.subtitle}>내가 올린 매치가 인기가 많으면 가격이 올라갑니다 </Text>
           </View>
           <View style={styles.headerIcons}>
             <TouchableOpacity 

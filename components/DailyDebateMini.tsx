@@ -118,11 +118,11 @@ const styles = StyleSheet.create({
     fontWeight: '400',
     color: Colors.textTertiary,
   },
-  question: {
+ question: {
     ...Type.caption,
     fontWeight: '600',
     color: Colors.text,
-    lineHeight: 17,
+    lineHeight: 16,
   },
   meta: {
     fontSize: 10,

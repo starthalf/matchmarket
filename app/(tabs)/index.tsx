@@ -23,6 +23,7 @@ import {
   X,
   Check,
   MapPin,
+  Flame,
 } from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { PlayerCarousel } from '../../components/PlayerCarousel';
@@ -638,12 +639,19 @@ export default function HomeScreen() {
               flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
             }}
           >
+            <Flame
+              size={14}
+              color={matchFilter === 'hot' ? Colors.accent : Colors.textTertiary}
+              fill={matchFilter === 'hot' ? Colors.accent : 'transparent'}
+              strokeWidth={matchFilter === 'hot' ? 0 : 2}
+            />
             <Text
               style={[styles.segmentText, matchFilter === 'hot' && styles.segmentTextActive]}
             >
               인기 매치
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             style={[styles.segmentTab, matchFilter === 'all' && styles.segmentTabActive]}
             activeOpacity={0.9}
@@ -823,7 +831,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     backgroundColor: Colors.surface,
-    // shadow 제거 — 칩에 그림자 넣으면 바로 촌스러워진다
   },
   chipActive: {
     backgroundColor: Colors.ink,
@@ -861,10 +868,10 @@ const styles = StyleSheet.create({
   searchWrap: {
     paddingHorizontal: 16,
     paddingTop: 10,
+    paddingBottom: 12,
     backgroundColor: Colors.surface,
     borderBottomWidth: Hairline,
     borderBottomColor: Colors.border,
-    paddingBottom: 12,
   },
   searchBar: {
     flexDirection: 'row',
@@ -975,7 +982,10 @@ const styles = StyleSheet.create({
     ...Shadow.md,
   },
   segmentTab: {
-    paddingHorizontal: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 16,
     paddingVertical: 9,
     borderRadius: Radius.full,
   },

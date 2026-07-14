@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { ArrowUp } from 'lucide-react-native';
 import { PricingFactors, PricingCalculator } from '../types/tennis';
-import { Colors, Radius, Type } from '../constants/theme';
+import { Colors, Radius } from '../constants/theme';
 
 interface PriceDisplayProps {
   currentPrice: number;
@@ -17,15 +16,15 @@ interface PriceDisplayProps {
 }
 
 /**
- * 히트 배지: 불꽃 이모지 2개 겹치기 같은 건 촌스럽다.
- * → 컬러 dot + 짧은 라벨. 레벨은 색으로만 구분.
+ * 히트 표시: 불꽃 이모지 나열 대신, 가격 위에 붙는 아주 작은 컬러 라벨.
+ * 시선은 "가격"에 가야 한다. 배지가 가격보다 시끄러우면 안 된다.
  */
 const HEAT_CONFIG = [
-  { label: '', color: Colors.transparent, bg: Colors.transparent },
-  { label: '관심 상승', color: '#CA8A04', bg: '#FEFCE8' },
-  { label: '신청 몰림', color: '#EA580C', bg: '#FFF7ED' },
-  { label: '경쟁 치열', color: '#E11D48', bg: '#FFF1F2' },
-  { label: '신청 폭주', color: '#BE123C', bg: '#FFF1F2' },
+  { label: '', color: Colors.textTertiary },
+  { label: '관심 상승', color: '#CA8A04' },
+  { label: '신청 몰림', color: '#EA580C' },
+  { label: '경쟁 치열', color: '#E11D48' },
+  { label: '신청 폭주', color: '#BE123C' },
 ];
 
 export function PriceDisplay({
@@ -55,16 +54,13 @@ export function PriceDisplay({
 
   const initialCalculatedPrice = calculateDynamicPrice();
   const [animatedPrice, setAnimatedPrice] = useState(initialCalculatedPrice);
-  const [isIncreasing, setIsIncreasing] = useState(initialCalculatedPrice > basePrice);
   const [prevPrice, setPrevPrice] = useState(initialCalculatedPrice);
 
   const heatLevel = PricingCalculator.getHeatLevel(viewCount, applicationsCount, actualSlots);
   const heatInfo = HEAT_CONFIG[heatLevel];
 
   useEffect(() => {
-    if (onPriceChange) {
-      onPriceChange(initialCalculatedPrice);
-    }
+    if (onPriceChange) onPriceChange(initialCalculatedPrice);
   }, []);
 
   useEffect(() => {
@@ -75,17 +71,10 @@ export function PriceDisplay({
         const priceChange = Math.abs(finalPrice - prevPrice);
         const changePercentage = priceChange / basePrice;
 
-        if (changePercentage < 0.03) {
-          return prevDisplayPrice;
-        }
+        if (changePercentage < 0.03) return prevDisplayPrice;
 
         setPrevPrice(finalPrice);
-        setIsIncreasing(finalPrice > basePrice);
-
-        if (onPriceChange) {
-          onPriceChange(finalPrice);
-        }
-
+        if (onPriceChange) onPriceChange(finalPrice);
         return finalPrice;
       });
     }, 120000);
@@ -101,38 +90,39 @@ export function PriceDisplay({
     prevPrice,
   ]);
 
-  const priceChangePercentage = Math.abs(
-    ((animatedPrice - basePrice) / basePrice) * 100
-  ).toFixed(0);
-  const showChange = animatedPrice > basePrice;
+  const isUp = animatedPrice > basePrice;
+  const changePct = Math.abs(((animatedPrice - basePrice) / basePrice) * 100).toFixed(0);
 
   return (
     <View style={styles.container}>
-      {heatLevel > 0 && !isClosed && (
-        <View style={[styles.heatBadge, { backgroundColor: heatInfo.bg }]}>
-          <View style={[styles.heatDot, { backgroundColor: heatInfo.color }]} />
-          <Text style={[styles.heatText, { color: heatInfo.color }]}>{heatInfo.label}</Text>
+      {/* 위: 상태 라벨 (히트 or 인상률) */}
+      {!isClosed && (heatLevel > 0 || isUp) && (
+        <View style={styles.topLine}>
+          {heatLevel > 0 && (
+            <>
+              <View style={[styles.dot, { backgroundColor: heatInfo.color }]} />
+              <Text style={[styles.heatText, { color: heatInfo.color }]}>{heatInfo.label}</Text>
+            </>
+          )}
+          {isUp && (
+            <View style={styles.upTag}>
+              <Text style={styles.upText}>▲ {changePct}%</Text>
+            </View>
+          )}
         </View>
       )}
 
-      <View style={styles.priceRow}>
-        {showChange && !isClosed && (
-          <View style={styles.changeIndicator}>
-            <ArrowUp size={10} color={Colors.accent} strokeWidth={2.5} />
-            <Text style={styles.changeText}>{priceChangePercentage}%</Text>
-          </View>
-        )}
-        <Text
-          style={[
-            styles.price,
-            isIncreasing && !isClosed && styles.increasing,
-            isClosed && styles.closedPrice,
-          ]}
-        >
-          {animatedPrice.toLocaleString()}
-          <Text style={styles.won}>원</Text>
-        </Text>
-      </View>
+      {/* 아래: 가격 (이 카드의 결론) */}
+      <Text
+        style={[
+          styles.price,
+          isUp && !isClosed && styles.priceUp,
+          isClosed && styles.priceClosed,
+        ]}
+      >
+        {animatedPrice.toLocaleString()}
+        <Text style={styles.won}>원</Text>
+      </Text>
     </View>
   );
 }
@@ -140,60 +130,54 @@ export function PriceDisplay({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'flex-end',
-    gap: 5,
+    gap: 2,
   },
-  priceRow: {
+  topLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 4,
   },
-  price: {
-    ...Type.price,
-    color: Colors.text,
-  },
-  won: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-    color: Colors.textSecondary,
-  },
-  increasing: {
-    color: Colors.accent,
-  },
-  closedPrice: {
-    color: Colors.textTertiary,
-    textDecorationLine: 'line-through',
-  },
-  changeIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 1,
-    paddingHorizontal: 5,
-    paddingVertical: 2,
-    borderRadius: Radius.xs,
-    backgroundColor: Colors.accentSoft,
-  },
-  changeText: {
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: -0.2,
-    color: Colors.accent,
-  },
-  heatBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: Radius.full,
-  },
-  heatDot: {
+  dot: {
     width: 5,
     height: 5,
     borderRadius: 2.5,
   },
   heatText: {
-    ...Type.micro,
+    fontSize: 10,
+    fontWeight: '700',
     letterSpacing: -0.1,
+  },
+  upTag: {
+    paddingHorizontal: 4,
+    paddingVertical: 1,
+    borderRadius: Radius.xs,
+    backgroundColor: Colors.accentSoft,
+  },
+  upText: {
+    fontSize: 10,
+    fontWeight: '700',
+    letterSpacing: -0.2,
+    color: Colors.accent,
+  },
+
+  price: {
+    fontSize: 21,
+    fontWeight: '700',
+    letterSpacing: -0.8,
+    lineHeight: 25,
+    color: Colors.text,
+  },
+  priceUp: {
+    color: Colors.accent,
+  },
+  priceClosed: {
+    color: Colors.textTertiary,
+    textDecorationLine: 'line-through',
+  },
+  won: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    color: Colors.textSecondary,
   },
 });

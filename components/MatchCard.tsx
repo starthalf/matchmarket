@@ -2,15 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  Clock,
-  MapPin,
-  UserRound,
-  Eye,
-  Users,
-  Star,
-  Shield,
-} from 'lucide-react-native';
+import { Clock, MapPin, UserRound, Eye, Star, ChevronRight } from 'lucide-react-native';
 import { Match } from '../types/tennis';
 import { PriceDisplay } from './PriceDisplay';
 import { CertificationBadge } from './CertificationBadge';
@@ -21,6 +13,8 @@ interface MatchCardProps {
   onPress?: () => void;
 }
 
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
 export function MatchCard({ match }: MatchCardProps) {
   const { user } = useAuth();
   const currentTime = new Date();
@@ -30,143 +24,141 @@ export function MatchCard({ match }: MatchCardProps) {
     (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60)
   );
 
-  // 안전한 기본값 설정
   const applications = match.applications || [];
 
-  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
   const isDummyMatch =
     match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
 
   const handlePress = () => {
-    if (match.isClosed) {
-      return;
-    }
-
+    if (match.isClosed) return;
     if (!user) {
       router.push('/auth/login');
       return;
     }
-
     router.push(`/match/${match.id}`);
   };
 
   const getRecruitmentStatus = () => {
     const { male, female, total } = match.expectedParticipants;
-
-    if (male > 0 && female > 0) {
-      return `남 ${male} · 여 ${female}`;
-    } else if (male > 0) {
-      return `남 ${male}명`;
-    } else if (female > 0) {
-      return `여 ${female}명`;
-    } else {
-      return `${total}명`;
-    }
+    if (male > 0 && female > 0) return `남 ${male} · 여 ${female}`;
+    if (male > 0) return `남 ${male}명`;
+    if (female > 0) return `여 ${female}명`;
+    return `${total}명`;
   };
 
   const matchTypeLabel = Array.isArray(match.matchType)
-    ? match.matchType.join(' · ')
+    ? match.matchType.join('·')
     : String(match.matchType).replace(/[\[\]"\\]/g, '').trim();
+
+  // 05-15 → 05.15 (수)
+  const dateObj = new Date(match.date);
+  const [, mm, dd] = match.date.split('-');
+  const weekday = WEEKDAYS[dateObj.getDay()] ?? '';
 
   return (
     <TouchableOpacity
-      style={[styles.card, match.isClosed && styles.cardDisabled]}
+      style={[styles.card, match.isClosed && styles.cardClosed]}
       onPress={handlePress}
-      activeOpacity={match.isClosed ? 1 : 0.85}
+      activeOpacity={match.isClosed ? 1 : 0.9}
       disabled={match.isClosed}
     >
-      {/* ── 상단: 판매자 ── */}
-      <View style={styles.header}>
-        {match.seller.profileImage ? (
-          <Image source={{ uri: match.seller.profileImage }} style={styles.avatar} />
-        ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <UserRound size={18} color={Colors.textTertiary} strokeWidth={IconStroke} />
-          </View>
-        )}
-
-        <View style={styles.headerBody}>
-          <View style={styles.nameRow}>
-            <Text style={styles.sellerName} numberOfLines={1}>
-              {match.seller.name}
-            </Text>
-            <CertificationBadge
-              ntrpCert={match.seller.certification.ntrp}
-              careerCert={match.seller.certification.career}
-              youtubeCert={match.seller.certification.youtube}
-              instagramCert={match.seller.certification.instagram}
-              size="tiny"
-            />
-            <View style={styles.ratingInline}>
-              <Star
-                size={11}
-                color={Colors.star}
-                fill={Colors.star}
-                strokeWidth={0}
-              />
-              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
+      {/* ══════════ 본문 영역 ══════════ */}
+      <View style={styles.body}>
+        {/* 호스트 */}
+        <View style={styles.hostRow}>
+          {match.seller.profileImage ? (
+            <Image source={{ uri: match.seller.profileImage }} style={styles.avatar} />
+          ) : (
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <UserRound size={16} color={Colors.textTertiary} strokeWidth={IconStroke} />
             </View>
+          )}
+
+          <View style={styles.hostText}>
+            <View style={styles.hostNameRow}>
+              <Text style={styles.hostName} numberOfLines={1}>
+                {match.seller.name}
+              </Text>
+              <CertificationBadge
+                ntrpCert={match.seller.certification.ntrp}
+                careerCert={match.seller.certification.career}
+                youtubeCert={match.seller.certification.youtube}
+                instagramCert={match.seller.certification.instagram}
+                size="tiny"
+              />
+            </View>
+            <Text style={styles.hostMeta} numberOfLines={1}>
+              {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)} · ★{' '}
+              {match.seller.avgRating}
+            </Text>
           </View>
 
-          <Text style={styles.sellerMeta} numberOfLines={1}>
-            {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP{' '}
-            {match.seller.ntrp.toFixed(1)}
-          </Text>
+          {/* 우상단 태그: 마감이면 마감이 우선 */}
+          {match.isClosed ? (
+            <View style={styles.closedTag}>
+              <Text style={styles.closedTagText}>마감</Text>
+            </View>
+          ) : (
+            <View style={styles.typeTag}>
+              <Text style={styles.typeTagText}>{matchTypeLabel}</Text>
+            </View>
+          )}
         </View>
 
-        <View style={styles.typeBadge}>
-          <Text style={styles.typeBadgeText}>{matchTypeLabel}</Text>
-        </View>
-      </View>
-
-      {/* ── 제목 ── */}
-      <Text style={styles.title} numberOfLines={2}>
-        {match.title}
-      </Text>
-
-      {/* ── 일시 · 장소 ── */}
-      <View style={styles.infoRow}>
-        <Clock size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
-        <Text style={styles.infoText}>
-          {match.date.slice(5)} {match.time}~{match.endTime}
+        {/* 제목 — 카드의 주인공 */}
+        <Text style={styles.title} numberOfLines={2}>
+          {match.title}
         </Text>
-        <View style={styles.dot} />
-        <MapPin size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
-        <Text style={styles.infoText} numberOfLines={1}>
-          {match.court}
-        </Text>
+
+        {/* 일시 · 장소 */}
+        <View style={styles.infoBlock}>
+          <View style={styles.infoLine}>
+            <Clock size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
+            <Text style={styles.infoStrong}>
+              {mm}.{dd}
+              <Text style={styles.infoWeak}> ({weekday})</Text>
+            </Text>
+            <Text style={styles.infoStrong}>
+              {match.time}–{match.endTime}
+            </Text>
+          </View>
+          <View style={styles.infoLine}>
+            <MapPin size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
+            <Text style={styles.infoWeak} numberOfLines={1}>
+              {match.court}
+            </Text>
+          </View>
+        </View>
+
+        {/* 조건 */}
+        <View style={styles.tagRow}>
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>
+              NTRP {match.ntrpRequirement.min.toFixed(1)}–{match.ntrpRequirement.max.toFixed(1)}
+            </Text>
+          </View>
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{getRecruitmentStatus()} 모집</Text>
+          </View>
+        </View>
       </View>
 
-      {/* ── 조건 pill ── */}
-      <View style={styles.pillRow}>
-        <View style={styles.pill}>
-          <Shield size={12} color={Colors.textSecondary} strokeWidth={IconStroke} />
-          <Text style={styles.pillText}>
-            NTRP {match.ntrpRequirement.min.toFixed(1)}–{match.ntrpRequirement.max.toFixed(1)}
-          </Text>
-        </View>
-        <View style={styles.pill}>
-          <Users size={12} color={Colors.textSecondary} strokeWidth={IconStroke} />
-          <Text style={styles.pillText}>{getRecruitmentStatus()} 모집</Text>
-        </View>
-      </View>
-
-      {/* ── 구분선 ── */}
-      <View style={styles.divider} />
-
-      {/* ── 하단: 조회수 / 가격 ── */}
+      {/* ══════════ 하단 바 (배경색으로 구역 분리) ══════════ */}
       <View style={styles.footer}>
         <View style={styles.footerLeft}>
-          <View style={styles.viewCount}>
+          <View style={styles.viewRow}>
             <Eye size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
-            <Text style={styles.viewText}>{match.seller.viewCount}</Text>
+            <Text style={styles.viewText}>{match.seller.viewCount.toLocaleString()}</Text>
           </View>
+
           {!isDummyMatch && (
             <TouchableOpacity
+              style={styles.reviewBtn}
               onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <Text style={styles.reviewLinkText}>리뷰</Text>
+              <Text style={styles.reviewText}>리뷰</Text>
+              <ChevronRight size={11} color={Colors.textTertiary} strokeWidth={2} />
             </TouchableOpacity>
           )}
         </View>
@@ -182,18 +174,6 @@ export function MatchCard({ match }: MatchCardProps) {
           isClosed={match.isClosed}
         />
       </View>
-
-      {/* ── 마감 오버레이 ── */}
-      {match.isClosed && (
-        <>
-          <View style={styles.fadeOverlay} pointerEvents="none" />
-          <View style={styles.closedOverlay} pointerEvents="none">
-            <View style={styles.closedBadge}>
-              <Text style={styles.closedBadgeText}>마감</Text>
-            </View>
-          </View>
-        </>
-      )}
     </TouchableOpacity>
   );
 }
@@ -204,25 +184,30 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: 16,
     marginHorizontal: 16,
-    marginBottom: 10,
-    // ⚠️ shadow 없음. border 하나로 끝낸다. (이중 테두리가 촌스러움의 주범)
+    marginBottom: 12,
+    overflow: 'hidden', // 하단 바가 카드 라운딩을 따라가게
   },
-  cardDisabled: {
-    backgroundColor: Colors.bg,
+  /** 마감: 카드 전체를 흐리게. 정중앙 검은 알약 같은 건 두지 않는다. */
+  cardClosed: {
+    opacity: 0.5,
   },
 
-  // ── header ──
-  header: {
+  // ── 본문 ──
+  body: {
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
+  },
+
+  hostRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
+    gap: 8,
   },
   avatar: {
-    width: 36,
-    height: 36,
+    width: 32,
+    height: 32,
     borderRadius: Radius.full,
     backgroundColor: Colors.surfaceAlt,
   },
@@ -230,148 +215,145 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  headerBody: {
+  hostText: {
     flex: 1,
-    gap: 2,
+    gap: 1,
   },
-  nameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  sellerName: {
-    ...Type.bodyStrong,
-    color: Colors.text,
-    flexShrink: 1,
-  },
-  ratingInline: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-  },
-  ratingText: {
-    ...Type.caption,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  sellerMeta: {
-    ...Type.caption,
-    fontWeight: '400',
-    color: Colors.textTertiary,
-  },
-  typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.accentSoft,
-  },
-  typeBadgeText: {
-    ...Type.micro,
-    color: Colors.accent,
-  },
-
-  // ── title ──
-  title: {
-    ...Type.h2,
-    color: Colors.text,
-    marginBottom: 10,
-  },
-
-  // ── info ──
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginBottom: 10,
-  },
-  infoText: {
-    ...Type.label,
-    color: Colors.textSecondary,
-    flexShrink: 1,
-  },
-  dot: {
-    width: 2,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: Colors.borderStrong,
-    marginHorizontal: 3,
-  },
-
-  // ── pills ──
-  pillRow: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  pill: {
+  hostNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
+  },
+  hostName: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    color: Colors.text,
+    flexShrink: 1,
+  },
+  hostMeta: {
+    fontSize: 11,
+    fontWeight: '400',
+    letterSpacing: -0.1,
+    lineHeight: 15,
+    color: Colors.textTertiary,
+  },
+
+  typeTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: Radius.xs,
+    backgroundColor: Colors.surfaceAlt,
+  },
+  typeTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+    color: Colors.textSecondary,
+  },
+  closedTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: Radius.xs,
+    backgroundColor: Colors.ink,
+  },
+  closedTagText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: Colors.textOnInk,
+  },
+
+  // ── 제목: 카드의 주인공 ──
+  title: {
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: -0.5,
+    lineHeight: 24,
+    color: Colors.text,
+    marginTop: 12,
+  },
+
+  // ── 일시/장소 ──
+  infoBlock: {
+    marginTop: 10,
+    gap: 5,
+  },
+  infoLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  infoStrong: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    color: Colors.textSecondary,
+  },
+  infoWeak: {
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: -0.2,
+    color: Colors.textTertiary,
+    flexShrink: 1,
+  },
+
+  // ── 조건 태그 ──
+  tagRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 12,
+  },
+  tag: {
     paddingHorizontal: 8,
     paddingVertical: 5,
     borderRadius: Radius.sm,
-    backgroundColor: Colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  pillText: {
-    ...Type.caption,
+  tagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: -0.1,
     color: Colors.textSecondary,
   },
 
-  divider: {
-    height: Hairline,
-    backgroundColor: Colors.divider,
-    marginTop: 14,
-    marginBottom: 12,
-  },
-
-  // ── footer ──
+  // ── 하단 바: 배경색으로 구역을 만든다 (그림자 없이 구조 만들기) ──
   footer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    backgroundColor: Colors.surfaceAlt,
+    borderTopWidth: Hairline,
+    borderTopColor: Colors.border,
   },
   footerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingBottom: 2,
+    gap: 12,
   },
-  viewCount: {
+  viewRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   viewText: {
-    ...Type.caption,
-    fontWeight: '400',
+    fontSize: 12,
+    fontWeight: '500',
+    letterSpacing: -0.1,
     color: Colors.textTertiary,
   },
-  reviewLinkText: {
-    ...Type.caption,
-    color: Colors.textTertiary,
-    textDecorationLine: 'underline',
-  },
-
-  // ── closed ──
-  fadeOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(250, 250, 250, 0.72)',
-    borderRadius: Radius.lg,
-  },
-  closedOverlay: {
-    ...StyleSheet.absoluteFillObject,
+  reviewBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 1,
   },
-  closedBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 7,
-    borderRadius: Radius.full,
-    backgroundColor: Colors.inkOverlay,
-  },
-  closedBadgeText: {
-    ...Type.caption,
-    fontWeight: '700',
-    color: Colors.textOnInk,
-    letterSpacing: 0.5,
+  reviewText: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+    color: Colors.textTertiary,
   },
 });

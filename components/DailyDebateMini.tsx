@@ -71,7 +71,7 @@ export function DailyDebateMini() {
         <ChevronRight size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
       </View>
 
-      <Text style={styles.question} numberOfLines={2}>
+    <Text style={styles.question} numberOfLines={1} ellipsizeMode="tail">
         {debate.question}
       </Text>
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Flame } from 'lucide-react-native';
 import { PricingFactors, PricingCalculator } from '../types/tennis';
 import { Colors, Radius } from '../constants/theme';
 
@@ -16,15 +17,16 @@ interface PriceDisplayProps {
 }
 
 /**
- * 히트 표시: 불꽃 이모지 나열 대신, 가격 위에 붙는 아주 작은 컬러 라벨.
- * 시선은 "가격"에 가야 한다. 배지가 가격보다 시끄러우면 안 된다.
+ * 히트 배지 (Lv0~4)
+ * 불꽃 아이콘 개수 + 색상으로 열기를 표현.
+ * 단, 가격보다 시끄러우면 안 되므로 아이콘은 11px로 작게 유지.
  */
 const HEAT_CONFIG = [
-  { label: '', color: Colors.textTertiary },
-  { label: '관심 상승', color: '#CA8A04' },
-  { label: '신청 몰림', color: '#EA580C' },
-  { label: '경쟁 치열', color: '#E11D48' },
-  { label: '신청 폭주', color: '#BE123C' },
+  { label: '', color: Colors.textTertiary, bg: 'transparent', flames: 0 },
+  { label: '관심 상승', color: '#CA8A04', bg: '#FEFCE8', flames: 1 },
+  { label: '신청 몰림', color: '#EA580C', bg: '#FFF7ED', flames: 2 },
+  { label: '경쟁 치열', color: '#E11D48', bg: '#FFF1F2', flames: 3 },
+  { label: '신청 폭주', color: '#BE123C', bg: '#FFE4E6', flames: 3 },
 ];
 
 export function PriceDisplay({
@@ -95,15 +97,27 @@ export function PriceDisplay({
 
   return (
     <View style={styles.container}>
-      {/* 위: 상태 라벨 (히트 or 인상률) */}
+      {/* 위: 히트 배지(🔥) + 인상률 */}
       {!isClosed && (heatLevel > 0 || isUp) && (
         <View style={styles.topLine}>
           {heatLevel > 0 && (
-            <>
-              <View style={[styles.dot, { backgroundColor: heatInfo.color }]} />
+            <View style={[styles.heatBadge, { backgroundColor: heatInfo.bg }]}>
+              <View style={styles.flames}>
+                {Array.from({ length: heatInfo.flames }).map((_, i) => (
+                  <Flame
+                    key={i}
+                    size={11}
+                    color={heatInfo.color}
+                    fill={heatInfo.color}
+                    strokeWidth={0}
+                    style={i > 0 ? styles.flameOverlap : undefined}
+                  />
+                ))}
+              </View>
               <Text style={[styles.heatText, { color: heatInfo.color }]}>{heatInfo.label}</Text>
-            </>
+            </View>
           )}
+
           {isUp && (
             <View style={styles.upTag}>
               <Text style={styles.upText}>▲ {changePct}%</Text>
@@ -112,7 +126,7 @@ export function PriceDisplay({
         </View>
       )}
 
-      {/* 아래: 가격 (이 카드의 결론) */}
+      {/* 아래: 가격 */}
       <Text
         style={[
           styles.price,
@@ -130,23 +144,35 @@ export function PriceDisplay({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'flex-end',
-    gap: 2,
+    gap: 3,
   },
   topLine: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
-  dot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
+
+  heatBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+  },
+  flames: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  flameOverlap: {
+    marginLeft: -3, // 불꽃을 살짝 겹쳐서 "덩어리"로 보이게
   },
   heatText: {
     fontSize: 10,
     fontWeight: '700',
     letterSpacing: -0.1,
   },
+
   upTag: {
     paddingHorizontal: 4,
     paddingVertical: 1,

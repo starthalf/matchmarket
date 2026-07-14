@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
   topRowDivider: {
     width: Hairline,
     backgroundColor: Colors.border,
-    marginVertical: 12,
+    marginVertical: 10,
   },
   topRowRight: {
     flex: 4,

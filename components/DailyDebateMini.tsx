@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { MessageCircle, ChevronRight } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { supabase } from '../lib/supabase';
+import { Colors, Type, IconStroke } from '../constants/theme';
 
 export function DailyDebateMini() {
   const [debate, setDebate] = useState<any>(null);
@@ -22,7 +23,7 @@ export function DailyDebateMini() {
       .lte('display_date', today)
       .order('display_date', { ascending: false })
       .limit(1)
-      .single();
+      .maybeSingle();
 
     if (!debateData) return;
     setDebate(debateData);
@@ -31,7 +32,9 @@ export function DailyDebateMini() {
       .from('debate_votes')
       .select('*', { count: 'exact', head: true })
       .eq('debate_id', debateData.id);
-    setVoteCount((debateData.agree_count || 0) + (debateData.disagree_count || 0) + (realVotes || 0));
+    setVoteCount(
+      (debateData.agree_count || 0) + (debateData.disagree_count || 0) + (realVotes || 0)
+    );
 
     const { count: comments } = await supabase
       .from('debate_comments')
@@ -42,10 +45,15 @@ export function DailyDebateMini() {
 
   if (!debate) {
     return (
-      <TouchableOpacity style={styles.container} activeOpacity={1}>
-        <Text style={styles.label}>🔥 토론</Text>
-        <Text style={styles.emptyText}>준비 중...</Text>
-      </TouchableOpacity>
+      <View style={styles.container}>
+        <View style={styles.topLine}>
+          <View style={styles.labelWrap}>
+            <View style={styles.liveDot} />
+            <Text style={styles.label}>토론</Text>
+          </View>
+        </View>
+        <Text style={styles.emptyText}>준비 중</Text>
+      </View>
     );
   }
 
@@ -56,12 +64,22 @@ export function DailyDebateMini() {
       onPress={() => router.push(`/debate/${debate.id}`)}
     >
       <View style={styles.topLine}>
-        <Text style={styles.label}>🔥 토론</Text>
-        <ChevronRight size={12} color="#9ca3af" />
+        <View style={styles.labelWrap}>
+          <View style={styles.liveDot} />
+          <Text style={styles.label}>토론</Text>
+        </View>
+        <ChevronRight size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
       </View>
-      <Text style={styles.question} numberOfLines={1}>
+
+      <Text style={styles.question} numberOfLines={2}>
         {debate.question}
       </Text>
+
+      {voteCount > 0 && (
+        <Text style={styles.meta} numberOfLines={1}>
+          {voteCount.toLocaleString()}명 참여
+        </Text>
+      )}
     </TouchableOpacity>
   );
 }
@@ -70,28 +88,46 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingVertical: 12,
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     justifyContent: 'center',
+    gap: 3,
   },
   topLine: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 4,
+  },
+  labelWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  liveDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: Colors.accent,
   },
   label: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#ea4c89',
+    ...Type.micro,
+    color: Colors.textSecondary,
+    letterSpacing: -0.1,
   },
   emptyText: {
-    fontSize: 11,
-    color: '#9ca3af',
+    ...Type.caption,
+    fontWeight: '400',
+    color: Colors.textTertiary,
   },
   question: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0d0c22',
-    lineHeight: 16,
+    ...Type.caption,
+    fontWeight: '600',
+    color: Colors.text,
+    lineHeight: 17,
+  },
+  meta: {
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+    color: Colors.textTertiary,
   },
 });

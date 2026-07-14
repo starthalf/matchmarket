@@ -11,10 +11,19 @@ import {
   Platform,
   Modal,
   RefreshControl,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Search, Filter, Shield, Database, User, LogIn, ArrowUpDown, X, Check, MapPin } from 'lucide-react-native';
+import {
+  Search,
+  SlidersHorizontal,
+  Shield,
+  Database,
+  User,
+  LogIn,
+  X,
+  Check,
+  MapPin,
+} from 'lucide-react-native';
 import { MatchCard } from '../../components/MatchCard';
 import { PlayerCarousel } from '../../components/PlayerCarousel';
 import { DailyDebateMini } from '../../components/DailyDebateMini';
@@ -25,33 +34,58 @@ import { router } from 'expo-router';
 import { useSafeStyles } from '../../constants/Styles';
 import { isToday as isTodayHelper } from '../../utils/dateHelper';
 import { PricingCalculator } from '../../types/tennis';
+import { Colors, Radius, Type, Shadow, Hairline, IconStroke } from '../../constants/theme';
 
 type MatchTypeFilter = 'womens' | 'mixed' | null;
 type LevelFilter = 'pro' | null;
 type TimeFilter = 'today' | null;
 
+const LOCATIONS = [
+  { label: '전체 지역', value: '' },
+  { label: '서울시', value: '서울시' },
+  { label: '경기북부', value: '경기북부' },
+  { label: '경기남부', value: '경기남부' },
+  { label: '경기서부', value: '경기서부' },
+  { label: '경기동부', value: '경기동부' },
+  { label: '인천시', value: '인천시' },
+  { label: '대전시', value: '대전시' },
+  { label: '대구시', value: '대구시' },
+  { label: '부산시', value: '부산시' },
+  { label: '울산시', value: '울산시' },
+  { label: '광주시', value: '광주시' },
+  { label: '세종시', value: '세종시' },
+  { label: '강원도', value: '강원도' },
+  { label: '충북', value: '충북' },
+  { label: '충남', value: '충남' },
+  { label: '경북', value: '경북' },
+  { label: '경남', value: '경남' },
+  { label: '전북', value: '전북' },
+  { label: '전남', value: '전남' },
+  { label: '제주도', value: '제주도' },
+];
+
 export default function HomeScreen() {
   const { user, login, logout } = useAuth();
-const { isAdmin, adminLogin, adminLogout } = useAdmin();
+  const { isAdmin, adminLogin, adminLogout } = useAdmin();
   const { matches: displayMatches, isLoadingMatches, refreshMatches } = useMatches();
   const safeStyles = useSafeStyles();
-const mounted = useRef(false);
+  const mounted = useRef(false);
   const flatListRef = useRef<FlatList>(null);
-  
+
   const isDevelopment = process.env.NODE_ENV === 'development';
-  
+
   const [searchQuery, setSearchQuery] = useState('');
-const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
+  const [sortBy, setSortBy] = useState<'popular' | 'time' | 'ntrp'>('time');
 
   const [matchTypeFilter, setMatchTypeFilter] = useState<MatchTypeFilter>(null);
   const [levelFilter, setLevelFilter] = useState<LevelFilter>(null);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>(null);
   const [recruitingFilter, setRecruitingFilter] = useState<boolean>(false);
   const [locationFilter, setLocationFilter] = useState<string>('');
-const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
+  const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
   const [displayCount, setDisplayCount] = useState(20);
 
- const [showSearchBar, setShowSearchBar] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
   const [showSortModal, setShowSortModal] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -66,7 +100,7 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
 
   const handleQuickLogin = async (userIdentifier: string) => {
     try {
-   if (userIdentifier === 'admin') {
+      if (userIdentifier === 'admin') {
         const result = await adminLogin('hcgkhlee@gmail.com', 'demo123');
         if (!result.success) {
           window.alert(`관리자 로그인 실패: ${result.error}`);
@@ -76,14 +110,14 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
 
       const { mockUsers } = await import('../../data/mockData');
       const targetUser = mockUsers.find(u => u.name === userIdentifier);
-      
+
       if (!targetUser) {
         if (Platform.OS === 'web') {
           window.alert('로그인 실패: 사용자를 찾을 수 없습니다.');
         }
         return;
       }
-      
+
       const result = await login(targetUser.email, 'demo123');
       if (result.success) {
         if (Platform.OS === 'web') {
@@ -114,99 +148,115 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
     }
   };
 
-  const handleScroll = (event: any) => {
-    // scroll tracking (reserved for future use)
-  };
-
   const handleSortSelect = (sort: 'popular' | 'time' | 'ntrp') => {
     setSortBy(sort);
     setShowSortModal(false);
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await refreshMatches();
-    setRefreshing(false);
-  };
-
   const toggleMatchTypeFilter = (type: 'womens' | 'mixed') => {
-    setMatchTypeFilter(prev => prev === type ? null : type);
+    setMatchTypeFilter(prev => (prev === type ? null : type));
   };
 
   const toggleLevelFilter = () => {
-    setLevelFilter(prev => prev === 'pro' ? null : 'pro');
+    setLevelFilter(prev => (prev === 'pro' ? null : 'pro'));
   };
 
   const toggleTimeFilter = () => {
-    setTimeFilter(prev => prev === 'today' ? null : 'today');
+    setTimeFilter(prev => (prev === 'today' ? null : 'today'));
   };
 
   const toggleRecruitingFilter = () => {
     setRecruitingFilter(prev => !prev);
   };
-  
-// 필터 변경 시 표시 개수 리셋
+
+  // 필터 변경 시 표시 개수 리셋
   useEffect(() => {
     setDisplayCount(20);
-  }, [matchFilter, matchTypeFilter, levelFilter, timeFilter, recruitingFilter, locationFilter, searchQuery, sortBy]);
+  }, [
+    matchFilter,
+    matchTypeFilter,
+    levelFilter,
+    timeFilter,
+    recruitingFilter,
+    locationFilter,
+    searchQuery,
+    sortBy,
+  ]);
 
   const isToday = (dateString: string) => {
     return isTodayHelper(dateString);
   };
 
+  const activeFilterCount =
+    (levelFilter ? 1 : 0) +
+    (matchTypeFilter ? 1 : 0) +
+    (timeFilter ? 1 : 0) +
+    (recruitingFilter ? 1 : 0) +
+    (locationFilter ? 1 : 0);
+
   const filteredMatches = useMemo(() => {
     return displayMatches
-      .filter(match => 
-        searchQuery === '' ||
-        match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (match.location && match.location.toLowerCase().includes(searchQuery.toLowerCase()))
+      .filter(
+        match =>
+          searchQuery === '' ||
+          match.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (match.location && match.location.toLowerCase().includes(searchQuery.toLowerCase()))
       )
       .filter(match => {
         let passes = true;
-        
+
         if (levelFilter === 'pro') {
           passes = passes && match.seller.careerType === '선수';
         }
-        
+
         if (matchTypeFilter === 'womens') {
           passes = passes && match.matchType === '여복';
         } else if (matchTypeFilter === 'mixed') {
           passes = passes && match.matchType === '혼복';
         }
-        
+
         if (timeFilter === 'today') {
           passes = passes && isToday(match.date);
         }
-        
+
         if (recruitingFilter) {
           passes = passes && !match.isClosed;
         }
-        
+
         if (locationFilter) {
           passes = passes && match.location.includes(locationFilter);
         }
-        
+
         return passes;
       })
       .sort((a, b) => {
         if (sortBy === 'popular') {
           const diff = b.applicationsCount - a.applicationsCount;
           if (diff !== 0) return diff;
-          return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+          return (
+            new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime()
+          );
         } else if (sortBy === 'time') {
-          return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+          return (
+            new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime()
+          );
         } else if (sortBy === 'ntrp') {
           const diff = b.ntrpRequirement.max - a.ntrpRequirement.max;
           if (diff !== 0) return diff;
-          return new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime();
+          return (
+            new Date(b.date + ' ' + b.time).getTime() - new Date(a.date + ' ' + a.time).getTime()
+          );
         }
         return 0;
       })
       .filter(match => {
         const matchDateTime = new Date(`${match.date}T${match.time}`);
-        const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60));
+        const hoursUntilMatch = Math.max(
+          0,
+          (matchDateTime.getTime() - Date.now()) / (1000 * 60 * 60)
+        );
         const applications = match.applications || [];
-        
+
         const dynamicPrice = PricingCalculator.calculateDynamicPrice({
           viewCount: match.seller?.viewCount || 0,
           applicationsCount: applications.length,
@@ -221,19 +271,61 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
         }
         return dynamicPrice <= match.basePrice;
       });
-  }, [displayMatches, searchQuery, levelFilter, matchTypeFilter, timeFilter, recruitingFilter, locationFilter, sortBy, matchFilter]);
+  }, [
+    displayMatches,
+    searchQuery,
+    levelFilter,
+    matchTypeFilter,
+    timeFilter,
+    recruitingFilter,
+    locationFilter,
+    sortBy,
+    matchFilter,
+  ]);
+
+  const renderChip = (label: string, active: boolean, onPress: () => void) => (
+    <TouchableOpacity
+      style={[styles.chip, active && styles.chipActive]}
+      onPress={onPress}
+      activeOpacity={0.8}
+    >
+      <Text style={[styles.chipText, active && styles.chipTextActive]}>{label}</Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView style={safeStyles.safeContainer}>
+    <SafeAreaView style={safeStyles.safeContainer} edges={['top']}>
+      {/* ── 헤더 ── */}
       <View style={safeStyles.safeHeader}>
         <View style={safeStyles.safeHeaderContent}>
           <View style={styles.headerLeft}>
-            <Text style={styles.title}>MatchMarket</Text>
-            <Text style={styles.subtitle} numberOfLines={1}>내 매치가 인기가 많으면 가격이 올라갑니다</Text>
+            <View style={styles.brandRow}>
+              <Text style={styles.brand}>MatchMarket</Text>
+              <View style={styles.brandDot} />
+            </View>
+            <Text style={styles.subtitle} numberOfLines={1}>
+              인기가 오르면 가격도 오릅니다
+            </Text>
           </View>
+
           <View style={styles.headerIcons}>
-            <TouchableOpacity 
-              style={styles.headerLoginIcon}
+            {isAdmin && (
+              <TouchableOpacity
+                style={styles.iconBtn}
+                onPress={() => router.push('/supabase-test')}
+              >
+                <Database size={18} color={Colors.textSecondary} strokeWidth={IconStroke} />
+              </TouchableOpacity>
+            )}
+
+            {isAdmin && (
+              <TouchableOpacity style={styles.iconBtn} onPress={handleAdminPress}>
+                <Shield size={18} color={Colors.danger} strokeWidth={IconStroke} />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              style={styles.iconBtn}
               onPress={() => {
                 if (user) {
                   router.push('/profile');
@@ -243,78 +335,60 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
               }}
             >
               {user ? (
-                <User size={20} color="#16a34a" />
+                <User size={18} color={Colors.text} strokeWidth={IconStroke} />
               ) : (
-                <LogIn size={20} color="#6b7280" />
+                <LogIn size={18} color={Colors.textSecondary} strokeWidth={IconStroke} />
               )}
             </TouchableOpacity>
-            
-            {isAdmin && (
-              <TouchableOpacity 
-                style={styles.supabaseTestIcon}
-                onPress={() => router.push('/supabase-test')}
-              >
-                <Database size={20} color="#3b82f6" />
-              </TouchableOpacity>
-            )}
-            
-            {isAdmin && (
-              <TouchableOpacity 
-                style={styles.adminButton}
-                onPress={handleAdminPress}
-              >
-                <Shield size={24} color="#dc2626" />
-              </TouchableOpacity>
-            )}
           </View>
         </View>
       </View>
-    
-      {/* 개발 모드 데모 컨트롤 */}
+
+      {/* ── 개발 모드 데모 컨트롤 ── */}
       {isDevelopment && (
         <View style={styles.demoControls}>
           <Text style={styles.demoTitle}>
-            🎮 데모 컨트롤 {user ? `(${user.name}님 로그인됨)` : '(로그인 안됨)'}
+            DEV {user ? `· ${user.name}` : '· 로그아웃 상태'}
           </Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.demoButtons}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             {!user ? (
               <>
-                <TouchableOpacity 
-                  style={[styles.demoButton, styles.adminDemoButton]} 
+                <TouchableOpacity
+                  style={[styles.demoButton, styles.adminDemoButton]}
                   onPress={() => handleQuickLogin('admin')}
                 >
-                  <Text style={[styles.demoButtonText, styles.adminDemoButtonText]}>🛡️ admin</Text>
+                  <Text style={[styles.demoButtonText, styles.adminDemoButtonText]}>admin</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.demoButton}
                   onPress={() => handleQuickLogin('aesthetic.vibes')}
                 >
                   <Text style={styles.demoButtonText}>aesthetic.vibes</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.demoButton}
                   onPress={() => handleQuickLogin('urban.explorer')}
                 >
                   <Text style={styles.demoButtonText}>urban.explorer</Text>
                 </TouchableOpacity>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.demoButton}
                   onPress={() => handleQuickLogin('midnight.rider')}
                 >
                   <Text style={styles.demoButtonText}>midnight.rider</Text>
                 </TouchableOpacity>
               </>
-           ) : (
-             <TouchableOpacity 
+            ) : (
+              <TouchableOpacity
                 style={[
-                  styles.demoButton, 
+                  styles.demoButton,
                   styles.logoutButton,
-                  isLoggingOut && styles.logoutButtonDisabled
+                  isLoggingOut && styles.logoutButtonDisabled,
                 ]}
                 disabled={isLoggingOut}
                 onPress={async () => {
                   if (isLoggingOut) return;
-                  
+
                   setIsLoggingOut(true);
                   try {
                     if (isAdmin) {
@@ -331,7 +405,7 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
                   }
                 }}
               >
-                <Text style={styles.logoutButtonText}>
+                <Text style={[styles.demoButtonText, styles.logoutButtonText]}>
                   {isLoggingOut ? '로그아웃 중...' : '로그아웃'}
                 </Text>
               </TouchableOpacity>
@@ -340,7 +414,7 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
         </View>
       )}
 
-      {/* 🔥 핫 플레이어 + 오늘의 토론 */}
+      {/* ── 인기 플레이어 + 오늘의 토론 ── */}
       <View style={styles.topRow}>
         <View style={styles.topRowLeft}>
           <PlayerCarousel />
@@ -351,95 +425,82 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
         </View>
       </View>
 
-     {/* 검색 + 필터 + 지역 한 줄 */}
-      <View style={styles.filterRow}>
-        {/* 지역 아이콘 */}
+      {/* ── 필터 바 ── */}
+      <View style={styles.filterBar}>
         <TouchableOpacity
-          style={[styles.iconButton, locationFilter ? styles.iconButtonActive : null]}
+          style={[styles.locationBtn, !!locationFilter && styles.locationBtnActive]}
           onPress={() => setShowLocationModal(true)}
+          activeOpacity={0.8}
         >
-          <MapPin size={20} color={locationFilter ? '#ea4c89' : '#0d0c22'} />
+          <MapPin
+            size={13}
+            color={locationFilter ? Colors.textOnInk : Colors.textSecondary}
+            strokeWidth={IconStroke}
+          />
+          <Text style={[styles.locationText, !!locationFilter && styles.locationTextActive]}>
+            {locationFilter || '지역'}
+          </Text>
         </TouchableOpacity>
 
-        {/* 필터 칩들 */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll} contentContainerStyle={styles.chipsContent}>
-          <TouchableOpacity
-            style={[styles.chip, levelFilter === 'pro' && styles.chipActive]}
-            onPress={toggleLevelFilter}
-          >
-            <Text style={[styles.chipText, levelFilter === 'pro' && styles.chipTextActive]}>선출</Text>
-          </TouchableOpacity>
+        <View style={styles.filterBarDivider} />
 
-          <TouchableOpacity
-            style={[styles.chip, matchTypeFilter === 'womens' && styles.chipActive]}
-            onPress={() => toggleMatchTypeFilter('womens')}
-          >
-            <Text style={[styles.chipText, matchTypeFilter === 'womens' && styles.chipTextActive]}>여복</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.chip, matchTypeFilter === 'mixed' && styles.chipActive]}
-            onPress={() => toggleMatchTypeFilter('mixed')}
-          >
-            <Text style={[styles.chipText, matchTypeFilter === 'mixed' && styles.chipTextActive]}>혼복</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.chip, timeFilter === 'today' && styles.chipActive]}
-            onPress={toggleTimeFilter}
-          >
-            <Text style={[styles.chipText, timeFilter === 'today' && styles.chipTextActive]}>오늘</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.chip, recruitingFilter && styles.chipActive]}
-            onPress={toggleRecruitingFilter}
-          >
-            <Text style={[styles.chipText, recruitingFilter && styles.chipTextActive]}>모집중</Text>
-          </TouchableOpacity>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsContent}
+        >
+          {renderChip('선출', levelFilter === 'pro', toggleLevelFilter)}
+          {renderChip('여복', matchTypeFilter === 'womens', () => toggleMatchTypeFilter('womens'))}
+          {renderChip('혼복', matchTypeFilter === 'mixed', () => toggleMatchTypeFilter('mixed'))}
+          {renderChip('오늘', timeFilter === 'today', toggleTimeFilter)}
+          {renderChip('모집중', recruitingFilter, toggleRecruitingFilter)}
         </ScrollView>
 
-        {/* 검색 아이콘 */}
-        <TouchableOpacity
-          style={[styles.iconButton, showSearchBar && styles.iconButtonActive]}
-          onPress={() => setShowSearchBar(prev => !prev)}
-        >
-          <Search size={20} color={showSearchBar ? '#ea4c89' : '#0d0c22'} />
-        </TouchableOpacity>
+        <View style={styles.filterBarActions}>
+          <TouchableOpacity
+            style={styles.iconBtnSm}
+            onPress={() => setShowSearchBar(prev => !prev)}
+          >
+            <Search
+              size={17}
+              color={showSearchBar ? Colors.accent : Colors.textSecondary}
+              strokeWidth={IconStroke}
+            />
+          </TouchableOpacity>
 
-        {/* 필터/정렬 아이콘 */}
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => setShowSortModal(true)}
-        >
-          <Filter size={20} color="#0d0c22" />
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.iconBtnSm} onPress={() => setShowSortModal(true)}>
+            <SlidersHorizontal size={17} color={Colors.textSecondary} strokeWidth={IconStroke} />
+            {activeFilterCount > 0 && <View style={styles.filterCountDot} />}
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {/* 검색바 (토글) */}
+      {/* ── 검색바 (토글) ── */}
       {showSearchBar && (
-        <View style={styles.searchBarExpanded}>
-          <Search size={16} color="#9ca3af" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="매치 검색..."
-            placeholderTextColor="#9ca3af"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            autoFocus
-          />
-          {searchQuery.length > 0 && (
-            <TouchableOpacity onPress={() => setSearchQuery('')}>
-              <X size={16} color="#9ca3af" />
-            </TouchableOpacity>
-          )}
+        <View style={styles.searchWrap}>
+          <View style={styles.searchBar}>
+            <Search size={15} color={Colors.textTertiary} strokeWidth={IconStroke} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="매치 · 지역 검색"
+              placeholderTextColor={Colors.textPlaceholder}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoFocus
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')} hitSlop={8}>
+                <X size={15} color={Colors.textTertiary} strokeWidth={IconStroke} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       )}
 
-      {/* 지역 선택 모달 */}
+      {/* ── 지역 선택 모달 (바텀시트) ── */}
       <Modal
         visible={showLocationModal}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setShowLocationModal(false)}
       >
@@ -448,128 +509,96 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
           activeOpacity={1}
           onPress={() => setShowLocationModal(false)}
         >
-          <View style={styles.sortModalContainer}>
-            <View style={styles.sortModalHeader}>
-              <Text style={styles.sortModalTitle}>지역 선택</Text>
-              <TouchableOpacity onPress={() => setShowLocationModal(false)}>
-                <X size={24} color="#6b7280" />
+          <TouchableOpacity activeOpacity={1} style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>지역</Text>
+              <TouchableOpacity onPress={() => setShowLocationModal(false)} hitSlop={8}>
+                <X size={20} color={Colors.textTertiary} strokeWidth={IconStroke} />
               </TouchableOpacity>
             </View>
-            <ScrollView style={{ maxHeight: 400 }}>
-              {[
-                { label: '전체 지역', value: '' },
-                { label: '서울시', value: '서울시' },
-                { label: '경기북부', value: '경기북부' },
-                { label: '경기남부', value: '경기남부' },
-                { label: '경기서부', value: '경기서부' },
-                { label: '경기동부', value: '경기동부' },
-                { label: '인천시', value: '인천시' },
-                { label: '대전시', value: '대전시' },
-                { label: '대구시', value: '대구시' },
-                { label: '부산시', value: '부산시' },
-                { label: '울산시', value: '울산시' },
-                { label: '광주시', value: '광주시' },
-                { label: '세종시', value: '세종시' },
-                { label: '강원도', value: '강원도' },
-                { label: '충북', value: '충북' },
-                { label: '충남', value: '충남' },
-                { label: '경북', value: '경북' },
-                { label: '경남', value: '경남' },
-                { label: '전북', value: '전북' },
-                { label: '전남', value: '전남' },
-                { label: '제주도', value: '제주도' },
-              ].map((loc) => (
-                <TouchableOpacity
-                  key={loc.value}
-                  style={styles.sortOption}
-                  onPress={() => {
-                    setLocationFilter(loc.value);
-                    setShowLocationModal(false);
-                  }}
-                >
-                  <Text style={[styles.sortOptionText, locationFilter === loc.value && styles.sortOptionTextActive]}>
-                    {loc.label}
-                  </Text>
-                  {locationFilter === loc.value && <Check size={20} color="#ea4c89" />}
-                </TouchableOpacity>
-              ))}
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              {LOCATIONS.map(loc => {
+                const active = locationFilter === loc.value;
+                return (
+                  <TouchableOpacity
+                    key={loc.value}
+                    style={styles.sheetOption}
+                    onPress={() => {
+                      setLocationFilter(loc.value);
+                      setShowLocationModal(false);
+                    }}
+                  >
+                    <Text style={[styles.sheetOptionText, active && styles.sheetOptionTextActive]}>
+                      {loc.label}
+                    </Text>
+                    {active && <Check size={17} color={Colors.accent} strokeWidth={2.2} />}
+                  </TouchableOpacity>
+                );
+              })}
             </ScrollView>
-          </View>
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
-      {/* Sort 모달 */}
+      {/* ── 정렬 모달 (바텀시트) ── */}
       <Modal
         visible={showSortModal}
-        transparent={true}
+        transparent
         animationType="fade"
         onRequestClose={() => setShowSortModal(false)}
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.modalOverlay}
           activeOpacity={1}
           onPress={() => setShowSortModal(false)}
         >
-          <View style={styles.sortModalContainer}>
-            <View style={styles.sortModalHeader}>
-              <Text style={styles.sortModalTitle}>정렬</Text>
-              <TouchableOpacity onPress={() => setShowSortModal(false)}>
-                <X size={24} color="#6b7280" />
+          <TouchableOpacity activeOpacity={1} style={styles.sheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.sheetHeader}>
+              <Text style={styles.sheetTitle}>정렬</Text>
+              <TouchableOpacity onPress={() => setShowSortModal(false)} hitSlop={8}>
+                <X size={20} color={Colors.textTertiary} strokeWidth={IconStroke} />
               </TouchableOpacity>
             </View>
-            
-            <View style={styles.sortOptions}>
-              <TouchableOpacity
-                style={styles.sortOption}
-                onPress={() => handleSortSelect('popular')}
-              >
-                <Text style={[styles.sortOptionText, sortBy === 'popular' && styles.sortOptionTextActive]}>
-                  인기순
-                </Text>
-                {sortBy === 'popular' && <Check size={20} color="#ea4c89" />}
-              </TouchableOpacity>
 
+            {(
+              [
+                { key: 'popular', label: '인기순' },
+                { key: 'time', label: '시간순' },
+                { key: 'ntrp', label: 'NTRP순' },
+              ] as const
+            ).map(opt => (
               <TouchableOpacity
-                style={styles.sortOption}
-                onPress={() => handleSortSelect('time')}
+                key={opt.key}
+                style={styles.sheetOption}
+                onPress={() => handleSortSelect(opt.key)}
               >
-                <Text style={[styles.sortOptionText, sortBy === 'time' && styles.sortOptionTextActive]}>
-                  시간순
+                <Text
+                  style={[styles.sheetOptionText, sortBy === opt.key && styles.sheetOptionTextActive]}
+                >
+                  {opt.label}
                 </Text>
-                {sortBy === 'time' && <Check size={20} color="#ea4c89" />}
+                {sortBy === opt.key && <Check size={17} color={Colors.accent} strokeWidth={2.2} />}
               </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.sortOption}
-                onPress={() => handleSortSelect('ntrp')}
-              >
-                <Text style={[styles.sortOptionText, sortBy === 'ntrp' && styles.sortOptionTextActive]}>
-                  NTRP순
-                </Text>
-                {sortBy === 'ntrp' && <Check size={20} color="#ea4c89" />}
-              </TouchableOpacity>
-            </View>
-          </View>
+            ))}
+          </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
 
-   {/* 매치 목록 */}
+      {/* ── 매치 목록 ── */}
       {isLoadingMatches ? (
-        <View style={[styles.matchList, styles.loadingContainer]}>
-          <Text style={styles.loadingText}>매치를 불러오는 중...</Text>
+        <View style={[styles.matchList, styles.stateContainer]}>
+          <Text style={styles.stateText}>불러오는 중…</Text>
         </View>
       ) : (
         <FlatList
           ref={flatListRef}
           style={styles.matchList}
+          contentContainerStyle={styles.matchListContent}
           data={filteredMatches.slice(0, displayCount)}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item: match }) => (
-            <MatchCard 
-              match={match}
-              onPress={() => router.push(`/match/${match.id}`)}
-            />
-          )}
+          keyExtractor={item => item.id}
+          renderItem={({ item: match }) => <MatchCard match={match} />}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
@@ -580,311 +609,385 @@ const [matchFilter, setMatchFilter] = useState<'all' | 'hot'>('hot');
                 await refreshMatches();
                 setRefreshing(false);
               }}
-              tintColor="#ea4c89"
-              colors={['#ea4c89']}
+              tintColor={Colors.textTertiary}
+              colors={[Colors.accent]}
             />
           }
           onEndReached={() => {
             setDisplayCount(prev => prev + 20);
           }}
           onEndReachedThreshold={0.5}
-          ListFooterComponent={
-            <View style={styles.bottomPadding} />
-          }
+          ListFooterComponent={<View style={styles.bottomPadding} />}
           ListEmptyComponent={
-            <View style={styles.loadingContainer}>
-              <Text style={styles.loadingText}>매치가 없습니다</Text>
+            <View style={styles.stateContainer}>
+              <Text style={styles.stateTitle}>조건에 맞는 매치가 없어요</Text>
+              <Text style={styles.stateText}>필터를 조정해 보세요</Text>
             </View>
           }
         />
       )}
 
-      <View style={styles.floatingFilter}>
-        <TouchableOpacity
-          style={[styles.floatingTab, matchFilter === 'hot' && styles.floatingTabActive]}
-          onPress={() => {
-            setMatchFilter('hot');
-            flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-          }}
-        >
-          <Text style={[styles.floatingTabText, matchFilter === 'hot' && styles.floatingTabTextActive]}>🔥 HOT</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.floatingTab, matchFilter === 'all' && styles.floatingTabActive]}
-          onPress={() => {
-            setMatchFilter('all');
-            flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-          }}
-        >
-          <Text style={[styles.floatingTabText, matchFilter === 'all' && styles.floatingTabTextActive]}>일반매치</Text>
-        </TouchableOpacity>
+      {/* ── 플로팅 세그먼트 ── */}
+      <View style={styles.segmentWrap}>
+        <View style={styles.segment}>
+          <TouchableOpacity
+            style={[styles.segmentTab, matchFilter === 'hot' && styles.segmentTabActive]}
+            activeOpacity={0.9}
+            onPress={() => {
+              setMatchFilter('hot');
+              flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+            }}
+          >
+            <Text
+              style={[styles.segmentText, matchFilter === 'hot' && styles.segmentTextActive]}
+            >
+              인기 매치
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.segmentTab, matchFilter === 'all' && styles.segmentTabActive]}
+            activeOpacity={0.9}
+            onPress={() => {
+              setMatchFilter('all');
+              flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
+            }}
+          >
+            <Text
+              style={[styles.segmentText, matchFilter === 'all' && styles.segmentTextActive]}
+            >
+              일반 매치
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  // ── header ──
   headerLeft: {
     flex: 1,
     marginRight: 8,
+    gap: 1,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#ea4c89',
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+  },
+  brand: {
+    ...Type.h1,
+    color: Colors.text,
+  },
+  brandDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: Colors.accent,
+    marginTop: 6,
   },
   subtitle: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
+    ...Type.caption,
+    fontWeight: '400',
+    color: Colors.textTertiary,
   },
   headerIcons: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
     flexShrink: 0,
   },
-  headerLoginIcon: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+  iconBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: Radius.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  supabaseTestIcon: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#eff6ff',
-  },
-  adminButton: {
-    padding: 8,
-    borderRadius: 8,
-    backgroundColor: '#fef2f2',
-  },
+
+  // ── dev ──
   demoControls: {
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 10,
+    backgroundColor: Colors.surfaceAlt,
+    paddingVertical: 8,
     paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    gap: 6,
+    borderBottomWidth: Hairline,
+    borderBottomColor: Colors.border,
   },
   demoTitle: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 6,
-  },
-  demoButtons: {
-    flexDirection: 'row',
+    letterSpacing: 0.4,
+    color: Colors.textTertiary,
   },
   demoButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: Colors.surface,
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 14,
+    borderRadius: Radius.full,
     marginRight: 6,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: Colors.border,
   },
   demoButtonText: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#374151',
+    letterSpacing: -0.1,
+    color: Colors.textSecondary,
   },
   adminDemoButton: {
-    backgroundColor: '#fef2f2',
-    borderColor: '#dc2626',
+    borderColor: Colors.dangerBorder,
+    backgroundColor: Colors.dangerSoft,
   },
   adminDemoButtonText: {
-    color: '#dc2626',
-    fontWeight: '700',
+    color: Colors.danger,
+    fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#fee2e2',
-    borderColor: '#ef4444',
+    borderColor: Colors.border,
   },
   logoutButtonDisabled: {
     opacity: 0.5,
   },
   logoutButtonText: {
-    color: '#ef4444',
+    color: Colors.danger,
     fontWeight: '600',
-    fontSize: 11,
   },
+
+  // ── top row ──
   topRow: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
+    backgroundColor: Colors.surface,
+    borderBottomWidth: Hairline,
+    borderBottomColor: Colors.border,
   },
   topRowLeft: {
-    flex: 7,
+    flex: 6,
   },
   topRowDivider: {
-    width: 1,
-    backgroundColor: '#e5e7eb',
-    marginVertical: 8,
+    width: Hairline,
+    backgroundColor: Colors.border,
+    marginVertical: 12,
   },
   topRowRight: {
-    flex: 3,
+    flex: 4,
   },
-  filterRow: {
+
+  // ── filter bar ──
+  filterBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    backgroundColor: '#f8f7f4',
-    gap: 6,
+    paddingLeft: 16,
+    paddingRight: 8,
+    paddingVertical: 10,
+    gap: 8,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: Hairline,
+    borderBottomColor: Colors.border,
   },
-  chipsScroll: {
-    flex: 1,
+  locationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceAlt,
+  },
+  locationBtnActive: {
+    backgroundColor: Colors.ink,
+  },
+  locationText: {
+    ...Type.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  locationTextActive: {
+    color: Colors.textOnInk,
+  },
+  filterBarDivider: {
+    width: Hairline,
+    height: 16,
+    backgroundColor: Colors.border,
   },
   chipsContent: {
     alignItems: 'center',
     gap: 6,
+    paddingRight: 4,
   },
-  iconButton: {
-    padding: 6,
+  chip: {
+    paddingHorizontal: 11,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.surface,
+    // shadow 제거 — 칩에 그림자 넣으면 바로 촌스러워진다
   },
-  iconButtonActive: {},
-  searchBarExpanded: {
+  chipActive: {
+    backgroundColor: Colors.ink,
+    borderColor: Colors.ink,
+  },
+  chipText: {
+    ...Type.caption,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  chipTextActive: {
+    color: Colors.textOnInk,
+  },
+  filterBarActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff',
-    marginHorizontal: 12,
-    marginBottom: 6,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  },
+  iconBtnSm: {
+    width: 32,
+    height: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filterCountDot: {
+    position: 'absolute',
+    top: 5,
+    right: 4,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Colors.accent,
+  },
+
+  // ── search ──
+  searchWrap: {
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    backgroundColor: Colors.surface,
+    borderBottomWidth: Hairline,
+    borderBottomColor: Colors.border,
+    paddingBottom: 12,
+  },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-    shadowColor: '#0d0c22',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: Colors.surfaceAlt,
+    borderRadius: Radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
-    color: '#0d0c22',
+    ...Type.body,
+    color: Colors.text,
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
   },
-  chip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: '#ffffff',
-    borderWidth: 0,
-    shadowColor: '#0d0c22',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    elevation: 2,
-  },
-  chipActive: {
-    backgroundColor: '#0d0c22',
-    shadowColor: '#0d0c22',
-    shadowOpacity: 0.3,
-  },
-  chipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6e6d7a',
-  },
-  chipTextActive: {
-    color: '#ffffff',
-  },
+
+  // ── modal / sheet ──
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(24, 24, 27, 0.4)',
+    justifyContent: 'flex-end',
   },
-  sortModalContainer: {
-    backgroundColor: '#ffffff',
-    borderRadius: 20,
-    width: '80%',
-    maxWidth: 400,
-    padding: 24,
-    shadowColor: '#0d0c22',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
+  sheet: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: Radius.xxl,
+    borderTopRightRadius: Radius.xxl,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 28,
+    ...Shadow.lg,
   },
-  sortModalHeader: {
+  sheetHandle: {
+    alignSelf: 'center',
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.borderStrong,
+    marginBottom: 8,
+  },
+  sheetHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    marginBottom: 4,
   },
-  sortModalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#0d0c22',
+  sheetTitle: {
+    ...Type.h2,
+    color: Colors.text,
   },
-  sortOptions: {
-    gap: 4,
-  },
-  sortOption: {
+  sheetOption: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+    justifyContent: 'space-between',
+    paddingVertical: 13,
+    paddingHorizontal: 2,
   },
-  sortOptionText: {
-    fontSize: 16,
-    color: '#6e6d7a',
-    fontWeight: '500',
+  sheetOptionText: {
+    ...Type.body,
+    color: Colors.textSecondary,
   },
-  sortOptionTextActive: {
-    color: '#ea4c89',
+  sheetOptionTextActive: {
+    color: Colors.text,
     fontWeight: '600',
   },
+
+  // ── list ──
   matchList: {
     flex: 1,
-    backgroundColor: '#f8f7f4',
+    backgroundColor: Colors.bg,
   },
-  loadingContainer: {
-    padding: 32,
+  matchListContent: {
+    paddingTop: 12,
+  },
+  stateContainer: {
+    paddingVertical: 64,
     alignItems: 'center',
+    gap: 4,
   },
-  loadingText: {
-    fontSize: 16,
-    color: '#6b7280',
+  stateTitle: {
+    ...Type.h3,
+    color: Colors.text,
+  },
+  stateText: {
+    ...Type.label,
+    color: Colors.textTertiary,
   },
   bottomPadding: {
-    height: 100,
+    height: 96,
   },
-  floatingFilter: {
+
+  // ── floating segment ──
+  segmentWrap: {
     position: 'absolute',
     bottom: 16,
-    alignSelf: 'center',
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  segment: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderRadius: 25,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.full,
     padding: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    ...Shadow.md,
   },
-  floatingTab: {
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 22,
+  segmentTab: {
+    paddingHorizontal: 18,
+    paddingVertical: 9,
+    borderRadius: Radius.full,
   },
-  floatingTabActive: {
-    backgroundColor: '#0d0c22',
+  segmentTabActive: {
+    backgroundColor: Colors.ink,
   },
-  floatingTabText: {
-    fontSize: 14,
+  segmentText: {
+    ...Type.label,
     fontWeight: '600',
-    color: '#6b7280',
+    color: Colors.textTertiary,
   },
-  floatingTabTextActive: {
-    color: '#ffffff',
+  segmentTextActive: {
+    color: Colors.textOnInk,
   },
 });

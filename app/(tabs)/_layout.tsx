@@ -73,7 +73,7 @@ export default function TabLayout() {
   if (isLoading) {
     return (
       <View style={styles.loading}>
-        <ActivityIndicator size="large" color={Colors.textTertiary} />
+        <ActivityIndicator size="large" color={Colors.accent} />
       </View>
     );
   }
@@ -85,25 +85,28 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           headerShown: false,
-          tabBarActiveTintColor: Colors.text,
+          // 선택 시 핑크
+          tabBarActiveTintColor: Colors.accent,
           tabBarInactiveTintColor: Colors.textTertiary,
+          // 메뉴 이름(라벨) 항상 표시
+          tabBarShowLabel: true,
           tabBarStyle: {
             backgroundColor: Colors.surface,
             borderTopWidth: Hairline,
             borderTopColor: Colors.border,
             paddingTop: 8,
-            paddingBottom: Platform.OS === 'web' ? 8 : 6,
-            height: Platform.OS === 'web' ? 64 : 76,
+            paddingBottom: Platform.OS === 'web' ? 10 : 8,
+            height: Platform.OS === 'web' ? 68 : 80,
             elevation: 0,
           },
           tabBarLabelStyle: {
-            fontSize: 10,
+            fontSize: 11,
             fontWeight: '600',
-            letterSpacing: -0.1,
-            marginTop: 2,
+            letterSpacing: -0.2,
+            marginTop: 3,
           },
-          tabBarItemStyle: {
-            paddingVertical: 2,
+          tabBarIconStyle: {
+            marginTop: 2,
           },
         }}
       >
@@ -111,6 +114,7 @@ export default function TabLayout() {
           name="index"
           options={{
             title: '매치찾기',
+            tabBarLabel: '매치찾기',
             tabBarIcon: ({ color, focused }) => (
               <Users
                 size={TAB_ICON_SIZE}
@@ -124,6 +128,7 @@ export default function TabLayout() {
           name="chat"
           options={{
             title: '채팅',
+            tabBarLabel: '채팅',
             tabBarIcon: ({ color, focused }) => (
               <View>
                 <MessageCircle
@@ -151,6 +156,7 @@ export default function TabLayout() {
           name="match-management"
           options={{
             title: '나의매치',
+            tabBarLabel: '나의매치',
             tabBarIcon: ({ color, focused }) => (
               <View>
                 <ClipboardList
@@ -178,6 +184,7 @@ export default function TabLayout() {
           name="register"
           options={{
             title: '매치판매',
+            tabBarLabel: '매치판매',
             tabBarIcon: ({ color, focused }) => (
               <Plus size={TAB_ICON_SIZE} color={color} strokeWidth={focused ? 2.4 : 2} />
             ),
@@ -196,6 +203,7 @@ export default function TabLayout() {
           name="earnings"
           options={{
             title: '수익관리',
+            tabBarLabel: '수익관리',
             tabBarIcon: ({ color, focused }) => (
               <Wallet
                 size={TAB_ICON_SIZE}
@@ -232,7 +240,7 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: Colors.accent,
+    backgroundColor: Colors.danger,
     borderWidth: 1.5,
     borderColor: Colors.surface,
   },

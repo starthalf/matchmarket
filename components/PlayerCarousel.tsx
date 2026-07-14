@@ -9,12 +9,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { User, ChevronRight } from 'lucide-react-native';
+import { User } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { Colors, Type, Radius, IconStroke } from '../constants/theme';
 
 const AVATAR_SIZE = 34;
-const OVERLAP = -8; // 아바타를 살짝 겹쳐서 "스택" 느낌 — 나열보다 훨씬 모던함
+const OVERLAP = -8; // 아바타를 살짝 겹쳐서 "스택" 느낌
 
 export function PlayerCarousel() {
   const router = useRouter();
@@ -78,8 +78,8 @@ export function PlayerCarousel() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.hotLabel}>인기 플레이어</Text>
-        <ActivityIndicator size="small" color={Colors.textTertiary} />
+        <Text style={styles.hotLabel}>Hot</Text>
+        <ActivityIndicator size="small" color={Colors.accent} />
       </View>
     );
   }
@@ -94,13 +94,7 @@ export function PlayerCarousel() {
       activeOpacity={0.75}
       onPress={() => router.push('/players')}
     >
-      <View style={styles.labelCol}>
-        <Text style={styles.hotLabel}>인기 플레이어</Text>
-        <View style={styles.moreRow}>
-          <Text style={styles.moreText}>전체보기</Text>
-          <ChevronRight size={11} color={Colors.textTertiary} strokeWidth={IconStroke} />
-        </View>
-      </View>
+      <Text style={styles.hotLabel}>Hot</Text>
 
       <FlatList
         ref={flatListRef}
@@ -138,24 +132,11 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: Colors.surface,
   },
-  labelCol: {
-    gap: 2,
-  },
   hotLabel: {
-    ...Type.caption,
-    fontWeight: '600',
-    color: Colors.text,
-  },
-  moreRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 1,
-  },
-  moreText: {
-    fontSize: 10,
-    fontWeight: '500',
-    letterSpacing: -0.1,
-    color: Colors.textTertiary,
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: -0.3,
+    color: Colors.accent,
   },
   listContent: {
     alignItems: 'center',

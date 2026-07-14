@@ -4,7 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useChat } from '../../contexts/ChatContext';
 import { useMatches } from '../../contexts/MatchContext';
 import { router } from 'expo-router';
-import { View, ActivityIndicator, Platform, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import React from 'react';
 import {
   getUnreadNotificationCount,
@@ -17,6 +18,21 @@ import { Colors, Hairline, IconStroke } from '../../constants/theme';
 
 const TAB_ICON_SIZE = 22;
 
+/**
+ * 탭바 높이 계산
+ * ------------------------------------------------------------------
+ * 라벨이 잘리던 원인:
+ *  1) height를 고정값(68)으로 박아놓고 padding까지 더해서 실제 콘텐츠 영역이 부족했음
+ *  2) 웹/PWA standalone에서 하단 safe-area(홈 인디케이터)를 안 더해줘서 잘림
+ *
+ * 해결: 콘텐츠 높이를 명시적으로 계산하고 insets.bottom을 그 위에 더한다.
+ *   아이콘(22) + 간격(4) + 라벨 lineHeight(15) = 41
+ *   + 상단 패딩 8 + 하단 패딩 10 = 59  → 여유 두고 60
+ */
+const TAB_CONTENT_HEIGHT = 60;
+const TAB_PADDING_TOP = 8;
+const TAB_PADDING_BOTTOM = 10;
+
 function Dot() {
   return <View style={styles.dot} />;
 }
@@ -25,6 +41,7 @@ export default function TabLayout() {
   const { user, isLoading } = useAuth();
   const { unreadCount } = useChat();
   const { matches } = useMatches();
+  const insets = useSafeAreaInsets();
 
   const [hasNewApplication, setHasNewApplication] = React.useState(false);
   const [hasNewChatRoom, setHasNewChatRoom] = React.useState(false);
@@ -88,25 +105,33 @@ export default function TabLayout() {
           // 선택 시 핑크
           tabBarActiveTintColor: Colors.accent,
           tabBarInactiveTintColor: Colors.textTertiary,
-          // 메뉴 이름(라벨) 항상 표시
+          // 메뉴 이름 항상 표시
           tabBarShowLabel: true,
           tabBarStyle: {
             backgroundColor: Colors.surface,
             borderTopWidth: Hairline,
             borderTopColor: Colors.border,
-            paddingTop: 8,
-            paddingBottom: Platform.OS === 'web' ? 10 : 8,
-            height: Platform.OS === 'web' ? 68 : 80,
+            paddingTop: TAB_PADDING_TOP,
+            // 홈 인디케이터/하단 노치만큼 더 준다 (잘림 방지의 핵심)
+            paddingBottom: TAB_PADDING_BOTTOM + insets.bottom,
+            height: TAB_CONTENT_HEIGHT + insets.bottom,
             elevation: 0,
           },
           tabBarLabelStyle: {
             fontSize: 11,
+            lineHeight: 15, // ← 명시 안 하면 웹에서 디센더(ㅈ, ㅍ 등)가 잘린다
             fontWeight: '600',
             letterSpacing: -0.2,
-            marginTop: 3,
+            includeFontPadding: false,
+            margin: 0,
+            padding: 0,
           },
           tabBarIconStyle: {
-            marginTop: 2,
+            marginTop: 0,
+            marginBottom: 2,
+          },
+          tabBarItemStyle: {
+            paddingVertical: 0,
           },
         }}
       >

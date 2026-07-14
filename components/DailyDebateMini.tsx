@@ -85,12 +85,12 @@ export function DailyDebateMini() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+ container: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingHorizontal: 14,
     justifyContent: 'center',
-    gap: 3,
+    gap: 2,
   },
   topLine: {
     flexDirection: 'row',

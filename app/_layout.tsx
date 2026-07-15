@@ -113,33 +113,39 @@ export default function RootLayout() {
     }
   }, []);
 
-  // ✨ Pretendard 웹폰트 로드 + 전역 폰트 세팅 (웹 전용)
+ // ✨ Pretendard 웹폰트 로드 + 전역 폰트 세팅 (웹 전용)
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       if (!document.getElementById('pretendard-font')) {
         const link = document.createElement('link');
         link.id = 'pretendard-font';
         link.rel = 'stylesheet';
-        link.href = 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable-dynamic-subset.min.css';
+        link.href =
+          'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css';
         document.head.appendChild(link);
       }
 
       if (!document.getElementById('matchmarket-global-style')) {
         const style = document.createElement('style');
         style.id = 'matchmarket-global-style';
+        // ⚠️ inherit이 아니라 모든 요소에 직접 지정해야 한다.
+        // RN Web은 요소마다 font-family를 인라인으로 박기 때문에
+        // inherit 방식은 상속이 끊겨서 시스템 폰트로 떨어진다.
+        const FONT_STACK =
+          "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif";
         style.innerHTML = `
           html, body, #root, #__next {
-            font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            font-family: ${FONT_STACK} !important;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             text-rendering: optimizeLegibility;
-            background-color: #FAFAF7;
+            background-color: #FAFAFA;
           }
-          * {
-            font-family: inherit;
+          *, *::before, *::after {
+            font-family: ${FONT_STACK} !important;
           }
           input, textarea, select, button {
-            font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif !important;
+            font-family: ${FONT_STACK} !important;
           }
         `;
         document.head.appendChild(style);

@@ -2,83 +2,78 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  Clock,
-  MapPin,
-  UserRound,
-  Eye,
-  Users,
-  Star,
-  Shield
-} from 'lucide-react-native';
+import { Clock, MapPin, UserRound, Eye, Star, ChevronRight } from 'lucide-react-native';
 import { Match } from '../types/tennis';
 import { PriceDisplay } from './PriceDisplay';
 import { CertificationBadge } from './CertificationBadge';
+import { Colors, Radius, Hairline, IconStroke } from '../constants/theme';
 
 interface MatchCardProps {
   match: Match;
+  onPress?: () => void;
 }
 
 export function MatchCard({ match }: MatchCardProps) {
   const { user } = useAuth();
   const currentTime = new Date();
   const matchDateTime = new Date(`${match.date}T${match.time}`);
-  const hoursUntilMatch = Math.max(0, (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60));
-  
-  // 안전한 기본값 설정
+  const hoursUntilMatch = Math.max(
+    0,
+    (matchDateTime.getTime() - currentTime.getTime()) / (1000 * 60 * 60)
+  );
+
   const applications = match.applications || [];
-  
-  // 더미 매치인지 확인 (더미 매치는 seller.id가 dummy_로 시작)
-  const isDummyMatch = match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
-  
-const handlePress = () => {
-  if (match.isClosed) {
-    return;
-  }
 
-  if (!user) {
-    router.push('/auth/login');
-    return;
-  }
+  const isDummyMatch =
+    match.seller.id.startsWith('dummy_') || match.seller.id.startsWith('seller_');
 
-  router.push(`/match/${match.id}`);
-};
+  const handlePress = () => {
+    if (match.isClosed) return;
+    if (!user) {
+      router.push('/auth/login');
+      return;
+    }
+    router.push(`/match/${match.id}`);
+  };
 
+  // 원본 문구 그대로 복구: "남성 N명, 여성 N명 모집"
   const getRecruitmentStatus = () => {
     const { male, female, total } = match.expectedParticipants;
-    
-    if (male > 0 && female > 0) {
-      return `남성 ${male}명, 여성 ${female}명 모집`;
-    } else if (male > 0) {
-      return `남성 ${male}명 모집`;
-    } else if (female > 0) {
-      return `여성 ${female}명 모집`;
-    } else {
-      return `${total}명 모집`;
-    }
+    if (male > 0 && female > 0) return `남성 ${male}명, 여성 ${female}명 모집`;
+    if (male > 0) return `남성 ${male}명 모집`;
+    if (female > 0) return `여성 ${female}명 모집`;
+    return `${total}명 모집`;
   };
+
+  const matchTypeLabel = Array.isArray(match.matchType)
+    ? match.matchType.join(' · ')
+    : String(match.matchType).replace(/[\[\]"\\]/g, '').trim();
 
   return (
     <TouchableOpacity
-      style={[styles.card, match.isClosed && styles.cardDisabled]}
+      style={[styles.card, match.isClosed && styles.cardClosed]}
       onPress={handlePress}
-      activeOpacity={match.isClosed ? 1 : 0.7}
+      activeOpacity={match.isClosed ? 1 : 0.9}
       disabled={match.isClosed}
     >
-      {/* 상단 - 판매자 정보 */}
-      <View style={styles.header}>
-        <View style={styles.sellerInfo}>
+      {/* ══════════ 본문 영역 ══════════ */}
+      <View style={styles.body}>
+        {/* 호스트 */}
+        <View style={styles.hostRow}>
           {match.seller.profileImage ? (
-            <Image source={{ uri: match.seller.profileImage }} style={styles.sellerAvatar} />
+            <Image source={{ uri: match.seller.profileImage }} style={styles.avatar} />
           ) : (
-            <View style={styles.sellerAvatarPlaceholder}>
-              <UserRound size={20} color="#6b7280" />
+            <View style={[styles.avatar, styles.avatarPlaceholder]}>
+              <UserRound size={18} color={Colors.textTertiary} strokeWidth={IconStroke} />
             </View>
           )}
-          <View style={styles.sellerDetails}>
-            <View style={styles.sellerNameRow}>
-              <Text style={styles.sellerName}>{match.seller.name}</Text>
-              <CertificationBadge 
+
+          <View style={styles.hostText}>
+            <View style={styles.hostNameRow}>
+              <Text style={styles.hostName} numberOfLines={1}>
+                {match.seller.name}
+              </Text>
+              <CertificationBadge
                 ntrpCert={match.seller.certification.ntrp}
                 careerCert={match.seller.certification.career}
                 youtubeCert={match.seller.certification.youtube}
@@ -86,322 +81,271 @@ const handlePress = () => {
                 size="tiny"
               />
             </View>
-            <View style={styles.sellerMeta}>
-              <Text style={styles.sellerMetaText}>
-                {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)}
-              </Text>
-            </View>
+
+            {/* 원본 그대로: 성별 · 연령대 · 경력 · NTRP */}
+            <Text style={styles.hostMeta} numberOfLines={1}>
+              {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP{' '}
+              {match.seller.ntrp.toFixed(1)}
+            </Text>
+
+            {/* 원본 그대로: 별점 + 리뷰 보기 */}
             <View style={styles.ratingRow}>
-              <Star size={12} color="#f59e0b" fill="#f59e0b" />
+              <Star size={12} color={Colors.star} fill={Colors.star} strokeWidth={0} />
               <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
               {!isDummyMatch && (
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
-                  style={styles.reviewLink}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 >
                   <Text style={styles.reviewLinkText}>리뷰 보기</Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
-        </View>
-      </View>
 
-      {/* 매치 제목 및 타입 */}
-      <View style={styles.titleSection}>
-        <Text style={styles.title} numberOfLines={2}>{match.title}</Text>
-        <View style={styles.matchTypeBadge}>
-        <Text style={styles.matchTypeText}>
-  {Array.isArray(match.matchType) 
-    ? match.matchType.join(' · ') 
-    : String(match.matchType).replace(/[\[\]"\\]/g, '').trim()}
-</Text>
+          {/* 우상단 태그: 마감이면 마감이 우선 */}
+          {match.isClosed ? (
+            <View style={styles.closedTag}>
+              <Text style={styles.closedTagText}>마감</Text>
+            </View>
+          ) : (
+            <View style={styles.typeTag}>
+              <Text style={styles.typeTagText}>{matchTypeLabel}</Text>
+            </View>
+          )}
         </View>
-      </View>
-      
-      {/* 매치 기본 정보 */}
-      <View style={styles.matchInfo}>
-        <View style={styles.infoRow}>
-          <Clock size={14} color="#6b7280" />
+
+        {/* 제목 */}
+        <Text style={styles.title} numberOfLines={2}>
+          {match.title}
+        </Text>
+
+        {/* 일시 · 장소 (원본 포맷: 05-15 18:00~20:00) */}
+        <View style={styles.infoLine}>
+          <Clock size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
           <Text style={styles.infoText}>
             {match.date.slice(5)} {match.time}~{match.endTime}
           </Text>
-          <Text style={styles.separator}>·</Text>
-          <MapPin size={14} color="#6b7280" />
-          <Text style={styles.infoText}>{match.court}</Text>
-        </View>
-      </View>
-
-      {/* 모집 현황 - 새로운 형태 */}
-      <View style={styles.recruitmentStatus}>
-        <View style={styles.ntrpRequirement}>
-          <Shield size={14} color="#6b7280" />
-          <Text style={styles.ntrpText}>
-            NTRP {match.ntrpRequirement.min.toFixed(1)}-{match.ntrpRequirement.max.toFixed(1)}
+          <View style={styles.dot} />
+          <MapPin size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
+          <Text style={styles.infoText} numberOfLines={1}>
+            {match.court}
           </Text>
         </View>
-        <View style={styles.recruitmentInfo}>
-          <Users size={14} color="#6b7280" />
-          <Text style={styles.recruitmentText}>
-            {getRecruitmentStatus()}
-          </Text>
-        </View>
-      </View>
 
-      {/* 하단 - 가격 및 액션 */}
-      <View style={styles.footer}>
-        {/* 조회수 */}
-        <View style={styles.viewCount}>
-          <Eye size={12} color="#9ca3af" />
-          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
-        </View>
-        
-        <View style={styles.priceSection}>
-          <PriceDisplay
-            currentPrice={match.currentPrice}
-            basePrice={match.basePrice}
-            maxPrice={match.maxPrice}
-            hoursUntilMatch={hoursUntilMatch}
-            viewCount={match.seller.viewCount}
-            applicationsCount={applications.length}
-            expectedParticipants={match.expectedParticipants.total}
-            isClosed={match.isClosed}
-          />
-        </View>
-      </View>
-      
-     {/* 마감 오버레이 */}
-      {match.isClosed && (
-        <View style={styles.closedOverlay}>
-          <View style={styles.closedBadge}>
-            <Text style={styles.closedBadgeText}>마감</Text>
+        {/* 조건 */}
+        <View style={styles.tagRow}>
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>
+              NTRP {match.ntrpRequirement.min.toFixed(1)}–{match.ntrpRequirement.max.toFixed(1)}
+            </Text>
+          </View>
+          <View style={styles.tag}>
+            <Text style={styles.tagText}>{getRecruitmentStatus()}</Text>
           </View>
         </View>
-      )}
+      </View>
 
-      {/* 마감 시 화이트 페이드 효과 */}
-      {match.isClosed && <View style={styles.fadeOverlay} pointerEvents="none" />}
+      {/* ══════════ 하단 바 ══════════ */}
+      <View style={styles.footer}>
+        <View style={styles.viewRow}>
+          <Eye size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
+          {/* 원본 그대로: 콤마 없는 raw 조회수 */}
+          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
+        </View>
+
+        <PriceDisplay
+          currentPrice={match.currentPrice}
+          basePrice={match.basePrice}
+          maxPrice={match.maxPrice}
+          hoursUntilMatch={hoursUntilMatch}
+          viewCount={match.seller.viewCount}
+          applicationsCount={applications.length}
+          expectedParticipants={match.expectedParticipants.total}
+          isClosed={match.isClosed}
+        />
+      </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: Colors.surface,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    borderColor: Colors.border,
+    marginHorizontal: 16,
     marginBottom: 12,
-    position: 'relative',
+    overflow: 'hidden',
   },
-  sellerInfo: {
+  cardClosed: {
+    opacity: 0.5,
+  },
+
+  // ── 본문 ──
+  body: {
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 14,
+  },
+
+  hostRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    flex: 1,
-    gap: 10,
+    gap: 9,
   },
-  sellerAvatar: {
+  avatar: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.surfaceAlt,
   },
-  sellerAvatarPlaceholder: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+  avatarPlaceholder: {
+    alignItems: 'center',
     justifyContent: 'center',
-    alignItems: 'center',
   },
-  sellerDetails: {
+  hostText: {
     flex: 1,
-    gap: 4,
+    gap: 2,
   },
-  sellerNameRow: {
+  hostNameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
-  sellerName: {
+  hostName: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  sellerMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  sellerMetaText: {
-    fontSize: 12,
-    color: '#6b7280',
     fontWeight: '600',
+    letterSpacing: -0.2,
+    color: Colors.text,
+    flexShrink: 1,
+  },
+  hostMeta: {
+    fontSize: 11,
+    fontWeight: '400',
+    letterSpacing: -0.1,
+    lineHeight: 15,
+    color: Colors.textTertiary,
   },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    gap: 3,
+    marginTop: 1,
   },
   ratingText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
-    color: '#f59e0b',
-  },
-  reviewLink: {
-    marginLeft: 4,
+    letterSpacing: -0.1,
+    color: Colors.textSecondary,
   },
   reviewLinkText: {
     fontSize: 11,
-    color: '#ec4899',
-    fontWeight: '600',
+    fontWeight: '500',
+    letterSpacing: -0.1,
+    color: Colors.textTertiary,
     textDecorationLine: 'underline',
+    marginLeft: 4,
   },
-  titleSection: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    gap: 8,
+
+  typeTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: Radius.xs,
+    backgroundColor: Colors.surfaceAlt,
   },
+  typeTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+    color: Colors.textSecondary,
+  },
+  closedTag: {
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: Radius.xs,
+    backgroundColor: Colors.ink,
+  },
+  closedTagText: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: -0.1,
+    color: Colors.textOnInk,
+  },
+
+  // ── 제목 ──
   title: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
-    color: '#111827',
-    flex: 1,
-    lineHeight: 22,
+    letterSpacing: -0.5,
+    lineHeight: 24,
+    color: Colors.text,
+    marginTop: 12,
   },
-  matchTypeBadge: {
-    backgroundColor: '#fdf2f8',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  matchTypeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#ec4899',
-  },
-  matchInfo: {
-    marginBottom: 6,
-  },
-  infoRow: {
+
+  // ── 일시/장소 ──
+  infoLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
+    marginTop: 10,
   },
   infoText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: -0.2,
+    color: Colors.textSecondary,
+    flexShrink: 1,
   },
-  separator: {
-    fontSize: 12,
-    color: '#d1d5db',
+  dot: {
+    width: 2,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: Colors.borderStrong,
     marginHorizontal: 2,
   },
-  recruitmentStatus: {
+
+  // ── 조건 태그 ──
+  tagRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
-  },
-  ntrpRequirement: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  ntrpText: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: '#6b7280',
-  },
-  recruitmentInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
+    marginTop: 12,
   },
-  recruitmentText: {
-    fontSize: 12,
-    color: '#6b7280',
-    fontWeight: '500',
+  tag: {
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
-  applicationText: {
-    fontSize: 12,
-    color: '#ec4899',
+  tagText: {
+    fontSize: 11,
     fontWeight: '600',
+    letterSpacing: -0.1,
+    color: Colors.textSecondary,
   },
+
+  // ── 하단 바 ──
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    backgroundColor: Colors.surfaceAlt,
+    borderTopWidth: Hairline,
+    borderTopColor: Colors.border,
   },
-  viewCount: {
+  viewRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
   },
   viewText: {
     fontSize: 12,
-    color: '#9ca3af',
-  },
-  priceSection: {
-    alignItems: 'flex-end',
-  },
-  closedOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2,
-  },
-  fadeOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.3)',
-    borderRadius: 16,
-    zIndex: 1,
-  },
-  closedBadge: {
-    backgroundColor: 'rgba(55, 65, 81, 0.92)',
-    paddingHorizontal: 18,
-    paddingVertical: 7,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  closedBadgeText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-  },
-  cardDisabled: {
-    opacity: 0.65,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+    color: Colors.textTertiary,
   },
 });

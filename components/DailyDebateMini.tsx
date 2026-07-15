@@ -3,12 +3,10 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { supabase } from '../lib/supabase';
-import { Colors, Type, IconStroke } from '../constants/theme';
+import { Colors, IconStroke } from '../constants/theme';
 
 export function DailyDebateMini() {
   const [debate, setDebate] = useState<any>(null);
-  const [voteCount, setVoteCount] = useState(0);
-  const [commentCount, setCommentCount] = useState(0);
 
   useEffect(() => {
     fetchTodayDebate();
@@ -27,24 +25,13 @@ export function DailyDebateMini() {
 
     if (!debateData) return;
     setDebate(debateData);
-
-    
-
-    const { count: comments } = await supabase
-      .from('debate_comments')
-      .select('*', { count: 'exact', head: true })
-      .eq('debate_id', debateData.id);
-    setCommentCount(comments || 0);
   };
 
   if (!debate) {
     return (
       <View style={styles.container}>
         <View style={styles.topLine}>
-          <View style={styles.labelWrap}>
-            <View style={styles.liveDot} />
-            <Text style={styles.label}>토론</Text>
-          </View>
+          <Text style={styles.label}>🔥 토론</Text>
         </View>
         <Text style={styles.emptyText}>준비 중</Text>
       </View>
@@ -58,14 +45,11 @@ export function DailyDebateMini() {
       onPress={() => router.push(`/debate/${debate.id}`)}
     >
       <View style={styles.topLine}>
-        <View style={styles.labelWrap}>
-          <View style={styles.liveDot} />
-          <Text style={styles.label}>토론</Text>
-        </View>
+        <Text style={styles.label}>🔥 토론</Text>
         <ChevronRight size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
       </View>
 
-    <Text style={styles.question} numberOfLines={1} ellipsizeMode="tail">
+      <Text style={styles.question} numberOfLines={1} ellipsizeMode="tail">
         {debate.question}
       </Text>
     </TouchableOpacity>
@@ -73,49 +57,35 @@ export function DailyDebateMini() {
 }
 
 const styles = StyleSheet.create({
- container: {
+  container: {
     flex: 1,
     paddingVertical: 10,
     paddingHorizontal: 14,
     justifyContent: 'center',
-    gap: 2,
+    gap: 3,
   },
   topLine: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  labelWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  liveDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 2.5,
-    backgroundColor: Colors.accent,
-  },
   label: {
-    ...Type.micro,
-    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '600',
     letterSpacing: -0.1,
+    color: Colors.textSecondary,
   },
   emptyText: {
-    ...Type.caption,
+    fontSize: 12,
     fontWeight: '400',
-    color: Colors.textTertiary,
-  },
- question: {
-    ...Type.caption,
-    fontWeight: '600',
-    color: Colors.text,
-    lineHeight: 16,
-  },
-  meta: {
-    fontSize: 10,
-    fontWeight: '500',
     letterSpacing: -0.1,
     color: Colors.textTertiary,
+  },
+  question: {
+    fontSize: 12,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+    lineHeight: 16,
+    color: Colors.text,
   },
 });

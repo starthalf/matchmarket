@@ -6,14 +6,12 @@ import { Clock, MapPin, UserRound, Eye, Star, ChevronRight } from 'lucide-react-
 import { Match } from '../types/tennis';
 import { PriceDisplay } from './PriceDisplay';
 import { CertificationBadge } from './CertificationBadge';
-import { Colors, Radius, Type, Hairline, IconStroke } from '../constants/theme';
+import { Colors, Radius, Hairline, IconStroke } from '../constants/theme';
 
 interface MatchCardProps {
   match: Match;
   onPress?: () => void;
 }
-
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
 export function MatchCard({ match }: MatchCardProps) {
   const { user } = useAuth();
@@ -38,22 +36,18 @@ export function MatchCard({ match }: MatchCardProps) {
     router.push(`/match/${match.id}`);
   };
 
+  // 원본 문구 그대로 복구: "남성 N명, 여성 N명 모집"
   const getRecruitmentStatus = () => {
     const { male, female, total } = match.expectedParticipants;
-    if (male > 0 && female > 0) return `남 ${male} · 여 ${female}`;
-    if (male > 0) return `남 ${male}명`;
-    if (female > 0) return `여 ${female}명`;
-    return `${total}명`;
+    if (male > 0 && female > 0) return `남성 ${male}명, 여성 ${female}명 모집`;
+    if (male > 0) return `남성 ${male}명 모집`;
+    if (female > 0) return `여성 ${female}명 모집`;
+    return `${total}명 모집`;
   };
 
   const matchTypeLabel = Array.isArray(match.matchType)
-    ? match.matchType.join('·')
+    ? match.matchType.join(' · ')
     : String(match.matchType).replace(/[\[\]"\\]/g, '').trim();
-
-  // 05-15 → 05.15 (수)
-  const dateObj = new Date(match.date);
-  const [, mm, dd] = match.date.split('-');
-  const weekday = WEEKDAYS[dateObj.getDay()] ?? '';
 
   return (
     <TouchableOpacity
@@ -70,7 +64,7 @@ export function MatchCard({ match }: MatchCardProps) {
             <Image source={{ uri: match.seller.profileImage }} style={styles.avatar} />
           ) : (
             <View style={[styles.avatar, styles.avatarPlaceholder]}>
-              <UserRound size={16} color={Colors.textTertiary} strokeWidth={IconStroke} />
+              <UserRound size={18} color={Colors.textTertiary} strokeWidth={IconStroke} />
             </View>
           )}
 
@@ -87,10 +81,26 @@ export function MatchCard({ match }: MatchCardProps) {
                 size="tiny"
               />
             </View>
+
+            {/* 원본 그대로: 성별 · 연령대 · 경력 · NTRP */}
             <Text style={styles.hostMeta} numberOfLines={1}>
-              {match.seller.careerType} · NTRP {match.seller.ntrp.toFixed(1)} · ★{' '}
-              {match.seller.avgRating}
+              {match.seller.gender} · {match.seller.ageGroup} · {match.seller.careerType} · NTRP{' '}
+              {match.seller.ntrp.toFixed(1)}
             </Text>
+
+            {/* 원본 그대로: 별점 + 리뷰 보기 */}
+            <View style={styles.ratingRow}>
+              <Star size={12} color={Colors.star} fill={Colors.star} strokeWidth={0} />
+              <Text style={styles.ratingText}>{match.seller.avgRating}</Text>
+              {!isDummyMatch && (
+                <TouchableOpacity
+                  onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Text style={styles.reviewLinkText}>리뷰 보기</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* 우상단 태그: 마감이면 마감이 우선 */}
@@ -105,29 +115,22 @@ export function MatchCard({ match }: MatchCardProps) {
           )}
         </View>
 
-        {/* 제목 — 카드의 주인공 */}
+        {/* 제목 */}
         <Text style={styles.title} numberOfLines={2}>
           {match.title}
         </Text>
 
-        {/* 일시 · 장소 */}
-        <View style={styles.infoBlock}>
-          <View style={styles.infoLine}>
-            <Clock size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
-            <Text style={styles.infoStrong}>
-              {mm}.{dd}
-              <Text style={styles.infoWeak}> ({weekday})</Text>
-            </Text>
-            <Text style={styles.infoStrong}>
-              {match.time}–{match.endTime}
-            </Text>
-          </View>
-          <View style={styles.infoLine}>
-            <MapPin size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
-            <Text style={styles.infoWeak} numberOfLines={1}>
-              {match.court}
-            </Text>
-          </View>
+        {/* 일시 · 장소 (원본 포맷: 05-15 18:00~20:00) */}
+        <View style={styles.infoLine}>
+          <Clock size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
+          <Text style={styles.infoText}>
+            {match.date.slice(5)} {match.time}~{match.endTime}
+          </Text>
+          <View style={styles.dot} />
+          <MapPin size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
+          <Text style={styles.infoText} numberOfLines={1}>
+            {match.court}
+          </Text>
         </View>
 
         {/* 조건 */}
@@ -138,29 +141,17 @@ export function MatchCard({ match }: MatchCardProps) {
             </Text>
           </View>
           <View style={styles.tag}>
-            <Text style={styles.tagText}>{getRecruitmentStatus()} 모집</Text>
+            <Text style={styles.tagText}>{getRecruitmentStatus()}</Text>
           </View>
         </View>
       </View>
 
-      {/* ══════════ 하단 바 (배경색으로 구역 분리) ══════════ */}
+      {/* ══════════ 하단 바 ══════════ */}
       <View style={styles.footer}>
-        <View style={styles.footerLeft}>
-          <View style={styles.viewRow}>
-            <Eye size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
-            <Text style={styles.viewText}>{match.seller.viewCount.toLocaleString()}</Text>
-          </View>
-
-          {!isDummyMatch && (
-            <TouchableOpacity
-              style={styles.reviewBtn}
-              onPress={() => router.push(`/seller/${match.seller.id}/reviews`)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Text style={styles.reviewText}>리뷰</Text>
-              <ChevronRight size={11} color={Colors.textTertiary} strokeWidth={2} />
-            </TouchableOpacity>
-          )}
+        <View style={styles.viewRow}>
+          <Eye size={13} color={Colors.textTertiary} strokeWidth={IconStroke} />
+          {/* 원본 그대로: 콤마 없는 raw 조회수 */}
+          <Text style={styles.viewText}>{match.seller.viewCount}</Text>
         </View>
 
         <PriceDisplay
@@ -186,9 +177,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.border,
     marginHorizontal: 16,
     marginBottom: 12,
-    overflow: 'hidden', // 하단 바가 카드 라운딩을 따라가게
+    overflow: 'hidden',
   },
-  /** 마감: 카드 전체를 흐리게. 정중앙 검은 알약 같은 건 두지 않는다. */
   cardClosed: {
     opacity: 0.5,
   },
@@ -202,12 +192,12 @@ const styles = StyleSheet.create({
 
   hostRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-start',
+    gap: 9,
   },
   avatar: {
-    width: 32,
-    height: 32,
+    width: 40,
+    height: 40,
     borderRadius: Radius.full,
     backgroundColor: Colors.surfaceAlt,
   },
@@ -217,7 +207,7 @@ const styles = StyleSheet.create({
   },
   hostText: {
     flex: 1,
-    gap: 1,
+    gap: 2,
   },
   hostNameRow: {
     flexDirection: 'row',
@@ -225,7 +215,7 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   hostName: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     letterSpacing: -0.2,
     color: Colors.text,
@@ -237,6 +227,26 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
     lineHeight: 15,
     color: Colors.textTertiary,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    marginTop: 1,
+  },
+  ratingText: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: -0.1,
+    color: Colors.textSecondary,
+  },
+  reviewLinkText: {
+    fontSize: 11,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+    color: Colors.textTertiary,
+    textDecorationLine: 'underline',
+    marginLeft: 4,
   },
 
   typeTag: {
@@ -264,7 +274,7 @@ const styles = StyleSheet.create({
     color: Colors.textOnInk,
   },
 
-  // ── 제목: 카드의 주인공 ──
+  // ── 제목 ──
   title: {
     fontSize: 17,
     fontWeight: '700',
@@ -275,27 +285,25 @@ const styles = StyleSheet.create({
   },
 
   // ── 일시/장소 ──
-  infoBlock: {
-    marginTop: 10,
-    gap: 5,
-  },
   infoLine: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
+    marginTop: 10,
   },
-  infoStrong: {
-    fontSize: 13,
-    fontWeight: '600',
-    letterSpacing: -0.2,
-    color: Colors.textSecondary,
-  },
-  infoWeak: {
+  infoText: {
     fontSize: 13,
     fontWeight: '400',
     letterSpacing: -0.2,
-    color: Colors.textTertiary,
+    color: Colors.textSecondary,
     flexShrink: 1,
+  },
+  dot: {
+    width: 2,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: Colors.borderStrong,
+    marginHorizontal: 2,
   },
 
   // ── 조건 태그 ──
@@ -318,7 +326,7 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
 
-  // ── 하단 바: 배경색으로 구역을 만든다 (그림자 없이 구조 만들기) ──
+  // ── 하단 바 ──
   footer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -329,11 +337,6 @@ const styles = StyleSheet.create({
     borderTopWidth: Hairline,
     borderTopColor: Colors.border,
   },
-  footerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
   viewRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -342,17 +345,6 @@ const styles = StyleSheet.create({
   viewText: {
     fontSize: 12,
     fontWeight: '500',
-    letterSpacing: -0.1,
-    color: Colors.textTertiary,
-  },
-  reviewBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 1,
-  },
-  reviewText: {
-    fontSize: 12,
-    fontWeight: '600',
     letterSpacing: -0.1,
     color: Colors.textTertiary,
   },

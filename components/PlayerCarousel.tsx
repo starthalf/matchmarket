@@ -13,7 +13,7 @@ import { User } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { Colors, Type, Radius, IconStroke } from '../constants/theme';
 
-const AVATAR_SIZE = 30;
+const AVATAR_SIZE = 34;
 const OVERLAP = -8; // 아바타를 살짝 겹쳐서 "스택" 느낌
 
 export function PlayerCarousel() {
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 12,
     paddingHorizontal: 16,
     gap: 12,
     backgroundColor: Colors.surface,

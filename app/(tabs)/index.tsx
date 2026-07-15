@@ -420,7 +420,6 @@ export default function HomeScreen() {
         <View style={styles.topRowLeft}>
           <PlayerCarousel />
         </View>
-        <View style={styles.topRowDivider} />
         <View style={styles.topRowRight}>
           <DailyDebateMini />
         </View>
@@ -641,8 +640,8 @@ export default function HomeScreen() {
           >
             <Flame
               size={14}
-              color={Colors.accent}
-              fill={matchFilter === 'hot' ? Colors.accent : 'transparent'}
+              color={matchFilter === 'hot' ? Colors.textOnInk : Colors.textTertiary}
+              fill={matchFilter === 'hot' ? Colors.textOnInk : 'transparent'}
               strokeWidth={matchFilter === 'hot' ? 0 : 2}
             />
             <Text
@@ -765,17 +764,14 @@ const styles = StyleSheet.create({
   // ── top row ──
   topRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.surface,
-    borderBottomWidth: Hairline,
-    borderBottomColor: Colors.border,
+    paddingRight: 12,
+    gap: 8,
+    // 아래 구분선 제거 — filterBar의 배경 톤 차이로 자연스럽게 나뉜다
   },
   topRowLeft: {
     flex: 6,
-  },
-  topRowDivider: {
-    width: Hairline,
-    backgroundColor: Colors.border,
-    marginVertical: 12,
   },
   topRowRight: {
     flex: 4,
@@ -789,9 +785,10 @@ const styles = StyleSheet.create({
     paddingRight: 8,
     paddingVertical: 10,
     gap: 8,
-    backgroundColor: Colors.surface,
-    borderBottomWidth: Hairline,
-    borderBottomColor: Colors.border,
+    // 헤더(흰색)와 다른 배경 톤으로 층을 만든다. 구분선 없이도 분리됨.
+    backgroundColor: Colors.bg,
+    borderTopWidth: Hairline,
+    borderTopColor: Colors.border,
   },
   locationBtn: {
     flexDirection: 'row',

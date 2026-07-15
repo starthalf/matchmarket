@@ -78,7 +78,9 @@ export function PlayerCarousel() {
   if (loading) {
     return (
       <View style={styles.container}>
-        <Text style={styles.hotLabel}>Hot</Text>
+        <View style={styles.hotBadge}>
+          <Text style={styles.hotBadgeText}>🔥 Hot</Text>
+        </View>
         <ActivityIndicator size="small" color={Colors.accent} />
       </View>
     );
@@ -94,7 +96,9 @@ export function PlayerCarousel() {
       activeOpacity={0.75}
       onPress={() => router.push('/players')}
     >
-      <Text style={styles.hotLabel}>Hot</Text>
+      <View style={styles.hotBadge}>
+        <Text style={styles.hotBadgeText}>🔥 Hot</Text>
+      </View>
 
       <FlatList
         ref={flatListRef}
@@ -132,8 +136,14 @@ const styles = StyleSheet.create({
     gap: 12,
     backgroundColor: Colors.surface,
   },
-  hotLabel: {
-    fontSize: 14,
+  hotBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: Radius.full,
+    backgroundColor: Colors.accentSoft,
+  },
+  hotBadgeText: {
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: -0.3,
     color: Colors.accent,

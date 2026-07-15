@@ -990,7 +990,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
   segmentTabActive: {
-    backgroundColor: Colors.ink,
+    backgroundColor: Colors.accent,
   },
   segmentText: {
     ...Type.label,

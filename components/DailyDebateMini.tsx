@@ -74,12 +74,6 @@ export function DailyDebateMini() {
     <Text style={styles.question} numberOfLines={1} ellipsizeMode="tail">
         {debate.question}
       </Text>
-
-      {voteCount > 0 && (
-        <Text style={styles.meta} numberOfLines={1}>
-          {voteCount.toLocaleString()}명 참여
-        </Text>
-      )}
     </TouchableOpacity>
   );
 }

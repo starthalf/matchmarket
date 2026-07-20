@@ -228,10 +228,9 @@ const styles = StyleSheet.create({
     color: Colors.accent,
   },
 
-  summary: {
+ summary: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     marginTop: 12,
     marginBottom: 14,
   },

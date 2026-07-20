@@ -312,12 +312,21 @@ const styles = StyleSheet.create({
 
   
 
+  footerNote: {
+    fontSize: 10,
+    fontWeight: '500',
+    letterSpacing: -0.1,
+    color: Colors.textTertiary,
+    textAlign: 'center',
+    marginTop: 12,
+  },
+
   prorateText: {
     fontSize: 10,
     fontWeight: '400',
     letterSpacing: -0.1,
     color: Colors.textTertiary,
     textAlign: 'center',
-    marginTop: 12,
+    marginTop: 4,
   },
 });

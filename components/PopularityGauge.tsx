@@ -321,6 +321,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.1,
     color: Colors.textTertiary,
     textAlign: 'center',
-    marginTop: 8,
+    marginTop: 12,
   },
 });

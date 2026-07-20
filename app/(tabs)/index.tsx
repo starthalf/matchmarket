@@ -640,8 +640,8 @@ export default function HomeScreen() {
           >
             <Flame
               size={14}
-              color={Colors.accent}
-              fill={matchFilter === 'hot' ? Colors.accent : 'transparent'}
+              color={matchFilter === 'hot' ? Colors.textOnInk : Colors.textTertiary}
+              fill={matchFilter === 'hot' ? Colors.textOnInk : 'transparent'}
               strokeWidth={matchFilter === 'hot' ? 0 : 2}
             />
             <Text

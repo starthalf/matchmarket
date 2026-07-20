@@ -107,11 +107,7 @@ export function PopularityGauge({ sellerId }: Props) {
         </View>
       </View>
 
-      <View style={styles.summary}>
-        <View>
-          <Text style={styles.scoreValue}>{me.score.toLocaleString()}</Text>
-          <Text style={styles.scoreLabel}>인기도 · D-{daysLeft}</Text>
-        </View>
+     <View style={styles.summary}>
         <View style={styles.summaryRight}>
           <Text style={styles.rewardValue}>
             {estimatedReward.toLocaleString()}

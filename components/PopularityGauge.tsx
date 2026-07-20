@@ -138,23 +138,7 @@ export function PopularityGauge({ sellerId }: Props) {
         })}
       </View>
 
-      <View style={styles.labelRow}>
-        {REWARD_TIERS.map(t => {
-          const passed = me.tierLevel >= t.level;
-          return (
-            <View key={t.level} style={styles.labelCell}>
-              {passed ? (
-                <View style={styles.passedRow}>
-                  <Check size={9} color={Colors.success} strokeWidth={3} />
-                  <Text style={styles.labelPassed}>{t.reward / 1000}천</Text>
-                </View>
-              ) : (
-                <Text style={styles.labelPending}>{t.reward / 1000}천</Text>
-              )}
-            </View>
-          );
-        })}
-      </View>
+      
 
       <View style={styles.notice}>
         {nextTier ? (

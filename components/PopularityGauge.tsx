@@ -261,10 +261,9 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  barRow: {
+ barRow: {
     flexDirection: 'row',
     gap: 3,
-    marginBottom: 6,
   },
   segmentWrap: {
     flex: 1,

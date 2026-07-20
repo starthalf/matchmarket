@@ -118,7 +118,7 @@ export function PopularityGauge({ sellerId }: Props) {
             <Text style={styles.rewardWon}>원</Text>
           </Text>
           <Text style={styles.rewardLabel}>
-            {me.tierLevel > 0 ? `${me.tierLevel}단계 확정` : '미달'}
+            {me.tierLevel > 0 ? `Lv${me.tierLevel} 수익 지급` : '지급기준 미달'}
           </Text>
         </View>
       </View>

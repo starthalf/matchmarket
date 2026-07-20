@@ -208,6 +208,8 @@ export default function EarningsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        {currentUser && <PopularityGauge sellerId={currentUser.id} />}
+
         {/* 월 선택 네비게이션 */}
         <View style={styles.monthNavigation}>
           <TouchableOpacity

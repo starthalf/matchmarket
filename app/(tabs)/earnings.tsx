@@ -17,6 +17,8 @@ import { AdminSettingsManager } from '../../utils/adminSettings';
 import { getMockEarnings, EarningsData } from '../../data/mockData';
 import { useSafeStyles } from '../../constants/Styles';
 import { EarningsManager, MonthlySettlement } from '../../utils/earningsManager';
+import { PopularityGauge } from '../../components/PopularityGauge';
+{currentUser && <PopularityGauge sellerId={currentUser.id} />}
 
 export default function EarningsScreen() {
   const { user: currentUser } = useAuth();

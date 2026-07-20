@@ -160,17 +160,7 @@ export function PopularityGauge({ sellerId }: Props) {
         })}
       </View>
 
-      <View style={styles.notice}>
-        {nextTier ? (
-          <Text style={styles.noticeText}>
-            <Text style={styles.noticeStrong}>{toNextScore.toLocaleString()}</Text> 더 모으면{' '}
-            <Text style={styles.noticeStrong}>{nextTier.reward.toLocaleString()}원</Text> 광고수익
-            획득!
-          </Text>
-        ) : (
-          <Text style={styles.noticeText}>최고 단계 달성! 광고수익이 정산됩니다</Text>
-        )}
-      </View>
+      
 
       {prorateRatio < 1 && (
         <Text style={styles.prorateText}>

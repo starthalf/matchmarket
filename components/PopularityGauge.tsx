@@ -1,15 +1,4 @@
 // components/PopularityGauge.tsx
-//
-// 인기 리워드 게이지 카드.
-//  - 바 하나를 5단계로 나눠서, 도달한 단계까지 채운다.
-//  - 각 단계 아래에 지급액을 표시하고, 통과한 단계는 ✓ 표시.
-//  - "단계를 넘으면 광고 수익이 정산됩니다" 안내 포함.
-//  - 매달 리셋되므로 기간(7월)과 남은 일수를 함께 표기.
-//
-// 사용법 (earnings.tsx):
-//   import { PopularityGauge } from '../../components/PopularityGauge';
-//   {currentUser && <PopularityGauge sellerId={currentUser.id} />}
-
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Check, Sparkles } from 'lucide-react-native';
@@ -19,34 +8,54 @@ import {
   REWARD_TIERS,
   getHostGrade,
 } from '../utils/popularityManager';
-import { Colors, Radius, Hairline, IconStroke } from '../constants/theme';
+import { Colors, Radius, IconStroke } from '../constants/theme';
 
 interface Props {
   sellerId: string;
 }
 
+function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} 시간 초과 (${ms / 1000}초)`)), ms)
+    ),
+  ]);
+}
+
 export function PopularityGauge({ sellerId }: Props) {
   const [loading, setLoading] = useState(true);
   const [snap, setSnap] = useState<RewardSnapshot | null>(null);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
+
     (async () => {
       setLoading(true);
+      setErrMsg(null);
       const now = new Date();
+
       try {
-        const s = await PopularityManager.getSnapshot(
-          sellerId,
-          now.getFullYear(),
-          now.getMonth() + 1
+        console.log('📊 [1] 게이지 조회 시작 sellerId:', sellerId);
+
+        const s = await withTimeout(
+          PopularityManager.getSnapshot(sellerId, now.getFullYear(), now.getMonth() + 1),
+          8000,
+          '게이지 조회'
         );
+
+        console.log('📊 [2] 게이지 결과:', s);
         if (alive) setSnap(s);
-      } catch (e) {
-        console.error('인기 게이지 조회 오류:', e);
+      } catch (e: any) {
+        console.error('📊 [X] 게이지 오류:', e);
+        if (alive) setErrMsg(e?.message || '불러오지 못했습니다');
       } finally {
+        console.log('📊 [3] 로딩 종료');
         if (alive) setLoading(false);
       }
     })();
+
     return () => {
       alive = false;
     };
@@ -60,6 +69,15 @@ export function PopularityGauge({ sellerId }: Props) {
     );
   }
 
+  if (errMsg) {
+    return (
+      <View style={[styles.card, styles.center]}>
+        <Text style={styles.errText}>인기 리워드를 불러오지 못했습니다</Text>
+        <Text style={styles.errDetail}>{errMsg}</Text>
+      </View>
+    );
+  }
+
   if (!snap) return null;
 
   const { me, nextTier, toNextScore, estimatedReward, prorateRatio } = snap;
@@ -69,7 +87,6 @@ export function PopularityGauge({ sellerId }: Props) {
   const daysLeft = lastDay - now.getDate();
   const grade = getHostGrade(me.completedMatches);
 
-  /** 각 단계 칸의 채움 비율(0~1) 계산 */
   const fillOf = (idx: number): number => {
     const tier = REWARD_TIERS[idx];
     const prevMin = idx === 0 ? 0 : REWARD_TIERS[idx - 1].minScore;
@@ -80,7 +97,6 @@ export function PopularityGauge({ sellerId }: Props) {
 
   return (
     <View style={styles.card}>
-      {/* 헤더 */}
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Sparkles size={15} color={Colors.accent} strokeWidth={IconStroke} />
@@ -91,7 +107,6 @@ export function PopularityGauge({ sellerId }: Props) {
         </View>
       </View>
 
-      {/* 현재 점수 + 예상 지급액 */}
       <View style={styles.summary}>
         <View>
           <Text style={styles.scoreValue}>{me.score.toLocaleString()}</Text>
@@ -108,7 +123,6 @@ export function PopularityGauge({ sellerId }: Props) {
         </View>
       </View>
 
-      {/* 5단계 세그먼트 바 */}
       <View style={styles.barRow}>
         {REWARD_TIERS.map((t, i) => {
           const fill = fillOf(i);
@@ -124,7 +138,6 @@ export function PopularityGauge({ sellerId }: Props) {
         })}
       </View>
 
-      {/* 단계별 지급액 라벨 */}
       <View style={styles.labelRow}>
         {REWARD_TIERS.map(t => {
           const passed = me.tierLevel >= t.level;
@@ -133,36 +146,28 @@ export function PopularityGauge({ sellerId }: Props) {
               {passed ? (
                 <View style={styles.passedRow}>
                   <Check size={9} color={Colors.success} strokeWidth={3} />
-                  <Text style={styles.labelPassed}>
-                    {(t.reward / 1000).toLocaleString()}천
-                  </Text>
+                  <Text style={styles.labelPassed}>{t.reward / 1000}천</Text>
                 </View>
               ) : (
-                <Text style={styles.labelPending}>
-                  {(t.reward / 1000).toLocaleString()}천
-                </Text>
+                <Text style={styles.labelPending}>{t.reward / 1000}천</Text>
               )}
             </View>
           );
         })}
       </View>
 
-      {/* 안내 문구 */}
       <View style={styles.notice}>
         {nextTier ? (
           <Text style={styles.noticeText}>
             <Text style={styles.noticeStrong}>{toNextScore.toLocaleString()}</Text> 더 모으면{' '}
-            <Text style={styles.noticeStrong}>
-              {nextTier.reward.toLocaleString()}원
-            </Text>{' '}
-            광고수익 획득!
+            <Text style={styles.noticeStrong}>{nextTier.reward.toLocaleString()}원</Text> 광고수익
+            획득!
           </Text>
         ) : (
           <Text style={styles.noticeText}>최고 단계 달성! 광고수익이 정산됩니다</Text>
         )}
       </View>
 
-      {/* 삭감 안내 */}
       {prorateRatio < 1 && (
         <Text style={styles.prorateText}>
           이번 달 재원에 따라 지급액이 조정될 수 있습니다
@@ -186,6 +191,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: 90,
+  },
+  errText: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: -0.2,
+    color: Colors.textSecondary,
+  },
+  errDetail: {
+    fontSize: 11,
+    fontWeight: '400',
+    letterSpacing: -0.1,
+    color: Colors.textTertiary,
+    marginTop: 4,
+    textAlign: 'center',
   },
 
   header: {
@@ -258,7 +277,6 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
-  // 5단계 바
   barRow: {
     flexDirection: 'row',
     gap: 3,

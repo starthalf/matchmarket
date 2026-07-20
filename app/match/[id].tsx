@@ -48,43 +48,42 @@ export default function MatchDetailScreen() {
   const [myApplication, setMyApplication] = useState<MatchApplication | undefined>();
 const [myParticipation, setMyParticipation] = useState<any>();
 const [sellerInfo, setSellerInfo] = useState<any>(null);
-
 const match = matches.find(m => m.id === id);
 
-// 🔥 매치 상세 진입 시 조회수 +1 (유저당 1회만)
+// 🔥 매치 상세 진입 시 조회수 +1 (유저당 1회만, DB에서 원자적 증가)
 useEffect(() => {
   if (!match || !user || match.sellerId === user.id) return;
-  
+
   const viewKey = `viewed_${match.id}_${user.id}`;
   if (typeof window !== 'undefined' && localStorage.getItem(viewKey)) return;
-  
-  const newViewCount = (match.seller?.viewCount || 0) + 1;
-  
-  // 로컬 상태 업데이트
+
+  // 중복 방지를 먼저 걸어둔다 (렌더 중복으로 두 번 호출되는 것 차단)
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(viewKey, 'true');
+  }
+
+  // 로컬 상태는 낙관적으로 먼저 반영
+  const optimisticCount = (match.seller?.viewCount || 0) + 1;
   updateMatch({
     ...match,
     seller: {
       ...match.seller,
-      viewCount: newViewCount
-    }
+      viewCount: optimisticCount,
+    },
   });
-  
-  // DB 업데이트
-  supabase
-    .from('matches')
-    .update({ seller_view_count: newViewCount })
-    .eq('id', match.id)
-    .then(() => {
-      console.log('👁️ 조회수 +1:', match.id, '→', newViewCount);
-    });
-  
-  // 중복 방지
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(viewKey, 'true');
-  }
-}, [match?.id, user?.id]);
 
-// 🔥 초기 가격을 동적 계산
+  // DB는 RPC로 원자적 증가 (동시 접속에도 카운트 유실 없음)
+  // view_count(매치별) + seller_view_count(기존 호환) 둘 다 증가시킨다
+  supabase
+    .rpc('increment_match_view', { p_match_id: match.id })
+    .then(({ data, error }) => {
+      if (error) {
+        console.error('조회수 증가 실패:', error);
+        return;
+      }
+      console.log('👁️ 조회수 +1:', match.id, '→', data);
+    });
+}, [match?.id, user?.id]);
 
 // 🔥 초기 가격을 동적 계산
 const calculateInitialPrice = () => {
@@ -112,17 +111,14 @@ const [displayPrice, setDisplayPrice] = useState(calculateInitialPrice());
 
   const handlePriceChange = async (newPrice: number) => {
     if (!match) return;
-
     setDisplayPrice(newPrice);
-
     const updatedMatch: Match = {
       ...match,
       currentPrice: newPrice
     };
-
     await updateMatch(updatedMatch);
   };
-
+  
   if (!match) {
     return (
       <SafeAreaView style={safeStyles.safeContainer}>

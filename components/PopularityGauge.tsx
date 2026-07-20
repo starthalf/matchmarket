@@ -307,7 +307,7 @@ const styles = StyleSheet.create({
   },
 
   notice: {
-    marginTop: 14,
+    marginTop: 12,
     paddingHorizontal: 10,
     paddingVertical: 9,
     borderRadius: Radius.sm,

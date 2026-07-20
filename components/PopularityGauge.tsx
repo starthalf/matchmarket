@@ -72,7 +72,7 @@ export function PopularityGauge({ sellerId }: Props) {
   if (errMsg) {
     return (
       <View style={[styles.card, styles.center]}>
-        <Text style={styles.errText}>인기 리워드를 불러오지 못했습니다</Text>
+        <Text style={styles.errText}>광고수익을 불러오지 못했습니다</Text>
         <Text style={styles.errDetail}>{errMsg}</Text>
       </View>
     );
@@ -123,6 +123,7 @@ export function PopularityGauge({ sellerId }: Props) {
         </View>
       </View>
 
+      {/* 5단계 세그먼트 바 */}
       <View style={styles.barRow}>
         {REWARD_TIERS.map((t, i) => {
           const fill = fillOf(i);
@@ -138,7 +139,26 @@ export function PopularityGauge({ sellerId }: Props) {
         })}
       </View>
 
-      
+      {/* 단계 번호 */}
+      <View style={styles.tierRow}>
+        {REWARD_TIERS.map(t => {
+          const isCurrent = me.tierLevel === t.level;
+          const isPassed = me.tierLevel > t.level;
+          return (
+            <View key={t.level} style={styles.tierCell}>
+              <Text
+                style={[
+                  styles.tierText,
+                  isPassed && styles.tierPassed,
+                  isCurrent && styles.tierCurrent,
+                ]}
+              >
+                {t.level}단계
+              </Text>
+            </View>
+          );
+        })}
+      </View>
 
       <View style={styles.notice}>
         {nextTier ? (
@@ -261,7 +281,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
 
- barRow: {
+  barRow: {
     flexDirection: 'row',
     gap: 3,
   },
@@ -280,34 +300,31 @@ const styles = StyleSheet.create({
     borderRadius: Radius.full,
   },
 
-  labelRow: {
+  tierRow: {
     flexDirection: 'row',
     gap: 3,
+    marginTop: 6,
   },
-  labelCell: {
+  tierCell: {
     flex: 1,
     alignItems: 'center',
   },
-  passedRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 1,
-  },
-  labelPassed: {
-    fontSize: 9,
-    fontWeight: '700',
-    letterSpacing: -0.1,
-    color: Colors.success,
-  },
-  labelPending: {
+  tierText: {
     fontSize: 9,
     fontWeight: '500',
     letterSpacing: -0.1,
     color: Colors.textTertiary,
   },
+  tierPassed: {
+    color: Colors.accent,
+  },
+  tierCurrent: {
+    fontWeight: '700',
+    color: Colors.accent,
+  },
 
   notice: {
-    marginTop: 12,
+    marginTop: 10,
     paddingHorizontal: 10,
     paddingVertical: 9,
     borderRadius: Radius.sm,

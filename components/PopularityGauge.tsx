@@ -158,9 +158,11 @@ export function PopularityGauge({ sellerId }: Props) {
 
       
 
+      <Text style={styles.footerNote}>광고수익은 다음 달 초에 정산 지급됩니다</Text>
+
       {prorateRatio < 1 && (
         <Text style={styles.prorateText}>
-          이번 달 재원에 따라 지급액이 조정될 수 있습니다
+          재원에 따라 지급액이 조정될 수 있습니다
         </Text>
       )}
     </View>

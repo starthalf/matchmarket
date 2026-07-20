@@ -313,24 +313,7 @@ const styles = StyleSheet.create({
     color: Colors.accent,
   },
 
-  notice: {
-    marginTop: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 9,
-    borderRadius: Radius.sm,
-    backgroundColor: Colors.surfaceAlt,
-  },
-  noticeText: {
-    fontSize: 12,
-    fontWeight: '500',
-    letterSpacing: -0.2,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-  noticeStrong: {
-    fontWeight: '700',
-    color: Colors.accent,
-  },
+  
 
   prorateText: {
     fontSize: 10,

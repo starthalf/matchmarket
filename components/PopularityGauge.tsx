@@ -100,7 +100,7 @@ export function PopularityGauge({ sellerId }: Props) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Sparkles size={15} color={Colors.accent} strokeWidth={IconStroke} />
-          <Text style={styles.headerTitle}>{monthLabel} 인기 리워드</Text>
+          <Text style={styles.headerTitle}>{monthLabel} 광고수익</Text>
         </View>
         <View style={styles.gradeBadge}>
           <Text style={styles.gradeText}>{grade}</Text>

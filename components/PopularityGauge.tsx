@@ -1,6 +1,7 @@
 // components/PopularityGauge.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { Sparkles } from 'lucide-react-native';
 import {
   PopularityManager,

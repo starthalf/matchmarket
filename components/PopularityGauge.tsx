@@ -304,10 +304,18 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceAlt,
     overflow: 'hidden',
   },
-  segmentFill: {
+ segmentFill: {
     height: '100%',
-    backgroundColor: Colors.accent,
     borderRadius: Radius.full,
+  },
+  /** 단계 통과 완료 */
+  segmentComplete: {
+    backgroundColor: Colors.accent,
+  },
+  /** 차오르는 중 — 반투명 */
+  segmentPartial: {
+    backgroundColor: Colors.accent,
+    opacity: 0.4,
   },
 
   tierRow: {

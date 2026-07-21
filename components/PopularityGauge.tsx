@@ -138,11 +138,19 @@ export function PopularityGauge({ sellerId }: Props) {
       <View style={styles.barRow}>
         {REWARD_TIERS.map((t, i) => {
           const fill = fillOf(i);
+          const isComplete = fill >= 1;
           return (
             <View key={t.level} style={styles.segmentWrap}>
               <View style={styles.segmentTrack}>
                 {fill > 0 && (
-                  <View style={[styles.segmentFill, { width: `${fill * 100}%` }]} />
+                  <View
+                    style={[
+                      styles.segmentFill,
+                      { width: `${fill * 100}%` },
+                      // 통과 완료 = 진한 핑크 / 차오르는 중 = 반투명 핑크
+                      isComplete ? styles.segmentComplete : styles.segmentPartial,
+                    ]}
+                  />
                 )}
               </View>
             </View>

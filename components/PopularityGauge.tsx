@@ -75,6 +75,7 @@ export function PopularityGauge({ sellerId }: Props) {
       };
     }, [sellerId])
   );
+
   if (loading) {
     return (
       <View style={[styles.card, styles.center]}>

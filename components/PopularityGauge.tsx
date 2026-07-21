@@ -29,39 +29,52 @@ export function PopularityGauge({ sellerId }: Props) {
   const [snap, setSnap] = useState<RewardSnapshot | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  useEffect(() => {
-    let alive = true;
+  // 탭에 진입할 때마다 조회한다.
+  // 마운트 직후에는 Supabase 세션 복원이 안 끝나 요청이 걸리는 경우가 있어,
+  // 실패하면 잠시 뒤 자동으로 한 번 더 시도한다.
+  useFocusEffect(
+    useCallback(() => {
+      let alive = true;
 
-    (async () => {
+      const fetchSnapshot = async (attempt: number): Promise<void> => {
+        const now = new Date();
+        try {
+          const s = await withTimeout(
+            PopularityManager.getSnapshot(sellerId, now.getFullYear(), now.getMonth() + 1),
+            6000,
+            '게이지 조회'
+          );
+          if (!alive) return;
+          setSnap(s);
+          setErrMsg(null);
+          setLoading(false);
+        } catch (e: any) {
+          if (!alive) return;
+
+          if (attempt < 2) {
+            // 세션이 준비될 시간을 주고 재시도
+            console.warn('📊 게이지 재시도:', attempt + 1);
+            setTimeout(() => {
+              if (alive) fetchSnapshot(attempt + 1);
+            }, 1200);
+            return;
+          }
+
+          console.error('📊 게이지 오류:', e);
+          setErrMsg(e?.message || '불러오지 못했습니다');
+          setLoading(false);
+        }
+      };
+
       setLoading(true);
       setErrMsg(null);
-      const now = new Date();
+      fetchSnapshot(0);
 
-      try {
-        console.log('📊 [1] 게이지 조회 시작 sellerId:', sellerId);
-
-        const s = await withTimeout(
-          PopularityManager.getSnapshot(sellerId, now.getFullYear(), now.getMonth() + 1),
-          8000,
-          '게이지 조회'
-        );
-
-        console.log('📊 [2] 게이지 결과:', s);
-        if (alive) setSnap(s);
-      } catch (e: any) {
-        console.error('📊 [X] 게이지 오류:', e);
-        if (alive) setErrMsg(e?.message || '불러오지 못했습니다');
-      } finally {
-        console.log('📊 [3] 로딩 종료');
-        if (alive) setLoading(false);
-      }
-    })();
-
-    return () => {
-      alive = false;
-    };
-  }, [sellerId]);
-
+      return () => {
+        alive = false;
+      };
+    }, [sellerId])
+  );
   if (loading) {
     return (
       <View style={[styles.card, styles.center]}>

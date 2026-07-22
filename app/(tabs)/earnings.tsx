@@ -208,8 +208,6 @@ export default function EarningsScreen() {
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {currentUser && <PopularityGauge sellerId={currentUser.id} />}
-
         {/* 월 선택 네비게이션 */}
         <View style={styles.monthNavigation}>
           <TouchableOpacity
@@ -230,11 +228,13 @@ export default function EarningsScreen() {
             <ChevronRight size={24} color="#374151" />
           </TouchableOpacity>
         </View>
-        {/* 선택된 월 정산 */}
+
+        {/* 판매수익 */}
         <View style={styles.monthlySettlementSection}>
-          <Text style={styles.sectionTitle}>
-            {selectedYear}년 {selectedMonth}월 수익현황
-          </Text>
+          <View style={styles.cardTitleRow}>
+            <ClipboardList size={15} color="#ec4899" />
+            <Text style={styles.cardTitle}>{selectedMonth}월 판매수익</Text>
+          </View>
           
           {currentMonthSettlement ? (
             <>
@@ -282,6 +282,9 @@ export default function EarningsScreen() {
             </View>
           )}
         </View>
+
+        {/* 광고수익 게이지 */}
+        {currentUser && <PopularityGauge sellerId={currentUser.id} />}
 
         {/* 미정산 내역 */}
         {
@@ -482,17 +485,24 @@ const styles = StyleSheet.create({
   monthlySettlementSection: {
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
-    marginTop: 16,
+    marginTop: 4,
     marginBottom: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 3,
+    borderColor: '#FBCFE8',
+  },
+  cardTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginBottom: 14,
+  },
+  cardTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    letterSpacing: -0.3,
+    color: '#18181B',
   },
   // 🔥 컴팩트 정산 그리드
   compactSettlementGrid: {

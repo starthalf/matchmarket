@@ -302,12 +302,9 @@ export default function EarningsScreen() {
             </View>
             <View style={styles.feeNoticeBox}>
               <Text style={styles.feeNoticeText}>
-                추가수익에 대한 수수료에 대한 안내 섹션입니다.
+                추가수익에 대해 납부가 필요한 수수료입니다.
               </Text>
-              <Text style={styles.feeNoticeWarn}>
-                매달 말일까지 입금되지 않으면 사용이 중지됩니다.
-              </Text>
-            </View>
+                         </View>
 
             {unpaidSettlements.length > 0 ? (
               <>

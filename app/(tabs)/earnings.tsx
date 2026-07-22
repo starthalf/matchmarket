@@ -597,6 +597,7 @@ const styles = StyleSheet.create({
   unpaidSection: {
     backgroundColor: '#ffffff',
     marginHorizontal: 16,
+    marginTop: 8,
     marginBottom: 12,
     borderRadius: 12,
     padding: 16,

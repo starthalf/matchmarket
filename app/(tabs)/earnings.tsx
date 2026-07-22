@@ -666,6 +666,27 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 8,
   },
+  feeNoticeBox: {
+    backgroundColor: '#fff7ed',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#fed7aa',
+    marginTop: 4,
+    marginBottom: 4,
+    gap: 3,
+  },
+  feeNoticeText: {
+    fontSize: 12,
+    color: '#9a3412',
+    fontWeight: '600',
+    lineHeight: 17,
+  },
+  feeNoticeWarn: {
+    fontSize: 11,
+    color: '#c2410c',
+    lineHeight: 16,
+  },
   unpaidCard: {
     backgroundColor: '#f9fafb',
     borderRadius: 8,

@@ -290,16 +290,24 @@ export default function EarningsScreen() {
         {
           <View style={styles.unpaidSection}>
             <View style={styles.unpaidHeaderRow}>
-              <Text style={styles.sectionTitle}>미정산 내역</Text>
+              <View style={styles.cardTitleRow}>
+                <AlertCircle size={15} color="#ec4899" />
+                <Text style={styles.cardTitle}>납부할 수수료</Text>
+              </View>
               {unpaidSettlements.length > 1 && (
                 <Text style={styles.unpaidCounter}>
                   {unpaidIndex + 1} / {unpaidSettlements.length}
                 </Text>
               )}
             </View>
-            <Text style={styles.unpaidWarningText}>
-              매달 말일 까지 추가수익에 대한 수수료가 입금되지 않으면 사용이 중지됩니다.
-            </Text>
+            <View style={styles.feeNoticeBox}>
+              <Text style={styles.feeNoticeText}>
+                추가수익에 대한 수수료를 플랫폼에 납부하는 섹션입니다.
+              </Text>
+              <Text style={styles.feeNoticeWarn}>
+                매달 말일까지 입금되지 않으면 사용이 중지됩니다.
+              </Text>
+            </View>
 
             {unpaidSettlements.length > 0 ? (
               <>
